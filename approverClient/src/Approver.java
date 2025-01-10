@@ -157,4 +157,9 @@ public class Approver extends RoomStub implements RoomManageable{
     public void FetchRemote(IUser applier) {
     }
 
+    @Override
+    public int getReserved() throws RemoteException {
+        return server.getReserved();
+    }
+
 }

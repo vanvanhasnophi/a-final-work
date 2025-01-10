@@ -29,6 +29,15 @@ public class User extends RoomStub implements IUser {
     public void FetchRemote(IUser applier) {
     }
 
+    @Deprecated
+    public int getReserved() throws RemoteException {
+        return 0;
+    }
+
+    public boolean isInReserved() throws RemoteException {
+        return server.getReserved()==ID;
+    }
+
     public void FetchRemote()throws IOException,ClassNotFoundException{
         server.FetchRemote(this);
     }

@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.rmi.RemoteException;
 
 public interface RoomMonitorWithAppliers extends RoomMonitor{
     boolean Applying(int UserID) throws IOException, ClassNotFoundException;
@@ -6,4 +7,6 @@ public interface RoomMonitorWithAppliers extends RoomMonitor{
     int NumberOfAppliers()throws IOException,ClassNotFoundException;
     int getCrowdRemote(int UserID)throws IOException,ClassNotFoundException;
     void FetchRemote(IUser applier)throws IOException,ClassNotFoundException;
+    boolean isReserved()throws RemoteException;
+    int getReserved()throws RemoteException;
 }

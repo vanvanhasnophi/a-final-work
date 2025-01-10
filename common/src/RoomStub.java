@@ -59,8 +59,16 @@ public abstract class RoomStub extends UnicastRemoteObject implements RoomMonito
 
     /**Monitor*/
     @Override
+    public boolean isReserved() throws RemoteException {
+        return server.isReserved();
+    }
+    @Override
     public String StateStr() throws IOException, ClassNotFoundException {
         return server.StateStr();
+    }
+    @Override
+    public String RichStateStr() throws IOException, ClassNotFoundException {
+        return server.RichStateStr();
     }
 
     @Override

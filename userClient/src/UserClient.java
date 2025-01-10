@@ -16,6 +16,12 @@ import java.util.*;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class UserClient extends JFrame implements Command{
+    // Default Fonts
+    static final Font fntText = LoadFont.InterR(11);
+    static final Font fntDisplay=LoadFont.InterR(13);
+    static final Font fntBld = LoadFont.InterB(12);
+    static final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
+    static final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
 
     public void Scanning(String State) throws MalformedURLException, NotBoundException, RemoteException {
         RoomMonitorWithAppliers server;
@@ -39,13 +45,14 @@ public class UserClient extends JFrame implements Command{
                 server = (RoomMonitorWithAppliers) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (count));
                 Application[0]+=server.Applying(ID[0])?1:0;
                 connect++;
-                if(server.Applying(ID[0])&&!Objects.requireNonNull(filter.getSelectedItem()).equals("-Select filter-"))OverallInfo.append("(Applying) ");
+                if(server.Occupying(ID[0]))OverallInfo.append("(Occupying) ");
+                else if(server.Applying(ID[0])&&!Objects.requireNonNull(filter.getSelectedItem()).equals("-Select filter-"))OverallInfo.append(server.getReserved()==ID[0]?"(Reserved) ":"(Applying) ");
                 OverallInfo.append("Location "+count+": "+server.ToString()+"\n");
                 FilteredInfo.append(switch((String) Objects.requireNonNull(filter.getSelectedItem())){
                     case "Available"-> (!server.Applying(ID[0]))&&Objects.equals(server.StateStr(), "Empty, Clean") ?("Location "+count+": "+server.ToString()+"("+server.NumberOfAppliers()+" person(s) applying)\n"):"";
-                    case "Applying"-> server.Applying(ID[0])?("Location "+count+": "+server.ToString()+"\n   ("+(server.NumberOfAppliers()-1-(server.StateStr().equals("Guest-Occupied")?1:0))+" person(s) applying besides you)\n"):"";
+                    case "Applying"-> server.Applying(ID[0])?((server.getReserved()==ID[0]?"(Reserved) ":"")+"Location "+count+": "+server.ToString()+"\n   ("+(server.NumberOfAppliers()-1-(server.StateStr().equals("Guest-Occupied")?1:0))+" person(s) applying besides you)\n"):"";
                     case "Occupying"->server.Occupying(ID[0])?("Location "+count+": "+server.ToString()+"\n"):"";
-                    case "Occupied"->(!server.Occupying(ID[0]))&&server.StateStr().equals("Guest-Occupied")?((server.Applying(ID[0])?"(Applying) ":"")+"Location "+count+": "+server.ToString()+"\n"):"";
+                    case "Occupied"->(!server.Occupying(ID[0]))&&server.StateStr().equals("Guest-Occupied")?((server.Applying(ID[0])?(server.getReserved()==ID[0]?"(Reserved) ":"(Applying) "):"")+"Location "+count+": "+server.ToString()+"\n"):"";
                     default -> "";
                 });
                 roomList.addItem(count);
@@ -66,7 +73,7 @@ public class UserClient extends JFrame implements Command{
             }
         }
     }
-    private final String version="1.2";
+    private final String version= properties.version.description();
 
     private final JTextField idTextField;
     private final JTextField crowdTextField;
@@ -391,11 +398,6 @@ public class UserClient extends JFrame implements Command{
     }
 
     public UserClient() {
-        // Default Fonts
-        Font fnt = new Font("微软雅黑", Font.PLAIN, 11);
-        Font fntBld = new Font("微软雅黑", Font.BOLD, 11);
-        Font fntCons = new Font("Consolas", Font.PLAIN, 12);
-        Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
         // Title
         setTitle("UserClient");
 
@@ -422,7 +424,9 @@ public class UserClient extends JFrame implements Command{
         JPanel ChooseARoom=new JPanel();
         ChooseARoom.setLayout(new FlowLayout(FlowLayout.CENTER));
         actionPanel.add(ChooseARoom);
-        ChooseARoom.add(new JLabel("Room Loc:"));
+        JLabel RoomLoc=new JLabel("Room Loc:");
+        RoomLoc.setFont(fntDisplay);
+        ChooseARoom.add(RoomLoc);
 
         JPanel RoomNameL=new JPanel();
         RoomNameL.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -435,7 +439,7 @@ public class UserClient extends JFrame implements Command{
         // RoomList ComboBox
         ChooseARoom.add(roomList);
         roomList.setEnabled(true);
-        roomList.setFont(fnt);
+        roomList.setFont(fntText);
         roomList.setVisible(true);
         roomList.addItemListener(new ItemListener() {
             @Override
@@ -455,14 +459,17 @@ public class UserClient extends JFrame implements Command{
             }
         });
 
-        ChooseARoom.add(new JLabel("  Crowd:"));
+        JLabel CrowdTip=new JLabel("  Crowd:");
+        CrowdTip.setFont(fntDisplay);
+        ChooseARoom.add(CrowdTip);
 
         // Crowd TextField
         crowdTextField = new JTextField(3);
         ChooseARoom.add(crowdTextField);
-        crowdTextField.setFont(fnt);
+        crowdTextField.setFont(fntText);
 
         // Selected Label
+        selected.setFont(fntDisplay);
         RoomNameL.add(selected);
         selected.setVisible(true);
 
@@ -477,7 +484,7 @@ public class UserClient extends JFrame implements Command{
 
         idTextField = new JTextField(20);
         inputPanel.add(idTextField);
-        idTextField.setFont(fnt);
+        idTextField.setFont(fntText);
 
         // Register Button
         registerButton = new JButton("Register");
@@ -721,14 +728,14 @@ public class UserClient extends JFrame implements Command{
         OverallInfo.setEditable(false); // Readonly
         JScrollPane scrollPane1 = new JScrollPane(OverallInfo);
         InfoPane.add(scrollPane1);
-        OverallInfo.setFont(fnt);
+        OverallInfo.setFont(fntText);
 
         // Filtered Info
         FilteredInfo=new JTextArea();
         FilteredInfo.setEditable(false); //Readonly
         JScrollPane scrollPane2=new JScrollPane(FilteredInfo);
         InfoPane.add(scrollPane2);
-        FilteredInfo.setFont(fnt);
+        FilteredInfo.setFont(fntText);
 
 
         // Notification Center
@@ -736,7 +743,7 @@ public class UserClient extends JFrame implements Command{
         Notification.setEditable(false); //Readonly
         JScrollPane scrollPane3 =new JScrollPane(Notification);
         InfoPane.add(scrollPane3);
-        Notification.setFont(fnt);
+        Notification.setFont(fntText);
         Notification.append("Input your id.\n");
         Notification.setVisible(true);
 
@@ -784,7 +791,7 @@ public class UserClient extends JFrame implements Command{
 
         // Filter ComboBox
         filter=new JComboBox<>(new String[]{"-Select filter-","Applying","Occupying","Available","Occupied"});
-        filter.setFont(fnt);
+        filter.setFont(fntText);
         buttonPanel.add(filter);
         filter.addItemListener(e -> {
             try {
@@ -891,7 +898,7 @@ public class UserClient extends JFrame implements Command{
     private void Apply(int roomId,int id,int crowd) {
         Notification.setText("");
         try {
-            ConfirmDialog c=new ConfirmDialog("You are applying Room #"+roomList.getSelectedItem()+"\nRoom info: "+selected.getText()+"\nContinue?",600,160);
+            ConfirmDialog c=new ConfirmDialog("You are applying Room #"+roomList.getSelectedItem()+"\nRoom info: "+selected.getText()+"\nContinue?",800,160);
             c.setVisible(true);
             if(!c.isOK()) return;
             if(Application[0]>=5)throw new TooManyApplicationsException();

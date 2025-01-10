@@ -135,4 +135,9 @@ public class ServiceStaff extends RoomStub implements RoomCleanable{
 
     }
 
+    @Deprecated
+    public int getReserved() throws RemoteException {
+        return 0;
+    }
+
 }

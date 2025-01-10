@@ -19,6 +19,12 @@ import java.util.Map;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class MaintainerClient extends JFrame implements Command {
+    // Default Fonts
+    static final Font fntText = LoadFont.InterR(11);
+    static final Font fntDisplay=LoadFont.InterR(13);
+    static final Font fntBld = LoadFont.InterB(12);
+    static final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
+    static final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
 
     public void Scanning() throws MalformedURLException, NotBoundException, RemoteException {
         RoomMonitor server;
@@ -56,7 +62,7 @@ public class MaintainerClient extends JFrame implements Command {
         }
     }
 
-    private final String version="1.2";
+    private final String version=properties.version.description();
 
     private final JTextField idTextField;
     private final JTextArea Messenger;
@@ -240,11 +246,6 @@ public class MaintainerClient extends JFrame implements Command {
     }
 
     public MaintainerClient() {
-        // Default Fonts
-        Font fnt = new Font("微软雅黑", Font.PLAIN, 11);
-        Font fntBld = new Font("微软雅黑", Font.BOLD, 11);
-        Font fntCons = new Font("Consolas", Font.PLAIN, 12);
-        Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
         // Title
         setTitle("MaintainerClient");
 
@@ -395,7 +396,9 @@ public class MaintainerClient extends JFrame implements Command {
         JPanel ChooseARoom=new JPanel();
         ChooseARoom.setLayout(new FlowLayout(FlowLayout.CENTER));
         actionPanel.add(ChooseARoom,BorderLayout.NORTH);
-        ChooseARoom.add(new JLabel("Room Loc:"));
+        JLabel RoomLoc=new JLabel("Room Loc:");
+        RoomLoc.setFont(fntDisplay);
+        ChooseARoom.add(RoomLoc);
 
         JPanel RoomNameL=new JPanel();
         RoomNameL.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -408,7 +411,7 @@ public class MaintainerClient extends JFrame implements Command {
         // RoomList ComboBox
         ChooseARoom.add(roomList);
         roomList.setEnabled(true);
-        roomList.setFont(fnt);
+        roomList.setFont(fntText);
         roomList.setVisible(true);
         roomList.addItemListener(e -> {
             try {
@@ -419,6 +422,7 @@ public class MaintainerClient extends JFrame implements Command {
         });
 
         // Selected Label
+        selected.setFont(fntDisplay);
         RoomNameL.add(selected);
         selected.setVisible(true);
 
@@ -433,7 +437,7 @@ public class MaintainerClient extends JFrame implements Command {
 
         idTextField = new JTextField(20);
         inputPanel.add(idTextField);
-        idTextField.setFont(fnt);
+        idTextField.setFont(fntText);
 
         add(inputPanel, BorderLayout.NORTH);
 
@@ -548,21 +552,21 @@ public class MaintainerClient extends JFrame implements Command {
         OverallInfo.setEditable(false); // Readonly
         JScrollPane scrollPane1 = new JScrollPane(OverallInfo);
         InfoPane.add(scrollPane1);
-        OverallInfo.setFont(fnt);
+        OverallInfo.setFont(fntText);
 
         // Filtered Info
         FilteredInfo=new JTextArea();
         FilteredInfo.setEditable(false); //Readonly
         JScrollPane scrollPane2=new JScrollPane(FilteredInfo);
         InfoPane.add(scrollPane2);
-        FilteredInfo.setFont(fnt);
+        FilteredInfo.setFont(fntText);
 
         // Notification Center
         Notification = new JTextArea();
         Notification.setEditable(false); //Readonly
         JScrollPane scrollPane3 =new JScrollPane(Notification);
         InfoPane.add(scrollPane3);
-        Notification.setFont(fnt);
+        Notification.setFont(fntText);
         Notification.append("Input your id.\n");
         Notification.setVisible(true);
 

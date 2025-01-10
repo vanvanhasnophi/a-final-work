@@ -121,4 +121,9 @@ public class Maintainer extends RoomStub implements RoomMaintainable {
 
     }
 
+    @Deprecated
+    public int getReserved() throws RemoteException {
+        return 0;
+    }
+
 }

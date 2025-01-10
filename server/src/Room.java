@@ -109,6 +109,14 @@ public class Room extends RoomContext{
             if(observer.getValue().isOnline())observer.getValue().getOnClient().update(message);
         }
     }
+
+    public void notifyReserve() throws IOException,ClassNotFoundException{
+        if(appliers.get(reserved).isOnline())appliers.get(reserved).getOnClient().update("Your application for "+NameStr()+" is approved and reserved.\nYou can use it when it is ready.\n");
+    }
+    public void notifyReserveToUse() throws IOException,ClassNotFoundException{
+        if(appliers.get(reserved).isOnline())appliers.get(reserved).getOnClient().update("The room is ready, welcome.\n");
+    }
+
     public void notifyAllMaintainers(String Message) throws IOException, ClassNotFoundException {
         for (Map.Entry <Integer,Observable> observer : maintainers.entrySet()) {
             observer.getValue().update(Message);
@@ -160,11 +168,17 @@ public class Room extends RoomContext{
     @Override
     public int Approve(int userID) {
         try{
-            if(!StateStr().equals("Empty, Clean"))throw new RuntimeException();
-            if(appliers.get(userID)==null)throw new NullPointerException();
-            this.userID = userID;
-            notifyWinner();
-            Occupy(userID);
+            if(isReserved()||userID==this.userID)throw new RuntimeException();
+            if(StateStr().equals("Empty, Clean")) {
+                if (appliers.get(userID) == null) throw new NullPointerException();
+                this.userID = userID;
+                notifyWinner();
+                Occupy(userID);
+            }
+            else {
+                setReserved(userID);
+                notifyReserve();
+            }
             return 1;
         }
         catch(Exception e){
@@ -175,10 +189,18 @@ public class Room extends RoomContext{
     @Override
     public int Reject(int userID) throws IOException, ClassNotFoundException {
         try{
-            if(userID==this.userID)throw new RuntimeException();
-            if(appliers.get(userID)==null)throw new NullPointerException();
-            appliers.get(userID).getOnClient().update("Sorry, your application for "+NameStr()+" is rejected.\n");
-            appliers.remove(userID);
+            if(reserved==userID){
+                if (appliers.get(userID) == null) throw new NullPointerException();
+                setReserved(-1);
+                appliers.get(userID).getOnClient().update("Sorry, your reservation for " + NameStr() + " is canceled.\n");
+                appliers.remove(userID);
+            }
+            else {
+                if (userID == this.userID) throw new RuntimeException();
+                if (appliers.get(userID) == null) throw new NullPointerException();
+                appliers.get(userID).getOnClient().update("Sorry, your application for " + NameStr() + " is rejected.\n");
+                appliers.remove(userID);
+            }
             return 1;
         }
         catch(NullPointerException e){
@@ -258,11 +280,15 @@ public class Room extends RoomContext{
         try {
             System.out.print(name+":");
             suc = state.Occupy(this);
+            try {
+                notifyReserveToUse();
+            } catch (Exception ignored){}
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
         if(suc){
         setUserID(ID);
+        setReserved(-1);
         }
     }
 
@@ -270,15 +296,17 @@ public class Room extends RoomContext{
         boolean suc;
         try {
             suc = state.Cleaning(this);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            if(isReserved()){
+                Occupy(getReserved());
+            }
+        } catch (Exception e) {
+            return false;
         }
         if(suc){
             System.out.print(name+":");
-            setUserID(-1);
-            return true;
+            if(StateStr().equals("Empty, Clean"))setUserID(-1);
         }
-        else return false;
+        return suc;
     }
     public boolean Use(int ID) {
         if(ID!=userID)return false;
@@ -327,8 +355,13 @@ public class Room extends RoomContext{
         if(Cleaning()) notifyAllServiceStaffs(NameStr()+" is cleaned by Service Staffs #"+ID+" .\n");
         else serviceStaffs.get(ID).update("ERROR: Failed to set cleaned status, or not need cleaning, if necessary, contact the supporters.\n");
         notifyAllMaintainers(NameStr()+" is cleaned, not need repairing.\n");
-        notifyAllAppliers(NameStr()+" is cleaned, ready to use.\n");
-        notifyAllApprovers(NameStr()+" is cleaned, ready to use.\n");
+        if(StateStr().equals("Guest-Occupied")){
+            notifyAllApprovers(NameStr()+" is cleaned, ready for the reserved user.\n");
+        }
+        else{
+            notifyAllAppliers(NameStr()+" is cleaned, ready to use.\n");
+            notifyAllApprovers(NameStr()+" is cleaned, ready to use.\n");
+        }
     }
 
     @Override

@@ -12,16 +12,29 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+class CheckItem{
+    public final JCheckBox checkBx;
+    public final int id;
+    CheckItem(String Text,int id){
+        this.checkBx=new JCheckBox(Text);
+        checkBx.setFont(ApproverClient.fntText);
+        this.id=id;
+    }
+}
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ApproverClient extends JFrame implements Command {
 
     // Default Fonts
-    final Font fnt = new Font("微软雅黑", Font.PLAIN, 11);
-    final Font fntBld = new Font("微软雅黑", Font.BOLD, 11);
-    final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
-    final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
+    static final Font fntText = LoadFont.InterR(11);
+    static final Font fntDisplay=LoadFont.InterR(13);
+    static final Font fntBld = LoadFont.InterB(12);
+    static final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
+    static final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
 
 
     public void Scanning() throws MalformedURLException, NotBoundException, RemoteException {
@@ -62,7 +75,8 @@ public class ApproverClient extends JFrame implements Command {
     }
 
     public void Check(int Focus) throws RemoteException {
-        ApplierList.setText("\n");
+        if(!appliersCheck.isEmpty())appliersCheck.clear();
+        ApplierList.removeAll();
         AppliersChoice.removeAllItems();
         if(!CheckPane.isVisible()) {
             CheckPane.setVisible(true);
@@ -73,21 +87,36 @@ public class ApproverClient extends JFrame implements Command {
             boolean exi=false;
             appliers=observers.get(Focus).ApplierList();
             for(Map.Entry<Integer, UserInfo>observer : appliers.entrySet()) {
-                if(observers.get(Focus).Occupying(observer.getValue().getID())) ApplierList.append("(Occupying) ");
-                ApplierList.append("Applier id: "+observer.getValue().getID()+" Crowd: "+observer.getValue().getCrowd()+"\n\n");
-                AppliersChoice.addItem(observer.getValue().getID());
+                String curInfo="";
+                if(observers.get(Focus).Occupying(observer.getValue().getID())) curInfo="(Occupying) ";
+                else if(observers.get(Focus).getReserved()==(observer.getValue().getID())) curInfo="(Reserved) ";
+                curInfo=curInfo+"Applier id: "+observer.getValue().getID()+" Crowd: "+observer.getValue().getCrowd();
+                CheckItem ele=new CheckItem(curInfo,observer.getValue().getID());
+                ApplierList.add(ele.checkBx);
+                appliersCheck.addLast(ele);
+                ele.checkBx.addActionListener(e -> {
+                    try{
+                        setComBoDefault();
+                    }
+                    catch (Exception ignored){}
+                });
+                AppliersChoice.addItem(String.valueOf(observer.getValue().getID()));
                 exi=true;
             }
             if(!exi)throw new RuntimeException();
+            AppliersChoice.addItem("Selected");
+            AppliersChoice.addItem("All");
+            ApproveButton.setEnabled(!observers.get(Focus).isReserved());
         } catch (Exception ex) {
             Notification.setText("");
             System.out.println("Cannot get applier list. \nCheck if there are any appliers.");
-            ApplierList.setText("Cannot get applier list. Check if there are any appliers.");
+            ApplierList.removeAll();
+            AppliersChoice.addItem("N/A");
             new MessageBox("Cannot get applier list. Check if there are any appliers.",400,100).setVisible(true);
         }
     }
 
-    private final String version="1.2";
+    private final String version=properties.version.description();
 
     private final JTextField idTextField;
     private final JTextField commandInputBox=new JTextField("Input commands...");
@@ -96,16 +125,19 @@ public class ApproverClient extends JFrame implements Command {
     private final JTextArea Notification;
     private final JTextArea OverallInfo;
     private final JTextArea FilteredInfo;
-    private final JTextArea ApplierList;
+    private final JPanel ApplierList;
     private final JButton registerButton;
     private final JButton DisconnectButton;
     private final JButton clearButton;
     private final JButton scanButton;
     private final JButton checkButton;
+    private final JButton ApproveButton=new JButton();
+    private final JButton RejectButton=new JButton();
+    private final JButton BackButton=new JButton();
     private final JPanel ItPane;
     private final JPanel CheckPane;
     private final JComboBox<Integer> roomList=new JComboBox<>();
-    private final JComboBox<Integer> AppliersChoice;
+    private final JComboBox<String> AppliersChoice=new JComboBox<>();
     private final int[] ID={-1};
     private Approver check;
     private final int[] Count={0};
@@ -118,10 +150,15 @@ public class ApproverClient extends JFrame implements Command {
     private final Color commandLostFocus=new Color(0x555555);
     private final Color love=new Color(0xff69b4);
     private HashMap<Integer, UserInfo> appliers=new HashMap<>();
+    private final ArrayList<CheckItem> appliersCheck=new ArrayList<>();
     final ArrayList<String> ref=new ArrayList<>(Arrays.asList("connect","register","approve","reject","scan","disconnect","exit","check","clear",
             "?", "help", "hello", "bye", "nihao", "zaijian","love", "tell","about"));
 
 
+
+    public void setComBoDefault() {
+        AppliersChoice.setSelectedItem("Selected");
+    }
     @Override
     public boolean conductible(String command) {
         String[] com=command.split("\\s+");
@@ -332,6 +369,8 @@ public class ApproverClient extends JFrame implements Command {
         // Title
         setTitle("ApproverClient");
 
+        // Font
+
         // Size of the form
         setSize(960, 540);
         setMinimumSize(new Dimension(960,540));
@@ -456,7 +495,9 @@ public class ApproverClient extends JFrame implements Command {
         JPanel ChooseARoom=new JPanel();
         ChooseARoom.setLayout(new FlowLayout(FlowLayout.CENTER));
         actionPanel.add(ChooseARoom,BorderLayout.NORTH);
-        ChooseARoom.add(new JLabel("Room Loc:"));
+        JLabel RoomLoc=new JLabel("Room Loc:");
+        RoomLoc.setFont(fntDisplay);
+        ChooseARoom.add(RoomLoc);
 
         JPanel RoomNameL=new JPanel();
         RoomNameL.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -469,7 +510,7 @@ public class ApproverClient extends JFrame implements Command {
         // RoomList ComboBox
         ChooseARoom.add(roomList);
         roomList.setEnabled(true);
-        roomList.setFont(fnt);
+        roomList.setFont(fntText);
         roomList.setVisible(true);
         roomList.addItemListener(e -> {
             try {
@@ -480,6 +521,7 @@ public class ApproverClient extends JFrame implements Command {
         });
 
         // Selected Label
+        selected.setFont(fntDisplay);
         RoomNameL.add(selected);
         selected.setVisible(true);
 
@@ -494,7 +536,7 @@ public class ApproverClient extends JFrame implements Command {
 
         idTextField = new JTextField(20);
         inputPanel.add(idTextField);
-        idTextField.setFont(fnt);
+        idTextField.setFont(fntText);
 
         add(inputPanel, BorderLayout.NORTH);
 
@@ -577,14 +619,14 @@ public class ApproverClient extends JFrame implements Command {
         OverallInfo.setEditable(false); // Readonly
         JScrollPane scrollPane1 = new JScrollPane(OverallInfo);
         InfoPane.add(scrollPane1);
-        OverallInfo.setFont(fnt);
+        OverallInfo.setFont(fntText);
 
         // Filtered Info
         FilteredInfo=new JTextArea();
         FilteredInfo.setEditable(false); //Readonly
         JScrollPane scrollPane2=new JScrollPane(FilteredInfo);
         InfoPane.add(scrollPane2);
-        FilteredInfo.setFont(fnt);
+        FilteredInfo.setFont(fntText);
 
 
         // Notification Center
@@ -592,7 +634,7 @@ public class ApproverClient extends JFrame implements Command {
         Notification.setEditable(false); //Readonly
         JScrollPane scrollPane3 =new JScrollPane(Notification);
         InfoPane.add(scrollPane3);
-        Notification.setFont(fnt);
+        Notification.setFont(fntText);
         Notification.append("Input your id.\n");
         Notification.setVisible(true);
         TextPane.add(InfoPane);
@@ -638,19 +680,21 @@ public class ApproverClient extends JFrame implements Command {
         CheckPane.add(decisionPane,BorderLayout.SOUTH);
 
         // Appliers ComboBox
-        AppliersChoice=new JComboBox<>();
+        AppliersChoice.setFont(fntDisplay);
         decisionPane.add(AppliersChoice);
 
 
         // Applier List
-        ApplierList=new JTextArea();
-        ApplierList.setEditable(false);
-        ApplierList.setFont(fnt);
+        ApplierList=new JPanel();
+        BoxLayout layout=new BoxLayout(ApplierList,BoxLayout.Y_AXIS);
+        ApplierList.setLayout(layout);
+        ApplierList.setVisible(true);
+        ApplierList.setFont(fntText);
 
         // Decision Buttons
-        JButton ApproveButton=new JButton();
-        JButton RejectButton=new JButton();
-        JButton BackButton=new JButton();
+        ///JButton ApproveButton=new JButton();
+        ///JButton RejectButton=new JButton();
+        ///JButton BackButton=new JButton();
         decisionPane.add(ApproveButton);
         decisionPane.add(RejectButton);
         decisionPane.add(BackButton);
@@ -664,57 +708,135 @@ public class ApproverClient extends JFrame implements Command {
         RejectButton.setText("Reject");
         BackButton.setText("Back");
         ApproveButton.addActionListener(e -> {
-            if(AppliersChoice.getSelectedItem()!=null) {
-                int i=(int)AppliersChoice.getSelectedItem();
-                try {
-                    ConfirmDialog c=new ConfirmDialog("Approve applier #"+i+"'s application for room #"+Focusing[0]+"(aka "+observers.get(Focusing[0]).NameStr()+")"+"?",400,100);
-                    c.setVisible(true);
-                    if(!c.isOK())return;
-                    int suc=observers.get(Focusing[0]).Approve(i);
-                    Messenger.setText("");
-                    if(suc==0)throw new RuntimeException();
-                    System.out.println("Approval success!");
-
-                    if (CheckPane.isVisible()) {
-                        CheckPane.setVisible(false);
+            try {
+                if(AppliersChoice.getSelectedItem()==null)throw new NullPointerException();
+                switch ((String)AppliersChoice.getSelectedItem()) {
+                    case "Selected":{
+                        int id=-1;
+                        int count=0;
+                        for (CheckItem checkItem : appliersCheck) {
+                            if (checkItem.checkBx.isSelected()){
+                                count++;
+                                id=checkItem.id;
+                            if(observers.get(Focusing[0]).getReserved()==id||observers.get(Focusing[0]).Occupying(id))throw new RuntimeException();
+                            }
+                        }
+                        if(count>1) {
+                            System.out.println("You can only approve 1 applier at a time.");
+                            new MessageBox("You can only approve 1 applier at a time.", 400, 100).setVisible(true);
+                        }
+                        else if(id==-1)throw new NullPointerException(); else{
+                            ConfirmDialog c = new ConfirmDialog("Approve applier #" + id + "'s application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                            c.setVisible(true);
+                            if (!c.isOK()) return;
+                            observers.get(Focusing[0]).Approve(id);
+                        }
+                        break;
                     }
-                    ApplierList.setText("");
-                } catch (Exception ex) {
-                    Messenger.setText("");
-                    System.out.println("Failed to approve, try again later.");
+                    case "All":{
+                        System.out.println("You can only approve 1 applier at a time.");
+                        new MessageBox("You can only approve 1 applier at a time.",400,100).setVisible(true);
+                        break;
+                    }
+                    case "N/A":{
+                        System.out.println("No appliers to approve.");
+                        new MessageBox("No appliers to approve.",320,100).setVisible(true);
+                        break;
+                    }
+                    default: {
+                        int i = Integer.parseInt((String) AppliersChoice.getSelectedItem());
+                        try {
+                            ConfirmDialog c = new ConfirmDialog("Approve applier #" + i + "'s application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                            c.setVisible(true);
+                            if (!c.isOK()) return;
+                            int suc = observers.get(Focusing[0]).Approve(i);
+                            Messenger.setText("");
+                            if (suc == 0) throw new RuntimeException();
+                            System.out.println("Approval success!");
+                        } catch (Exception ex) {
+                            Messenger.setText("");
+                            System.out.println("Failed to approve, try again later.");
+                        }
+                    }
                 }
+                // check again
+                try{Check(Focusing[0]);}
+                catch(Exception ignored){}
             }
-            else {
+            catch (Exception ex){
                 Messenger.setText("");
                 System.out.println("Failed to approve, try again later.");
                 new MessageBox("Failed to approve, try again later.",400,100).setVisible(true);
             }
         });
         RejectButton.addActionListener(e -> {
-            if(AppliersChoice.getSelectedItem()!=null) {
-                int i=(int)AppliersChoice.getSelectedItem();
-                try {
-                    ConfirmDialog c=new ConfirmDialog("Reject applier #"+i+"'s application for room #"+Focusing[0]+"(aka"+observers.get(Focusing[0]).NameStr()+")"+"?",400,100);
-                    c.setVisible(true);
-                    if(!c.isOK())return;
-                    int suc=observers.get(Focusing[0]).Reject(i);
-                    Messenger.setText("");
-                    if(suc==0)throw new RuntimeException();
-                    System.out.println("Rejection success!");
-                    Notification.setText("");
-
-                    // Check Again
-                    Check(Focusing[0]);
-                } catch (Exception ex) {
-                    Messenger.setText("");
-                    System.out.println("Failed to reject, try again later.");
-                    new MessageBox("Failed to reject, try again later.",400,100).setVisible(true);
-                }
-            }
-            else {
+            try {
+                if (AppliersChoice.getSelectedItem() == null) throw new NullPointerException();
+                switch ((String) AppliersChoice.getSelectedItem()) {
+                    case "Selected": {
+                        ConfirmDialog c = new ConfirmDialog("Reject selected appliers' application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                        c.setVisible(true);
+                        if (!c.isOK()) return;
+                        int id;
+                        for (CheckItem checkItem : appliersCheck) {
+                            if (checkItem.checkBx.isSelected()) {
+                                id = checkItem.id;
+                                try {
+                                    if (observers.get(Focusing[0]).Occupying(id)) throw new RuntimeException();
+                                    observers.get(Focusing[0]).Reject(id);
+                                } catch (Exception ex1) {
+                                    System.out.println("Failed to reject applier #" + id + ".");
+                                }
+                            }
+                        }
+                        break;
+                    }//case
+                    case "All": {
+                        ConfirmDialog c = new ConfirmDialog("Reject all appliers' application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                        c.setVisible(true);
+                        if (!c.isOK()) return;
+                        int id;
+                        for (CheckItem checkItem : appliersCheck) {
+                            id = checkItem.id;
+                            try {
+                                if (observers.get(Focusing[0]).Occupying(id)) throw new RuntimeException();
+                                observers.get(Focusing[0]).Reject(id);
+                                } catch (Exception ex1) {
+                                    System.out.println("Failed to reject applier #" + id + ".");
+                                }
+                        }
+                        break;
+                    }//case
+                    case "N/A": {
+                        System.out.println("No appliers to reject.");
+                        new MessageBox("No appliers to reject.", 320, 100).setVisible(true);
+                        break;
+                    }//case
+                    default: {
+                        int i = Integer.parseInt((String) AppliersChoice.getSelectedItem());
+                        try {
+                            ConfirmDialog c = new ConfirmDialog("Reject applier #" + i + "'s application for room #" + Focusing[0] + "(aka" + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                            c.setVisible(true);
+                            if (!c.isOK()) return;
+                            int suc = observers.get(Focusing[0]).Reject(i);
+                            Messenger.setText("");
+                            if (suc == 0) throw new RuntimeException();
+                            System.out.println("Rejection success!");
+                            Notification.setText("");
+                        } catch (Exception ex) {
+                            Messenger.setText("");
+                            System.out.println("Failed to reject, try again later.");
+                            new MessageBox("Failed to reject, try again later.", 400, 100).setVisible(true);
+                        }
+                    }//default
+                }//switch
+                // Check Again
+                try {Check(Focusing[0]);} catch (Exception ignored) {}
+            }//try
+             catch(Exception ex1){
                 Messenger.setText("");
                 System.out.println("Failed to reject, try again later.");
-            }
+            }//catch
         });
         BackButton.addActionListener(e -> {
             if(CheckPane.isVisible()) {

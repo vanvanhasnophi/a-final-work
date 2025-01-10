@@ -5,7 +5,12 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ConfirmDialog extends JDialog {
-
+    // Default Fonts
+    static final Font fntText = LoadFont.InterR(12);
+    static final Font fntDisplay=LoadFont.InterR(13);
+    static final Font fntBld = LoadFont.InterB(12);
+    static final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
+    static final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
 
     private JPanel contentPane;
     private JButton buttonOK;
@@ -14,6 +19,9 @@ public class ConfirmDialog extends JDialog {
     private boolean OK;
 
     public ConfirmDialog(String Message,int width,int height) {
+        MessageLabel.setFont(fntText);
+        buttonOK.setFont(fntBld);
+        buttonCancel.setFont(fntBld);
         setMinimumSize(new Dimension(300,120));
         setTitle("Confirm?");
         setContentPane(contentPane);
