@@ -17,7 +17,6 @@ public class LoadFont
         }
         catch(Exception e)//异常处理
         {
-            e.printStackTrace();
             return new Font("宋体", Font.PLAIN, 12);
         }
     }
