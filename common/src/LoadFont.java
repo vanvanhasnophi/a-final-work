@@ -1,18 +1,16 @@
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
 
 public class LoadFont
 {
-    public static Font loadFont(String fontFileName, float fontSize)  //第一个参数是外部字体名，第二个是字体大小
+    public static Font loadFont(String fontPath, float fontSize)  //第一个参数是外部字体名，第二个是字体大小
     {
-        try
+        try(InputStream fontStream = LoadFont.class.getClassLoader().getResourceAsStream(fontPath))
         {
-            File file = new File(fontFileName);
-            FileInputStream stream = new FileInputStream(file);
-            Font dynamicFont = Font.createFont(Font.TRUETYPE_FONT, stream);
+            if (fontStream==null) throw new RuntimeException();
+            Font dynamicFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
             Font dynamicFontPt = dynamicFont.deriveFont(fontSize);
-            stream.close();
+            fontStream.close();
             return dynamicFontPt;
         }
         catch(Exception e)//异常处理
@@ -26,9 +24,7 @@ public class LoadFont
     }
 
     public static Font InterR(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        //调用
-        return loadFont(root+"/resources/Inter-UI-Regular-2.ttf", Size);//返回字体
+        return loadFont("Inter-UI-Regular-2.ttf", Size);
     }
 
     public static Font InterI() {
@@ -36,8 +32,7 @@ public class LoadFont
     }
 
     public static Font InterI(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/Inter-UI-Italic-6.ttf", Size);//返回字体
+        return loadFont("Inter-UI-Italic-6.ttf", Size);
     }
 
     public static Font InterM() {
@@ -45,8 +40,7 @@ public class LoadFont
     }
 
     public static Font InterM(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/Inter-UI-Medium-3.ttf", Size);//返回字体
+        return loadFont("Inter-UI-Medium-3.ttf", Size);
     }
 
     public static Font InterMI() {
@@ -54,8 +48,7 @@ public class LoadFont
     }
 
     public static Font InterMI(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/Inter-UI-MediumItalic-8.ttf", Size);//返回字体
+        return loadFont("Inter-UI-MediumItalic-8.ttf", Size);
     }
 
     public static Font InterB() {
@@ -63,8 +56,7 @@ public class LoadFont
     }
 
     public static Font InterB(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/Inter-UI-Bold-5.ttf", Size);//返回字体
+        return loadFont("Inter-UI-Bold-5.ttf", Size);
     }
 
     public static Font InterBI() {
@@ -72,8 +64,7 @@ public class LoadFont
     }
 
     public static Font InterBI(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/Inter-UI-BoldItalic-7.ttf", Size);//返回字体
+        return loadFont("Inter-UI-BoldItalic-7.ttf", Size);
     }
 
     public static Font InterBlack() {
@@ -81,8 +72,7 @@ public class LoadFont
     }
 
     public static Font InterBlack(float Size){
-    String root=System.getProperty("user.dir");//项目根目录路径
-    return loadFont(root+"/resources/Inter-UI-Black-4.ttf", Size);//返回字体
+    return loadFont("Inter-UI-Black-4.ttf", Size);
     }
 
     public static Font Consolas() {
@@ -90,8 +80,7 @@ public class LoadFont
     }
 
     public static Font Consolas(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/consola.ttf", Size);//返回字体
+        return loadFont("consola.ttf", Size);
     }
 
     public static Font ConsolasB() {
@@ -99,8 +88,7 @@ public class LoadFont
     }
 
     public static Font ConsolasB(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/consolab.ttf", Size);//返回字体
+        return loadFont("consolab.ttf", Size);
     }
 
     public static Font ConsolasI() {
@@ -108,8 +96,7 @@ public class LoadFont
     }
 
     public static Font ConsolasI(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/consolai.ttf", Size);//返回字体
+        return loadFont("consolai.ttf", Size);
     }
 
     public static Font ConsolasBI() {
@@ -117,8 +104,7 @@ public class LoadFont
     }
 
     public static Font ConsolasBI(float Size){
-        String root=System.getProperty("user.dir");//项目根目录路径
-        return loadFont(root+"/resources/consolaz.ttf", Size);//返回字体
+        return loadFont("consolaz.ttf", Size);
     }
 
 }
