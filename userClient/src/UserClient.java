@@ -1,8 +1,6 @@
 import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -15,14 +13,9 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 @SuppressWarnings("FieldCanBeLocal")
-public class UserClient extends JFrame implements Command{
-    // Default Fonts
-    static final Font fntText = LoadFont.InterR(11);
-    static final Font fntDisplay=LoadFont.InterR(13);
-    static final Font fntBld = LoadFont.InterB(12);
-    static final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
-    static final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
+public class UserClient extends ClientFrame implements Command{
 
+    @Override
     public void Scanning(String State) throws MalformedURLException, NotBoundException, RemoteException {
         RoomMonitorWithAppliers server;
         int count=0;
@@ -31,32 +24,109 @@ public class UserClient extends JFrame implements Command{
         if(!observers.isEmpty())observers.clear();
         roomList.removeAllItems();
         System.gc(); //Initialize the observers.
-        OverallInfo.setText("");
-        FilteredInfo.setText(!Objects.equals(filter.getSelectedItem(), "-Select filter-") ?"Filter: "+ filter.getSelectedItem()+"\n\n":"No filter.\n");
+        OverallInfo.clear();
+        FilteredInfo.clear();
+        FilteredInfo.setTitle(!Objects.equals(filter.getSelectedItem(), "-Select filter-") ?"Filter: "+ filter.getSelectedItem():"No filter");
         if(ID[0]==-1){
-            OverallInfo.append("No certification!!!\nInput correct id.\n");
-            FilteredInfo.append("No certification!!!\nInput correct id.\n");
+            OverallInfo.add(-1,"null","No certification!!!\nInput correct id.\n",e->{});
+            FilteredInfo.add(-1,"null","No certification!!!\nInput correct id.\n",e->{});
             new MessageBox("No certification!!! Input correct id.",400,100).setVisible(true);
             return;
         }
         for(int i=0;i<100;i++){
             try{
                 count++;
+                int finalCount=count;
                 server = (RoomMonitorWithAppliers) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (count));
-                Application[0]+=server.Applying(ID[0])?1:0;
                 connect++;
-                if(server.Occupying(ID[0]))OverallInfo.append("(Occupying) ");
-                else if(server.Applying(ID[0])&&!Objects.requireNonNull(filter.getSelectedItem()).equals("-Select filter-"))OverallInfo.append(server.getReserved()==ID[0]?"(Reserved) ":"(Applying) ");
-                OverallInfo.append("Location "+count+": "+server.ToString()+"\n");
-                FilteredInfo.append(switch((String) Objects.requireNonNull(filter.getSelectedItem())){
-                    case "Available"-> (!server.Applying(ID[0]))&&Objects.equals(server.StateStr(), "Empty, Clean") ?("Location "+count+": "+server.ToString()+"("+server.NumberOfAppliers()+" person(s) applying)\n"):"";
-                    case "Applying"-> server.Applying(ID[0])?((server.getReserved()==ID[0]?"(Reserved) ":"")+"Location "+count+": "+server.ToString()+"\n   ("+(server.NumberOfAppliers()-1-(server.StateStr().equals("Guest-Occupied")?1:0))+" person(s) applying besides you)\n"):"";
-                    case "Occupying"->server.Occupying(ID[0])?("Location "+count+": "+server.ToString()+"\n"):"";
-                    case "Occupied"->(!server.Occupying(ID[0]))&&server.StateStr().equals("Guest-Occupied")?((server.Applying(ID[0])?(server.getReserved()==ID[0]?"(Reserved) ":"(Applying) "):"")+"Location "+count+": "+server.ToString()+"\n"):"";
-                    default -> "";
+                boolean applying=server.Applying(ID[0]),
+                        occupying=server.Occupying(ID[0]),
+                        occupied=server.StateStr().equals("Guest-Occupied")&&!occupying,
+                        available=server.StateStr().equals("Empty, Clean")&&!applying;
+                Application[0]+=applying?1:0;
+                String info="Location "+count+": "+server.NameStr()+"\n"+
+                        "Capacity: "+server.Capacity()+"("+server.TypeStr()+")\n"+
+                        "State: "+server.StateStr()+"  "+(occupying?"Occupying, ":"")+(applying||occupying?((server.NumberOfAppliers()-1)+" appliers besides you"):"");
+                if(occupying) {
+                    OverallInfo.add(count,"Occupying","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e->{
+                    try{
+                        roomList.setSelectedItem(finalCount);
+                        new MessageBox(info,600,140).setVisible(true);
+                    }catch(Exception ignored){}
                 });
+                }
+                else if(applying&&!Objects.requireNonNull(filter.getSelectedItem()).equals("-Select filter-")) {
+                    OverallInfo.add(count,server.getReserved() == ID[0] ? "Reserved" : "Applying","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                        try {
+                            roomList.setSelectedItem(finalCount);
+                            new MessageBox(info, 600, 140).setVisible(true);
+                        } catch (Exception ignored) {
+                        }
+                    });
+                }
+                else{
+                    OverallInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                        try {
+                            roomList.setSelectedItem(finalCount);
+                            new MessageBox(info, 600, 140).setVisible(true);
+                        } catch (Exception ignored) {
+                        }
+                    });
+                }
+                switch((String) Objects.requireNonNull(filter.getSelectedItem())){
+                    case "Available":{
+                        if(available){
+                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                                try {
+                                    roomList.setSelectedItem(finalCount);
+                                    new MessageBox(info, 600, 140).setVisible(true);
+                                } catch (Exception ignored) {
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    case "Occupying":{
+                        if(occupying){
+                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                                try {
+                                    roomList.setSelectedItem(finalCount);
+                                    new MessageBox(info, 600, 140).setVisible(true);
+                                } catch (Exception ignored) {
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    case "Occupied":{
+                        if(occupied){
+                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                                try {
+                                    roomList.setSelectedItem(finalCount);
+                                    new MessageBox(info, 600, 140).setVisible(true);
+                                } catch (Exception ignored) {
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    case "Applying":{
+                        if(applying){
+                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                                try {
+                                    roomList.setSelectedItem(finalCount);
+                                    new MessageBox(info, 600, 140).setVisible(true);
+                                } catch (Exception ignored) {
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    default:{
+                    }
+                }
                 roomList.addItem(count);
-                if(server.Applying(ID[0])||server.Occupying(ID[0])){
+                if(applying||occupying){
                     observers.put(count,new User(count-1,ID[0],server.getCrowdRemote(ID[0])));
                     server.FetchRemote(observers.get(count));
                 }
@@ -65,47 +135,28 @@ public class UserClient extends JFrame implements Command{
         }
         if(!Objects.equals(State, "NoMessage")) {
             if (connect == 0) {
-                OverallInfo.append("No remote rooms.\n\n");
+                OverallInfo.add(count,"null","No remote rooms found", e-> {});
                 System.out.println("No remote rooms found.\n");
             } else {
-                OverallInfo.append(connect + " rooms found above.\n\n");
+                OverallInfo.setTitle("Overall: "+connect+" rooms");
                 System.out.println("Scanning complete.\n" + connect + " rooms found.\n");
             }
         }
     }
     private final String version= properties.version.description();
-
-    private final JTextField idTextField;
     private final JTextField crowdTextField;
-    private final JTextArea Messenger;
-    private final JTextArea Console;
-    private final JTextArea Notification;
-    private final JTextArea OverallInfo;
-    private final JTextArea FilteredInfo;
-    private final JButton registerButton;
-    private final JButton DisconnectButton;
-    private final JButton clearButton;
-    private final JButton scanButton;
     private final JButton applyButton;
     private final JButton cancelButton;
     private final JButton endOccuButton;
     private final JButton needRepairButton;
-    private final JPanel ItPane;
-    private final JComboBox<Integer> roomList=new JComboBox<>();
     private final JComboBox<String> filter;
     private final int[] Application={0};
-    private final int[] ID={-1};
     private final int[] Crowd={0};
     private User check=null;
     private final HashMap<Integer, IUser> observers=new HashMap<>();
-    private final JLabel selected=new JLabel("N/A");
-    private final Color commandFore=new Color(0x449911);
-    private final Color commandBack=this.getBackground();
-    private final Color commandLostFocus=new Color(0x555555);
-    private final Color love=new Color(0xFF69B4);
     private final ArrayList<String> ref=new ArrayList<>(Arrays.asList(
             "connect", "register", "apply", "cancel", "endoccu", "report", "scan", "disconnect","clear",
-            "exit", "?", "help", "hello", "bye", "nihao", "zaijian","love", "tell","about"));
+            "exit", "?", "help", "hello", "bye", "nihao", "zaijian","love", "tell","about","light","dark"));
 
 
     @Override
@@ -318,10 +369,7 @@ public class UserClient extends JFrame implements Command{
                 break;
             }
             case "about":{
-                if(com.length>=2&&com[1].equals("love")){
-                    new MessageBox("Love is invaluable.\n\nRoom Management System (User Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
-                }
-                else new MessageBox("Room Management System (User Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
+                about(com.length>=2&&com[1].equals("love"));
                 break;
             }
             case "nihao":{
@@ -375,6 +423,14 @@ public class UserClient extends JFrame implements Command{
                 }
                 break;
             }
+            case "light":{
+                if(LightDarkMode.isDark())switchLD();else System.out.println("Already using light theme!");
+                break;
+            }
+            case "dark":{
+                if(!LightDarkMode.isDark())switchLD();else System.out.println("Already using dark theme!");
+                break;
+            }
             default:{
                 System.out.println("Incorrect command.");
             }
@@ -399,48 +455,15 @@ public class UserClient extends JFrame implements Command{
 
     public UserClient() {
         // Title
-        setTitle("UserClient");
+        setTitle("RoomX - UserClient");
 
-        // Size of the form
-        setSize(960, 540);
-        setMinimumSize(new Dimension(960,540));
-        this.setLocationRelativeTo(null);
-
+        // Exit Operation
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addWindowListener(new ExWindowListener());
 
-        // Overall Layout
-        setLayout(new BorderLayout());
-
-        // Button Panel
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(1,3));
-
-        // Action Panel
-        JPanel actionPanel=new JPanel();
-        actionPanel.setLayout(new GridLayout(3,1));
-        actionPanel.setVisible(false);
-
-        JPanel ChooseARoom=new JPanel();
-        ChooseARoom.setLayout(new FlowLayout(FlowLayout.CENTER));
-        actionPanel.add(ChooseARoom);
-        JLabel RoomLoc=new JLabel("Room Loc:");
-        RoomLoc.setFont(fntDisplay);
-        ChooseARoom.add(RoomLoc);
-
-        JPanel RoomNameL=new JPanel();
-        RoomNameL.setLayout(new FlowLayout(FlowLayout.CENTER));
-        actionPanel.add(RoomNameL);
-
-        JPanel Actions=new JPanel();
         Actions.setLayout(new GridLayout(1,4));
-        actionPanel.add(Actions);
 
-        // RoomList ComboBox
-        ChooseARoom.add(roomList);
-        roomList.setEnabled(true);
-        roomList.setFont(fntText);
-        roomList.setVisible(true);
+        // RoomList ComboBox Function
         roomList.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -460,338 +483,91 @@ public class UserClient extends JFrame implements Command{
         });
 
         JLabel CrowdTip=new JLabel("  Crowd:");
-        CrowdTip.setFont(fntDisplay);
+        CrowdTip.setFont(PresFont.fntDisplay.fontName());
         ChooseARoom.add(CrowdTip);
 
         // Crowd TextField
         crowdTextField = new JTextField(3);
         ChooseARoom.add(crowdTextField);
-        crowdTextField.setFont(fntText);
-
-        // Selected Label
-        selected.setFont(fntDisplay);
-        RoomNameL.add(selected);
-        selected.setVisible(true);
-
-        // Input Panel
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new FlowLayout());
-
-        JLabel idLabel = new JLabel("id:");
-        inputPanel.add(idLabel);
-        idLabel.setFont(fntBld);
+        crowdTextField.setFont(PresFont.fntText.fontName());
 
 
-        idTextField = new JTextField(20);
-        inputPanel.add(idTextField);
-        idTextField.setFont(fntText);
+        // Register Button Function
+        registerButton.addActionListener(e -> {
+            Notification.setText("");
+            if(!observers.isEmpty()){
+                observers.clear();
+            }
+            try {
+                ID[0] = Integer.parseInt(idTextField.getText().trim());
+                if(ID[0]<=0)throw new NumberFormatException();
+                check=new User("rmi://127.0.0.1:1099/Remote0",ID[0]);
+                if(check.isDup())throw new DuplicationException("id already exist.");
+                Messenger.append("Confirmed id: " + ID[0] + "\n");
+                registerButton.setVisible(false);
+                idTextField.setEditable(false);
+                DisconnectButton.setVisible(true);
+                actionPanel.setVisible(true);
+                Scanning("");
+            } catch (NumberFormatException ex1) {
+                Messenger.append("Illegal id.\n");
+                new MessageBox("Illegal id.",400,100).setVisible(true);
+                ID[0]=-1;
+            }
+            catch(NotBoundException | IOException ex2){
+                Messenger.append("Failed to connect to the remote server.\n");
+                new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
+                ID[0]=-1;
+            }
+            catch(DuplicationException ex3){
+                Messenger.append("id already exist.");
+                new MessageBox("Id already exist.",400,100).setVisible(true);
+                ID[0]=-1;
+                check=null;
+            }
+        });
 
-        // Register Button
-        registerButton = new JButton("Register");
-        registerButton.setFont(fntBld);
-        inputPanel.add(registerButton);
-        registerButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Notification.setText("");
+        // Disconnect Button Function
+        DisconnectButton.addActionListener(e -> {
+            Notification.setText("");
+            try {
+                ConfirmDialog c=new ConfirmDialog("Disconnect "+ID[0]+" from the server?",400,100);
+                c.setVisible(true);
+                if(!c.isOK())return;
+                Scanning("NoMessage");
+                check.DisconnectFromHello();
                 if(!observers.isEmpty()){
+                    for(Map.Entry<Integer, IUser> observer:observers.entrySet()){
+                        observer.getValue().userDisconnect(ID[0]);
+                    }
                     observers.clear();
                 }
-                try {
-                    ID[0] = Integer.parseInt(idTextField.getText().trim());
-                    if(ID[0]<=0)throw new NumberFormatException();
-                    check=new User("rmi://127.0.0.1:1099/Remote0",ID[0]);
-                    if(check.isDup())throw new DuplicationException("id already exist.");
-                    Messenger.append("Confirmed id: " + ID[0] + "\n");
-                    registerButton.setVisible(false);
-                    idTextField.setEditable(false);
-                    DisconnectButton.setVisible(true);
-                    actionPanel.setVisible(true);
-                    Scanning("");
-                } catch (NumberFormatException ex1) {
-                    Messenger.append("Illegal id.\n");
-                    new MessageBox("Illegal id.",400,100).setVisible(true);
-                    ID[0]=-1;
-                }
-                catch(NotBoundException | IOException ex2){
-                    Messenger.append("Failed to connect to the remote server.\n");
-                    new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
-                    ID[0]=-1;
-                }
-                catch(DuplicationException ex3){
-                    Messenger.append("id already exist.");
-                    new MessageBox("Id already exist.",400,100).setVisible(true);
-                    ID[0]=-1;
-                    check=null;
-                }
+                Application[0]=0;
+                idTextField.setText(String.valueOf(ID[0]));
+                ID[0]=-1;
+                crowdTextField.setText("");
+                Console.setText("");
+                DisconnectButton.setVisible(false);
+                registerButton.setVisible(true);
+                idTextField.setEditable(true);
+                Messenger.setText("Disconnected from the server.\n");
+                OverallInfo.clear();
+                FilteredInfo.clear();
+                OverallInfo.setTitle("Overall:");
+                FilteredInfo.setTitle("Filtered:");
+                actionPanel.setVisible(false);
+            } catch (Exception ex) {
+                Messenger.setText("Failed to disconnect, try again later.");
+                new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
             }
         });
-
-        // Disconnect Button
-        DisconnectButton = new JButton("Disconnect");
-        DisconnectButton.setFont(fntBld);
-        inputPanel.add(DisconnectButton);
-        DisconnectButton.setVisible(false);
-        DisconnectButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Notification.setText("");
-                try {
-                    ConfirmDialog c=new ConfirmDialog("Disconnect "+ID[0]+" from the server?",400,100);
-                    c.setVisible(true);
-                    if(!c.isOK())return;
-                    Scanning("NoMessage");
-                    check.DisconnectFromHello();
-                    if(!observers.isEmpty()){
-                        for(Map.Entry<Integer, IUser> observer:observers.entrySet()){
-                            observer.getValue().userDisconnect(ID[0]);
-                        }
-                        observers.clear();
-                    }
-                    Application[0]=0;
-                    idTextField.setText(String.valueOf(ID[0]));
-                    ID[0]=-1;
-                    crowdTextField.setText("");
-                    Console.setText("");
-                    FilteredInfo.setText("");
-                    DisconnectButton.setVisible(false);
-                    registerButton.setVisible(true);
-                    idTextField.setEditable(true);
-                    Messenger.setText("Disconnected from the server.\n");
-                    OverallInfo.setText("");
-                    actionPanel.setVisible(false);
-                } catch (Exception ex) {
-                    Messenger.setText("Failed to disconnect, try again later.");
-                    new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
-                }
-            }
-        });
-
-
-        // TextArea at the Center
-        JPanel TextPane=new JPanel();
-        add(TextPane, BorderLayout.CENTER);
-        TextPane.setLayout(new GridLayout(1,2));
-        JPanel OpPane=new JPanel();
-        OpPane.setLayout(new BorderLayout());
-        TextPane.add(OpPane);
-        JPanel InfoPane=new JPanel();
-        InfoPane.setLayout(new GridLayout(3,1));
-        TextPane.add(InfoPane);
-
-        // Command Panel
-        JPanel commandPanel=new JPanel(new BorderLayout(5,5));
-        add(commandPanel, BorderLayout.SOUTH);
-
-        JPanel gap1=new JPanel();
-        commandPanel.add(gap1,BorderLayout.WEST);
-        gap1.setBackground(commandBack);
-        JPanel gap2=new JPanel();
-        commandPanel.add(gap2,BorderLayout.NORTH);
-        gap2.setBackground(commandBack);
-        gap2.setMaximumSize(new Dimension(0,1));
-        JPanel goPane=new JPanel(new BorderLayout());
-        commandPanel.add(goPane,BorderLayout.EAST);
-        goPane.setBackground(commandBack);
-        goPane.setMinimumSize(new Dimension(20,0));
-
-        commandPanel.setBackground(commandBack);
-        JTextField commandInputBox=new JTextField("Input commands...");
-        commandInputBox.setFont(fntConsL);
-        commandInputBox.setForeground(commandLostFocus);
-        commandInputBox.setBackground(commandBack);
-        commandInputBox.setBorder(BorderFactory.createLineBorder(Color.BLACK,0));
-        commandInputBox.setMinimumSize(new Dimension(0,50));commandInputBox.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-                if (e.getKeyChar() == KeyEvent.VK_ENTER) {
-                    if(commandInputBox.getForeground()==commandFore||commandInputBox.getForeground()==love){
-                        Console.append("\n>> "+commandInputBox.getText()+"\n");
-                        conduct(commandInputBox.getText());
-                        commandInputBox.setText("");
-                    }
-                }
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                super.keyReleased(e);
-            }
-        });
-        commandInputBox.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                if(commandInputBox.getText().contains("love"))commandInputBox.setForeground(love);
-                else{
-                    if(commandInputBox.getText().equals("Input commands..."))return;
-                    if(!conductible(commandInputBox.getText()))commandInputBox.setForeground(Color.RED);
-                    else commandInputBox.setForeground(commandFore);
-                }
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                if(commandInputBox.getText().contains("love"))commandInputBox.setForeground(love);
-                else{
-                    if(commandInputBox.getText().equals("Input commands..."))return;
-                    if(!conductible(commandInputBox.getText()))commandInputBox.setForeground(Color.RED);
-                    else commandInputBox.setForeground(commandFore);
-                }
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                if(commandInputBox.getText().contains("love"))commandInputBox.setForeground(love);
-                else{
-                    if(commandInputBox.getText().equals("Input commands..."))return;
-                    if(!conductible(commandInputBox.getText()))commandInputBox.setForeground(Color.RED);
-                    else commandInputBox.setForeground(commandFore);
-                }
-            }
-        });
-        commandPanel.add(commandInputBox,BorderLayout.CENTER);
-        commandInputBox.addFocusListener(new FocusAdapter() {
-            final String hintText="Input commands...";
-            @Override
-            public void focusLost(FocusEvent e) {
-                super.focusLost(e);
-                String temp = commandInputBox.getText();
-                if(temp.isBlank()) {
-                    commandInputBox.setForeground(commandLostFocus);
-                    commandInputBox.setText(hintText);
-                }
-            }
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                super.focusGained(e);
-                String temp = commandInputBox.getText();
-                if (temp.equals(hintText)) {
-                    commandInputBox.setText("");
-                    commandInputBox.setForeground(commandFore);
-                }
-            }
-        });
-
-        commandInputBox.addFocusListener(new FocusAdapter() {
-            final String hintText="Input commands...";
-            @Override
-            public void focusLost(FocusEvent e) {
-                super.focusLost(e);
-                String temp = commandInputBox.getText();
-                if(temp.isBlank()) {
-                    commandInputBox.setForeground(commandLostFocus);
-                    commandInputBox.setText(hintText);
-                }
-            }
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                super.focusGained(e);
-                String temp = commandInputBox.getText();
-                if (temp.equals(hintText)) {
-                    commandInputBox.setText("");
-                    commandInputBox.setForeground(commandFore);
-                }
-            }
-        });
-
-        //Interface Panel
-        ItPane=new JPanel();
-        ItPane.setLayout(new BorderLayout());
-        OpPane.add(ItPane,BorderLayout.NORTH);// Action Panel
-        ItPane.add(actionPanel,BorderLayout.CENTER);
-        ItPane.add(buttonPanel,BorderLayout.SOUTH);
-        ItPane.add(inputPanel, BorderLayout.NORTH);
-
-
-        //Console
-        Console= new JTextArea();
-        Console.setEditable(false); //Readonly
-        JScrollPane scrollPane =new JScrollPane(Console);
-        OpPane.add(scrollPane,BorderLayout.CENTER);
-        Console.setFont(fntCons);
-        Console.setBorder(BorderFactory.createLineBorder(Color.BLACK,0));
-        Console.setBackground(new Color(0x181818));
-        Console.setForeground(new Color(0xe0e0e0));
-        Console.append("Input your id.\n");
-        Console.setVisible(true);
-
-        // OverallInfo
-        OverallInfo = new JTextArea();
-        OverallInfo.setEditable(false); // Readonly
-        JScrollPane scrollPane1 = new JScrollPane(OverallInfo);
-        InfoPane.add(scrollPane1);
-        OverallInfo.setFont(fntText);
-
-        // Filtered Info
-        FilteredInfo=new JTextArea();
-        FilteredInfo.setEditable(false); //Readonly
-        JScrollPane scrollPane2=new JScrollPane(FilteredInfo);
-        InfoPane.add(scrollPane2);
-        FilteredInfo.setFont(fntText);
-
-
-        // Notification Center
-        Notification = new JTextArea();
-        Notification.setEditable(false); //Readonly
-        JScrollPane scrollPane3 =new JScrollPane(Notification);
-        InfoPane.add(scrollPane3);
-        Notification.setFont(fntText);
-        Notification.append("Input your id.\n");
-        Notification.setVisible(true);
-
-
-        // Message
-        Messenger = new JTextArea("");
-        Messenger.setEditable(true); // Readonly
-        Messenger.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                try {
-                    if(ID[0]!=-1)Scanning("NoMessage");
-                }
-                catch(Exception ignored){
-                }
-                SwingUtilities.invokeLater(() -> {
-                    Console.append(Messenger.getText()+"\n");
-                    Notification.append(Messenger.getText());
-                    Messenger.setText("");
-                });
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-
-            }
-        });
-
 
         // Clear Button
-        clearButton = new JButton("Clear Console");
-        clearButton.setFont(fntBld);
-        clearButton.addActionListener(e -> {
-            ConfirmDialog c=new ConfirmDialog("Clear the console?",400,100);
-            c.setVisible(true);
-            if(!c.isOK())return;
-            Console.setText(""); // Clear
-        });
         buttonPanel.add(clearButton);
 
         // Filter ComboBox
         filter=new JComboBox<>(new String[]{"-Select filter-","Applying","Occupying","Available","Occupied"});
-        filter.setFont(fntText);
+        filter.setFont(PresFont.fntText.fontName());
         buttonPanel.add(filter);
         filter.addItemListener(e -> {
             try {
@@ -801,8 +577,6 @@ public class UserClient extends JFrame implements Command{
         });
 
         // Scan Button
-        scanButton=new JButton("Scan");
-        scanButton.setFont(fntBld);
         scanButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -816,7 +590,7 @@ public class UserClient extends JFrame implements Command{
 
         // Apply Button
         applyButton = new JButton("Apply");
-        applyButton.setFont(fntBld);
+        applyButton.setFont(PresFont.fntBld.fontName());
         applyButton.addActionListener(e -> {
             try {
                 Crowd[0] = Integer.parseInt(crowdTextField.getText().trim());
@@ -835,7 +609,7 @@ public class UserClient extends JFrame implements Command{
 
         // Cancel Button
         cancelButton = new JButton("Cancel");
-        cancelButton.setFont(fntBld);
+        cancelButton.setFont(PresFont.fntBld.fontName());
         cancelButton.addActionListener(e -> {
             try{
             if(roomList.getSelectedItem()!=null) Cancel((int)roomList.getSelectedItem());
@@ -850,7 +624,7 @@ public class UserClient extends JFrame implements Command{
 
         // End Occupying Button
         endOccuButton = new JButton("End Occupying");
-        endOccuButton.setFont(fntBld);
+        endOccuButton.setFont(PresFont.fntBld.fontName());
         endOccuButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -871,7 +645,7 @@ public class UserClient extends JFrame implements Command{
 
         // NeedRepair Button
         needRepairButton = new JButton("Repair Report");
-        needRepairButton.setFont(fntBld);
+        needRepairButton.setFont(PresFont.fntBld.fontName());
         needRepairButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -946,7 +720,7 @@ public class UserClient extends JFrame implements Command{
         }
 
     }
-    private void help(){
+    protected void help(){
         new MessageBox("""
                 register/connect <your id>   (register as <id>)
                 disconnect   (disconnect current user from server)
@@ -958,6 +732,7 @@ public class UserClient extends JFrame implements Command{
                 report <room id>   (report a room for repairing)
                 exit   (close the client)
                 help(or ?)   (show help, like this)
+                light/dark   (set light/dark theme)
                 "this", "~", "-", "room" represents for the room you are choosing.
                 you can omit the last parameter to auto-fill.""",500,300).setVisible(true);
         System.out.println("""
@@ -972,8 +747,14 @@ public class UserClient extends JFrame implements Command{
                 report <room id>   (report a room for repairing)
                 exit   (close the client)
                 help(or ?)   (show help, like this)
+                light/dark   (set light/dark theme)
                 "this", "~", "-", "room" represents for the room you are choosing.
                 you can omit the last parameter to auto-fill.""");
+    }
+
+    @Override
+    protected void about(boolean love) {
+        new MessageBox((love?"Love is invaluable.\n\n":"")+"RoomX (User Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
     }
 
 

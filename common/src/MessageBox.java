@@ -2,20 +2,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MessageBox extends JDialog {
-    // Default Fonts
-    static final Font fntText = LoadFont.InterR(12);
-    static final Font fntDisplay=LoadFont.InterR(13);
-    static final Font fntBld = LoadFont.InterB(12);
-    static final Font fntCons = new Font("Consolas", Font.PLAIN, 12);
-    static final Font fntConsL = new Font("Consolas", Font.PLAIN, 14);
 
     private JPanel contentPane;
     private JButton buttonOK;
     private JTextArea MessageLabel;
 
     public MessageBox(String Message,int width,int height) {
-        MessageLabel.setFont(fntText);
-        buttonOK.setFont(fntBld);
+        MessageLabel.setFont(PresFont.fnt.fontName());
+        buttonOK.setFont(PresFont.fntBld.fontName());
         setMinimumSize(new Dimension(300,120));
         setContentPane(contentPane);
         setModal(true);

@@ -1,7 +1,7 @@
 public enum properties {
-    version("1.2.2"),
+    version("1.3"),
     author("Vince C"),
-    date("Jan 10, 2025");
+    date("Jan 13, 2025");
     private final String description;
     properties(String s) {
         this.description=s;
