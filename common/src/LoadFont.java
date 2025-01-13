@@ -3,7 +3,7 @@ import java.io.InputStream;
 
 public class LoadFont
 {
-    public static Font loadFont(String fontPath, float fontSize)  //第一个参数是外部字体名，第二个是字体大小
+    public static Font loadFont(String fontPath, float fontSize)
     {
         try(InputStream fontStream = LoadFont.class.getClassLoader().getResourceAsStream(fontPath))
         {
