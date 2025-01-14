@@ -1,15 +1,21 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class MessageBox extends JDialog {
 
     private JPanel contentPane;
     private JButton buttonOK;
+    private JButton buttonSecondary;
     private JTextArea MessageLabel;
+    private JPanel buttonPane;
+    private JPanel buttons;
 
     public MessageBox(String Message,int width,int height) {
         MessageLabel.setFont(PresFont.fnt.fontName());
         buttonOK.setFont(PresFont.fntBld.fontName());
+        buttonSecondary.setFont(PresFont.fnt.fontName());
+        buttonSecondary.setVisible(false);
         setMinimumSize(new Dimension(300,120));
         setContentPane(contentPane);
         setModal(true);
@@ -19,6 +25,19 @@ public class MessageBox extends JDialog {
         MessageLabel.setText(Message);
         this.setLocationRelativeTo(null);
         buttonOK.addActionListener(e -> onOK());
+    }
+
+    public MessageBox(String Title,String Message,int width,int height){
+        this(Message,width,height);
+        setTitle(Title);
+    }
+
+    public MessageBox(String Title, String Message, int width, int height, String buttonName, ActionListener e){
+        this(Title,Message,width,height);
+        buttonSecondary.setVisible(true);
+        buttonSecondary.setText(buttonName);
+        buttonSecondary.addActionListener(e);
+        buttonSecondary.addActionListener(e1->dispose());
     }
 
     private void onOK() {

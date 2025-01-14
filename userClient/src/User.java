@@ -44,21 +44,11 @@ public class User extends RoomStub implements IUser {
 
 
     User(int i,int ID,int crowd) throws RemoteException, AlreadyBoundException {
-        super(i);
-        this.ID=ID;
-        this.crowd=crowd;
-        try {
-            this.serverU = (RoomUsable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"User");
-            if(!dup)Apply();
-        }
-        catch(AlreadyAppliedException e1){
-            throw new AlreadyBoundException();
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Submission failed. Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+        this("rmi://127.0.0.1:1099/Remote" + (i + 1),ID,crowd);
+    }
+
+    User(int i,int ID,int crowd,String loc)throws RemoteException,AlreadyBoundException{
+        this("rmi://"+loc+"/Remote" + (i + 1),ID,crowd);
     }
 
     User(String name,int ID,int crowd) throws RemoteException, AlreadyBoundException {
@@ -80,19 +70,12 @@ public class User extends RoomStub implements IUser {
     }
 
 
-    User(int i,int ID) throws RemoteException {
-        super(i);
-        this.ID=ID;
-        this.crowd=1;
-        try {
-            this.serverU = (RoomUsable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"User");
-            if(!dup)Connect();
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+    User(int i,int ID) throws RemoteException, MalformedURLException, NotBoundException {
+        this("rmi://127.0.0.1:1099/Remote" + (i + 1),ID);
+    }
+
+    User(int i,int ID,String loc) throws RemoteException, MalformedURLException, NotBoundException {
+        this("rmi://"+loc+"/Remote" + (i + 1),ID);
     }
 
     User(String name,int ID) throws MalformedURLException, NotBoundException, RemoteException {
@@ -112,20 +95,8 @@ public class User extends RoomStub implements IUser {
 
 
     @Override
-    public void Reconnect(int i) throws MalformedURLException, NotBoundException, RemoteException, AlreadyBoundException {
-        super.Reconnect(i);
-        try {
-            this.serverU = (RoomUsable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"User");
-            if(!dup)Apply();
-        }
-        catch(AlreadyAppliedException e1){
-            throw new AlreadyBoundException();
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Submission failed. Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+    public void Reconnect(int i) throws IOException, NotBoundException, AlreadyBoundException, ClassNotFoundException {
+        Reconnect("rmi://127.0.0.1:1099/Remote"+(i+1));
     }
 
     @Override
@@ -143,6 +114,10 @@ public class User extends RoomStub implements IUser {
             System.out.println("ERROR: Submission failed. Can not connect to the remote server.");
             throw new RemoteException();
         }
+    }
+    @Override
+    public void Reconnect(String loc,int i) throws IOException, NotBoundException, AlreadyBoundException, ClassNotFoundException {
+        Reconnect("rmi://"+loc+"/Remote"+(i+1));
     }
 
     /**get UserID*/

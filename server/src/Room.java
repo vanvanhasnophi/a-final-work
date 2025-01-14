@@ -94,27 +94,34 @@ public class Room extends RoomContext{
         }
     }
 
-    public void notifyAllAppliers(String Message) throws IOException, ClassNotFoundException {
-        for (Map.Entry<Integer, UserOnServer> observer : appliers.entrySet()) {
-            if(observer.getValue().isOnline())observer.getValue().getOnClient().update(Message);
+    public void notifyAllAppliers(String Message) {
+        for (Map.Entry<Integer, UserOnServer> observer : appliers.entrySet()) {try{
+            if(observer.getValue().isOnline())observer.getValue().getOnClient().update(Message);}
+        catch (Exception ignored){}
         }
     }
-    public void notifyWinner() throws IOException, ClassNotFoundException{
+    public void notifyWinner() {
         String message;
         for (Map.Entry<Integer, UserOnServer> observer : appliers.entrySet()) {
             int i=observer.getKey();
             message=(i==userID)?
                     ("Your application for "+NameStr()+" is approved, welcome.\n"):
                     ("Sorry, "+NameStr()+" is occupied, please wait in line.\n");
-            if(observer.getValue().isOnline())observer.getValue().getOnClient().update(message);
+            try{
+            if(observer.getValue().isOnline())observer.getValue().getOnClient().update(message);}
+            catch (Exception ignored){}
         }
     }
 
-    public void notifyReserve() throws IOException,ClassNotFoundException{
+    public void notifyReserve(){
+        try{
         if(appliers.get(reserved).isOnline())appliers.get(reserved).getOnClient().update("Your application for "+NameStr()+" is approved and reserved.\nYou can use it when it is ready.\n");
+        }catch (Exception ignored){}
     }
-    public void notifyReserveToUse() throws IOException,ClassNotFoundException{
-        if(appliers.get(reserved).isOnline())appliers.get(reserved).getOnClient().update("The room is ready, welcome.\n");
+    public void notifyReserveToUse(){
+        try{
+        if(appliers.get(reserved).isOnline())appliers.get(reserved).getOnClient().update("The room is ready, welcome.\n");}
+        catch (Exception ignored){}
     }
 
     public void notifyAllMaintainers(String Message) throws IOException, ClassNotFoundException {
@@ -172,8 +179,8 @@ public class Room extends RoomContext{
             if(StateStr().equals("Empty, Clean")) {
                 if (appliers.get(userID) == null) throw new NullPointerException();
                 this.userID = userID;
-                notifyWinner();
                 Occupy(userID);
+                notifyWinner();
             }
             else {
                 setReserved(userID);
@@ -187,19 +194,23 @@ public class Room extends RoomContext{
     }
 
     @Override
-    public int Reject(int userID) throws IOException, ClassNotFoundException {
+    public int Reject(int userID){
         try{
             if(reserved==userID){
                 if (appliers.get(userID) == null) throw new NullPointerException();
                 setReserved(-1);
-                appliers.get(userID).getOnClient().update("Sorry, your reservation for " + NameStr() + " is canceled.\n");
                 appliers.remove(userID);
+                try{
+                appliers.get(userID).getOnClient().update("Sorry, your reservation for " + NameStr() + " is canceled.\n");
+                } catch (Exception ignored){}
             }
             else {
                 if (userID == this.userID) throw new RuntimeException();
                 if (appliers.get(userID) == null) throw new NullPointerException();
-                appliers.get(userID).getOnClient().update("Sorry, your application for " + NameStr() + " is rejected.\n");
                 appliers.remove(userID);
+                try{
+                    appliers.get(userID).getOnClient().update("Sorry, your application for " + NameStr() + " is rejected.\n");
+                }catch(Exception ignored){}
             }
             return 1;
         }

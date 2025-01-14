@@ -6,6 +6,7 @@
       <element id="module-output" name="common" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/flatlaf-3.4.jar" path-in-jar="/" />
       <element id="dir-copy" path="$PROJECT_DIR$/lib" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/gson-2.8.5.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

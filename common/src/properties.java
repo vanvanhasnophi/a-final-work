@@ -1,5 +1,5 @@
 public enum properties {
-    version("1.3"),
+    version("2.0 beta 1"),
     author("Vince C"),
     date("Jan 13, 2025");
     private final String description;

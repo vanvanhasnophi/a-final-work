@@ -21,18 +21,8 @@ public class ServiceStaff extends RoomStub implements RoomCleanable{
 
     /**Initialize and reconnect*/
 
-    ServiceStaff(int i,int ID) throws RemoteException {
-        super(i);
-        this.ID=ID;
-        try {
-            this.serverS = (RoomCleanable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"ServiceStaff");
-            if(!dup)serverS.serviceStaffRegister(this);
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+    ServiceStaff(int i,int ID) throws RemoteException, MalformedURLException, NotBoundException {
+        this("rmi://127.0.0.1:1099/Remote" + (i + 1),ID);
     }
 
     ServiceStaff(String name,int ID) throws MalformedURLException, NotBoundException, RemoteException {
@@ -49,19 +39,14 @@ public class ServiceStaff extends RoomStub implements RoomCleanable{
         }
     }
 
+    ServiceStaff(String loc,int i,int ID) throws MalformedURLException, NotBoundException, RemoteException {
+        this("rmi://"+loc+"/Remote" + (i + 1),ID);
+    }
+
 
     @Override
-    public void Reconnect(int i) throws MalformedURLException, NotBoundException, RemoteException, AlreadyBoundException {
-        super.Reconnect(i);
-        try {
-            this.serverS = (RoomCleanable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"ServiceStaff");
-            if(!dup)serverS.serviceStaffRegister(this);
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+    public void Reconnect(int i) throws IOException, NotBoundException, AlreadyBoundException, ClassNotFoundException {
+        Reconnect("rmi://127.0.0.1:1099/Remote" + (i + 1));
     }
 
     @Override
@@ -78,6 +63,10 @@ public class ServiceStaff extends RoomStub implements RoomCleanable{
         }
     }
 
+    @Override
+    public void Reconnect(String loc,int i) throws IOException, NotBoundException, AlreadyBoundException, ClassNotFoundException {
+        Reconnect("rmi://"+loc+"/Remote" + (i + 1));
+    }
     public int getID() throws RemoteException {
         return ID;
     }
