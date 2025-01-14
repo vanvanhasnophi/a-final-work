@@ -14,9 +14,196 @@ import java.util.*;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class UserClient extends ClientFrame implements Command{
+    private final String version= properties.version.description();
+    private final JTextField crowdTextField;
+    private final JButton applyButton;
+    private final JButton cancelButton;
+    private final JButton endOccuButton;
+    private final JButton needRepairButton;
+    private final JComboBox<String> filter;
+    private final int[] Application={0};
+    private final int[] Crowd={0};
+    private User check=null;
+    private final HashMap<Integer, IUser> observers=new HashMap<>();
+    private final ArrayList<String> ref=new ArrayList<>(Arrays.asList(
+            "connect", "register", "apply", "cancel", "endoccu", "report", "scan", "disconnect","clear",
+            "exit", "?", "help", "hello", "bye", "nihao", "zaijian","love", "tell","about","light","dark"));
+
+    private class ExWindowListener extends WindowAdapter{
+        @Override
+        public void windowClosing(WindowEvent e) {
+            super.windowClosing(e);
+            try {
+                if(check!=null)check.DisconnectFromHello();
+                System.exit(0);
+            } catch (Exception ex) {
+                System.exit(-1);
+            }
+        }
+
+    }
+
+    public UserClient() {
+        // Title
+        setTitle("RoomX - UserClient");
+
+        // Exit Operation
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addWindowListener(new ExWindowListener());
+
+        Actions.setLayout(new GridLayout(1,4));
+
+        // RoomList ComboBox Function
+        roomList.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                try {
+                    if(roomList.getSelectedItem()!=null){
+                        RoomMonitorWithAppliers server = (RoomMonitorWithAppliers) Naming.lookup("rmi://"+loc+"/Remote" + roomList.getSelectedItem());
+                        selected.setText(server.ToString());
+                        applyButton.setEnabled(!server.Applying(ID[0]) && !server.Occupying(ID[0]));
+                        cancelButton.setEnabled(!applyButton.isEnabled());
+                        endOccuButton.setEnabled(server.Occupying(ID[0]));
+                        needRepairButton.setEnabled(!Objects.equals(server.StateStr(), "Needs Repairing"));
+                    }
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+
+        JLabel CrowdTip=new JLabel("  Crowd:");
+        CrowdTip.setFont(PresFont.fntDisplay.fontName());
+        ChooseARoom.add(CrowdTip);
+
+        // Crowd TextField
+        crowdTextField = new JTextField(3);
+        ChooseARoom.add(crowdTextField);
+        crowdTextField.setFont(PresFont.fntText.fontName());
+
+
+        // Register Button Function
+        registerButton.addActionListener(e -> clientRegister());
+
+        // Disconnect Button Function
+        DisconnectButton.addActionListener(e -> clientDisconnect(true));
+
+        // Clear Button
+        buttonPanel.add(clearButton);
+
+        // Filter ComboBox
+        filter=new JComboBox<>(new String[]{"-Select filter-","Applying","Occupying","Available","Occupied"});
+        filter.setFont(PresFont.fntText.fontName());
+        buttonPanel.add(filter);
+        filter.addItemListener(e -> {
+            try {
+                scanning("NoMessage");
+            } catch (MalformedURLException | NotBoundException | RemoteException ignored) {
+            }
+        });
+
+        // Scan Button
+        scanButton.addActionListener(e -> {
+            Notification.setText("");
+            try {
+                scanning("");
+            } catch (MalformedURLException | RemoteException | NotBoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        buttonPanel.add(scanButton);
+
+
+        // Apply Button
+        applyButton = new JButton("Apply");
+        applyButton.setFont(PresFont.fntBld.fontName());
+        applyButton.addActionListener(e -> {
+            try {
+                Crowd[0] = Integer.parseInt(crowdTextField.getText().trim());
+                if(roomList.getSelectedItem()==null)throw new RuntimeException();
+                int i=(int)roomList.getSelectedItem();
+                apply(i,ID[0], Crowd[0]);
+            }catch (NumberFormatException ex1){
+                System.out.println("Illegal number of people.");
+                new MessageBox("Illegal number of people.",400,100).setVisible(true);
+            }catch(Exception ex3){
+                System.out.println("Failed to submit application, try again later.");
+                new MessageBox("Failed to submit application, try again later.",400,100).setVisible(true);
+            }
+        });
+        Actions.add(applyButton);
+
+        // Cancel Button
+        cancelButton = new JButton("Cancel");
+        cancelButton.setFont(PresFont.fntBld.fontName());
+        cancelButton.addActionListener(e -> {
+            try{
+                if(roomList.getSelectedItem()!=null) cancel((int)roomList.getSelectedItem());
+                else throw new RuntimeException();
+            }
+            catch(Exception e1){
+                System.out.println("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.");
+                new MessageBox("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.",600,120).setVisible(true);
+            }
+        });
+        Actions.add(cancelButton);
+
+        // End Occupying Button
+        endOccuButton = new JButton("End Occupying");
+        endOccuButton.setFont(PresFont.fntBld.fontName());
+        endOccuButton.addActionListener(e -> {
+            Notification.setText("");
+            try {
+                ConfirmDialog c=new ConfirmDialog("End occupying Room #"+roomList.getSelectedItem()+"?\nRoom info: "+selected.getText()+"\nThe room will be cleaned before it's available again.",600,160);
+                c.setVisible(true);
+                if(!c.isOK())return;
+                if(roomList.getSelectedItem()==null)throw new RuntimeException();
+                observers.get((int)roomList.getSelectedItem()).EndOccupying(ID[0]);
+                observers.remove((int)roomList.getSelectedItem());
+                scanning("NoMessage");
+                new MessageBox("Ended Occupying.",400,100).setVisible(true);
+            } catch (Exception ex) {
+                System.out.println("Failed to end occupying, contact the supporters.");
+                new MessageBox("Failed to end occupying, contact the supporters.",400,100).setVisible(true);
+            }
+        });
+        Actions.add(endOccuButton);
+
+        // NeedRepair Button
+        needRepairButton = new JButton("Repair Report");
+        needRepairButton.setFont(PresFont.fntBld.fontName());
+        needRepairButton.addActionListener(e -> {
+            Notification.setText("");
+            try {
+                ConfirmDialog c=new ConfirmDialog("Report repair for Room #"+roomList.getSelectedItem()+"?\nRoom info: "+selected.getText(),600,140);
+                c.setVisible(true);
+                if(!c.isOK())return;
+                if(roomList.getSelectedItem()!=null)
+                    if(observers.get((int)roomList.getSelectedItem())!=null)
+                        observers.get((int)roomList.getSelectedItem()).RepairReportU(ID[0]);
+                    else throw new NullPointerException();
+                else throw new NullPointerException();
+                System.out.println("Repair reported.");
+            } catch (Exception ex) {
+                System.out.println("Repair reporting failed.");
+            }
+        });
+        Actions.add(needRepairButton);
+
+
+        // Redirect "System.out" to "TextArea"
+        System.setOut(new PrintStream(new JTextAreaOutputStream(Messenger)));
+
+        // themed-paint
+        try{
+            paintLD();}
+        catch (Exception e){
+            System.out.println("Failed to set theme.");
+        }
+    }
 
     @Override
-    public void Scanning(String State) throws MalformedURLException, NotBoundException, RemoteException {
+    public void scanning(String State) throws MalformedURLException, NotBoundException, RemoteException {
         RoomMonitorWithAppliers server;
         int count=0;
         int connect=0;
@@ -37,7 +224,7 @@ public class UserClient extends ClientFrame implements Command{
             try{
                 count++;
                 int finalCount=count;
-                server = (RoomMonitorWithAppliers) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (count));
+                server = (RoomMonitorWithAppliers) Naming.lookup("rmi://"+loc+"/Remote" + (count));
                 connect++;
                 boolean applying=server.Applying(ID[0]),
                         occupying=server.Occupying(ID[0]),
@@ -49,13 +236,13 @@ public class UserClient extends ClientFrame implements Command{
                         "State: "+server.StateStr()+"  "+(occupying?"Occupying, ":"")+(applying||occupying?((server.NumberOfAppliers()-1)+" appliers besides you"):"");
                 if(occupying) {
                     OverallInfo.add(count,"Occupying","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e->{
-                    try{
-                        roomList.setSelectedItem(finalCount);
-                        new MessageBox(info,600,140).setVisible(true);
-                    }catch(Exception ignored){}
-                });
+                        try{
+                            roomList.setSelectedItem(finalCount);
+                            new MessageBox(info,600,140).setVisible(true);
+                        }catch(Exception ignored){}
+                    });
                 }
-                else if(applying&&!Objects.requireNonNull(filter.getSelectedItem()).equals("-Select filter-")) {
+                else if(applying) {
                     OverallInfo.add(count,server.getReserved() == ID[0] ? "Reserved" : "Applying","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
                         try {
                             roomList.setSelectedItem(finalCount);
@@ -127,7 +314,7 @@ public class UserClient extends ClientFrame implements Command{
                 }
                 roomList.addItem(count);
                 if(applying||occupying){
-                    observers.put(count,new User(count-1,ID[0],server.getCrowdRemote(ID[0])));
+                    observers.put(count,new User(count-1,ID[0],server.getCrowdRemote(ID[0]),loc));
                     server.FetchRemote(observers.get(count));
                 }
             }catch (Exception ignored){
@@ -143,21 +330,85 @@ public class UserClient extends ClientFrame implements Command{
             }
         }
     }
-    private final String version= properties.version.description();
-    private final JTextField crowdTextField;
-    private final JButton applyButton;
-    private final JButton cancelButton;
-    private final JButton endOccuButton;
-    private final JButton needRepairButton;
-    private final JComboBox<String> filter;
-    private final int[] Application={0};
-    private final int[] Crowd={0};
-    private User check=null;
-    private final HashMap<Integer, IUser> observers=new HashMap<>();
-    private final ArrayList<String> ref=new ArrayList<>(Arrays.asList(
-            "connect", "register", "apply", "cancel", "endoccu", "report", "scan", "disconnect","clear",
-            "exit", "?", "help", "hello", "bye", "nihao", "zaijian","love", "tell","about","light","dark"));
 
+    @Override
+    protected void clientRegister() {
+        Notification.setText("");
+        if(!observers.isEmpty()){
+            observers.clear();
+        }
+        try {
+            ID[0] = Integer.parseInt(idTextField.getText().trim());
+            if(ID[0]<=0)throw new NumberFormatException();
+            check=new User("rmi://"+loc+"/Remote0",ID[0]);
+            if(check.isDup())throw new DuplicationException("id already exist.");
+            Messenger.append("Confirmed id: " + ID[0] + "\n");
+            idTextField.setEditable(false);
+            actionPanel.setVisible(true);
+            scanning("");
+            idLabelIn.setText("Welcome back, User #"+ID[0]+"!");
+            TextPane.setVisible(true);
+            inputPanel.setVisible(false);
+            add(TextPane, BorderLayout.CENTER);
+            menu.setVisible(true);
+            SwingUtilities.updateComponentTreeUI(TextPane);
+        } catch (NumberFormatException ex1) {
+            Messenger.append("Illegal id.\n");
+            new MessageBox("Illegal id.",400,100).setVisible(true);
+            ID[0]=-1;
+        }
+        catch(NotBoundException | IOException ex2){
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
+            ID[0]=-1;
+        }
+        catch(DuplicationException ex3){
+            Messenger.append("id already exist.");
+            new MessageBox("Id already exist.",400,100).setVisible(true);
+            ID[0]=-1;
+            check=null;
+        }
+    }
+
+    @Override
+    protected void clientDisconnect(boolean NeedConfirm) {
+        Notification.setText("");
+        try {
+            if(NeedConfirm) {
+                ConfirmDialog c = new ConfirmDialog("Disconnect " + ID[0] + " from the server?", 400, 100);
+                c.setVisible(true);
+                if (!c.isOK()) return;
+            }
+            scanning("NoMessage");
+            check.DisconnectFromHello();
+            if(!observers.isEmpty()){
+                for(Map.Entry<Integer, IUser> observer:observers.entrySet()){
+                    observer.getValue().userDisconnect(ID[0]);
+                }
+                observers.clear();
+            }
+            Application[0]=0;
+            idTextField.setText(String.valueOf(ID[0]));
+            ID[0]=-1;
+            crowdTextField.setText("");
+            Console.setText("");
+            idTextField.setEditable(true);
+            Messenger.setText("Disconnected from the server.\n");
+            OverallInfo.clear();
+            FilteredInfo.clear();
+            OverallInfo.setTitle("Overall:");
+            FilteredInfo.setTitle("Filtered:");
+            actionPanel.setVisible(false);
+            TextPane.setVisible(false);
+            inputPanel.setVisible(true);
+            add(inputPanel,BorderLayout.CENTER);
+            menu.setVisible(false);
+            SwingUtilities.updateComponentTreeUI(inputPanel);
+        } catch (Exception ex) {
+            Messenger.setText("Failed to disconnect, try again later.");
+            new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
+        }
+    }
 
     @Override
     public boolean conductible(String command) {
@@ -175,7 +426,7 @@ public class UserClient extends ClientFrame implements Command{
                     break;
                 }
                 if(com[1]!=null) idTextField.setText(com[1]);
-                registerButton.doClick();
+                clientRegister();
                 break;
             }
             case "report":{
@@ -223,7 +474,7 @@ public class UserClient extends ClientFrame implements Command{
                         else RoomID = Integer.parseInt(com[1].trim());
                         Notification.setText("");
                         if(observers.get(RoomID)!=null)
-                            if (roomList.getSelectedItem() != null) Cancel(RoomID);
+                            if (roomList.getSelectedItem() != null) cancel(RoomID);
                         else throw new NumberFormatException();
                         else throw new RuntimeException();
                     }
@@ -231,7 +482,7 @@ public class UserClient extends ClientFrame implements Command{
                         if (roomList.getSelectedItem() != null) RoomID = (int) roomList.getSelectedItem();
                         else throw new NumberFormatException();
                         Notification.setText("");
-                        if(observers.get(RoomID)!=null)Cancel((int) roomList.getSelectedItem());else throw new RuntimeException();
+                        if(observers.get(RoomID)!=null) cancel((int) roomList.getSelectedItem());else throw new RuntimeException();
                     }
                     catch(NumberFormatException e){
                         System.out.println("Input correct room ID.");
@@ -267,15 +518,15 @@ public class UserClient extends ClientFrame implements Command{
                         if (com[1].equals("this") || com[1].equals("~") || com[1].equals("-") || com[1].equals("room")) throw new ArrayIndexOutOfBoundsException();
                         else RoomID = Integer.parseInt(com[1].trim());
                         Notification.setText("");
-                        Naming.lookup("rmi://127.0.0.1:1099/Remote" + RoomID);
-                        Apply(RoomID,ID[0],crowd);
+                        Naming.lookup("rmi://"+loc+"/Remote" + RoomID);
+                        apply(RoomID,ID[0],crowd);
                     }
                     catch (ArrayIndexOutOfBoundsException e1){
                         if (roomList.getSelectedItem() != null) RoomID = (int) roomList.getSelectedItem();
                         else throw new NumberFormatException();
                         Notification.setText("");
-                        Naming.lookup("rmi://127.0.0.1:1099/Remote" + RoomID);
-                        Apply((int) roomList.getSelectedItem(),ID[0],crowd);
+                        Naming.lookup("rmi://"+loc+"/Remote" + RoomID);
+                        apply((int) roomList.getSelectedItem(),ID[0],crowd);
                     }
                     catch(NumberFormatException ex){
                         System.out.println("Input correct room ID.");
@@ -357,7 +608,7 @@ public class UserClient extends ClientFrame implements Command{
                     System.out.println("Please register first.");
                     break;
                 }
-                DisconnectButton.doClick();
+                clientDisconnect(true);
                 break;
             }
             case "exit","bye","zaijian":{
@@ -415,7 +666,7 @@ public class UserClient extends ClientFrame implements Command{
                     c.setVisible(true);
                     if(c.isOK()){
                         try {
-                            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://127.0.0.1:1099/Remote0");
+                            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://"+loc+"/Remote0");
                             server.Tells();
                         } catch (NotBoundException | MalformedURLException | RemoteException ignored) {
                         }
@@ -437,250 +688,18 @@ public class UserClient extends ClientFrame implements Command{
         }
     }
 
-
-
-    private class ExWindowListener extends WindowAdapter{
-        @Override
-        public void windowClosing(WindowEvent e) {
-            super.windowClosing(e);
-            try {
-                if(check!=null)check.DisconnectFromHello();
-                System.exit(0);
-            } catch (Exception ex) {
-                System.exit(-1);
-            }
-        }
-
-    }
-
-    public UserClient() {
-        // Title
-        setTitle("RoomX - UserClient");
-
-        // Exit Operation
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        addWindowListener(new ExWindowListener());
-
-        Actions.setLayout(new GridLayout(1,4));
-
-        // RoomList ComboBox Function
-        roomList.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                try {
-                    if(roomList.getSelectedItem()!=null){
-                        RoomMonitorWithAppliers server = (RoomMonitorWithAppliers) Naming.lookup("rmi://127.0.0.1:1099/Remote" + roomList.getSelectedItem());
-                        selected.setText(server.ToString());
-                        applyButton.setEnabled(!server.Applying(ID[0]) && !server.Occupying(ID[0]));
-                        cancelButton.setEnabled(!applyButton.isEnabled());
-                        endOccuButton.setEnabled(server.Occupying(ID[0]));
-                        needRepairButton.setEnabled(!Objects.equals(server.StateStr(), "Needs Repairing"));
-                    }
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        });
-
-        JLabel CrowdTip=new JLabel("  Crowd:");
-        CrowdTip.setFont(PresFont.fntDisplay.fontName());
-        ChooseARoom.add(CrowdTip);
-
-        // Crowd TextField
-        crowdTextField = new JTextField(3);
-        ChooseARoom.add(crowdTextField);
-        crowdTextField.setFont(PresFont.fntText.fontName());
-
-
-        // Register Button Function
-        registerButton.addActionListener(e -> {
-            Notification.setText("");
-            if(!observers.isEmpty()){
-                observers.clear();
-            }
-            try {
-                ID[0] = Integer.parseInt(idTextField.getText().trim());
-                if(ID[0]<=0)throw new NumberFormatException();
-                check=new User("rmi://127.0.0.1:1099/Remote0",ID[0]);
-                if(check.isDup())throw new DuplicationException("id already exist.");
-                Messenger.append("Confirmed id: " + ID[0] + "\n");
-                registerButton.setVisible(false);
-                idTextField.setEditable(false);
-                DisconnectButton.setVisible(true);
-                actionPanel.setVisible(true);
-                Scanning("");
-            } catch (NumberFormatException ex1) {
-                Messenger.append("Illegal id.\n");
-                new MessageBox("Illegal id.",400,100).setVisible(true);
-                ID[0]=-1;
-            }
-            catch(NotBoundException | IOException ex2){
-                Messenger.append("Failed to connect to the remote server.\n");
-                new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
-                ID[0]=-1;
-            }
-            catch(DuplicationException ex3){
-                Messenger.append("id already exist.");
-                new MessageBox("Id already exist.",400,100).setVisible(true);
-                ID[0]=-1;
-                check=null;
-            }
-        });
-
-        // Disconnect Button Function
-        DisconnectButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                ConfirmDialog c=new ConfirmDialog("Disconnect "+ID[0]+" from the server?",400,100);
-                c.setVisible(true);
-                if(!c.isOK())return;
-                Scanning("NoMessage");
-                check.DisconnectFromHello();
-                if(!observers.isEmpty()){
-                    for(Map.Entry<Integer, IUser> observer:observers.entrySet()){
-                        observer.getValue().userDisconnect(ID[0]);
-                    }
-                    observers.clear();
-                }
-                Application[0]=0;
-                idTextField.setText(String.valueOf(ID[0]));
-                ID[0]=-1;
-                crowdTextField.setText("");
-                Console.setText("");
-                DisconnectButton.setVisible(false);
-                registerButton.setVisible(true);
-                idTextField.setEditable(true);
-                Messenger.setText("Disconnected from the server.\n");
-                OverallInfo.clear();
-                FilteredInfo.clear();
-                OverallInfo.setTitle("Overall:");
-                FilteredInfo.setTitle("Filtered:");
-                actionPanel.setVisible(false);
-            } catch (Exception ex) {
-                Messenger.setText("Failed to disconnect, try again later.");
-                new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
-            }
-        });
-
-        // Clear Button
-        buttonPanel.add(clearButton);
-
-        // Filter ComboBox
-        filter=new JComboBox<>(new String[]{"-Select filter-","Applying","Occupying","Available","Occupied"});
-        filter.setFont(PresFont.fntText.fontName());
-        buttonPanel.add(filter);
-        filter.addItemListener(e -> {
-            try {
-                Scanning("NoMessage");
-            } catch (MalformedURLException | NotBoundException | RemoteException ignored) {
-            }
-        });
-
-        // Scan Button
-        scanButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                Scanning("");
-            } catch (MalformedURLException | RemoteException | NotBoundException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-        buttonPanel.add(scanButton);
-
-
-        // Apply Button
-        applyButton = new JButton("Apply");
-        applyButton.setFont(PresFont.fntBld.fontName());
-        applyButton.addActionListener(e -> {
-            try {
-                Crowd[0] = Integer.parseInt(crowdTextField.getText().trim());
-                if(roomList.getSelectedItem()==null)throw new RuntimeException();
-                int i=(int)roomList.getSelectedItem();
-                Apply(i,ID[0], Crowd[0]);
-            }catch (NumberFormatException ex1){
-                System.out.println("Illegal number of people.");
-                new MessageBox("Illegal number of people.",400,100).setVisible(true);
-            }catch(Exception ex3){
-                System.out.println("Failed to submit application, try again later.");
-                new MessageBox("Failed to submit application, try again later.",400,100).setVisible(true);
-            }
-        });
-        Actions.add(applyButton);
-
-        // Cancel Button
-        cancelButton = new JButton("Cancel");
-        cancelButton.setFont(PresFont.fntBld.fontName());
-        cancelButton.addActionListener(e -> {
-            try{
-            if(roomList.getSelectedItem()!=null) Cancel((int)roomList.getSelectedItem());
-            else throw new RuntimeException();
-            }
-            catch(Exception e1){
-                System.out.println("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.");
-                new MessageBox("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.",600,120).setVisible(true);
-            }
-        });
-        Actions.add(cancelButton);
-
-        // End Occupying Button
-        endOccuButton = new JButton("End Occupying");
-        endOccuButton.setFont(PresFont.fntBld.fontName());
-        endOccuButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                ConfirmDialog c=new ConfirmDialog("End occupying Room #"+roomList.getSelectedItem()+"?\nRoom info: "+selected.getText()+"\nThe room will be cleaned before it's available again.",600,160);
-                c.setVisible(true);
-                if(!c.isOK())return;
-                if(roomList.getSelectedItem()==null)throw new RuntimeException();
-                observers.get((int)roomList.getSelectedItem()).EndOccupying(ID[0]);
-                observers.remove((int)roomList.getSelectedItem());
-                Scanning("NoMessage");
-                new MessageBox("Ended Occupying.",400,100).setVisible(true);
-            } catch (Exception ex) {
-                System.out.println("Failed to end occupying, contact the supporters.");
-                new MessageBox("Failed to end occupying, contact the supporters.",400,100).setVisible(true);
-            }
-        });
-        Actions.add(endOccuButton);
-
-        // NeedRepair Button
-        needRepairButton = new JButton("Repair Report");
-        needRepairButton.setFont(PresFont.fntBld.fontName());
-        needRepairButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                ConfirmDialog c=new ConfirmDialog("Report repair for Room #"+roomList.getSelectedItem()+"?\nRoom info: "+selected.getText(),600,140);
-                c.setVisible(true);
-                if(!c.isOK())return;
-                if(roomList.getSelectedItem()!=null)
-                    if(observers.get((int)roomList.getSelectedItem())!=null)
-                        observers.get((int)roomList.getSelectedItem()).RepairReportU(ID[0]);
-                else throw new NullPointerException();
-                else throw new NullPointerException();
-                System.out.println("Repair reported.");
-            } catch (Exception ex) {
-                System.out.println("Repair reporting failed.");
-            }
-        });
-        Actions.add(needRepairButton);
-
-
-        // Redirect "System.out" to "TextArea"
-        System.setOut(new PrintStream(new JTextAreaOutputStream(Messenger)));
-    }
-
-    private void Apply(int roomId,int id,int crowd) {
+    private void apply(int roomId, int id, int crowd) {
         Notification.setText("");
         try {
-            ConfirmDialog c=new ConfirmDialog("You are applying Room #"+roomList.getSelectedItem()+"\nRoom info: "+selected.getText()+"\nContinue?",800,160);
+            ConfirmDialog c=new ConfirmDialog("You are applying Room #"+roomList.getSelectedItem()+"\nRoom info: "+selected.getText()+"\nContinue?",640,160);
             c.setVisible(true);
             if(!c.isOK()) return;
             if(Application[0]>=5)throw new TooManyApplicationsException();
-            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://127.0.0.1:1099/Remote"+roomId);
+            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://"+loc+"/Remote"+roomId);
             if(crowd<=0||crowd>server.Capacity())throw new IllegalCrowdException();
-            observers.put(roomId,new User(roomId-1,id,crowd));
+            observers.put(roomId,new User(roomId-1,id,crowd,loc));
             Application[0]++;
-            Scanning("NoMessage");
+            scanning("NoMessage");
             new MessageBox("Application submitted.",400,100).setVisible(true);
         } catch (IllegalCrowdException ex1){
             System.out.println("Illegal number of people.");
@@ -697,18 +716,18 @@ public class UserClient extends ClientFrame implements Command{
         }
     }
 
-    private void Cancel(int RoomID) {
+    private void cancel(int RoomID) {
         Notification.setText("");
         try {
             if(observers.get(RoomID)==null)throw new NullPointerException();
-            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://127.0.0.1:1099/Remote"+RoomID);
-            ConfirmDialog c=new ConfirmDialog("Cancel your application for Room #"+RoomID+" ?\nRoom info: "+server.ToString(),600,140);
+            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://"+loc+"/Remote"+RoomID);
+            ConfirmDialog c=new ConfirmDialog("Cancel your application for Room #"+RoomID+" ?\nRoom info: "+server.ToString(),640,140);
             c.setVisible(true);
             if(!c.isOK()) return;
             observers.get(RoomID).userCancel(ID[0]);
             observers.remove(RoomID);
             Application[0]--;
-            Scanning("NoMessage");
+            scanning("NoMessage");
             System.out.println("Application canceled.");
             new MessageBox("Application canceled.",400,100).setVisible(true);
         } catch (NotBoundException ex) {
@@ -720,8 +739,10 @@ public class UserClient extends ClientFrame implements Command{
         }
 
     }
+
+    @Override
     protected void help(){
-        new MessageBox("""
+        new MessageBox("Command Help","""
                 register/connect <your id>   (register as <id>)
                 disconnect   (disconnect current user from server)
                 scan <filter>   (refresh the room list, input "scan ?" for more info)
@@ -754,9 +775,8 @@ public class UserClient extends ClientFrame implements Command{
 
     @Override
     protected void about(boolean love) {
-        new MessageBox((love?"Love is invaluable.\n\n":"")+"RoomX (User Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
+        new MessageBox("About",(love?"Love is invaluable.\n\n":"")+"RoomX (User Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
     }
-
 
     public static void main(String[] args) {
         System.setProperty("sun.rmi.transport.tcp.responseTimeout", "7000");

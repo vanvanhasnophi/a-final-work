@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -16,14 +15,7 @@ public abstract class RoomStub extends UnicastRemoteObject implements RoomMonito
         super();
     }
     public RoomStub(int i) throws RuntimeException, RemoteException {
-        try{
-            this.server= (RoomMonitorWithAppliers) Naming.lookup("rmi://127.0.0.1:1099/Remote"+(i+1)); ///Connection
-            this.connected=true;
-        }
-        catch(Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            this.connected=false;
-        }
+        this("rmi://127.0.0.1:1099/Remote"+(i+1));
     }
     public RoomStub(String name) throws RuntimeException, RemoteException {
         try{
@@ -36,15 +28,13 @@ public abstract class RoomStub extends UnicastRemoteObject implements RoomMonito
         }
     }
 
-    public void Reconnect(int i) throws RuntimeException, RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
-        try{
-            this.server= (RoomMonitorWithAppliers) Naming.lookup("rmi://127.0.0.1:1099/Remote"+(i+1));
-            this.connected=true;
-        }
-        catch(Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            this.connected=false;
-        }
+    public RoomStub(String loc,int i)throws RemoteException{
+        this("rmi://"+loc+"/Remote"+(i+1));
+    }
+
+
+    public void Reconnect(int i) throws RuntimeException, IOException, NotBoundException, AlreadyBoundException, ClassNotFoundException {
+        Reconnect("rmi://127.0.0.1:1099/Remote"+(i+1));
     }
     public void Reconnect(String name) throws RuntimeException, IOException, NotBoundException, ClassNotFoundException, AlreadyBoundException {
         try{
@@ -55,6 +45,10 @@ public abstract class RoomStub extends UnicastRemoteObject implements RoomMonito
             System.out.println("ERROR: Can not connect to the remote server.");
             this.connected=false;
         }
+    }
+
+    public void Reconnect(String loc,int i) throws IOException, AlreadyBoundException, NotBoundException, ClassNotFoundException {
+        Reconnect("rmi://127.0.0.1:1099/Remote"+(i+1));
     }
 
     /**Monitor*/

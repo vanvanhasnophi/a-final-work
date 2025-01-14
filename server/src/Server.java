@@ -8,6 +8,27 @@ class Rooms {
     private final Room[] List;
     private final int count;
     public Rooms(int count) throws RemoteException {
+        if(count==-1){
+            this.count=15;
+            List=new Room[15];
+            List[0] = new Room("SEMINAR_ROOM 001",1,15,1);
+            List[1] = new Room("SEMINAR_ROOM 002",1,15,1);
+            List[2] = new Room("SEMINAR_ROOM 003",1,20,1);
+            List[3] = new Room("SEMINAR_ROOM 004",1,20,1);
+            List[4] = new Room("SEMINAR_ROOM 005",1,20,1);
+            List[5] = new Room("CASE_ROOM 001",2,15,1);
+            List[6] = new Room("CASE_ROOM 002",2,20,1);
+            List[7] = new Room("CASE_ROOM 003",2,35,1);
+            List[8] = new Room("CASE_ROOM 004",2,50,1);
+            List[9] = new Room("CASE_ROOM 005",2,75,1);
+            List[10] = new Room("LECTURE_ROOM 001",3,15,1);
+            List[11] = new Room("LECTURE_ROOM 002",3,40,1);
+            List[12] = new Room("LECTURE_ROOM 003",3,75,1);
+            List[13] = new Room("LECTURE_ROOM 004",3,100,1);
+            List[14] = new Room("LECTURE_ROOM 005",3,150,1);
+            System.out.println("Rooms initialized.");
+            return;
+        }
         this.count=count;
         List=new Room[count];
         System.out.print("--------------\nReminder: capacity<->type\n<=20  Seminar Room (1)\n<=75  Case Room (2)\n<=150 Lecture Room (3)\n--------------\n");

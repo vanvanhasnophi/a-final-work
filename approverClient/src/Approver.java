@@ -23,18 +23,8 @@ public class Approver extends RoomStub implements RoomManageable{
 
     /**Initialize and reconnect*/
 
-    Approver(int i,int ID) throws RemoteException {
-        super(i);
-        this.ID=ID;
-        try {
-            this.serverA = (RoomManageable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"Approver");
-            if(!dup)serverA.approverRegister(this);
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+    Approver(int i,int ID) throws RemoteException, MalformedURLException, NotBoundException {
+        this("rmi://127.0.0.1:1099/Remote" + (i + 1),ID);
     }
 
     Approver(String name,int ID) throws MalformedURLException, NotBoundException, RemoteException {
@@ -51,19 +41,19 @@ public class Approver extends RoomStub implements RoomManageable{
         }
     }
 
+    Approver(String loc,int i,int ID) throws RemoteException, MalformedURLException, NotBoundException {
+        this("rmi://"+loc+"/Remote" + (i + 1),ID);
+    }
+
 
     @Override
-    public void Reconnect(int i) throws MalformedURLException, NotBoundException, RemoteException, AlreadyBoundException {
-        super.Reconnect(i);
-        try {
-            this.serverA = (RoomManageable) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (i + 1));
-            dup=Check(ID,"Approver");
-            if(!dup)serverA.approverRegister(this);
-        }
-        catch (Exception e){
-            System.out.println("ERROR: Can not connect to the remote server.");
-            throw new RemoteException();
-        }
+    public void Reconnect(int i) throws IOException, NotBoundException, AlreadyBoundException, ClassNotFoundException {
+        Reconnect("rmi://127.0.0.1:1099/Remote"+(i+1));
+    }
+
+    @Override
+    public void Reconnect(String loc,int i) throws IOException, AlreadyBoundException, NotBoundException, ClassNotFoundException {
+        Reconnect("rmi://"+loc+"/Remote"+(i+1));
     }
 
     @Override

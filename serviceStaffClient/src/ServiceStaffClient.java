@@ -1,6 +1,7 @@
 import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -17,61 +18,6 @@ import java.util.Map;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ServiceStaffClient extends ClientFrame implements Command {
-
-    @Override
-    public void Scanning(String State) throws MalformedURLException, NotBoundException, RemoteException {
-        RoomMonitor server;
-        int count=0;
-        int connect=0;
-        if(!observers.isEmpty())observers.clear();
-        roomList.removeAllItems();
-        System.gc(); //Initialize the observers.
-        OverallInfo.clear();
-        FilteredInfo.clear();
-        FilteredInfo.setTitle("To be cleaned:");
-        if(ID[0]==-1){
-            OverallInfo.add(-1,"null","No certification!!! Input correct id.",e->{});
-            FilteredInfo.add(-1,"null","No certification!!! Input correct id.",e->{});
-            new MessageBox("No certification!!! Input correct id.",400,100).setVisible(true);
-            return;
-        }
-        for(int i=0;i<100;i++){
-            try{
-                count++;
-                server = (RoomMonitor) Naming.lookup("rmi://127.0.0.1:1099/Remote" + (count));
-                connect++;
-                String info="Location "+count+": "+server.NameStr()+"\n"+
-                        "Capacity: "+server.Capacity()+"("+server.TypeStr()+")\n"+
-                        "State: "+server.StateStr();
-                int finalCount = count;
-                OverallInfo.add(count,server.StateStr().equals("Needs Cleaning")?"NotExecuted":"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e->{
-                    try{
-                        roomList.setSelectedItem(finalCount);
-                        new MessageBox(info,600,140).setVisible(true);
-                    }catch(Exception ignored){}
-                });
-                observers.put(count,new ServiceStaff(count-1,ID[0]));
-                roomList.addItem(count);
-                if(server.StateStr().equals("Needs Cleaning"))FilteredInfo.add(count,"","Location "+count+": "+server.NameStr(), e->{
-                    try{
-                        roomList.setSelectedItem(finalCount);
-                        new MessageBox(info,600,140).setVisible(true);
-                    }catch(Exception ignored){}
-                });
-            }catch (Exception ignored){
-            }
-        }
-        if(connect==0){
-            OverallInfo.setTitle("Overall:");
-            OverallInfo.add(-1,"","No remote rooms.",e->{});
-            System.out.println("No remote rooms found.\n");
-        }
-        else {
-            OverallInfo.setTitle("Overall: "+connect+" rooms");
-            System.out.println("Scanning complete.\n"+connect+" rooms found.\n");
-        }
-    }
-
     private final String version=properties.version.description();
     private final JButton cleanButton;
     private final JButton needRepairButton;
@@ -81,6 +27,92 @@ public class ServiceStaffClient extends ClientFrame implements Command {
     final ArrayList<String> ref=new ArrayList<>(Arrays.asList("connect","register","clean","report","scan","disconnect","clear",
             "exit", "?", "help", "hello", "bye", "nihao", "zaijian","love", "tell","about","light","dark"));
 
+    private class ExWindowListener extends WindowAdapter {
+        @Override
+        public void windowClosing(WindowEvent e) {
+            super.windowClosing(e);
+            try {
+                if(check!=null)check.Disconnect();
+                if(!observers.isEmpty())for(Map.Entry<Integer,ServiceStaff> observer: observers.entrySet()) observer.getValue().Disconnect();
+                System.exit(0);
+            } catch (Exception ex) {
+                System.exit(-1);
+            }
+        }
+
+    }
+    public ServiceStaffClient() {
+        // Title
+        setTitle("RoomX - ServiceStaffClient");
+
+        // Exit Operation
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addWindowListener(new ExWindowListener());
+
+        // RoomList ComboBox Function
+        roomList.addItemListener(e -> {
+            try {
+                if(roomList.getSelectedItem()!=null)selected.setText(observers.get((int)roomList.getSelectedItem()).ToString());
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        // Register Button Function
+        registerButton.addActionListener(e -> clientRegister());
+
+        // Disconnect Button Function
+        DisconnectButton.addActionListener(e -> clientDisconnect(true));
+
+        // Clean Button
+        cleanButton = new JButton("Clean");
+        cleanButton.setFont(PresFont.fntBld.fontName());
+        cleanButton.addActionListener(e -> {
+            Notification.setText("");
+            try {
+                if(roomList.getSelectedItem()!=null)observers.get((int)roomList.getSelectedItem()).CleaningComplete(ID[0]);
+            } catch (IOException | ClassNotFoundException ex) {
+                System.out.println("Failed to set status of room #"+roomList.getSelectedItem()+".");
+                new MessageBox("Failed to set status of room #"+roomList.getSelectedItem()+".",400,100).setVisible(true);
+                throw new RuntimeException(ex);
+            }
+        });
+        Actions.add(cleanButton);
+
+        // NeedRepair Button
+        needRepairButton = new JButton("Repair Report");
+        needRepairButton.setFont(PresFont.fntBld.fontName());
+        needRepairButton.addActionListener(e -> {
+            Notification.setText("");
+            try {
+                ConfirmDialog c=new ConfirmDialog("Report repair for Room #"+roomList.getSelectedItem()+"?\nRoom info: "+selected.getText(),600,140);
+                c.setVisible(true);
+                if(!c.isOK())return;
+                if (roomList.getSelectedItem() != null)
+                    if (observers.get((int) roomList.getSelectedItem()) != null)
+                        observers.get((int) roomList.getSelectedItem()).RepairReportC();
+                    else throw new NullPointerException();
+                else throw new NullPointerException();
+                System.out.println("Repair reported.");
+                new MessageBox("Reported repair for Room #"+roomList.getSelectedItem()+".",400,100).setVisible(true);
+            } catch (Exception ex) {
+                System.out.println("Repair reporting failed.");
+                new MessageBox("Failed report repair for room #"+roomList.getSelectedItem()+".",400,100).setVisible(true);
+            }
+        });
+        Actions.add(needRepairButton);
+
+
+        // Redirect "System.out" to "TextArea"
+        System.setOut(new PrintStream(new JTextAreaOutputStream(Messenger)));
+
+        // themed-paint
+        try{
+            paintLD();}
+        catch (Exception e){
+            System.out.println("Failed to set theme.");
+        }
+    }
 
     @Override
     public boolean conductible(String command) {
@@ -98,7 +130,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
                     break;
                 }
                 if(com[1]!=null) idTextField.setText(com[1]);
-                registerButton.doClick();
+                clientRegister();
                 break;
             }
             case "report":{
@@ -176,7 +208,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
                     System.out.println("Please register first.");
                     break;
                 }
-                DisconnectButton.doClick();
+                clientDisconnect(true);
                 break;
             }
             case "exit","bye","zaijian":{
@@ -234,7 +266,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
                     c.setVisible(true);
                     if(c.isOK()){
                         try {
-                            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://127.0.0.1:1099/Remote0");
+                            RoomMonitor server=(RoomMonitor) Naming.lookup("rmi://"+loc+"/Remote0");
                             server.Tells();
                         } catch (NotBoundException | MalformedURLException | RemoteException ignored) {
                         }
@@ -256,146 +288,133 @@ public class ServiceStaffClient extends ClientFrame implements Command {
         }
     }
 
-
-    private class ExWindowListener extends WindowAdapter {
-        @Override
-        public void windowClosing(WindowEvent e) {
-            super.windowClosing(e);
-            try {
-                if(check!=null)check.Disconnect();
-                if(!observers.isEmpty())for(Map.Entry<Integer,ServiceStaff> observer: observers.entrySet()) observer.getValue().Disconnect();
-                System.exit(0);
-            } catch (Exception ex) {
-                System.exit(-1);
+    @Override
+    public void scanning(String State) throws MalformedURLException, NotBoundException, RemoteException {
+        RoomMonitor server;
+        int count=0;
+        int connect=0;
+        if(!observers.isEmpty())observers.clear();
+        roomList.removeAllItems();
+        System.gc(); //Initialize the observers.
+        OverallInfo.clear();
+        FilteredInfo.clear();
+        FilteredInfo.setTitle("To be cleaned:");
+        if(ID[0]==-1){
+            OverallInfo.add(-1,"null","No certification!!! Input correct id.",e->{});
+            FilteredInfo.add(-1,"null","No certification!!! Input correct id.",e->{});
+            new MessageBox("No certification!!! Input correct id.",400,100).setVisible(true);
+            return;
+        }
+        for(int i=0;i<100;i++){
+            try{
+                count++;
+                server = (RoomMonitor) Naming.lookup("rmi://"+loc+"/Remote" + (count));
+                connect++;
+                String info="Location "+count+": "+server.NameStr()+"\n"+
+                        "Capacity: "+server.Capacity()+"("+server.TypeStr()+")\n"+
+                        "State: "+server.StateStr();
+                int finalCount = count;
+                OverallInfo.add(count,server.StateStr().equals("Needs Cleaning")?"NotExecuted":"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e->{
+                    try{
+                        roomList.setSelectedItem(finalCount);
+                        new MessageBox(info,600,140).setVisible(true);
+                    }catch(Exception ignored){}
+                });
+                observers.put(count,new ServiceStaff(loc,count-1,ID[0]));
+                roomList.addItem(count);
+                if(server.StateStr().equals("Needs Cleaning"))FilteredInfo.add(count,"","Location "+count+": "+server.NameStr(), e->{
+                    try{
+                        roomList.setSelectedItem(finalCount);
+                        new MessageBox(info,600,140).setVisible(true);
+                    }catch(Exception ignored){}
+                });
+            }catch (Exception ignored){
             }
         }
-
+        if(connect==0){
+            OverallInfo.setTitle("Overall:");
+            OverallInfo.add(-1,"","No remote rooms.",e->{});
+            System.out.println("No remote rooms found.\n");
+        }
+        else {
+            OverallInfo.setTitle("Overall: "+connect+" rooms");
+            System.out.println("Scanning complete.\n"+connect+" rooms found.\n");
+        }
     }
 
-    public ServiceStaffClient() {
-        // Title
-        setTitle("RoomX - ServiceStaffClient");
+    @Override
+    protected void clientRegister() {
+        Notification.setText("");
+        try {
+            ID[0] = Integer.parseInt(idTextField.getText().trim());
+            if(ID[0]<=0)throw new NumberFormatException();
+            check=new ServiceStaff("rmi://"+loc+"/Remote0",ID[0]);
+            if(check.isDup())throw new DuplicationException("id already exist.");
+            Messenger.append("Confirmed id: " + ID[0] + "\n");
+            idTextField.setEditable(false);
+            actionPanel.setVisible(true);
+            scanning("");
+            idLabelIn.setText("Welcome back, Service staff #"+ID[0]+"!");
+            TextPane.setVisible(true);
+            inputPanel.setVisible(false);
+            add(TextPane, BorderLayout.CENTER);
+            menu.setVisible(true);
+            SwingUtilities.updateComponentTreeUI(TextPane);
+        } catch (NumberFormatException ex1) {
+            Messenger.append("Illegal id.\n");
+            new MessageBox("Illegal id.",400,100).setVisible(true);
+            ID[0]=-1;
+        }
+        catch(NotBoundException | IOException ex2){
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
+            ID[0]=-1;
+        }
+        catch(DuplicationException ex3){
+            Messenger.append("id already exist.");
+            new MessageBox("Id already exist.",400,100).setVisible(true);
+            ID[0]=-1;
+            check=null;
+        }
+    }
 
-        // Exit Operation
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        addWindowListener(new ExWindowListener());
-
-        // RoomList ComboBox Function
-        roomList.addItemListener(e -> {
-            try {
-                if(roomList.getSelectedItem()!=null)selected.setText(observers.get((int)roomList.getSelectedItem()).ToString());
-            } catch (RemoteException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-
-        // Register Button Function
-        registerButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                ID[0] = Integer.parseInt(idTextField.getText().trim());
-                if(ID[0]<=0)throw new NumberFormatException();
-                check=new ServiceStaff("rmi://127.0.0.1:1099/Remote0",ID[0]);
-                if(check.isDup())throw new DuplicationException("id already exist.");
-                Messenger.append("Confirmed id: " + ID[0] + "\n");
-                registerButton.setVisible(false);
-                idTextField.setEditable(false);
-                DisconnectButton.setVisible(true);
-                actionPanel.setVisible(true);
-                Scanning("");
-            } catch (NumberFormatException ex1) {
-                Messenger.append("Illegal id.\n");
-                new MessageBox("Illegal id.",400,100).setVisible(true);
-                ID[0]=-1;
-            }
-            catch(NotBoundException | IOException ex2){
-                Messenger.append("Failed to connect to the remote server.\n");
-                new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
-                ID[0]=-1;
-            }
-            catch(DuplicationException ex3){
-                Messenger.append("id already exist.");
-                new MessageBox("Id already exist.",400,100).setVisible(true);
-                ID[0]=-1;
-                check=null;
-            }
-        });
-
-        // Disconnect Button Function
-        DisconnectButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                ConfirmDialog c=new ConfirmDialog("Disconnect "+ID[0]+" from the server?",400,100);
+    @Override
+    protected void clientDisconnect(boolean NeedConfirm) {
+        Notification.setText("");
+        try {
+            if(NeedConfirm) {
+                ConfirmDialog c = new ConfirmDialog("Disconnect " + ID[0] + " from the server?", 400, 100);
                 c.setVisible(true);
-                if(!c.isOK())return;
-                check.Disconnect();
-                if(!observers.isEmpty()){
-                    for(Map.Entry<Integer,ServiceStaff> observer: observers.entrySet()) observer.getValue().Disconnect();
-                    observers.clear();
-                }
-                idTextField.setText(String.valueOf(ID[0]));
-                ID[0]=-1;
-                Console.setText("");
-                FilteredInfo.clear();
-                DisconnectButton.setVisible(false);
-                registerButton.setVisible(true);
-                idTextField.setEditable(true);
-                Messenger.setText("Disconnected from the server.\n");
-                OverallInfo.clear();
-                OverallInfo.setTitle("Overall:");
-                actionPanel.setVisible(false);
-            } catch (RemoteException ex) {
-                new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
-                throw new RuntimeException(ex);
+                if (!c.isOK()) return;
             }
-        });
-
-        // Clean Button
-        cleanButton = new JButton("Clean");
-        cleanButton.setFont(PresFont.fntBld.fontName());
-        cleanButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                if(roomList.getSelectedItem()!=null)observers.get((int)roomList.getSelectedItem()).CleaningComplete(ID[0]);
-            } catch (IOException | ClassNotFoundException ex) {
-                System.out.println("Failed to set status of room #"+roomList.getSelectedItem()+".");
-                new MessageBox("Failed to set status of room #"+roomList.getSelectedItem()+".",400,100).setVisible(true);
-                throw new RuntimeException(ex);
+            check.Disconnect();
+            if(!observers.isEmpty()){
+                for(Map.Entry<Integer,ServiceStaff> observer: observers.entrySet()) observer.getValue().Disconnect();
+                observers.clear();
             }
-        });
-        Actions.add(cleanButton);
-
-        // NeedRepair Button
-        needRepairButton = new JButton("Repair Report");
-        needRepairButton.setFont(PresFont.fntBld.fontName());
-        needRepairButton.addActionListener(e -> {
-            Notification.setText("");
-            try {
-                ConfirmDialog c=new ConfirmDialog("Report repair for Room #"+roomList.getSelectedItem()+"?\nRoom info: "+selected.getText(),600,140);
-                c.setVisible(true);
-                if(!c.isOK())return;
-                if (roomList.getSelectedItem() != null)
-                    if (observers.get((int) roomList.getSelectedItem()) != null)
-                        observers.get((int) roomList.getSelectedItem()).RepairReportC();
-                    else throw new NullPointerException();
-                else throw new NullPointerException();
-                System.out.println("Repair reported.");
-                new MessageBox("Reported repair for Room #"+roomList.getSelectedItem()+".",400,100).setVisible(true);
-            } catch (Exception ex) {
-                System.out.println("Repair reporting failed.");
-                new MessageBox("Failed report repair for room #"+roomList.getSelectedItem()+".",400,100).setVisible(true);
-            }
-        });
-        Actions.add(needRepairButton);
-
-
-        // Redirect "System.out" to "TextArea"
-        System.setOut(new PrintStream(new JTextAreaOutputStream(Messenger)));
+            idTextField.setText(String.valueOf(ID[0]));
+            ID[0]=-1;
+            Console.setText("");
+            FilteredInfo.clear();
+            idTextField.setEditable(true);
+            Messenger.setText("Disconnected from the server.\n");
+            OverallInfo.clear();
+            OverallInfo.setTitle("Overall:");
+            actionPanel.setVisible(false);
+            TextPane.setVisible(false);
+            inputPanel.setVisible(true);
+            add(inputPanel,BorderLayout.CENTER);
+            menu.setVisible(false);
+            SwingUtilities.updateComponentTreeUI(inputPanel);
+        } catch (RemoteException ex) {
+            new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     protected void help(){
-        new MessageBox("""
+        new MessageBox("Command Help","""
                 register/connect <your id>   (register as <id>)
                 disconnect   (disconnect current user from server)
                 scan   (refresh the room list)
@@ -424,7 +443,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
 
     @Override
     protected void about(boolean love) {
-        new MessageBox((love?"Love is invaluable.\n\n":"")+"RoomX (Service Staff Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
+        new MessageBox("About",(love?"Love is invaluable.\n\n":"")+"RoomX (Service Staff Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
     }
 
     public static void main(String[] args) {

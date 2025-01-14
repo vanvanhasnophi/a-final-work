@@ -42,6 +42,11 @@ public class ConfirmDialog extends JDialog {
         contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
+    public ConfirmDialog(String Title,String Message,int width,int height){
+        this(Message,width,height);
+        setTitle(Title);
+    }
+
 
     private void onOK() {
         // 在此处添加您的代码

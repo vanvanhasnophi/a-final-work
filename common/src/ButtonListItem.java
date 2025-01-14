@@ -38,39 +38,39 @@ public class ButtonListItem extends JButton implements ListItem{
         setBackground(new Color(0x00FFFFFF, true));
         setBorder(new LineBorder(Color.WHITE,0));
         addActionListener(aListener);
-        System.out.println(tag);
         switch(tag){
             case "Reserved":{
-                setText("  "+Text+"(Reserved)");
+                setText(" "+Text+"(Reserved)");
                 setFont(PresFont.fntBldText.fontName());
                 setForeground(PresColor.BLUE.value());
                 break;
             }
             case "Occupying":{
-                setText("  "+Text+"(Occupying)");
+                setText(" "+Text+"(Occupying)");
                 setFont(PresFont.fntBldText.fontName());
                 setForeground(PresColor.GREEN.value());
                 break;
             }
             case "NotExecuted":{
-                setText("  "+Text+"(To be executed)");
+                setText(" "+Text+"(To be executed)");
                 setFont(PresFont.fntBldText.fontName());
                 setForeground(PresColor.YELLOW.value());
                 break;
             }
             case "Applying":{
-                setText("  "+Text+"(Applying)");
+                setText(" "+Text+"(Applying)");
                 setFont(PresFont.fntBldText.fontName());
                 setForeground(PresColor.ROSE.value());
                 break;
             }
             case "null":{
+                setText(" "+Text);
                 setFont(PresFont.fntBld.fontName());
-                setForeground(PresColor.RED.value());
+                setForeground(PresColor.WARNING.value());
                 break;
             }
             default:{
-                setText("  "+Text);
+                setText(" "+Text);
                 setForeground(PresColor.FORE.value());
                 setFont(PresFont.fntText.fontName());
                 break;
