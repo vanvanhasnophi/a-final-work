@@ -24,7 +24,7 @@ public class LoadFont
     }
 
     public static Font InterR(float Size){
-        return loadFont("Inter-UI-Regular-2.ttf", Size);
+        return loadFont("SarasaGothicSC-Regular.ttf", Size);
     }
 
     public static Font InterI() {
@@ -32,23 +32,7 @@ public class LoadFont
     }
 
     public static Font InterI(float Size){
-        return loadFont("Inter-UI-Italic-6.ttf", Size);
-    }
-
-    public static Font InterM() {
-        return InterM(12f);
-    }
-
-    public static Font InterM(float Size){
-        return loadFont("Inter-UI-Medium-3.ttf", Size);
-    }
-
-    public static Font InterMI() {
-        return InterMI(12f);
-    }
-
-    public static Font InterMI(float Size){
-        return loadFont("Inter-UI-MediumItalic-8.ttf", Size);
+        return loadFont("SarasaGothicSC-Italic.ttf", Size);
     }
 
     public static Font InterB() {
@@ -56,7 +40,7 @@ public class LoadFont
     }
 
     public static Font InterB(float Size){
-        return loadFont("Inter-UI-Bold-5.ttf", Size);
+        return loadFont("SarasaGothicSC-Bold.ttf", Size);
     }
 
     public static Font InterBI() {
@@ -64,16 +48,20 @@ public class LoadFont
     }
 
     public static Font InterBI(float Size){
-        return loadFont("Inter-UI-BoldItalic-7.ttf", Size);
+        return loadFont("SarasaGothicSC-BoldItalic.ttf", Size);
     }
 
-    public static Font InterBlack() {
-        return InterBlack(12f);
-    }
+    public static Font InterLI(){return InterL(12f);}
 
-    public static Font InterBlack(float Size){
-    return loadFont("Inter-UI-Black-4.ttf", Size);
-    }
+    public static Font InterLI(float Size){ return loadFont("SarasaGothicSC-LightItalic.ttf",Size);}
+    
+    public static Font InterL(){return InterL(12f);}
+    
+    public static Font InterL(float Size){ return loadFont("SarasaGothicSC-Light.ttf",Size);}
+
+    public static Font Password(){return Password(12f);}
+
+    public static Font Password(float Size){return loadFont("Inter-UI-Regular-2.ttf",Size);}
 
     public static Font Consolas() {
         return Consolas(12f);
@@ -107,4 +95,11 @@ public class LoadFont
         return loadFont("consolaz.ttf", Size);
     }
 
+    public static Font SymBolR(){return SymbolR(12f);}
+
+    public static Font SymbolR(float Size){return loadFont("FontAwesome6FreeRegular400.otf",Size);}
+
+    public static Font SymBolS(){return SymbolS(12f);}
+
+    public static Font SymbolS(float Size){return loadFont("FontAwesome6FreeSolid900.otf",Size);}
 }

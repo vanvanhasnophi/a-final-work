@@ -14,7 +14,6 @@ import java.util.*;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class UserClient extends ClientFrame implements Command{
-    private final String version= properties.version.description();
     private final JTextField crowdTextField;
     private final JButton applyButton;
     private final JButton cancelButton;
@@ -73,13 +72,13 @@ public class UserClient extends ClientFrame implements Command{
         });
 
         JLabel CrowdTip=new JLabel("  Crowd:");
-        CrowdTip.setFont(PresFont.fntDisplay.fontName());
+        CrowdTip.setFont(PresFont.fntDisplay);
         ChooseARoom.add(CrowdTip);
 
         // Crowd TextField
         crowdTextField = new JTextField(3);
         ChooseARoom.add(crowdTextField);
-        crowdTextField.setFont(PresFont.fntText.fontName());
+        crowdTextField.setFont(PresFont.fntText);
 
 
         // Register Button Function
@@ -93,7 +92,7 @@ public class UserClient extends ClientFrame implements Command{
 
         // Filter ComboBox
         filter=new JComboBox<>(new String[]{"-Select filter-","Applying","Occupying","Available","Occupied"});
-        filter.setFont(PresFont.fntText.fontName());
+        filter.setFont(PresFont.fntText);
         buttonPanel.add(filter);
         filter.addItemListener(e -> {
             try {
@@ -116,7 +115,7 @@ public class UserClient extends ClientFrame implements Command{
 
         // Apply Button
         applyButton = new JButton("Apply");
-        applyButton.setFont(PresFont.fntBld.fontName());
+        applyButton.setFont(PresFont.fntBld);
         applyButton.addActionListener(e -> {
             try {
                 Crowd[0] = Integer.parseInt(crowdTextField.getText().trim());
@@ -135,7 +134,7 @@ public class UserClient extends ClientFrame implements Command{
 
         // Cancel Button
         cancelButton = new JButton("Cancel");
-        cancelButton.setFont(PresFont.fntBld.fontName());
+        cancelButton.setFont(PresFont.fntBld);
         cancelButton.addActionListener(e -> {
             try{
                 if(roomList.getSelectedItem()!=null) cancel((int)roomList.getSelectedItem());
@@ -150,7 +149,7 @@ public class UserClient extends ClientFrame implements Command{
 
         // End Occupying Button
         endOccuButton = new JButton("End Occupying");
-        endOccuButton.setFont(PresFont.fntBld.fontName());
+        endOccuButton.setFont(PresFont.fntBld);
         endOccuButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -171,7 +170,7 @@ public class UserClient extends ClientFrame implements Command{
 
         // NeedRepair Button
         needRepairButton = new JButton("Repair Report");
-        needRepairButton.setFont(PresFont.fntBld.fontName());
+        needRepairButton.setFont(PresFont.fntBld);
         needRepairButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -196,7 +195,7 @@ public class UserClient extends ClientFrame implements Command{
 
         // themed-paint
         try{
-            paintLD();}
+            paintTheme();}
         catch (Exception e){
             System.out.println("Failed to set theme.");
         }
@@ -358,9 +357,9 @@ public class UserClient extends ClientFrame implements Command{
             ID[0]=-1;
         }
         catch(NotBoundException | IOException ex2){
-            Messenger.append("Failed to connect to the remote server.\n");
-            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
             ID[0]=-1;
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Connection Failed","Failed to connect to the remote server.",400,100,"Connection Settings...",e->Load("Account")).setVisible(true);
         }
         catch(DuplicationException ex3){
             Messenger.append("id already exist.");
