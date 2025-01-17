@@ -10,13 +10,15 @@ public abstract class ListPanel extends JPanel {
     protected final JScrollPane ListScroll=new JScrollPane(ListContainer);
     protected final JLabel title=new JLabel();
     protected final Map<Integer, ListItem> List=new HashMap<>();
+    protected final ArrayList<Integer> selectedIndex=new ArrayList<>();
     ListPanel(String title){
         setLayout(new BorderLayout());
         this.title.setText("  "+title);
         add(this.title,BorderLayout.NORTH);
         add(ListScroll,BorderLayout.CENTER);
-        this.title.setFont(PresFont.fntBld.fontName());
+        this.title.setFont(PresFont.fntBld);
         ListContainer.setLayout(new BoxLayout(ListContainer,BoxLayout.Y_AXIS));
+        ListScroll.getVerticalScrollBar().setUnitIncrement(10);
     }
     public void setTitle(String title) {
         this.title.setText(title);

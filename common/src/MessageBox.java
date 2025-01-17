@@ -12,9 +12,9 @@ public class MessageBox extends JDialog {
     private JPanel buttons;
 
     public MessageBox(String Message,int width,int height) {
-        MessageLabel.setFont(PresFont.fnt.fontName());
-        buttonOK.setFont(PresFont.fntBld.fontName());
-        buttonSecondary.setFont(PresFont.fnt.fontName());
+        MessageLabel.setFont(PresFont.fntText);
+        buttonOK.setFont(PresFont.fntBldText);
+        buttonSecondary.setFont(PresFont.fntText);
         buttonSecondary.setVisible(false);
         setMinimumSize(new Dimension(300,120));
         setContentPane(contentPane);
