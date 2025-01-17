@@ -10,11 +10,11 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.text.MessageFormat;
 import java.util.*;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class UserClient extends ClientFrame implements Command{
-    private final String version= properties.version.description();
     private final JTextField crowdTextField;
     private final JButton applyButton;
     private final JButton cancelButton;
@@ -73,13 +73,13 @@ public class UserClient extends ClientFrame implements Command{
         });
 
         JLabel CrowdTip=new JLabel("  Crowd:");
-        CrowdTip.setFont(PresFont.fntDisplay.fontName());
+        CrowdTip.setFont(PresFont.fntDisplay);
         ChooseARoom.add(CrowdTip);
 
         // Crowd TextField
         crowdTextField = new JTextField(3);
         ChooseARoom.add(crowdTextField);
-        crowdTextField.setFont(PresFont.fntText.fontName());
+        crowdTextField.setFont(PresFont.fntText);
 
 
         // Register Button Function
@@ -92,8 +92,8 @@ public class UserClient extends ClientFrame implements Command{
         buttonPanel.add(clearButton);
 
         // Filter ComboBox
-        filter=new JComboBox<>(new String[]{"-Select filter-","Applying","Occupying","Available","Occupied"});
-        filter.setFont(PresFont.fntText.fontName());
+        filter=new JComboBox<>(new String[]{"-"+bundle.getString("selectFilter")+"-",bundle.getString("applying"),bundle.getString("occupying"),bundle.getString("available"),bundle.getString("occupied")});
+        filter.setFont(PresFont.fntText);
         buttonPanel.add(filter);
         filter.addItemListener(e -> {
             try {
@@ -115,8 +115,8 @@ public class UserClient extends ClientFrame implements Command{
 
 
         // Apply Button
-        applyButton = new JButton("Apply");
-        applyButton.setFont(PresFont.fntBld.fontName());
+        applyButton = new JButton(bundle.getString("applyRoom"));
+        applyButton.setFont(PresFont.fntBld);
         applyButton.addActionListener(e -> {
             try {
                 Crowd[0] = Integer.parseInt(crowdTextField.getText().trim());
@@ -124,33 +124,33 @@ public class UserClient extends ClientFrame implements Command{
                 int i=(int)roomList.getSelectedItem();
                 apply(i,ID[0], Crowd[0]);
             }catch (NumberFormatException ex1){
-                System.out.println("Illegal number of people.");
-                new MessageBox("Illegal number of people.",400,100).setVisible(true);
+                System.out.println(bundle.getString("illegalCrowdTip"));
+                new MessageBox(bundle.getString("illegalCrowdTip"),400,100).setVisible(true);
             }catch(Exception ex3){
-                System.out.println("Failed to submit application, try again later.");
-                new MessageBox("Failed to submit application, try again later.",400,100).setVisible(true);
+                System.out.println(bundle.getString("applyFail"));
+                new MessageBox(bundle.getString("applyFail"),400,100).setVisible(true);
             }
         });
         Actions.add(applyButton);
 
         // Cancel Button
-        cancelButton = new JButton("Cancel");
-        cancelButton.setFont(PresFont.fntBld.fontName());
+        cancelButton = new JButton(bundle.getString("cancelRoom"));
+        cancelButton.setFont(PresFont.fntBld);
         cancelButton.addActionListener(e -> {
             try{
                 if(roomList.getSelectedItem()!=null) cancel((int)roomList.getSelectedItem());
                 else throw new RuntimeException();
             }
             catch(Exception e1){
-                System.out.println("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.");
-                new MessageBox("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.",600,120).setVisible(true);
+                System.out.println(bundle.getString("cancelFail"));
+                new MessageBox(bundle.getString("cancelFail"),600,120).setVisible(true);
             }
         });
         Actions.add(cancelButton);
 
         // End Occupying Button
-        endOccuButton = new JButton("End Occupying");
-        endOccuButton.setFont(PresFont.fntBld.fontName());
+        endOccuButton = new JButton(bundle.getString("endOccu"));
+        endOccuButton.setFont(PresFont.fntBld);
         endOccuButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -161,17 +161,17 @@ public class UserClient extends ClientFrame implements Command{
                 observers.get((int)roomList.getSelectedItem()).EndOccupying(ID[0]);
                 observers.remove((int)roomList.getSelectedItem());
                 scanning("NoMessage");
-                new MessageBox("Ended Occupying.",400,100).setVisible(true);
+                new MessageBox(bundle.getString("endOccuSuc"),400,100).setVisible(true);
             } catch (Exception ex) {
-                System.out.println("Failed to end occupying, contact the supporters.");
-                new MessageBox("Failed to end occupying, contact the supporters.",400,100).setVisible(true);
+                System.out.println(bundle.getString("endOccuFail"));
+                new MessageBox(bundle.getString("endOccuFail"),400,100).setVisible(true);
             }
         });
         Actions.add(endOccuButton);
 
         // NeedRepair Button
-        needRepairButton = new JButton("Repair Report");
-        needRepairButton.setFont(PresFont.fntBld.fontName());
+        needRepairButton = new JButton(bundle.getString("repReport"));
+        needRepairButton.setFont(PresFont.fntBld);
         needRepairButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -183,9 +183,9 @@ public class UserClient extends ClientFrame implements Command{
                         observers.get((int)roomList.getSelectedItem()).RepairReportU(ID[0]);
                     else throw new NullPointerException();
                 else throw new NullPointerException();
-                System.out.println("Repair reported.");
+                System.out.println(bundle.getString("repReportSuc"));
             } catch (Exception ex) {
-                System.out.println("Repair reporting failed.");
+                System.out.println(bundle.getString("repReportFail"));
             }
         });
         Actions.add(needRepairButton);
@@ -196,9 +196,9 @@ public class UserClient extends ClientFrame implements Command{
 
         // themed-paint
         try{
-            paintLD();}
+            paintTheme();}
         catch (Exception e){
-            System.out.println("Failed to set theme.");
+            System.out.println(bundle.getString("setThemeFail"));
         }
     }
 
@@ -213,11 +213,11 @@ public class UserClient extends ClientFrame implements Command{
         System.gc(); //Initialize the observers.
         OverallInfo.clear();
         FilteredInfo.clear();
-        FilteredInfo.setTitle(!Objects.equals(filter.getSelectedItem(), "-Select filter-") ?"Filter: "+ filter.getSelectedItem():"No filter");
+        FilteredInfo.setTitle(filter.getSelectedIndex()!=0?bundle.getString("filterTip")+" "+ filter.getSelectedItem():bundle.getString("noFilter"));
         if(ID[0]==-1){
-            OverallInfo.add(-1,"null","No certification!!!\nInput correct id.\n",e->{});
-            FilteredInfo.add(-1,"null","No certification!!!\nInput correct id.\n",e->{});
-            new MessageBox("No certification!!! Input correct id.",400,100).setVisible(true);
+            OverallInfo.add(-1,"null",bundle.getString("noCertification"),e->{});
+            FilteredInfo.add(-1,"null",bundle.getString("noCertification"),e->{});
+            new MessageBox(bundle.getString("noCertification"),400,100).setVisible(true);
             return;
         }
         for(int i=0;i<100;i++){
@@ -235,7 +235,7 @@ public class UserClient extends ClientFrame implements Command{
                         "Capacity: "+server.Capacity()+"("+server.TypeStr()+")\n"+
                         "State: "+server.StateStr()+"  "+(occupying?"Occupying, ":"")+(applying||occupying?((server.NumberOfAppliers()-1)+" appliers besides you"):"");
                 if(occupying) {
-                    OverallInfo.add(count,"Occupying","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e->{
+                    OverallInfo.add(count,"Occupying",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e->{
                         try{
                             roomList.setSelectedItem(finalCount);
                             new MessageBox(info,600,140).setVisible(true);
@@ -243,7 +243,7 @@ public class UserClient extends ClientFrame implements Command{
                     });
                 }
                 else if(applying) {
-                    OverallInfo.add(count,server.getReserved() == ID[0] ? "Reserved" : "Applying","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                    OverallInfo.add(count,server.getReserved() == ID[0] ? "Reserved" : "Applying",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e-> {
                         try {
                             roomList.setSelectedItem(finalCount);
                             new MessageBox(info, 600, 140).setVisible(true);
@@ -252,7 +252,7 @@ public class UserClient extends ClientFrame implements Command{
                     });
                 }
                 else{
-                    OverallInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                    OverallInfo.add(count,"",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e-> {
                         try {
                             roomList.setSelectedItem(finalCount);
                             new MessageBox(info, 600, 140).setVisible(true);
@@ -260,10 +260,10 @@ public class UserClient extends ClientFrame implements Command{
                         }
                     });
                 }
-                switch((String) Objects.requireNonNull(filter.getSelectedItem())){
-                    case "Available":{
+                switch(filter.getSelectedIndex()){
+                    case 3:{
                         if(available){
-                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                            FilteredInfo.add(count,"", MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e-> {
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
@@ -273,9 +273,9 @@ public class UserClient extends ClientFrame implements Command{
                         }
                         break;
                     }
-                    case "Occupying":{
+                    case 2:{
                         if(occupying){
-                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                            FilteredInfo.add(count,"",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e-> {
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
@@ -285,9 +285,9 @@ public class UserClient extends ClientFrame implements Command{
                         }
                         break;
                     }
-                    case "Occupied":{
+                    case 4:{
                         if(occupied){
-                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                            FilteredInfo.add(count,"",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e-> {
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
@@ -297,9 +297,9 @@ public class UserClient extends ClientFrame implements Command{
                         }
                         break;
                     }
-                    case "Applying":{
+                    case 1:{
                         if(applying){
-                            FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e-> {
+                            FilteredInfo.add(count,"",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e-> {
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
@@ -322,7 +322,7 @@ public class UserClient extends ClientFrame implements Command{
         }
         if(!Objects.equals(State, "NoMessage")) {
             if (connect == 0) {
-                OverallInfo.add(count,"null","No remote rooms found", e-> {});
+                OverallInfo.add(count,"null",bundle.getString("noRooms"), e-> {});
                 System.out.println("No remote rooms found.\n");
             } else {
                 OverallInfo.setTitle("Overall: "+connect+" rooms");
@@ -358,9 +358,9 @@ public class UserClient extends ClientFrame implements Command{
             ID[0]=-1;
         }
         catch(NotBoundException | IOException ex2){
-            Messenger.append("Failed to connect to the remote server.\n");
-            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
             ID[0]=-1;
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Connection Failed","Failed to connect to the remote server.",400,100,"Connection Settings...",e->Load("Account")).setVisible(true);
         }
         catch(DuplicationException ex3){
             Messenger.append("id already exist.");
@@ -432,7 +432,7 @@ public class UserClient extends ClientFrame implements Command{
             case "report":{
                 int RoomID=-1;
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 try{
@@ -446,7 +446,7 @@ public class UserClient extends ClientFrame implements Command{
                         else RoomID = Integer.parseInt(com[1].trim());
                         Notification.setText("");
                         if(observers.get(RoomID)!=null)observers.get(RoomID).RepairReportU(ID[0]);else throw new RuntimeException();
-                        System.out.println("Repair reported.");
+                        System.out.println(bundle.getString("repReportSuc"));
                     }
                     catch(NumberFormatException e){
                         System.out.println("Input correct room ID.");
@@ -458,14 +458,14 @@ public class UserClient extends ClientFrame implements Command{
                         if(observers.get(RoomID)!=null)observers.get(RoomID).RepairReportU(ID[0]);else throw new RuntimeException();
                     }
                 }catch (Exception e) {
-                    System.out.println("Failed to report repair.");
+                    System.out.println(bundle.getString("repReportFail"));
                 }
                 break;
             }
             case "cancel":{
                 int RoomID;
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 try {
@@ -488,13 +488,13 @@ public class UserClient extends ClientFrame implements Command{
                         System.out.println("Input correct room ID.");
                     }
                     catch (Exception e1) {
-                        System.out.println("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.");
-                        new MessageBox("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.", 600, 120).setVisible(true);
+                        System.out.println(bundle.getString("cancelFail"));
+                        new MessageBox(bundle.getString("cancelFail"), 600, 120).setVisible(true);
                     }
 
                 }catch(Exception e2){
-                    System.out.println("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.");
-                    new MessageBox("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.", 600, 120).setVisible(true);
+                    System.out.println(bundle.getString("cancelFail"));
+                    new MessageBox(bundle.getString("cancelFail"), 600, 120).setVisible(true);
                 }
                 break;
             }
@@ -502,7 +502,7 @@ public class UserClient extends ClientFrame implements Command{
                 int RoomID;
                 int crowd=-1;
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 try {
@@ -532,23 +532,23 @@ public class UserClient extends ClientFrame implements Command{
                         System.out.println("Input correct room ID.");
                     }
                     catch (IllegalCrowdException ex1){
-                        System.out.println("Illegal number of people.");
+                        System.out.println(bundle.getString("illegalCrowdTip"));
 
                     }catch(Exception ex3){
-                        System.out.println("Failed to submit application, try again later.");
-                        new MessageBox("Failed to submit application, try again later.",400,100).setVisible(true);
+                        System.out.println(bundle.getString("applyFail"));
+                        new MessageBox(bundle.getString("applyFail"),400,100).setVisible(true);
                     }
 
                 }catch(Exception ex3){
-                    System.out.println("Failed to submit application, try again later.");
-                    new MessageBox("Failed to submit application, try again later.",400,100).setVisible(true);
+                    System.out.println(bundle.getString("applyFail"));
+                    new MessageBox(bundle.getString("applyFail"),400,100).setVisible(true);
                 }
                 break;
             }
             case "endoccu":{
                 int RoomID;
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 try{
@@ -583,18 +583,17 @@ public class UserClient extends ClientFrame implements Command{
                     if(com.length>1){
                         if (Objects.equals(com[1], "?")) System.out.println("""
                                 help for scan:
-                                "nofilter","0"->"No filter"
+                                "nofilter","0"->"noFilter"
                                 "applying","1"->"Applying"
                                 "occupying","2"->"Occupying"
                                 "available","3"-> "Available"
                                 "occupied","4"->"Occupied\"""");
-                        else filter.setSelectedItem(switch (com[1]){
-                            case "nofilter","0"->"-Select filter-";
-                            case "applying","1"->"Applying";
-                            case "occupying","2"->"Occupying";
-                            case "available","3"-> "Available";
-                            case "occupied","4"->"Occupied";
-                            default -> new RuntimeException();
+                        else filter.setSelectedIndex(switch (com[1]){
+                            case "applying","1"->1;
+                            case "occupying","2"->2;
+                            case "available","3"->3;
+                            case "occupied","4"->4;
+                            default -> 0;
                         });
                     }
                     scanButton.doClick();
@@ -605,7 +604,7 @@ public class UserClient extends ClientFrame implements Command{
             }
             case "disconnect":{
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 clientDisconnect(true);
@@ -702,8 +701,8 @@ public class UserClient extends ClientFrame implements Command{
             scanning("NoMessage");
             new MessageBox("Application submitted.",400,100).setVisible(true);
         } catch (IllegalCrowdException ex1){
-            System.out.println("Illegal number of people.");
-            new MessageBox("Illegal number of people.",400,100).setVisible(true);
+            System.out.println(bundle.getString("illegalCrowdTip"));
+            new MessageBox(bundle.getString("illegalCrowdTip"),400,100).setVisible(true);
         }catch (TooManyApplicationsException ex2){
             System.out.println("You have reached the bound of your quota for applications, scan or wait a while.");
             new MessageBox("You have reached the bound of your quota for applications. \nScan or wait a while.",600,100).setVisible(true);
@@ -711,8 +710,8 @@ public class UserClient extends ClientFrame implements Command{
             System.out.println("You have already applied for this room.");
             new MessageBox("You have already applied for this room.",400,100).setVisible(true);
         }catch(Exception ex3){
-            System.out.println("Failed to submit application, try again later.");
-            new MessageBox("Failed to submit application, try again later.",400,100).setVisible(true);
+            System.out.println(bundle.getString("applyFail"));
+            new MessageBox(bundle.getString("applyFail"),400,100).setVisible(true);
         }
     }
 
@@ -734,8 +733,8 @@ public class UserClient extends ClientFrame implements Command{
             System.out.println("Application canceled, but an exception occurs when scanning.");
             new MessageBox("Application canceled, but an exception occurs when scanning.",400,100).setVisible(true);
         }catch (Exception ex) {
-            System.out.println("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.");
-            new MessageBox("Failed to cancel application, check if you are applying this room.\nif you are occupying, the occupation is ended.",600,120).setVisible(true);
+            System.out.println(bundle.getString("cancelFail"));
+            new MessageBox(bundle.getString("cancelFail"),600,120).setVisible(true);
         }
 
     }

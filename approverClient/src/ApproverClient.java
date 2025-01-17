@@ -8,20 +8,25 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 class CheckItem{
     public final JCheckBox checkBx;
     public final int id;
     CheckItem(String Text,int id){
         this.checkBx=new JCheckBox(Text);
-        checkBx.setFont(PresFont.fntText.fontName());
+        checkBx.setFont(PresFont.fntText);
         this.id=id;
     }
 }
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ApproverClient extends ClientFrame{
+    private final JFrame checkFrame;
     private final JPanel ApplierList;
     private final JButton checkButton;
     private final JButton ApproveButton=new JButton();
@@ -57,7 +62,7 @@ public class ApproverClient extends ClientFrame{
     public ApproverClient() {
         super();
         // Title
-        setTitle("RoomX - ApproverClient");
+        setTitle("RoomX - "+bundle.getString("approverClient"));
 
         // Exit Operation
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -66,26 +71,32 @@ public class ApproverClient extends ClientFrame{
         // RoomList ComboBox Function
         roomList.addItemListener(e -> {
             try {
-                if(roomList.getSelectedItem()!=null)selected.setText(observers.get(roomList.getSelectedItem()!=null?roomList.getSelectedItem():-1).ToString());
+                if(roomList.getSelectedItem()!=null){
+                    selected.setText(observers.get(roomList.getSelectedItem()!=null?roomList.getSelectedItem():-1).ToString());
+                    selected.setToolTipText(selected.getText());
+                }
             } catch (RemoteException ex) {
                 throw new RuntimeException(ex);
             }
         });
 
+
         // Register Button Function
         registerButton.addActionListener(e -> clientRegister());
 
+        // checkFrame
+        checkFrame=new JFrame(bundle.getString("check"));
+        checkFrame.setSize(500,500);
+        checkFrame.setLocationRelativeTo(null);
 
         // CheckPane
         CheckPane=new JPanel();
         CheckPane.setLayout(new BorderLayout());
-        CheckPane.setVisible(false);
-        add(CheckPane,BorderLayout.EAST);
 
         // Room Label
         RoomL=new JTextPane();
         RoomL.setEditable(false);
-        RoomL.setFont(new Font("微软雅黑",Font.BOLD,12));
+        RoomL.setFont(PresFont.fnt);
         CheckPane.add(RoomL,BorderLayout.NORTH);
 
         // Decision Panel
@@ -94,7 +105,7 @@ public class ApproverClient extends ClientFrame{
         CheckPane.add(decisionPane,BorderLayout.SOUTH);
 
         // Appliers ComboBox
-        AppliersChoice.setFont(PresFont.fntDisplay.fontName());
+        AppliersChoice.setFont(PresFont.fntDisplay);
         decisionPane.add(AppliersChoice);
 
 
@@ -103,7 +114,7 @@ public class ApproverClient extends ClientFrame{
         BoxLayout layout=new BoxLayout(ApplierList,BoxLayout.Y_AXIS);
         ApplierList.setLayout(layout);
         ApplierList.setVisible(true);
-        ApplierList.setFont(PresFont.fntText.fontName());
+        ApplierList.setFont(PresFont.fntText);
 
         // Decision Buttons
         ///JButton ApproveButton=new JButton();
@@ -115,17 +126,16 @@ public class ApproverClient extends ClientFrame{
         ApproveButton.setVisible(true);
         RejectButton.setVisible(true);
         BackButton.setVisible(true);
-        ApproveButton.setFont(PresFont.fntBld.fontName());
-        RejectButton.setFont(PresFont.fntBld.fontName());
-        BackButton.setFont(PresFont.fntBld.fontName());
-        ApproveButton.setText("Approve");
-        RejectButton.setText("Reject");
-        BackButton.setText("Back");
+        ApproveButton.setFont(PresFont.fntBld);
+        RejectButton.setFont(PresFont.fntBld);
+        BackButton.setFont(PresFont.fntBld);
+        ApproveButton.setText(bundle.getString("approve"));
+        RejectButton.setText(bundle.getString("reject"));
+        BackButton.setText(bundle.getString("back"));
         ApproveButton.addActionListener(e -> {
             try {
                 if(AppliersChoice.getSelectedItem()==null)throw new NullPointerException();
-                switch ((String)AppliersChoice.getSelectedItem()) {
-                    case "Selected":{
+                if(AppliersChoice.getSelectedItem().equals(bundle.getString("selected"))) {
                         int id=-1;
                         int count=0;
                         for (CheckItem checkItem : appliersCheck) {
@@ -136,43 +146,40 @@ public class ApproverClient extends ClientFrame{
                             }
                         }
                         if(count>1) {
-                            System.out.println("You can only approve 1 applier at a time.");
-                            new MessageBox("You can only approve 1 applier at a time.", 400, 100).setVisible(true);
+                            System.out.println(bundle.getString("youCanOnlyApproveOne"));
+                            new MessageBox(bundle.getString("youCanOnlyApproveOne"), 400, 100).setVisible(true);
                         }
                         else if(id==-1)throw new NullPointerException(); else{
-                            ConfirmDialog c = new ConfirmDialog("Approve applier #" + id + "'s application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 600, 100);
+                            ConfirmDialog c = new ConfirmDialog(bundle.getString("continueTitle"),MessageFormat.format(bundle.getString("approveSpecConfirm"),id,Focusing[0],observers.get(Focusing[0]).NameStr()), 600, 100);
                             c.setVisible(true);
                             if (!c.isOK()) return;
                             observers.get(Focusing[0]).Approve(id);
                         }
-                        break;
                     }
-                    case "All":{
-                        System.out.println("You can only approve 1 applier at a time.");
-                        new MessageBox("You can only approve 1 applier at a time.",400,100).setVisible(true);
-                        break;
+                    else if(AppliersChoice.getSelectedItem().equals(bundle.getString("all"))){
+                        System.out.println(bundle.getString("youCanOnlyApproveOne"));
+                        new MessageBox(bundle.getString("youCanOnlyApproveOne"),400,100).setVisible(true);
                     }
-                    case "N/A":{
-                        System.out.println("No appliers to approve.");
-                        new MessageBox("No appliers to approve.",320,100).setVisible(true);
-                        break;
+                    else if(AppliersChoice.getSelectedItem().equals(bundle.getString("NA"))){
+                        System.out.println(bundle.getString("noApplier2Approve"));
+                        new MessageBox(bundle.getString("noApplier2Approve"),320,100).setVisible(true);
+                        
                     }
-                    default: {
+                    else {
                         int i = Integer.parseInt((String) AppliersChoice.getSelectedItem());
                         try {
-                            ConfirmDialog c = new ConfirmDialog("Approve applier #" + i + "'s application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                            ConfirmDialog c = new ConfirmDialog(bundle.getString("continueTitle"),MessageFormat.format(bundle.getString("approveSpecConfirm"),i,Focusing[0],observers.get(Focusing[0]).NameStr()), 600, 100);
                             c.setVisible(true);
                             if (!c.isOK()) return;
                             int suc = observers.get(Focusing[0]).Approve(i);
                             Messenger.setText("");
                             if (suc == 0) throw new RuntimeException();
-                            System.out.println("Approval success!");
+                            System.out.println(bundle.getString("approvalSuc"));
                         } catch (Exception ex) {
                             Messenger.setText("");
-                            System.out.println("Failed to approve, try again later.");
+                            System.out.println(bundle.getString("approvalFail"));
                         }
                     }
-                }
                 // check and scan again
                 try{
                     check(Focusing[0]);
@@ -181,16 +188,15 @@ public class ApproverClient extends ClientFrame{
             }
             catch (Exception ex){
                 Messenger.setText("");
-                System.out.println("Failed to approve, try again later.");
-                new MessageBox("Failed to approve, try again later.",400,100).setVisible(true);
+                System.out.println(bundle.getString("approvalFail"));
+                new MessageBox(bundle.getString("approvalFail"),400,100).setVisible(true);
             }
         });
         RejectButton.addActionListener(e -> {
             try {
                 if (AppliersChoice.getSelectedItem() == null) throw new NullPointerException();
-                switch ((String) AppliersChoice.getSelectedItem()) {
-                    case "Selected": {
-                        ConfirmDialog c = new ConfirmDialog("Reject selected appliers' application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                if(AppliersChoice.getSelectedItem().equals(bundle.getString("selected"))) {
+                        ConfirmDialog c = new ConfirmDialog(bundle.getString("continueTitle"),MessageFormat.format(bundle.getString("rejectSelectedConfirm"),Focusing[0],observers.get(Focusing[0]).NameStr()), 600, 100);
                         c.setVisible(true);
                         if (!c.isOK()) return;
                         int id;
@@ -201,14 +207,14 @@ public class ApproverClient extends ClientFrame{
                                     if (observers.get(Focusing[0]).Occupying(id)) throw new RuntimeException();
                                     observers.get(Focusing[0]).Reject(id);
                                 } catch (Exception ex1) {
-                                    System.out.println("Failed to reject applier #" + id + ".");
+                                    System.out.println(MessageFormat.format(bundle.getString("rejectSpecFail"),id));
                                 }
                             }
                         }
-                        break;
-                    }//case
-                    case "All": {
-                        ConfirmDialog c = new ConfirmDialog("Reject all appliers' application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                        
+                    }
+                    else if(AppliersChoice.getSelectedItem().equals(bundle.getString("all"))) {
+                        ConfirmDialog c = new ConfirmDialog(bundle.getString("continueTitle"),MessageFormat.format(bundle.getString("rejectAllConfirm"),Focusing[0],observers.get(Focusing[0]).NameStr()), 600, 100);
                         c.setVisible(true);
                         if (!c.isOK()) return;
                         int id;
@@ -218,34 +224,31 @@ public class ApproverClient extends ClientFrame{
                                 if (observers.get(Focusing[0]).Occupying(id)) throw new RuntimeException();
                                 observers.get(Focusing[0]).Reject(id);
                             } catch (Exception ex1) {
-                                System.out.println("Failed to reject applier #" + id + ".");
+                                System.out.println(MessageFormat.format(bundle.getString("rejectSpecFail"),id));
                             }
                         }
-                        break;
-                    }//case
-                    case "N/A": {
-                        System.out.println("No appliers to reject.");
-                        new MessageBox("No appliers to reject.", 320, 100).setVisible(true);
-                        break;
-                    }//case
-                    default: {
+                    }
+                    else if(AppliersChoice.getSelectedItem().equals(bundle.getString("NA"))){
+                        System.out.println(bundle.getString("noApplier2Reject"));
+                        new MessageBox(bundle.getString("noApplier2Reject"), 320, 100).setVisible(true);
+                    }
+                    else {
                         int i = Integer.parseInt((String) AppliersChoice.getSelectedItem());
                         try {
-                            ConfirmDialog c = new ConfirmDialog("Reject applier #" + i + "'s application for room #" + Focusing[0] + "(aka" + observers.get(Focusing[0]).NameStr() + ")" + "?", 600, 100);
+                            ConfirmDialog c = new ConfirmDialog(bundle.getString("continueTitle"),MessageFormat.format(bundle.getString("rejectSpecConfirm"),i,Focusing[0],observers.get(Focusing[0]).NameStr()), 600, 100);
                             c.setVisible(true);
                             if (!c.isOK()) return;
                             int suc = observers.get(Focusing[0]).Reject(i);
                             Messenger.setText("");
                             if (suc == 0) throw new RuntimeException();
-                            System.out.println("Rejection success!");
+                            System.out.println(bundle.getString("rejectSuc"));
                             Notification.setText("");
                         } catch (Exception ex) {
                             Messenger.setText("");
-                            System.out.println("Failed to reject, try again later.");
-                            new MessageBox("Failed to reject, try again later.", 400, 100).setVisible(true);
+                            System.out.println(bundle.getString("rejectFail"));
+                            new MessageBox(bundle.getString("rejectFail"), 400, 100).setVisible(true);
                         }
                     }//default
-                }//switch
                 // Check and scan Again
                 try {
                     check(Focusing[0]);
@@ -253,16 +256,15 @@ public class ApproverClient extends ClientFrame{
             }//try
             catch(Exception ex1){
                 Messenger.setText("");
-                System.out.println("Failed to reject, try again later.");
+                System.out.println(bundle.getString("rejectFail"));
             }//catch
         });
-        BackButton.addActionListener(e -> {
-            if(CheckPane.isVisible()) {
-                CheckPane.setVisible(false);}
-        });
+        BackButton.addActionListener(e -> checkFrame.dispose());
 
         // ApplierList add to CheckPane
         CheckPane.add(ApplierList,BorderLayout.CENTER);
+        checkFrame.setLayout(new BorderLayout());
+        checkFrame.add(CheckPane,BorderLayout.CENTER);
 
         // Disconnect Button Function
         DisconnectButton.addActionListener(e -> clientDisconnect(true));
@@ -273,8 +275,8 @@ public class ApproverClient extends ClientFrame{
 
 
         // Check Button
-        checkButton = new JButton("Check...");
-        checkButton.setFont(PresFont.fntBld.fontName());
+        checkButton = new JButton(bundle.getString("check")+"...");
+        checkButton.setFont(PresFont.fntBld);
         checkButton.addActionListener(e -> {
             Notification.setText("");
             Focusing[0]=(int) (roomList.getSelectedItem()!=null?roomList.getSelectedItem():-1);
@@ -292,14 +294,14 @@ public class ApproverClient extends ClientFrame{
 
         // themed-paint
         try{
-            paintLD();}
+            paintTheme();}
         catch (Exception e){
-            System.out.println("Failed to set theme.");
+            System.out.println(bundle.getString("setThemeFail"));
         }
     }
 
     public void setComBoDefault() {
-        AppliersChoice.setSelectedItem("Selected");
+        AppliersChoice.setSelectedItem(bundle.getString("selected"));
     }
 
     @Override
@@ -314,7 +316,7 @@ public class ApproverClient extends ClientFrame{
         switch (com[0]){
             case "connect","register":{
                 if(ID[0]!=-1){
-                    System.out.println("Disconnect current user first, please.");
+                    System.out.println(bundle.getString("needDisconnect"));
                     break;
                 }
                 try{if(com[1]!=null) idTextField.setText(com[1]);}catch(Exception ignored){}
@@ -323,7 +325,7 @@ public class ApproverClient extends ClientFrame{
             }
             case "approve":{
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 int RoomID;
@@ -338,15 +340,15 @@ public class ApproverClient extends ClientFrame{
                     observers.get(RoomID).Approve(UserID);
                     check(Focusing[0]);
                 } catch (NumberFormatException|ArrayIndexOutOfBoundsException e){
-                    System.out.println("Illegal room ID or user ID.");
+                    System.out.println(bundle.getString("illegalRoomNUserID"));
                 } catch (Exception e) {
-                    System.out.println("Failed to approve, check if the status is correct.");
+                    System.out.println(bundle.getString("approvalFail"));
                 }
                 break;
             }
             case "reject":{
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 int RoomID;
@@ -365,19 +367,19 @@ public class ApproverClient extends ClientFrame{
                         observers.get(RoomID).Reject(UserID);
                     }
                     if(roomList.getSelectedItem()!=null)Focusing[0]=Focusing[0]<=0?(int)roomList.getSelectedItem():Focusing[0];
-                    System.out.println("Rejecting success.");
+                    System.out.println(bundle.getString("rejectSuc"));
                     check(Focusing[0]);
                 } catch (NumberFormatException|ArrayIndexOutOfBoundsException e){
-                    System.out.println("Illegal room ID or user ID.");
+                    System.out.println(bundle.getString("illegalRoomNUserID"));
                 } catch (Exception e) {
-                    System.out.println("Failed to reject, check if the status is correct.");
+                    System.out.println(bundle.getString("rejectFail"));
                 }
                 break;
             }
             case "check":{
                 int RoomID;
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 try{
@@ -391,7 +393,7 @@ public class ApproverClient extends ClientFrame{
                         check(RoomID);
                     }
                     catch(NumberFormatException e){
-                        System.out.println("Input correct room ID.");
+                        System.out.println(bundle.getString("roomIDIncorrect"));
                     }
                     catch (ArrayIndexOutOfBoundsException e1){
                         if (roomList.getSelectedItem() != null) RoomID = (int) roomList.getSelectedItem();
@@ -400,7 +402,7 @@ public class ApproverClient extends ClientFrame{
                         check(RoomID);
                     }}
                 catch (RemoteException e1){
-                    System.out.println("Failed to get applier list from server.");
+                    System.out.println(bundle.getString("noApplierList"));
                 }
                 break;
             }
@@ -414,7 +416,7 @@ public class ApproverClient extends ClientFrame{
             }
             case "disconnect":{
                 if(ID[0]==-1){
-                    System.out.println("Please register first.");
+                    System.out.println(bundle.getString("needRegister"));
                     break;
                 }
                 clientDisconnect(true);
@@ -433,21 +435,11 @@ public class ApproverClient extends ClientFrame{
                 break;
             }
             case "nihao":{
-                System.out.println("""
-                        Ni hao ya, chi le ma?\
-                        
-                        Jin tian guo de zen yang, you mei you kai xin de shier?\
-                        
-                        You fan xin shi ye bie men zai xin li bianer, shu ru "tell" gao su wo ba!""");
+                System.out.println(bundle.getString("nihao"));
                 break;
             }
             case "hello":{
-                System.out.println("""
-                        Hi there, how's it going?\
-                        
-                        Is there something exciting?\
-                        
-                        Or something bothering you? Tell me with "tell"!""");
+                System.out.println(bundle.getString("hello"));
                 break;
             }
             case "love":{
@@ -463,15 +455,8 @@ public class ApproverClient extends ClientFrame{
                     new MessageBox("爱之花盛开的地方，生命便能欣欣向荣。\nWhere the flower of love blooms, life can thrive.\n    --Vincent Van Gogh",400,140).setVisible(true);
                 }
                 else{
-                    System.out.println("""
-                        Yes, I'm listening to you.\
-                        
-                        Yet I'm not able to talking to you in this version,\
-                        
-                        I'm glad you use /tell to pour sth out to me.\
-                        
-                        The content you just told me will not be sent to the server.""");
-                    ConfirmDialog c=new ConfirmDialog("听着呢。\n虽然我还没有和你对话的能力，\n但是很高兴有你这样使用/tell说点什么的人。\n刚才的对话内容不会上传到服务器。\n不过计数器会记录一次，如果你不介意的话，就按下OK吧",400,240);
+                    System.out.println(bundle.getString("tell"));
+                    ConfirmDialog c=new ConfirmDialog(bundle.getString("message"),bundle.getString("tell"),480,240);
                     c.setVisible(true);
                     if(c.isOK()){
                         try {
@@ -484,15 +469,15 @@ public class ApproverClient extends ClientFrame{
                 break;
             }
             case "light":{
-                if(LightDarkMode.isDark())switchLD();else System.out.println("Already using light theme!");
+                if(LightDarkMode.isDark())switchLD();else System.out.println(MessageFormat.format(bundle.getString("alreadyUsingTheme"),bundle.getString("light")));
                 break;
             }
             case "dark":{
-                if(!LightDarkMode.isDark())switchLD();else System.out.println("Already using dark theme!");
+                if(!LightDarkMode.isDark())switchLD();else System.out.println(MessageFormat.format(bundle.getString("alreadyUsingTheme"),bundle.getString("dark")));
                 break;
             }
             default:{
-                System.out.println("Incorrect command.");
+                System.out.println(bundle.getString("incorrectCommand"));
             }
         }
     }
@@ -509,12 +494,12 @@ public class ApproverClient extends ClientFrame{
         FilteredInfo.clear();
         SwingUtilities.updateComponentTreeUI(OverallInfo);
         SwingUtilities.updateComponentTreeUI(FilteredInfo);
-        FilteredInfo.setTitle("Application(s):");
+        FilteredInfo.setTitle(bundle.getString("applicationTip"));
         int n;
         if(ID[0]==-1){
-            OverallInfo.add(-1,"null","No certification!!!\nInput correct id.\n",e->{});
-            FilteredInfo.add(-1,"null","No certification!!!\nInput correct id.\n",e->{});
-            new MessageBox("No certification!!! Input correct id.",400,100).setVisible(true);
+            OverallInfo.add(-1,"null",bundle.getString("noCertification"),e->{});
+            FilteredInfo.add(-1,"null",bundle.getString("noCertification"),e->{});
+            new MessageBox(bundle.getString("noCertification"),400,100).setVisible(true);
             return;
         }
         for(int i=0;i<100;i++){
@@ -523,26 +508,24 @@ public class ApproverClient extends ClientFrame{
                 server = (RoomMonitorWithAppliers) Naming.lookup("rmi://"+loc+"/Remote" + (count));
                 connect++;
                 n=server.NumberOfAppliers();
-                String info="Location "+count+": "+server.NameStr()+"\n"+
-                        "Capacity: "+server.Capacity()+"("+server.TypeStr()+")\n"+
-                        "State: "+server.StateStr()+"  "+server.NumberOfAppliers()+" appliers";
+                String info=MessageFormat.format(bundle.getString("richInfo"),count,server.NameStr(),server.Capacity(),server.TypeStr(),server.StateStr())+", "+MessageFormat.format(bundle.getString("applierNumberA"),server.NumberOfAppliers());
                 int finalCount = count;
-                OverallInfo.add(count,n>0?"NotExecuted":"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+")", e->{
+                OverallInfo.add(count,n>0?"NotExecuted":"",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+")", e->{
                     try{
                         roomList.setSelectedItem(finalCount);
-                        new MessageBox("Properties of room loc "+finalCount,info,600,140,"Check...",e1-> CheckPane.setVisible(true)).setVisible(true);
+                        new MessageBox(MessageFormat.format(bundle.getString("richInfoTitle"),finalCount),info,600,140,"Check...",e1-> checkFrame.setVisible(true)).setVisible(true);
                         if(CheckPane.isVisible()) check(finalCount);
                     }catch(Exception ignored){}
                 });
                 observers.put(count,new Approver(loc,count-1,ID[0]));
                 roomList.addItem(count);
                 if(server.NumberOfAppliers()>0){
-                    if(server.StateStr().equals("Guest-Occupied"))FilteredInfo.add(count,"","Location "+count+": "+server.NameStr()+"("+server.StateStr()+", "+server.NumberOfAppliers()+" appliers)", e->{
+                    if(server.StateStr().equals("Guest-Occupied"))FilteredInfo.add(count,"",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+", "+MessageFormat.format(bundle.getString("applierNumberA"),server.NumberOfAppliers())+")", e->{
                         try{
                             roomList.setSelectedItem(finalCount);
                             check(finalCount);
                         }catch(Exception ignored){}
-                    });else FilteredInfo.add(count,"NotExecuted","Location "+count+": "+server.NameStr()+"("+server.StateStr()+", "+server.NumberOfAppliers()+" appliers)", e->{
+                    });else FilteredInfo.add(count,"NotExecuted",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+", "+MessageFormat.format(bundle.getString("applierNumberA"),server.NumberOfAppliers())+")", e->{
                         try{
                             roomList.setSelectedItem(finalCount);
                             check(finalCount);
@@ -553,13 +536,13 @@ public class ApproverClient extends ClientFrame{
             }
         }
         if(connect==0){
-            OverallInfo.setTitle("Overall:");
-            OverallInfo.add(-1,"","No remote rooms.",e->{});
-            System.out.println("No remote rooms found.\n");
+            OverallInfo.setTitle(bundle.getString("overall"));
+            OverallInfo.add(-1,"",bundle.getString("noRooms"),e->{});
+            System.out.println(bundle.getString("noRooms"));
         }
         else {
-            OverallInfo.setTitle("Overall: "+connect+" rooms");
-            System.out.println("Scanning complete.\n"+connect+" rooms found.\n");
+            OverallInfo.setTitle(MessageFormat.format(bundle.getString("overallWithNum"),connect));
+            System.out.println(MessageFormat.format(bundle.getString("foundRooms"),connect));
         }
     }
 
@@ -568,19 +551,19 @@ public class ApproverClient extends ClientFrame{
         ApplierList.removeAll();
         SwingUtilities.updateComponentTreeUI(ApplierList);
         AppliersChoice.removeAllItems();
-        if(!CheckPane.isVisible()) {
-            CheckPane.setVisible(true);
+        if(!checkFrame.isVisible()) {
+            checkFrame.setVisible(true);
         }
         Focusing[0]=Focus;
-        RoomL.setText(" All appliers for room loc "+Focus+"\n"+observers.get(Focus).ToString());
+        RoomL.setText(MessageFormat.format(bundle.getString("allAppliers"),Focus)+"\n"+observers.get(Focus).ToString());
         try {
             boolean exi=false;
             appliers=observers.get(Focus).ApplierList();
             for(Map.Entry<Integer, UserInfo>observer : appliers.entrySet()) {
                 String curInfo="";
-                if(observers.get(Focus).Occupying(observer.getValue().getID())) curInfo="(Occupying) ";
-                else if(observers.get(Focus).getReserved()==(observer.getValue().getID())) curInfo="(Reserved) ";
-                curInfo=curInfo+"Applier id: "+observer.getValue().getID()+" Crowd: "+observer.getValue().getCrowd();
+                if(observers.get(Focus).Occupying(observer.getValue().getID())) curInfo="("+bundle.getString("occupying")+") ";
+                else if(observers.get(Focus).getReserved()==(observer.getValue().getID())) curInfo="("+bundle.getString("reserved")+") ";
+                curInfo=curInfo+MessageFormat.format(bundle.getString("applierInfo"),observer.getValue().getID(),observer.getValue().getCrowd());
                 CheckItem ele=new CheckItem(curInfo,observer.getValue().getID());
                 ApplierList.add(ele.checkBx);
                 appliersCheck.addLast(ele);
@@ -596,14 +579,14 @@ public class ApproverClient extends ClientFrame{
             ApproveButton.setEnabled(!observers.get(Focus).isReserved()&&exi);
             RejectButton.setEnabled(RejectButton.isEnabled()&&exi);
             if(!exi)throw new RuntimeException();
-            AppliersChoice.addItem("Selected");
-            AppliersChoice.addItem("All");
+            AppliersChoice.addItem(bundle.getString("selected"));
+            AppliersChoice.addItem(bundle.getString("all"));
         } catch (Exception ex) {
             Notification.setText("");
-            System.out.println("Cannot get applier list. \nCheck if there are any appliers.");
+            System.out.println(bundle.getString("emptyApplierList"));
             ApplierList.removeAll();
-            AppliersChoice.addItem("N/A");
-            new MessageBox("Cannot get applier list. Check if there are any appliers.",400,100).setVisible(true);
+            AppliersChoice.addItem(bundle.getString("NA"));
+            new MessageBox(bundle.getString("emptyApplierList"),400,140).setVisible(true);
         }
     }
 
@@ -614,12 +597,12 @@ public class ApproverClient extends ClientFrame{
             ID[0] = Integer.parseInt(idTextField.getText().trim());
             if(ID[0]<=0)throw new NumberFormatException();
             check=new Approver("rmi://"+loc+"/Remote0",ID[0]);
-            if(check.isDup())throw new DuplicationException("id already exist.");
-            Messenger.append("Confirmed id: " + ID[0] + "\n");
+            if(check.isDup())throw new DuplicationException(bundle.getString("idCollide"));
+            Messenger.append(MessageFormat.format(bundle.getString("registeredIdTip"),ID[0])+"\n");
             idTextField.setEditable(false);
             idTextField.setVisible(false);
             actionPanel.setVisible(true);
-            idLabelIn.setText("Welcome back, Approver #"+ID[0]+"!");
+            idLabelIn.setText(MessageFormat.format(bundle.getString("greeting"),bundle.getString("approver"),ID[0]));
             TextPane.setVisible(true);
             inputPanel.setVisible(false);
             add(TextPane, BorderLayout.CENTER);
@@ -627,18 +610,18 @@ public class ApproverClient extends ClientFrame{
             SwingUtilities.updateComponentTreeUI(TextPane);
             scanning("NoMessage");
         } catch (NumberFormatException ex1) {
-            Messenger.append("Illegal id.\n");
-            new MessageBox("Illegal id.",400,100).setVisible(true);
+            Messenger.append(bundle.getString("illegalId"));
+            new MessageBox(bundle.getString("illegalId"),400,100).setVisible(true);
             ID[0]=-1;
         }
         catch(NotBoundException | IOException ex2){
-            Messenger.append("Failed to connect to the remote server.\n");
-            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
             ID[0]=-1;
+            Messenger.append(bundle.getString("connectFail"));
+            new MessageBox(bundle.getString("connectFailTitle"),bundle.getString("connectFail"),400,100,"Connection Settings...",e->Load("Account")).setVisible(true);
         }
         catch(DuplicationException ex3){
-            Messenger.append("id already exist.");
-            new MessageBox("Id already exist.",400,100).setVisible(true);
+            Messenger.append(bundle.getString("idCollide"));
+            new MessageBox(bundle.getString("idCollide"),400,100).setVisible(true);
             ID[0]=-1;
             check=null;
         }
@@ -648,7 +631,7 @@ public class ApproverClient extends ClientFrame{
     protected void clientDisconnect(boolean NeedConfirm) {
         try {
             if (NeedConfirm) {
-                ConfirmDialog c = new ConfirmDialog("Disconnect " + ID[0] + " from the server?", 400, 100);
+                ConfirmDialog c = new ConfirmDialog(bundle.getString("continueTitle"),MessageFormat.format(bundle.getString("disconnectConfirm"),ID[0]), 400, 100);
                 c.setVisible(true);
                 if (!c.isOK()) return;
             }
@@ -664,14 +647,13 @@ public class ApproverClient extends ClientFrame{
             FilteredInfo.clear();
             idTextField.setEditable(true);
             idTextField.setVisible(true);
-            idLabel.setText("ID:");
-            Messenger.setText("Disconnected from the server.\n");
+            Messenger.setText(bundle.getString("disconnectSuc"));
             OverallInfo.clear();
             actionPanel.setVisible(false);
-            if (CheckPane.isVisible()) {
-                CheckPane.setVisible(false);
+            if (checkFrame.isVisible()) {
+                checkFrame.dispose();
             }
-            OverallInfo.setTitle("Overall:");
+            OverallInfo.setTitle(bundle.getString("overall"));
             TextPane.setVisible(false);
             inputPanel.setVisible(true);
             add(inputPanel,BorderLayout.CENTER);
@@ -679,48 +661,24 @@ public class ApproverClient extends ClientFrame{
             SwingUtilities.updateComponentTreeUI(inputPanel);
         }
         catch (RemoteException ex) {
-            new MessageBox("Failed to disconnect, try again later.",400,100).setVisible(true);
+            new MessageBox(bundle.getString("disconnectFail"),400,100).setVisible(true);
             throw new RuntimeException(ex);
         }
     }
 
     @Override
     protected void help(){
-        new MessageBox("Command Help","""
-                register/connect <your id>   (register as <id>)
-                disconnect   (disconnect current user from server)
-                scan   (refresh the room list)
-                clear   (clear the console)
-                approve <room id> <applier id>   (approve an applier's request)
-                reject <room id> <applier id>   (reject an applier's request)
-                check <room id>   (check the applier list of a room)
-                exit   (close the client)
-                help(or ?)   (show help, like this)
-                light/dark   (set light/dark theme)
-                "this", "~", "-", "room" represents for the room you are choosing.
-                """,500,300).setVisible(true);
-        System.out.println("""
-                Help:
-                register/connect <your id>   (register as <id>)
-                disconnect   (disconnect current user from server)
-                scan   (refresh the room list)
-                clear   (clear the console)
-                approve <room id> <applier id>   (approve an applier's request)
-                reject <room id> <applier id>   (reject an applier's request)
-                check <room id>   (check the applier list of a room)
-                exit   (close the client)
-                help(or ?)   (show help, like this)
-                light/dark   (set light/dark theme)
-                "this", "~", "-", "room" represents for the room you are choosing.
-                """);
+        new MessageBox(bundle.getString("commandHelpTitle"),bundle.getString("helpTextA"),500,300).setVisible(true);
+        System.out.println(bundle.getString("helpTip")+"\n"+bundle.getString("helpTextA"));
     }
 
     @Override
     protected void about(boolean love) {
-        new MessageBox("About",(love?"Love is invaluable.\n\n":"")+"RoomX (Approver Client)\nversion "+version+"\n(C)Vincent C. All rights reserved.",400,240).setVisible(true);
+        new MessageBox(bundle.getString("about"),(love?(bundle.getString("loveInvaluable")+"\n\n"):"")+MessageFormat.format(bundle.getString("aboutText"),bundle.getString("approverClient"),version),400,240).setVisible(true);
     }
 
     public static void main(String[] args) {
+
         ///Optional, if not work, delete it and its dependency.
         try {
             setLightDarkMode();
