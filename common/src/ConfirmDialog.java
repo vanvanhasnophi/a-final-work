@@ -13,9 +13,9 @@ public class ConfirmDialog extends JDialog {
     private boolean OK;
 
     public ConfirmDialog(String Message,int width,int height) {
-        MessageLabel.setFont(PresFont.fnt.fontName());
-        buttonOK.setFont(PresFont.fntBld.fontName());
-        buttonCancel.setFont(PresFont.fntBld.fontName());
+        MessageLabel.setFont(PresFont.fnt);
+        buttonOK.setFont(PresFont.fntBld);
+        buttonCancel.setFont(PresFont.fntBld);
         setMinimumSize(new Dimension(300,120));
         setTitle("Confirm?");
         setContentPane(contentPane);

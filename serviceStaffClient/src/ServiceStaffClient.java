@@ -18,7 +18,6 @@ import java.util.Map;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ServiceStaffClient extends ClientFrame implements Command {
-    private final String version=properties.version.description();
     private final JButton cleanButton;
     private final JButton needRepairButton;
     private ServiceStaff check;
@@ -66,7 +65,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
 
         // Clean Button
         cleanButton = new JButton("Clean");
-        cleanButton.setFont(PresFont.fntBld.fontName());
+        cleanButton.setFont(PresFont.fntBld);
         cleanButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -81,7 +80,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
 
         // NeedRepair Button
         needRepairButton = new JButton("Repair Report");
-        needRepairButton.setFont(PresFont.fntBld.fontName());
+        needRepairButton.setFont(PresFont.fntBld);
         needRepairButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -108,7 +107,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
 
         // themed-paint
         try{
-            paintLD();}
+            paintTheme();}
         catch (Exception e){
             System.out.println("Failed to set theme.");
         }
@@ -366,9 +365,9 @@ public class ServiceStaffClient extends ClientFrame implements Command {
             ID[0]=-1;
         }
         catch(NotBoundException | IOException ex2){
-            Messenger.append("Failed to connect to the remote server.\n");
-            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
             ID[0]=-1;
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Connection Failed","Failed to connect to the remote server.",400,100,"Connection Settings...",e->Load("Account")).setVisible(true);
         }
         catch(DuplicationException ex3){
             Messenger.append("id already exist.");

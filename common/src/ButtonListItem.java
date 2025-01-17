@@ -3,9 +3,30 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-public class ButtonListItem extends JButton implements ListItem{
+@SuppressWarnings("FieldCanBeLocal")
+public class ButtonListItem extends JButton implements ListItem,Selection{
     private final int index;
     private String tag;
+    private boolean selected;
+    private final int selectPolicy;
+    private final Selection father;
+    private final Color fore;
+    @Override
+    public boolean isSelected(){
+        return selected;
+    }
+    @Override
+    public void setSelected(boolean selected){
+        this.selected=selected;
+        if(this.selected) {
+            this.setBackground(PresColor.SELECTED.value());
+            this.setForeground(PresColor.SELECTEDFORE.value());
+        }
+        else{
+            this.setBackground(PresColor.NULL.value());
+            this.setForeground(fore);
+        }
+    }
     @Override
     public int getIndex(){
         return index;
@@ -31,50 +52,68 @@ public class ButtonListItem extends JButton implements ListItem{
         return null;
     }
 
-    ButtonListItem(int index, String tag, String Text, ActionListener aListener){
+    ButtonListItem(int index, String tag, String Text, ActionListener aListener, int selectPolicy, Selection father){
         this.index=index;
         this.tag=tag;
-        setPreferredSize(new Dimension(100,11));
+        this.selectPolicy = selectPolicy;
+        this.father = father;
+        addActionListener(e->{
+            if(selectPolicy==CHECK)select(index);
+            else if(selectPolicy==UNIQUE)uniqueSelect(index);
+        });
+        setPreferredSize(new Dimension(100,15));
+        setMinimumSize(new Dimension(100,15));
         setBackground(new Color(0x00FFFFFF, true));
         setBorder(new LineBorder(Color.WHITE,0));
         addActionListener(aListener);
         switch(tag){
             case "Reserved":{
                 setText(" "+Text+"(Reserved)");
-                setFont(PresFont.fntBldText.fontName());
-                setForeground(PresColor.BLUE.value());
+                setFont(PresFont.fntBldText);
+                fore=PresColor.BLUE.value();
                 break;
             }
             case "Occupying":{
                 setText(" "+Text+"(Occupying)");
-                setFont(PresFont.fntBldText.fontName());
-                setForeground(PresColor.GREEN.value());
+                setFont(PresFont.fntBldText);
+                fore=PresColor.GREEN.value();
                 break;
             }
             case "NotExecuted":{
                 setText(" "+Text+"(To be executed)");
-                setFont(PresFont.fntBldText.fontName());
-                setForeground(PresColor.YELLOW.value());
+                setFont(PresFont.fntBldText);
+                fore=PresColor.YELLOW.value();
                 break;
             }
             case "Applying":{
                 setText(" "+Text+"(Applying)");
-                setFont(PresFont.fntBldText.fontName());
-                setForeground(PresColor.ROSE.value());
+                setFont(PresFont.fntBldText);
+                fore=PresColor.ROSE.value();
                 break;
             }
             case "null":{
                 setText(" "+Text);
-                setFont(PresFont.fntBld.fontName());
-                setForeground(PresColor.WARNING.value());
+                setFont(PresFont.fntBld);
+                fore=PresColor.WARNING.value();
                 break;
             }
             default:{
                 setText(" "+Text);
-                setForeground(PresColor.FORE.value());
-                setFont(PresFont.fntText.fontName());
+                fore=PresColor.FORE.value();
+                setFont(PresFont.fntText);
                 break;
             }
         }
+        setForeground(fore);
+    }
+
+    @Override
+    public void select(int index) {
+        father.select(index);
+    }
+
+    @Override
+    public void uniqueSelect(int index) {
+        father.uniqueSelect(index);
     }
 }

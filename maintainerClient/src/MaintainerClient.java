@@ -17,7 +17,6 @@ import java.util.Map;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class MaintainerClient extends ClientFrame implements Command {
-    private final String version=properties.version.description();
     private final JButton repairButton;
     private Maintainer check;
     private final int[] Count={0};
@@ -66,7 +65,7 @@ public class MaintainerClient extends ClientFrame implements Command {
 
         // Repair Button
         repairButton = new JButton("Repair");
-        repairButton.setFont(PresFont.fntBld.fontName());
+        repairButton.setFont(PresFont.fntBld);
         repairButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -89,7 +88,7 @@ public class MaintainerClient extends ClientFrame implements Command {
 
         // themed-paint
         try{
-            paintLD();}
+            paintTheme();}
         catch (Exception e){
             System.out.println("Failed to set theme.");
         }
@@ -176,9 +175,9 @@ public class MaintainerClient extends ClientFrame implements Command {
             ID[0]=-1;
         }
         catch(NotBoundException | IOException ex2){
-            Messenger.append("Failed to connect to the remote server.\n");
-            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
             ID[0]=-1;
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Connection Failed","Failed to connect to the remote server.",400,100,"Connection Settings...",e->Load("Account")).setVisible(true);
         }
         catch(DuplicationException ex3){
             Messenger.append("id already exist.");

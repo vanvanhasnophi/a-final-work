@@ -1,5 +1,6 @@
-import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.FlatLaf;
 
+import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
@@ -11,16 +12,18 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.text.MessageFormat;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class ClientFrame extends JFrame implements Command,settable{
+    protected final ResourceBundle bundle;
     protected final JMenuBar menu=new JMenuBar();
-    protected final JTextField idTextField=new JTextField(22);
-    protected final JPasswordField passwordField=new JPasswordField(22);
-    protected final JTextField commandInputBox=new JTextField("Input commands...");
+    protected final JTextField idTextField=new JTextField();
+    protected final JPasswordField passwordField=new JPasswordField();
+    protected final JTextField commandInputBox;
     protected final JTextArea Messenger=new JTextArea("");
     protected final JTextArea Console=new JTextArea("");
     protected final JTextArea Notification=new JTextArea("");
@@ -41,26 +44,26 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
     protected final JPanel TextPane=new JPanel();
     protected final JPanel InfoPane=new JPanel();
     protected final JScrollPane scrollPane =new JScrollPane(Console);
-    protected final JButton registerButton=new JButton("Register");
-    protected final JButton DisconnectButton=new JButton("Disconnect");
-    protected final JButton clearButton=new JButton("Clear Console");
-    protected final JButton scanButton=new JButton("Scan");
-    protected final JButton settingButton=new JButton("Settings...");
+    protected final JButton registerButton;
+    protected final JButton DisconnectButton;
+    protected final JButton clearButton;
+    protected final JButton scanButton;
+    protected final JButton settingButton;
     protected final JButton AppTitle=new JButton("RoomX");
-    protected final JLabel selected=new JLabel("N/A");
-    protected final JLabel idLabel=new JLabel("      id:");
-    protected final JLabel passwordLabel=new JLabel("password:");
-    protected final JLabel idLabelIn=new JLabel("Welcome back!");
-    protected final JLabel RoomLoc=new JLabel("  Room Loc:");
+    protected final JLabel selected;
+    protected final JLabel idLabel;
+    protected final JLabel passwordLabel;
+    protected final JLabel idLabelIn;
+    protected final JLabel RoomLoc;
     protected final JComboBox<Integer> roomList=new JComboBox<>();
-    protected final JMenu MFile=new JMenu("<html><body><u>F</u>ile</body></html>");
-    protected final JMenu MAccount =new JMenu("<html><body><u>A</u>ccount</body></html>");
-    protected final JMenu MView=new JMenu("<html><body><u>V</u>iew</body></html>");
-    protected final JMenu MHelp=new JMenu("<html><body><u>H</u>elp</body></html>");
-    protected final ButtonListPanel OverallInfo=new ButtonListPanel("Overall:");
-    protected final ButtonListPanel FilteredInfo=new ButtonListPanel("Filtered:");
+    protected final JMenu MFile;
+    protected final JMenu MAccount;
+    protected final JMenu MView;
+    protected final JMenu MHelp;
+    protected final ButtonListPanel OverallInfo;
+    protected final ButtonListPanel FilteredInfo;
 
-    protected final String version=properties.version.description();
+    protected final String version=properties.version;
 
     protected final Color commandFore=PresColor.GREEN.value();
     protected final Color commandBack=this.getBackground();
@@ -74,19 +77,18 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
     protected String loc;
 
     ClientFrame(){
+        UIManager.put( "TextComponent.arc", 5 );
+        System.setProperty( "flatlaf.animation", "true" );
+        setLocale(settings.setting.getSetting("locale","default"));
         LightDarkMode.setDark(settings.setting.getSetting("theme","light").equals("dark"));
         loc=settings.setting.getSetting("loc","127.0.0.1:1099");
         menu.setVisible(false);
 
+        bundle = ResourceBundle.getBundle("sysmsg",getLocale());
+
         count[0]=0;
         LocalDate today=LocalDate.now();
         if(today.getMonthValue()==4&&today.getDayOfMonth()==26) count[0]=9999;
-        try {
-            paintLD();
-        } catch (UnsupportedLookAndFeelException e) {
-            System.err.println("Failed to initialize flatLaf.");
-        } catch (MalformedURLException | NotBoundException | RemoteException ignored) {
-        }
         setLayout(new BorderLayout());
         UIManager.put( "Component.focusWidth", 0 );
         UIManager.put( "ScrollBar.thumbArc", 999 );
@@ -102,7 +104,8 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
 
         ChooseARoom.setLayout(new FlowLayout(FlowLayout.CENTER));
         actionPanel.add(ChooseARoom,BorderLayout.NORTH);
-        RoomLoc.setFont(PresFont.fntDisplay.fontName());
+        RoomLoc = new JLabel("  "+bundle.getString("roomLocTip"));
+        RoomLoc.setFont(PresFont.fntDisplay);
         ChooseARoom.add(RoomLoc);
 
         RoomNameL.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -114,27 +117,24 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         // RoomList ComboBox Paint
         ChooseARoom.add(roomList);
         roomList.setEnabled(true);
-        roomList.setFont(PresFont.fntText.fontName());
+        roomList.setFont(PresFont.fntText);
         roomList.setVisible(true);
 
         /// File Menu
+        MFile = new JMenu(bundle.getString("fileMenu"));
         MFile.setMnemonic(KeyEvent.VK_F);//设置快速访问符
         JMenuItem item;
 
         // Settings
-        item=new JMenuItem("<html><body><u>S</u>ettings</body></html>",KeyEvent.VK_S);
+        item=new JMenuItem(bundle.getString("settingsMenu"),KeyEvent.VK_S);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,InputEvent.ALT_DOWN_MASK));
-        item.addActionListener(e-> {
-            settings.setVisible(true);
-            SwingUtilities.updateComponentTreeUI(settings);
-            settings.Load("General");
-        });
+        item.addActionListener(e->Load("general"));
         MFile.add(item);
 
         MFile.addSeparator();// Separator---------------------------------------------
 
         // Exit
-        item=new JMenuItem("<html><body><u>E</u>xit</body></html>",KeyEvent.VK_E);
+        item=new JMenuItem(bundle.getString("exitMenu"),KeyEvent.VK_E);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4,InputEvent.ALT_DOWN_MASK));
         item.addActionListener(e->dispose());
         MFile.add(item);
@@ -143,19 +143,16 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         /// End File Menu
 
         /// Account Menu
+        MAccount = new JMenu(bundle.getString("accountMenu"));
         MAccount.setMnemonic(KeyEvent.VK_A);
 
         // Account Settings
-        item=new JMenuItem("<html><body>Account <u>S</u>ettings...</body></html>",KeyEvent.VK_S);
-        item.addActionListener(e->{
-            settings.setVisible(true);
-            SwingUtilities.updateComponentTreeUI(settings);
-            settings.Load("Account");
-        });
+        item=new JMenuItem(bundle.getString("accountMenu"),KeyEvent.VK_S);
+        item.addActionListener(e->Load("account"));
         MAccount.add(item);
         MAccount.addSeparator();// Separator---------------------------------------------
         // Disconnect
-        item=new JMenuItem("<html><body><u>D</u>isconnect</body></html>",KeyEvent.VK_D);
+        item=new JMenuItem(bundle.getString("disconnectMenu"),KeyEvent.VK_D);
         JMenuItem finalItem1 = item;
         item.addActionListener(e->{
             if(ID[0]>0) clientDisconnect(true);
@@ -168,14 +165,15 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
 
 
         /// View Menu
+        MView = new JMenu(bundle.getString("viewMenu"));
         MView.setMnemonic(KeyEvent.VK_V);
         // Show/Hide Command
-        item=new JMenuItem(commandPanel.isVisible()?"<html><body>Hide <u>C</u>ommand</body></html>":"<html><body>Show <u>C</u>ommand</body></html>",KeyEvent.VK_C);
+        item=new JMenuItem(bundle.getString(commandPanel.isVisible()?"hideCommandMenu":"showCommandMenu"),KeyEvent.VK_C);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
         JMenuItem finalItem2 = item;
         item.addActionListener(e->{
             commandPanel.setVisible(!commandPanel.isVisible());
-            finalItem2.setText(commandPanel.isVisible()?"<html><body>Hide <u>C</u>ommand</body></html>":"<html><body>Show <u>C</u>ommand</body></html>");
+            finalItem2.setText(bundle.getString(commandPanel.isVisible()?"hideCommandMenu":"showCommandMenu"));
         });
         MView.add(item);
 
@@ -187,14 +185,15 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         /// End View Menu
 
         /// Help Menu
+        MHelp = new JMenu(bundle.getString("helpMenu"));
         MHelp.setMnemonic(KeyEvent.VK_H);
 
         // Command Help
-        item=new JMenuItem("<html><body><u>C</u>ommand Help...</body></html>",KeyEvent.VK_C);
+        item=new JMenuItem(bundle.getString("commandHelpMenu"),KeyEvent.VK_C);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK));
         item.addActionListener(e->{
             commandPanel.setVisible(true);
-            finalItem2.setText(commandPanel.isVisible()?"<html><body>Hide <u>C</u>ommand</body></html>":"<html><body>Show <u>C</u>ommand</body></html>");
+            finalItem2.setText(bundle.getString(commandPanel.isVisible()?"hideCommandMenu":"showCommandMenu"));
             help();
         });
         MHelp.add(item);
@@ -202,7 +201,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         MHelp.addSeparator();// Separator---------------------------------------------
 
         // About
-        item=new JMenuItem("<html><body><u>A</u>bout</body></html>",KeyEvent.VK_A);
+        item=new JMenuItem(bundle.getString("aboutMenu"),KeyEvent.VK_A);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,InputEvent.ALT_DOWN_MASK));
         item.addActionListener(e->about(false));
         MHelp.add(item);
@@ -213,7 +212,8 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         setJMenuBar(menu);
 
         // Selected Label
-        selected.setFont(PresFont.fntDisplay.fontName());
+        selected = new JLabel(bundle.getString("NA"));
+        selected.setFont(PresFont.fntDisplay);
         RoomNameL.add(selected);
         selected.setVisible(true);
 
@@ -223,25 +223,31 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
 
         idPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         idPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+        idLabel = new JLabel(bundle.getString("idTip"));
         idPanel.add(idLabel);
+        idLabelIn = new JLabel(bundle.getString("greeting"));
         accountPanel.add(idLabelIn);
-        idLabel.setFont(PresFont.fntBld.fontName());
-        idLabelIn.setFont(PresFont.fntDisplay.fontName());
+        idLabel.setFont(PresFont.fnt);
+        idLabelIn.setFont(PresFont.fntDisplay);
 
         idPanel.add(idTextField);
-        idTextField.setFont(PresFont.fntText.fontName());
+        idTextField.setFont(PresFont.fntText);
 
         passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         passwordPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+        passwordLabel = new JLabel(bundle.getString("passwordTip"));
         passwordPanel.add(passwordLabel);
-        passwordLabel.setFont(PresFont.fntBld.fontName());
+        passwordLabel.setFont(PresFont.fnt);
         passwordPanel.add(passwordField);
-        passwordField.setFont(PresFont.fntText.fontName());
+        idTextField.setPreferredSize(new Dimension(250,20));
+        passwordField.setPreferredSize(new Dimension(250,20));
+        passwordField.setFont(PresFont.password);
 
-        AppTitle.setFont(PresFont.fntTitle.fontName());
+        AppTitle.setFont(PresFont.fntTitle);
         AppTitle.setBorder(new LineBorder(PresColor.NULL.value(),0));
         AppTitle.setBackground(PresColor.NULL.value());
         AppTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        commandInputBox = new JTextField(bundle.getString("inputCommands"));
         AppTitle.addActionListener(e->{
             count[0]++;
             if(count[0]>10&&count[0]<(today.getYear()-1911))commandInputBox.setText(String.valueOf(count[0]));
@@ -266,23 +272,22 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         inputArea.add(passwordPanel);
 
         // Register Button Paint
-        registerButton.setFont(PresFont.fntBld.fontName());
+        registerButton = new JButton(bundle.getString("register"));
+        registerButton.setFont(PresFont.fntBld);
         registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputButtonPanel.add(registerButton);
 
         // Setting Button
-        settingButton.setFont(PresFont.fnt.fontName());
+        settingButton = new JButton(bundle.getString("settings"));
+        settingButton.setFont(PresFont.fnt);
         settingButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        settingButton.addActionListener(e->{
-            settings.setVisible(true);
-            SwingUtilities.updateComponentTreeUI(settings);
-            settings.Load("General");
-        });
+        settingButton.addActionListener(e->Load("general"));
         inputButtonPanel.add(settingButton);
         inputArea.add(inputButtonPanel);
 
         // Disconnect Button Paint
-        DisconnectButton.setFont(PresFont.fntBld.fontName());
+        DisconnectButton = new JButton(bundle.getString("disconnect"));
+        DisconnectButton.setFont(PresFont.fntBld);
         accountPanel.add(DisconnectButton);
 
         //Interface Panel Layout
@@ -308,22 +313,22 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         scrollPane.getVerticalScrollBar().setBackground(Console.getBackground());
         scrollPane.getVerticalScrollBar().setForeground(new Color(0x555555));
         OpPane.add(scrollPane,BorderLayout.CENTER);
-        Console.setFont(PresFont.fntCons.fontName());
+        Console.setFont(PresFont.fntCons);
         Console.setBackground(PresColor.DARK.value());
         Console.setForeground(PresColor.LIGHT.value());
-        Console.append("Input your id.\n");
         Console.setVisible(true);
 
         // Overall Info & Filtered Info
+        OverallInfo = new ButtonListPanel(bundle.getString("overall"),Selection.UNIQUE);
         InfoPane.add(OverallInfo);
+        FilteredInfo = new ButtonListPanel(bundle.getString("filtered"),Selection.UNIQUE);
         InfoPane.add(FilteredInfo);
 
         // Notification Center
         Notification.setEditable(false); //Readonly
         JScrollPane scrollPane3 =new JScrollPane(Notification);
         InfoPane.add(scrollPane3);
-        Notification.setFont(PresFont.fntText.fontName());
-        Notification.append("Input your id.\n");
+        Notification.setFont(PresFont.fntText);
         Notification.setVisible(true);
         TextPane.add(InfoPane);
 
@@ -352,16 +357,18 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
 
 
         // Clear Button
-        clearButton.setFont(PresFont.fntBld.fontName());
+        clearButton = new JButton(bundle.getString("clearCons"));
+        clearButton.setFont(PresFont.fntBld);
         clearButton.addActionListener(e -> {
-            ConfirmDialog c=new ConfirmDialog("Clear the console?",400,100);
+            ConfirmDialog c=new ConfirmDialog(bundle.getString("clearConfirm"),400,100);
             c.setVisible(true);
             if(!c.isOK())return;
             Console.setText(""); // Clear
         });
 
         // Scan Button
-        scanButton.setFont(PresFont.fntBld.fontName());
+        scanButton = new JButton(bundle.getString("scan"));
+        scanButton.setFont(PresFont.fntBld);
         scanButton.addActionListener(e -> {
             Notification.setText("");
             try {
@@ -388,7 +395,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         goPane.setMinimumSize(new Dimension(20,0));
 
         commandPanel.setBackground(commandBack);
-        commandInputBox.setFont(PresFont.fntConsL.fontName());
+        commandInputBox.setFont(PresFont.fntConsL);
         commandInputBox.setForeground(PresColor.GREY.value());
         commandInputBox.setBackground(commandBack);
         commandInputBox.setBorder(BorderFactory.createLineBorder(Color.BLACK,0));
@@ -421,7 +428,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
             public void insertUpdate(DocumentEvent e) {
                 if(commandInputBox.getText().contains("love"))commandInputBox.setForeground(PresColor.PINK.value());
                 else{
-                    if(commandInputBox.getText().equals("Input commands..."))return;
+                    if(commandInputBox.getText().equals(bundle.getString("inputCommands")))return;
                     if(!conductible(commandInputBox.getText()))commandInputBox.setForeground(PresColor.RED.value());
                     else commandInputBox.setForeground(commandFore);
                 }
@@ -431,7 +438,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
             public void removeUpdate(DocumentEvent e) {
                 if(commandInputBox.getText().contains("love"))commandInputBox.setForeground(PresColor.PINK.value());
                 else{
-                    if(commandInputBox.getText().equals("Input commands..."))return;
+                    if(commandInputBox.getText().equals(bundle.getString("inputCommands")))return;
                     if(!conductible(commandInputBox.getText()))commandInputBox.setForeground(PresColor.RED.value());
                     else commandInputBox.setForeground(commandFore);
                 }
@@ -441,7 +448,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
             public void changedUpdate(DocumentEvent e) {
                 if(commandInputBox.getText().contains("love"))commandInputBox.setForeground(PresColor.PINK.value());
                 else{
-                    if(commandInputBox.getText().equals("Input commands..."))return;
+                    if(commandInputBox.getText().equals(bundle.getString("inputCommands")))return;
                     if(!conductible(commandInputBox.getText()))commandInputBox.setForeground(PresColor.RED.value());
                     else commandInputBox.setForeground(commandFore);
                 }
@@ -450,7 +457,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         });
         commandPanel.add(commandInputBox,BorderLayout.CENTER);
         commandInputBox.addFocusListener(new FocusAdapter() {
-            final String hintText="Input commands...";
+            final String hintText=bundle.getString("inputCommands");
             @Override
             public void focusLost(FocusEvent e) {
                 super.focusLost(e);
@@ -482,15 +489,20 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
     protected void switchLD() {
         try {
             LightDarkMode.switchMode();
-            paintLD();
+            paintTheme();
         } catch (UnsupportedLookAndFeelException ex) {
-            System.out.println("switch failed!");
+            System.out.println(bundle.getString("switchLDFail"));
         } catch (MalformedURLException | NotBoundException | RemoteException ignored) {
         }
     }
 
-    protected void paintLD() throws UnsupportedLookAndFeelException, MalformedURLException, NotBoundException, RemoteException {
+    public Color getAccent(){
+        return settings.getAccent();
+    }
+
+    protected void paintTheme() throws UnsupportedLookAndFeelException, MalformedURLException, NotBoundException, RemoteException {
         setLightDarkMode();
+        FlatLaf.setGlobalExtraDefaults( Collections.singletonMap( "@accentColor", "#"+ColorDecode.toRRGGBB(getAccent())));
         revalidate();
         repaint();
         scrollPane.getHorizontalScrollBar().setBackground(Console.getBackground());
@@ -498,13 +510,14 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         scrollPane.putClientProperty("ScrollBar.thumb",new Color(0x555555));
         SwingUtilities.updateComponentTreeUI(this);
         SwingUtilities.updateComponentTreeUI(settingFrame.getFrames()[0]);
+        FlatLaf.updateUI();
         commandInputBox.setBackground(this.getBackground());
         if(ID[0]>0) scanning("NoMessage");
     }
 
     protected static void setLightDarkMode() throws UnsupportedLookAndFeelException {
         UIManager.getLookAndFeelDefaults().clear();
-        UIManager.setLookAndFeel(LightDarkMode.isDark()?new FlatDarkerLaf():new FlatLightLaf());
+        UIManager.setLookAndFeel(LightDarkMode.isDark()?new FlatDarkerLaf():new FlatLighterLaf());
         UIManager.put( "Component.focusWidth", 0 );
         UIManager.put( "ScrollBar.thumbArc", 999 );
         UIManager.put( "ScrollBar.thumbInsets", new Insets( 2, 2, 2, 2 ) );
@@ -532,58 +545,101 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
 
 
     }
-
+    @Override
+    public void setLocale(String locale) {
+        if(Objects.equals(locale, "default")) {
+        setLocale(Locale.getDefault());
+    }
+    else  {
+        setLocale(Locale.forLanguageTag(locale));
+    }
+    }
+    @Override
+    public int getID(){
+        return ID[0];
+    }
+    @Override
+    public void discFromSet(){
+        clientDisconnect(true);
+    }
     // Apply
     @Override
     public void Apply(){
         loc=settings.setting.getSetting("loc","127.0.0.1:1099");
         try {
-            paintLD();
+            paintTheme();
             if(!settings.locT.getText().equals(settings.locForRestore)&&ID[0]>0) clientDisconnect(false);
         }
         catch (Exception ignored){}
     }
     @Override
     public void Load(String Home){
-
+        settings.setVisible(true);
+        settings.Load(Home);
+        SwingUtilities.updateComponentTreeUI(settings);
     }
 }
 class settingFrame extends JFrame implements settable{
-    private final settable Father;
-
+    private final settable Parent;
+    final ResourceBundle bundle;
     private final GridBagLayout layout=new GridBagLayout();
     final JPanel container=new JPanel(layout);
     final JPanel buttonPanel=new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    final JPanel colorPanel=new JPanel(new FlowLayout(FlowLayout.LEFT));
     final JScrollPane settingPanel;
-    final JButton OKButton=new JButton("OK");
-    final JButton CancelButton=new JButton("Cancel");
-    final JButton ApplyButton=new JButton("Apply");
-    final JButton RestoreLocButton=new JButton("Restore");
-    final JList<String> options=new JList<>(new String[]{"General","Appearance","Account"});
-    final HashMap<String,JPanel> panels=new HashMap<>();
+    final JButton OKButton;
+    final JButton CancelButton;
+    final JButton ApplyButton;
+    final JButton RestoreLocButton;
+    final JButton sDiscButton;
+    final JButton changePass;
+    final JList<String> options;
+    final List<JPanel> panels=new ArrayList<>();
+    final List<String> panelName=new ArrayList<>(List.of(new String[]{"general", "appearance", "account"}));
+    final List<String> localeName=new ArrayList<>(List.of(new String[]{"default", "zh-CN", "en-US"}));
     final JSONSettingsManager setting=new JSONSettingsManager();
+    final JLabel info;
+    final JLabel selectedColor;
+    final JLabel localeChangeTip=new JLabel();
+    final JCheckBox SavePass;
 
     String locForRestore;
+    Color accent;
     final JComboBox<String> themeSelector=new JComboBox<>();
+    final JComboBox<String> localeSelector=new JComboBox<>();
     JTextField locT=new JTextField(20);
+    final MetroListPanel colorSel=new MetroListPanel(20,Selection.UNIQUE);
+    boolean defaultLocale;
+    boolean localeChangeNotify=false;
 
-    settingFrame(settable Father){
-        this.Father=Father;
-
-        setTitle("Settings");
-        setSize(600,400);
+    settingFrame(settable Parent){
+        this.Parent = Parent;
+        setLocale(setting.getSetting("locale","default"));
+        bundle=ResourceBundle.getBundle("sysmsg",getLocale());
+        setTitle(bundle.getString("settings"));
+        setSize(640,400);
         setLayout(new BorderLayout());
         setMinimumSize(getSize());
         setMaximumSize(getSize());
         setLocationRelativeTo(null);
-        options.setFont(PresFont.fnt.fontName());
+        options = new JList<>(new String[]{
+                bundle.getString("general"),
+                bundle.getString("appearance"),
+                bundle.getString("account")});
+        options.setFont(PresFont.fnt);
+        options.setFixedCellHeight(30);
+        options.setMinimumSize(new Dimension(120,150));
+        options.setBackground(getBackground());
 
         add(container,BorderLayout.CENTER);
         add(buttonPanel,BorderLayout.SOUTH);
 
-        OKButton.setFont(PresFont.fntBld.fontName());
-        CancelButton.setFont(PresFont.fnt.fontName());
-        ApplyButton.setFont(PresFont.fnt.fontName());
+        OKButton = new JButton(bundle.getString("ok"));
+        OKButton.setFont(PresFont.fntBld);
+        CancelButton = new JButton(bundle.getString("cancel"));
+        CancelButton.setFont(PresFont.fnt);
+        ApplyButton = new JButton(bundle.getString("apply"));
+        ApplyButton.setFont(PresFont.fnt);
         buttonPanel.add(OKButton);
         buttonPanel.add(CancelButton);
         buttonPanel.add(ApplyButton);
@@ -591,63 +647,180 @@ class settingFrame extends JFrame implements settable{
         JLabel title;
 
         // General Settings
-        JPanel General=new JPanel();
-        BoxLayout layout1=new BoxLayout(General,BoxLayout.Y_AXIS);
-        General.setLayout(layout1);
-        panels.put("General",General);
+        JPanel General=new JPanel(new BorderLayout(0,10));
+        JPanel GeneralCont=new JPanel();
+        BoxLayout layout1=new BoxLayout(GeneralCont,BoxLayout.Y_AXIS);
+        GeneralCont.setLayout(layout1);
+        General.add(GeneralCont,BorderLayout.CENTER);
+        panels.addLast(General);
         settingPanel=new JScrollPane(General);
 
 
 
-        title=new JLabel("General");
-        title.setFont(PresFont.fntBldDisplay.fontName());
+        title=new JLabel(bundle.getString("general"));
+        title.setFont(PresFont.fntBldDisplay);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        General.add(new JPanel(new FlowLayout(FlowLayout.LEFT)).add(title));
+        General.add(new JPanel(new FlowLayout(FlowLayout.LEFT)).add(title),BorderLayout.NORTH);
+
+        JPanel localeP=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel localeTip=new JLabel(bundle.getString("localeTip"));
+        localeChangeTip.setVisible(false);
+        localeChangeTip.setText(bundle.getString("localeChangeMessage"));
+        localeChangeTip.setForeground(PresColor.WARNING.value());
+        localeChangeTip.setFont(PresFont.fntText);
+        localeTip.setFont(PresFont.fnt);
+        localeP.add(localeTip);
+        localeP.add(localeSelector);
+
+        localeSelector.setFont(PresFont.fntText);
+        localeSelector.setToolTipText(bundle.getString("selectTheme"));
+        localeSelector.addItem(bundle.getString("systemDefault"));
+        localeSelector.addItem("简体中文");
+        localeSelector.addItem("English (US)");
+        localeSelector.addActionListener(e->{
+            Change();
+            if(!getLocale().toLanguageTag().equals(localeName.get(localeSelector.getSelectedIndex()))||(localeSelector.getSelectedIndex()!=0&&defaultLocale)){
+                localeChangeNotify=true;
+                localeChangeTip.setVisible(true);
+                localeChangeTip.setForeground(PresColor.WARNING.value());
+            }
+            else {
+                localeChangeNotify=false;
+                localeChangeTip.setVisible(false);
+            }
+        });
+        GeneralCont.add(localeP);
+        GeneralCont.add(localeChangeTip);
+        localeP.setBounds(5,5,300,30);
+        localeChangeTip.setBounds(5,40,400,20);
+
 
 
         // Appearance Settings
-        JPanel Appearance=new JPanel();
-        layout1=new BoxLayout(Appearance,BoxLayout.Y_AXIS);
-        Appearance.setLayout(layout1);
-        panels.put("Appearance",Appearance);
+        JPanel Appearance=new JPanel(new BorderLayout(0,10));
+        JPanel AppearanceCont=new JPanel(null);
+        Appearance.add(AppearanceCont,BorderLayout.CENTER);
+        panels.addLast(Appearance);
 
-        title=new JLabel("Appearance");
-        title.setFont(PresFont.fntBldDisplay.fontName());
+        title=new JLabel(bundle.getString("appearance"));
+        title.setFont(PresFont.fntBldDisplay);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        Appearance.add(new JPanel(new FlowLayout(FlowLayout.LEFT)).add(title));
+        Appearance.add(new JPanel(new FlowLayout(FlowLayout.LEFT)).add(title),BorderLayout.NORTH);
 
         JPanel themeP=new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel themeTip=new JLabel("theme:");
-        themeTip.setFont(PresFont.fnt.fontName());
+        JLabel themeTip=new JLabel(bundle.getString("themeTip"));
+        themeTip.setFont(PresFont.fnt);
         themeP.add(themeTip);
         themeP.add(themeSelector);
 
-        themeSelector.setFont(PresFont.fntText.fontName());
-        themeSelector.setToolTipText("select theme");
-        themeSelector.addItem("light");
-        themeSelector.addItem("dark");
+        themeSelector.setFont(PresFont.fntText);
+        themeSelector.setToolTipText(bundle.getString("selectTheme"));
+        themeSelector.addItem(bundle.getString("light"));
+        themeSelector.addItem(bundle.getString("dark"));
+        themeSelector.addItem(bundle.getString("auto")+"("+bundle.getString("comingSoon")+")");
         themeSelector.addActionListener(e->Change());
-        Appearance.add(themeP);
+        AppearanceCont.add(themeP);
+        themeP.setBounds(5,5,300,30);
 
+        JLabel colorTip=new JLabel(bundle.getString("chooseColor")+":");
+        colorTip.setFont(PresFont.fnt);
+        AppearanceCont.add(colorTip);
+        colorTip.setBounds(5,40,100,20);
 
-        JPanel Account=new JPanel();
-        layout1=new BoxLayout(Account,BoxLayout.Y_AXIS);
-        Account.setLayout(layout1);
-        panels.put("Account",Account);
+        selectedColor = new JLabel(bundle.getString("nullS"));
+        selectedColor.setFont(PresFont.fnt);
+        AppearanceCont.add(selectedColor);
+        selectedColor.setBounds(105,40,200,20);
+
+        colorSel.add(1,"","",e->{
+            accent=PresColor.RED.value();
+            selectedColor.setText(bundle.getString("red"));
+            selectedColor.setForeground(accent);
+            Change();
+            },PresColor.RED.value());
+        colorSel.add(2,"","",e->{
+            accent=PresColor.ORANGE.value();
+            selectedColor.setText(bundle.getString("orange"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.ORANGE.value());
+        colorSel.add(3,"","",e->{
+            accent=PresColor.YELLOW.value();
+            selectedColor.setText(bundle.getString("yellow"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.YELLOW.value());
+        colorSel.add(4,"","",e-> {
+            accent = PresColor.GREEN.value();
+            selectedColor.setText(bundle.getString("green"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.GREEN.value());
+        colorSel.add(5,"","",e-> {
+            accent = PresColor.BLUE.value();
+            selectedColor.setText(bundle.getString("blue"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.BLUE.value());
+        colorSel.add(6,"","",e-> {
+            accent = PresColor.PURPLE.value();
+            selectedColor.setText(bundle.getString("purple"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.PURPLE.value());
+        colorSel.add(7,"","",e-> {
+            accent = PresColor.ROSE.value();
+            selectedColor.setText(bundle.getString("rose"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.ROSE.value());
+        colorSel.add(8,"","",e-> {
+            accent = PresColor.PINK.value();
+            selectedColor.setText(bundle.getString("pink"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.PINK.value());
+        colorSel.add(9,"","",e-> {
+            accent = PresColor.GREY.value();
+            selectedColor.setText(bundle.getString("grey"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.GREY.value());
+        colorSel.add(10,"","\uF53F",e-> {
+            accent= Objects.requireNonNull(JColorChooser.showDialog(this, bundle.getString("chooseColor")+"...", accent));
+            selectedColor.setText(bundle.getString("custom")+" (0x"+Integer.toHexString(accent.getRGB())+")");
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.NULL.value());
+        colorSel.add(11,"","\uF715",e-> {
+            accent=PresColor.FORE.value();
+            selectedColor.setText(bundle.getString("nullS"));
+            selectedColor.setForeground(accent);
+            Change();
+        },PresColor.NULL.value());
+
+        AppearanceCont.add(colorSel);
+        colorSel.setBounds(5,65,300,30);
+
+        JPanel Account=new JPanel(new BorderLayout(0,10));
+        JPanel AccountCont=new JPanel(null);
+        Account.add(AccountCont,BorderLayout.CENTER);
+        panels.addLast(Account);
         JPanel locP=new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel locTip=new JLabel("server loc:");
-        locTip.setFont(PresFont.fnt.fontName());
-        JLabel invalidTip=new JLabel("Invalid location.");
-        invalidTip.setFont(PresFont.fntText.fontName());
+        JLabel locTip=new JLabel(bundle.getString("serverLocTip"));
+        locTip.setFont(PresFont.fnt);
+        JLabel invalidTip=new JLabel(bundle.getString("invalidLocTip"));
+        invalidTip.setFont(PresFont.fntText);
         invalidTip.setForeground(PresColor.WARNING.value());
         invalidTip.setVisible(false);
         locP.add(locTip);
         locP.add(locT);
         locP.add(invalidTip);
+        RestoreLocButton = new JButton(bundle.getString("restore"));
         locP.add(RestoreLocButton);
 
-        locT.setFont(PresFont.fntText.fontName());
-        locT.setToolTipText("server location on the internet");
+        locT.setFont(PresFont.fntText);
+        locT.setToolTipText(bundle.getString("serverLocToolTip"));
         locT.addActionListener(e->Change());
         locT.getDocument().addDocumentListener(new DocumentListener() {
             public void update(){
@@ -708,39 +881,98 @@ class settingFrame extends JFrame implements settable{
             }
         });
         RestoreLocButton.setEnabled(false);
-        RestoreLocButton.setFont(PresFont.fnt.fontName());
+        RestoreLocButton.setFont(PresFont.fnt);
         RestoreLocButton.addActionListener(e->{
             RestoreLocButton.setEnabled(false);
             locT.setText(locForRestore);
         });
-        title=new JLabel("Account & Connection");
-        title.setFont(PresFont.fntBldDisplay.fontName());
+        title=new JLabel(bundle.getString("accountNConnection"));
+        title.setFont(PresFont.fntBldDisplay);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        Account.add(new JPanel(new FlowLayout(FlowLayout.LEFT)).add(title));
-        Account.add(locP);
+        Account.add(new JPanel(new FlowLayout(FlowLayout.LEFT)).add(title),BorderLayout.NORTH);
+        AccountCont.add(locP);
+
+        JSeparator separator=new JSeparator();
+        AccountCont.add(separator);
+
+
+
+        JPanel accountInfo=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        info = new JLabel(getID()>0?bundle.getString("registerToStart"): (MessageFormat.format(bundle.getString("registeredIdTip"),getID())));
+        info.setFont(PresFont.fntText);
+        sDiscButton = new JButton(bundle.getString("disconnect"));
+        changePass = new JButton(bundle.getString("changePass"));
+        SavePass = new JCheckBox(bundle.getString("doNotNeedPasswordAgain"));
+        sDiscButton.setFont(PresFont.fnt);
+        sDiscButton.setVisible(getID()>0);
+        sDiscButton.addActionListener(e->{
+            discFromSet();
+            if(getID()>=0)return;
+            sDiscButton.setVisible(false);
+            changePass.setVisible(false);
+            SavePass.setVisible(false);
+            info.setText(bundle.getString("registerToStart"));
+        });
+        accountInfo.add(info);
+        accountInfo.add(sDiscButton);
+        AccountCont.add(accountInfo);
+
+        JPanel accountMana=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        changePass.setVisible(getID()>0);
+        changePass.setFont(PresFont.fnt);
+        changePass.addActionListener(e->{
+
+        });
+        accountMana.add(changePass);
+        AccountCont.add(accountMana);
+
+
+        JPanel accountSet=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        SavePass.setVisible(getID()>0);
+        SavePass.setFont(PresFont.fnt);
+        accountSet.add(SavePass);
+        AccountCont.add(accountSet);
+
+
+        locP.setBounds(5,5,450,30);
+        separator.setBounds(5,45,420,10);
+        accountInfo.setBounds(5,55,300,30);
+        accountMana.setBounds(5,85,300,30);
+        accountSet.setBounds(5,115,420,30);
+
 
         OKButton.addActionListener(e->{
-            if(!locT.getText().equals(locForRestore)){
-                ConfirmDialog confirm=new ConfirmDialog("Continue?","Changing server location will disconnect current account.\nContinue?\nChoose \"Cancel\" to restore the loc.",600,140);
+            if(!locT.getText().equals(locForRestore)&&getID()>0){
+                ConfirmDialog confirm=new ConfirmDialog(bundle.getString("continueTitle"),bundle.getString("changeLocConfirm"),600,140);
                 confirm.setVisible(true);
                 if(!confirm.isOK()){
                     RestoreLocButton.doClick();
                     return;
                 }
+                sDiscButton.setVisible(false);
+                changePass.setVisible(false);
+                SavePass.setVisible(false);
+                info.setText(bundle.getString("registerToStart"));
             }
             Apply();
             dispose();
         });
         ApplyButton.addActionListener(e-> {
-            if(!locT.getText().equals(locForRestore)){
-                ConfirmDialog confirm=new ConfirmDialog("Continue?","Changing server location will disconnect current account.\nContinue?\nChoose \"Cancel\" to restore the loc.",600,140);
+            if(!locT.getText().equals(locForRestore)&&getID()>0){
+                ConfirmDialog confirm=new ConfirmDialog(bundle.getString("continueTitle"),bundle.getString("changeLocConfirm"),600,140);
                 confirm.setVisible(true);
                 if(!confirm.isOK()){
                     RestoreLocButton.doClick();
                     return;
                 }
+                sDiscButton.setVisible(false);
+                changePass.setVisible(false);
+                SavePass.setVisible(false);
+                info.setText(bundle.getString("registerToStart"));
             }
             Apply();
+            locForRestore=locT.getText();
+            RestoreLocButton.setEnabled(false);
         });
         CancelButton.addActionListener(e->dispose());
 
@@ -750,7 +982,7 @@ class settingFrame extends JFrame implements settable{
         s.anchor= GridBagConstraints.WEST;
         s.weightx=0;
         s.weighty=1;
-        s.insets=new Insets(10,10,10,10);
+        s.insets=new Insets(10,0,10,10);
         options.setPreferredSize(new Dimension(150,400));
         layout.setConstraints(options,s);
 
@@ -763,43 +995,146 @@ class settingFrame extends JFrame implements settable{
         container.add(options);
         container.add(settingPanel);
         options.addListSelectionListener(e->{
-            settingPanel.setViewportView(panels.get(options.getSelectedValue()));
+            settingPanel.setViewportView(panels.get(options.getSelectedIndex()));
             SwingUtilities.updateComponentTreeUI(settingPanel);
         });
 
         settingPanel.setBorder(new LineBorder(PresColor.BACK.value(),0));
 
         // Load Settings from the father
-        Load("General");
+        Load("general");
+    }
+
+    @Override
+    public void discFromSet(){
+        Parent.discFromSet();
+    }
+
+    @Override
+    public int getID() {
+        if (Parent != null) {
+            return Parent.getID();
+        }
+        else return -1;
     }
 
     @Override
     public void Apply(){
-        LightDarkMode.setDark(Objects.equals(themeSelector.getSelectedItem(), "dark"));
+
+        // write to file
         setting.setSetting("loc",locT.getText());
-        setting.setSetting("theme", (String) themeSelector.getSelectedItem());
+        setting.setSetting("theme",  Objects.equals(themeSelector.getSelectedItem(), bundle.getString("auto"))?"auto":(Objects.equals(themeSelector.getSelectedItem(), bundle.getString("light"))?"light":"dark"));
+        setting.setSetting("accentColor",ColorDecode.toAARRGGBB(accent));
+        setting.setSetting("locale",localeName.get(localeSelector.getSelectedIndex()));
         setting.saveSettings();
-        Father.Apply();
-        //
-        ApplyButton.setEnabled(false);
-        CancelButton.setText("Close");
+
+        // update UI
+        LightDarkMode.setDark(Objects.equals(themeSelector.getSelectedItem(),bundle.getString("dark")));
+        FlatLaf.setGlobalExtraDefaults( Collections.singletonMap( "@accentColor", "#"+ColorDecode.toRRGGBB(accent)));
         SwingUtilities.updateComponentTreeUI(this);
+        FlatLaf.updateUI();
+
+        // apply to parent
+        Parent.Apply();
+
+        // update the buttons
+        ApplyButton.setEnabled(false);
+        CancelButton.setText(bundle.getString("close"));
+
+        if(localeName.indexOf(setting.getSetting("locale","default"))!=localeSelector.getSelectedIndex()){
+            if(localeChangeNotify){MessageBox m=new MessageBox(bundle.getString("continueTitle"),bundle.getString("localeChangeMessage"),400,120);
+            localeChangeNotify=false;}
+        }
+
+        if(!getLocale().toLanguageTag().equals(localeName.get(localeSelector.getSelectedIndex()))||(localeSelector.getSelectedIndex()!=0&&defaultLocale)){
+            localeChangeNotify=true;
+            localeChangeTip.setVisible(true);
+            localeChangeTip.setForeground(PresColor.WARNING.value());
+            localeChangeTip.setText(bundle.getString("localeChangeMessage")+"  ->"+setting.getSetting("locale","default"));
+        }
+        else {
+            localeChangeNotify=false;
+            localeChangeTip.setVisible(false);
+        }
     }
 
     @Override
     public void Load(String Home) {
-        themeSelector.setSelectedItem(LightDarkMode.isDark()?"dark":"light");
+        themeSelector.setSelectedItem(bundle.getString(LightDarkMode.isDark()?"dark":"light"));
+        localeSelector.setSelectedIndex(defaultLocale?0:(localeName.indexOf(bundle.getLocale().toLanguageTag())));
+        if(!getLocale().toLanguageTag().equals(localeName.get(localeSelector.getSelectedIndex()))||(localeSelector.getSelectedIndex()!=0&&defaultLocale)){
+            localeChangeNotify=true;
+            localeChangeTip.setVisible(true);
+            localeChangeTip.setForeground(PresColor.WARNING.value());
+            localeChangeTip.setText(bundle.getString("localeChangeMessage")+"  ->"+setting.getSetting("locale","default"));
+        }
+        else {
+            localeChangeNotify=false;
+            localeChangeTip.setVisible(false);
+        }
         locForRestore=setting.getSetting("loc","127.0.0.1:1099");
         locT.setText(locForRestore);
         getRootPane().setDefaultButton(OKButton);
         ApplyButton.setEnabled(false);
-        CancelButton.setText("Close");
-        options.setSelectedValue(Home,true);
+        CancelButton.setText(bundle.getString("close"));
+        options.setSelectedIndex(panelName.indexOf(Home));
+        info.setText(getID()<=0?bundle.getString("registerToStart"):MessageFormat.format(bundle.getString("registeredIdTip"),getID()));
+        sDiscButton.setVisible(getID()>0);
+        changePass.setVisible(getID()>0);
+        SavePass.setVisible(getID()>0);
+        getAccentFromSet();
+    }
+
+    @Override
+    public Color getAccent(){
+        return accent;
+    }
+
+    @Override
+    public void setLocale(String locale) {
+        if(Objects.equals(locale, "default")) {
+            defaultLocale=true;
+            setLocale(Locale.getDefault());
+        }
+        else  {
+            defaultLocale=false;
+            setLocale(Locale.forLanguageTag(locale));
+        }
+
+    }
+
+    private void getAccentFromSet() {
+        String colorS=setting.getSetting("accentColor",Integer.toHexString(PresColor.FORE.value().getRGB()));
+        int color=switch (colorS){
+            case "ffff3b30","ffff453a"-> 1;
+            case "ffff9500","ffff9f0a"-> 2;
+            case "ffffcc00","ffffd60a"->3;
+            case "ff34c759","ff30d158"->4;
+            case "ff007aff","ff0a84ff"->5;
+            case "ff660874","ff990cab"->6;
+            case "ffd93379","ffe24880"->7;
+            case "ffff69b4"->8;
+            case "ff8e8e93"->9;
+            case "ff060606","ffd8dae1"->11;
+            default -> -1;};
+        colorSel.selectClick(color);
+        if(color<0)
+        {
+            try {
+                accent = ColorDecode.fromAARRGGBB(colorS);
+                selectedColor.setText(bundle.getString("custom")+" (0x" + colorS + ")");
+                selectedColor.setForeground(accent);
+            }
+            catch(Exception e){
+                colorSel.selectClick(11);
+            }
+        }
+        else if(color==11)accent=PresColor.FORE.value();
     }
 
 
     private void Change(){
         ApplyButton.setEnabled(true);
-        CancelButton.setText("Cancel");
+        CancelButton.setText(bundle.getString("cancel"));
     }
 }

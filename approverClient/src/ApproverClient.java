@@ -15,7 +15,7 @@ class CheckItem{
     public final int id;
     CheckItem(String Text,int id){
         this.checkBx=new JCheckBox(Text);
-        checkBx.setFont(PresFont.fntText.fontName());
+        checkBx.setFont(PresFont.fntText);
         this.id=id;
     }
 }
@@ -85,7 +85,6 @@ public class ApproverClient extends ClientFrame{
         // Room Label
         RoomL=new JTextPane();
         RoomL.setEditable(false);
-        RoomL.setFont(new Font("微软雅黑",Font.BOLD,12));
         CheckPane.add(RoomL,BorderLayout.NORTH);
 
         // Decision Panel
@@ -94,7 +93,7 @@ public class ApproverClient extends ClientFrame{
         CheckPane.add(decisionPane,BorderLayout.SOUTH);
 
         // Appliers ComboBox
-        AppliersChoice.setFont(PresFont.fntDisplay.fontName());
+        AppliersChoice.setFont(PresFont.fntDisplay);
         decisionPane.add(AppliersChoice);
 
 
@@ -103,7 +102,7 @@ public class ApproverClient extends ClientFrame{
         BoxLayout layout=new BoxLayout(ApplierList,BoxLayout.Y_AXIS);
         ApplierList.setLayout(layout);
         ApplierList.setVisible(true);
-        ApplierList.setFont(PresFont.fntText.fontName());
+        ApplierList.setFont(PresFont.fntText);
 
         // Decision Buttons
         ///JButton ApproveButton=new JButton();
@@ -115,9 +114,9 @@ public class ApproverClient extends ClientFrame{
         ApproveButton.setVisible(true);
         RejectButton.setVisible(true);
         BackButton.setVisible(true);
-        ApproveButton.setFont(PresFont.fntBld.fontName());
-        RejectButton.setFont(PresFont.fntBld.fontName());
-        BackButton.setFont(PresFont.fntBld.fontName());
+        ApproveButton.setFont(PresFont.fntBld);
+        RejectButton.setFont(PresFont.fntBld);
+        BackButton.setFont(PresFont.fntBld);
         ApproveButton.setText("Approve");
         RejectButton.setText("Reject");
         BackButton.setText("Back");
@@ -190,7 +189,7 @@ public class ApproverClient extends ClientFrame{
                 if (AppliersChoice.getSelectedItem() == null) throw new NullPointerException();
                 switch ((String) AppliersChoice.getSelectedItem()) {
                     case "Selected": {
-                        ConfirmDialog c = new ConfirmDialog("Reject selected appliers' application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                        ConfirmDialog c = new ConfirmDialog("Reject selected appliers' applications for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
                         c.setVisible(true);
                         if (!c.isOK()) return;
                         int id;
@@ -208,7 +207,7 @@ public class ApproverClient extends ClientFrame{
                         break;
                     }//case
                     case "All": {
-                        ConfirmDialog c = new ConfirmDialog("Reject all appliers' application for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
+                        ConfirmDialog c = new ConfirmDialog("Reject all appliers' applications for room #" + Focusing[0] + "(aka " + observers.get(Focusing[0]).NameStr() + ")" + "?", 400, 100);
                         c.setVisible(true);
                         if (!c.isOK()) return;
                         int id;
@@ -274,7 +273,7 @@ public class ApproverClient extends ClientFrame{
 
         // Check Button
         checkButton = new JButton("Check...");
-        checkButton.setFont(PresFont.fntBld.fontName());
+        checkButton.setFont(PresFont.fntBld);
         checkButton.addActionListener(e -> {
             Notification.setText("");
             Focusing[0]=(int) (roomList.getSelectedItem()!=null?roomList.getSelectedItem():-1);
@@ -292,7 +291,7 @@ public class ApproverClient extends ClientFrame{
 
         // themed-paint
         try{
-            paintLD();}
+            paintTheme();}
         catch (Exception e){
             System.out.println("Failed to set theme.");
         }
@@ -603,7 +602,7 @@ public class ApproverClient extends ClientFrame{
             System.out.println("Cannot get applier list. \nCheck if there are any appliers.");
             ApplierList.removeAll();
             AppliersChoice.addItem("N/A");
-            new MessageBox("Cannot get applier list. Check if there are any appliers.",400,100).setVisible(true);
+            new MessageBox("Cannot get applier list. Check if there are any appliers.",400,140).setVisible(true);
         }
     }
 
@@ -632,9 +631,9 @@ public class ApproverClient extends ClientFrame{
             ID[0]=-1;
         }
         catch(NotBoundException | IOException ex2){
-            Messenger.append("Failed to connect to the remote server.\n");
-            new MessageBox("Failed to connect to the remote server.",400,100).setVisible(true);
             ID[0]=-1;
+            Messenger.append("Failed to connect to the remote server.\n");
+            new MessageBox("Connection Failed","Failed to connect to the remote server.",400,100,"Connection Settings...",e->Load("Account")).setVisible(true);
         }
         catch(DuplicationException ex3){
             Messenger.append("id already exist.");
@@ -664,7 +663,6 @@ public class ApproverClient extends ClientFrame{
             FilteredInfo.clear();
             idTextField.setEditable(true);
             idTextField.setVisible(true);
-            idLabel.setText("ID:");
             Messenger.setText("Disconnected from the server.\n");
             OverallInfo.clear();
             actionPanel.setVisible(false);
@@ -721,6 +719,7 @@ public class ApproverClient extends ClientFrame{
     }
 
     public static void main(String[] args) {
+
         ///Optional, if not work, delete it and its dependency.
         try {
             setLightDarkMode();
