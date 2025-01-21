@@ -80,7 +80,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         UIManager.put( "TextComponent.arc", 5 );
         System.setProperty( "flatlaf.animation", "true" );
         setLocale(settings.setting.getSetting("locale","default"));
-        LightDarkMode.setDark(settings.setting.getSetting("theme","light").equals("dark"));
+        try{paintTheme();} catch (Exception ignored){}
         loc=settings.setting.getSetting("loc","127.0.0.1:1099");
         menu.setVisible(false);
 
@@ -501,15 +501,15 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
     protected void paintTheme() throws UnsupportedLookAndFeelException, MalformedURLException, NotBoundException, RemoteException {
         setLightDarkMode();
         FlatLaf.setGlobalExtraDefaults( Collections.singletonMap( "@accentColor", "#"+ColorDecode.toRRGGBB(getAccent())));
-        revalidate();
-        repaint();
         scrollPane.getHorizontalScrollBar().setBackground(Console.getBackground());
         scrollPane.getVerticalScrollBar().setBackground(Console.getBackground());
         scrollPane.putClientProperty("ScrollBar.thumb",new Color(0x555555));
         SwingUtilities.updateComponentTreeUI(this);
         SwingUtilities.updateComponentTreeUI(settingFrame.getFrames()[0]);
         FlatLaf.updateUI();
-        commandInputBox.setBackground(this.getBackground());
+        if (commandInputBox != null) {
+            commandInputBox.setBackground(this.getBackground());
+        }
         if(ID[0]>0) scanning("NoMessage");
     }
 
@@ -611,6 +611,7 @@ class settingFrame extends JFrame implements settable{
     boolean localeChangeNotify=false;
 
     settingFrame(settable Parent){
+        LightDarkMode.setDark(setting.getSetting("theme","light").equals("dark"));
         this.Parent = Parent;
         setLocale(setting.getSetting("locale","default"));
         bundle=ResourceBundle.getBundle("sysmsg",getLocale());
@@ -1114,7 +1115,6 @@ class settingFrame extends JFrame implements settable{
             case "ff8e8e93"->9;
             case "ff060606","ffd8dae1"->11;
             default -> -1;};
-        colorSel.selectClick(color);
         if(color<0)
         {
             try {
@@ -1127,6 +1127,7 @@ class settingFrame extends JFrame implements settable{
             }
         }
         else if(color==11)accent=PresColor.FORE.value();
+        colorSel.selectClick(color);
     }
 
 
