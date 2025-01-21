@@ -514,7 +514,7 @@ public class ApproverClient extends ClientFrame{
                     try{
                         roomList.setSelectedItem(finalCount);
                         new MessageBox(MessageFormat.format(bundle.getString("richInfoTitle"),finalCount),info,600,140,"Check...",e1-> checkFrame.setVisible(true)).setVisible(true);
-                        if(CheckPane.isVisible()) check(finalCount);
+                        if(checkFrame.isVisible()) check(finalCount);
                     }catch(Exception ignored){}
                 });
                 observers.put(count,new Approver(loc,count-1,ID[0]));

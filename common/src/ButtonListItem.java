@@ -19,7 +19,7 @@ public class ButtonListItem extends JButton implements ListItem,Selection{
     public void setSelected(boolean selected){
         this.selected=selected;
         if(this.selected) {
-            this.setBackground(PresColor.SELECTED.value());
+            this.setBackground(fore);
             this.setForeground(PresColor.SELECTEDFORE.value());
         }
         else{
