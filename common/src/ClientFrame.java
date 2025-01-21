@@ -213,7 +213,7 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
 
         // Selected Label
         selected = new JLabel(bundle.getString("NA"));
-        selected.setFont(PresFont.fntDisplay);
+        selected.setFont(PresFont.fntText);
         RoomNameL.add(selected);
         selected.setVisible(true);
 
