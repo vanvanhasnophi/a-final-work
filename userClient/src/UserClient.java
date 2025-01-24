@@ -239,6 +239,7 @@ public class UserClient extends ClientFrame implements Command{
                         try{
                             roomList.setSelectedItem(finalCount);
                             new MessageBox(info,600,140).setVisible(true);
+                            FilteredInfo.uniqueSelect(finalCount);
                         }catch(Exception ignored){}
                     });
                 }
@@ -247,6 +248,7 @@ public class UserClient extends ClientFrame implements Command{
                         try {
                             roomList.setSelectedItem(finalCount);
                             new MessageBox(info, 600, 140).setVisible(true);
+                            FilteredInfo.uniqueSelect(finalCount);
                         } catch (Exception ignored) {
                         }
                     });
@@ -256,6 +258,7 @@ public class UserClient extends ClientFrame implements Command{
                         try {
                             roomList.setSelectedItem(finalCount);
                             new MessageBox(info, 600, 140).setVisible(true);
+                            FilteredInfo.uniqueSelect(finalCount);
                         } catch (Exception ignored) {
                         }
                     });
@@ -267,6 +270,7 @@ public class UserClient extends ClientFrame implements Command{
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
+                                    OverallInfo.uniqueSelect(finalCount);
                                 } catch (Exception ignored) {
                                 }
                             });
@@ -279,6 +283,7 @@ public class UserClient extends ClientFrame implements Command{
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
+                                    OverallInfo.uniqueSelect(finalCount);
                                 } catch (Exception ignored) {
                                 }
                             });
@@ -291,6 +296,7 @@ public class UserClient extends ClientFrame implements Command{
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
+                                    OverallInfo.uniqueSelect(finalCount);
                                 } catch (Exception ignored) {
                                 }
                             });
@@ -303,6 +309,7 @@ public class UserClient extends ClientFrame implements Command{
                                 try {
                                     roomList.setSelectedItem(finalCount);
                                     new MessageBox(info, 600, 140).setVisible(true);
+                                    OverallInfo.uniqueSelect(finalCount);
                                 } catch (Exception ignored) {
                                 }
                             });

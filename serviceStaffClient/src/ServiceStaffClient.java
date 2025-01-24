@@ -317,6 +317,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
                     try{
                         roomList.setSelectedItem(finalCount);
                         new MessageBox(info,600,140).setVisible(true);
+                        FilteredInfo.uniqueSelect(finalCount);
                     }catch(Exception ignored){}
                 });
                 observers.put(count,new ServiceStaff(loc,count-1,ID[0]));
@@ -325,6 +326,7 @@ public class ServiceStaffClient extends ClientFrame implements Command {
                     try{
                         roomList.setSelectedItem(finalCount);
                         new MessageBox(info,600,140).setVisible(true);
+                        OverallInfo.uniqueSelect(finalCount);
                     }catch(Exception ignored){}
                 });
             }catch (Exception ignored){

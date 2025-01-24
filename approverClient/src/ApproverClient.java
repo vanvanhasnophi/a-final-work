@@ -515,6 +515,7 @@ public class ApproverClient extends ClientFrame{
                         roomList.setSelectedItem(finalCount);
                         new MessageBox(MessageFormat.format(bundle.getString("richInfoTitle"),finalCount),info,600,140,"Check...",e1-> checkFrame.setVisible(true)).setVisible(true);
                         if(checkFrame.isVisible()) check(finalCount);
+                        FilteredInfo.uniqueSelect(finalCount);
                     }catch(Exception ignored){}
                 });
                 observers.put(count,new Approver(loc,count-1,ID[0]));
@@ -524,11 +525,13 @@ public class ApproverClient extends ClientFrame{
                         try{
                             roomList.setSelectedItem(finalCount);
                             check(finalCount);
+                            OverallInfo.uniqueSelect(finalCount);
                         }catch(Exception ignored){}
                     });else FilteredInfo.add(count,"NotExecuted",MessageFormat.format(bundle.getString("itemInfo"),count,server.NameStr(),server.TypeStr())+", "+MessageFormat.format(bundle.getString("applierNumberA"),server.NumberOfAppliers())+")", e->{
                         try{
                             roomList.setSelectedItem(finalCount);
                             check(finalCount);
+                            OverallInfo.uniqueSelect(finalCount);
                         }catch(Exception ignored){}
                     });
                 }

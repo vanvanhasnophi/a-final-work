@@ -43,7 +43,7 @@ public class ButtonListPanel extends ListPanel implements Selection {
     }
     @Override
     public void uniqueSelect(int index){
-        if(index>=0)List.get(index).setSelected(true);
+        if(index>=0&&List.get(index)!=null)List.get(index).setSelected(true);
         for(ListItem item: this.List.values()){
             if(item.getIndex()!=index)item.setSelected(false);
         }
@@ -52,7 +52,7 @@ public class ButtonListPanel extends ListPanel implements Selection {
         SwingUtilities.updateComponentTreeUI(this);
     }
     public void selectClick(int index){
-        if(index<0)return;
+        if(index<0||List.get(index)==null)return;
         List.get(index).getButton().doClick();
     }
 }
