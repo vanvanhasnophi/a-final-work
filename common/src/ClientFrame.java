@@ -325,6 +325,13 @@ public abstract class ClientFrame extends JFrame implements Command,settable{
         FilteredInfo = new ButtonListPanel(bundle.getString("filtered"),Selection.UNIQUE);
         InfoPane.add(FilteredInfo);
 
+        roomList.addItemListener(e->{
+            if(roomList.getSelectedItem()!=null) {
+                OverallInfo.uniqueSelect((Integer) roomList.getSelectedItem());
+                FilteredInfo.uniqueSelect((Integer) roomList.getSelectedItem());
+            }
+        });
+
         // Notification Center
         Notification.setEditable(false); //Readonly
         JScrollPane scrollPane3 =new JScrollPane(Notification);
