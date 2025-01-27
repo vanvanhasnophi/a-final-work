@@ -17,6 +17,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public abstract class ClientFrame extends JFrame implements Command,settable{
     protected final ResourceBundle bundle;
@@ -600,7 +603,7 @@ class settingFrame extends JFrame implements settable{
     final JButton changePass;
     final JList<String> options;
     final List<JPanel> panels=new ArrayList<>();
-    final List<String> panelName=new ArrayList<>(List.of(new String[]{"general", "appearance", "account"}));
+    final List<String> panelName=new ArrayList<>(List.of(new String[]{"general", "appearance", "account","snake"}));
     final List<String> localeName=new ArrayList<>(List.of(new String[]{"default", "zh-CN", "en-US"}));
     final JSONSettingsManager setting=new JSONSettingsManager();
     final JLabel info;
@@ -631,7 +634,8 @@ class settingFrame extends JFrame implements settable{
         options = new JList<>(new String[]{
                 bundle.getString("general"),
                 bundle.getString("appearance"),
-                bundle.getString("account")});
+                bundle.getString("account"),
+                bundle.getString("snakeGame")});
         options.setFont(PresFont.fnt);
         options.setFixedCellHeight(30);
         options.setMinimumSize(new Dimension(120,150));
@@ -1000,6 +1004,12 @@ class settingFrame extends JFrame implements settable{
         container.add(options);
         container.add(settingPanel);
         options.addListSelectionListener(e->{
+            if(options.getSelectedIndex()==3){
+                options.setSelectedIndex(0);
+                snakeGame sg=new snakeGame(getLocale());
+                sg.setVisible(true);
+                return;
+            }
             settingPanel.setViewportView(panels.get(options.getSelectedIndex()));
             SwingUtilities.updateComponentTreeUI(settingPanel);
         });
@@ -1141,5 +1151,331 @@ class settingFrame extends JFrame implements settable{
     private void Change(){
         ApplyButton.setEnabled(true);
         CancelButton.setText(bundle.getString("cancel"));
+    }
+}
+
+
+@SuppressWarnings("ALL")
+class snakeGame extends JFrame{
+    static final int NORTH=0;
+    static final int SOUTH=1;
+    static final int WEST=2;
+    static final int EAST=3;
+    int score;
+    final JPanel board=new JPanel(new FlowLayout());
+    final JPanel container=new JPanel(new BorderLayout());
+    final JLabel scoreL;
+    final JLabel scoreN;
+    final JLabel velTip;
+    final JSpinner vel=new JSpinner();
+    final JButton retry;
+    final JButton resume;
+    ResourceBundle bundle;
+
+    snakeGame(Locale l){
+        setLocale(l);
+        bundle=ResourceBundle.getBundle("sysmsg",getLocale());
+        setLayout(new BorderLayout());
+        setSize(600,600);
+        setLocationRelativeTo(null);
+        setTitle("Snake Game - "+bundle.getString("scoreTip")+" 0");
+        setBackground(new Color(0x1e1f22));
+        add(container,BorderLayout.CENTER);
+        final map[] m = {new map(50, 50)};
+        m[0].setVisible(true);
+        container.add(m[0],BorderLayout.CENTER);
+        final snake[] s = {new snake(10, m[0], new location(0, 20, 50, 50), EAST)};
+        m[0].addSnake(s[0]);
+        board.setVisible(false);
+        scoreL = new JLabel(bundle.getString("scoreTip")+" ");
+        board.add(scoreL);
+        scoreN = new JLabel("0");
+        board.add(scoreN);
+        velTip = new JLabel(" "+bundle.getString("veloTip"));
+        board.add(velTip);
+        board.add(vel);
+        vel.setValue(10);
+        retry = new JButton(bundle.getString("retry"));
+        board.add(retry);
+        resume = new JButton(bundle.getString("resume"));
+        retry.addActionListener(e->{
+            board.setVisible(false);
+            m[0].destroy();
+            container.removeAll();
+            m[0] =new map(50,50);
+            m[0].setVisible(true);
+            s[0] =new snake((Integer)vel.getValue(), m[0], new location(0, 20, 50, 50),EAST);
+            m[0].addSnake(s[0]);
+            container.add(m[0]);
+            score=0;
+            scoreN.setText(String.valueOf(score));
+            resume.setEnabled(true);
+            container.requestFocusInWindow();
+            setTitle("Snake Game - "+bundle.getString("scoreTip")+" "+score);
+        });
+        resume.addActionListener(e->{
+            s[0].resume();
+            board.setVisible(false);
+            container.requestFocusInWindow();
+        });
+        container.requestFocusInWindow();
+        container.setFocusable(true);
+        container.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                switch (e.getKeyChar()){
+                    case  KeyEvent.VK_W,KeyEvent.VK_UP:{
+                        s[0].face(NORTH);
+                        break;
+                    }
+                    case  KeyEvent.VK_S,KeyEvent.VK_DOWN:{
+                        s[0].face(SOUTH);
+                        break;
+                    }
+                    case  KeyEvent.VK_A,KeyEvent.VK_LEFT:{
+                        s[0].face(WEST);
+                        break;
+                    }
+                    case  KeyEvent.VK_D,KeyEvent.VK_RIGHT:{
+                        s[0].face(EAST);
+                        break;
+                    }
+                    case KeyEvent.VK_SPACE:{
+                        if(s[0].paused&&resume.isEnabled()){
+                            s[0].resume();
+                            board.setVisible(false);
+                        }
+                        else {
+                            s[0].pause();
+                            board.setVisible(true);
+                            container.requestFocusInWindow();
+                        }
+                    }
+                    default:break;
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                super.keyReleased(e);
+            }
+        });
+        board.add(resume);
+        add(board,BorderLayout.SOUTH);
+    }
+    snakeGame(){
+        this(null);
+    }
+    static class location{
+        private final int x,y;
+        private final int xBound,yBound;
+        location(int x,int y,int xBound,int yBound){
+            this.xBound=xBound;
+            this.yBound=yBound;
+            this.x=(x+xBound) %xBound;
+            this.y=(y+yBound)%yBound;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY(){
+            return y;
+        }
+
+        public int getXBound() {
+            return xBound;
+        }
+
+        public int getYBound() {
+            return yBound;
+        }
+
+        public location north(){
+            return new location(x, y - 1, xBound, yBound);
+        }
+        public location south(){
+            return new location(x, y + 1, xBound, yBound);
+        }
+        public location west(){
+            return new location(x - 1, y, xBound, yBound);
+        }
+        public location east(){
+            return new location(x + 1, y, xBound, yBound);
+        }
+        public location near(int facing){
+            return switch (facing){
+                case 0->north();
+                case 1->south();
+                case 2->west();
+                case 3->east();
+                default -> this;
+            };
+        }
+
+    }
+    class map extends JPanel implements drawable{
+        private final ArrayList<snake> snakes=new ArrayList<>();
+        private final int xBound, yBound;
+        private location fruit;
+        map(int xBound,int yBound){
+            setBackground(new Color(0x1e1f22));
+            this.yBound = yBound;
+            this.xBound=xBound;
+            setLayout(null);
+            addFruit();
+        }
+        @SuppressWarnings("UnusedAssignment")
+        public void destroy(){
+            for(snake s: snakes) {
+                s.destroy();
+                s=null;
+            }
+            System.gc();
+        }
+
+        public void addSnake(snake s){
+            snakes.addLast(s);
+        }
+
+        public int getYBound() {
+            return yBound;
+        }
+
+
+        public int getXBound() {
+            return xBound;
+        }
+        public void addFruit(){
+            Random r=new Random(System.currentTimeMillis());
+            fruit= new location(r.nextInt(0, xBound), r.nextInt(0, yBound), xBound, yBound);
+        }
+
+        @Override
+        public void draw(){
+            removeAll();
+            int sWidth=getWidth()/xBound;
+            int sHeight=getHeight()/yBound;
+            for(snake s: snakes){
+                boolean extend=false;
+                if(s.body[s.head].getX()==fruit.getX()&&s.body[s.head].getY()==fruit.getY()){
+                    s.extend();
+                    addFruit();
+                    score++;
+                    scoreN.setText(String.valueOf(score));
+                    setTitle("Snake Game - "+bundle.getString("scoreTip")+" "+score);
+                }
+                int corTail=(s.tail>s.head?0:100)+s.tail;
+                boolean crashed=s.isCrashed();
+                Color head=crashed?Color.GRAY:Color.RED;
+                Color body=crashed?Color.DARK_GRAY:Color.ORANGE;
+                for(int i=corTail;i>s.head;i--){
+                    JPanel square = new JPanel();
+                    square.setBackground(body);
+                    square.setBounds(s.body[i%100].getX()*sWidth,s.body[i%100].getY()*sHeight,sWidth,sHeight);
+                    add(square);
+                    square.setVisible(true);
+                }
+                JPanel square = new JPanel();
+                square.setBackground(head);
+                square.setBounds(s.body[s.head].getX()*sWidth,s.body[s.head].getY()*sHeight,sWidth,sHeight);
+                add(square);
+                square.setVisible(true);
+                if(crashed){
+                    setTitle(getTitle()+" - "+bundle.getString("gameOver"));
+                    board.setVisible(true);
+                    resume.setEnabled(false);
+                }
+            }
+            JPanel square = new JPanel();
+            square.setBackground(Color.GREEN);
+            square.setBounds(fruit.getX()*sWidth,fruit.getY()*sHeight,sWidth,sHeight);
+            add(square);
+            square.setVisible(true);
+            SwingUtilities.updateComponentTreeUI(this);
+        }
+    }
+    interface drawable{
+        void draw();
+    }
+    class snake{
+        snake(float velocity,map m,location sp,int facing){
+            this.xBound=m.getXBound();
+            this.yBound=m.getYBound();
+            this.father=m;
+            this.facing=facing;
+            tail=2;
+            body[0]= new location(sp.getX(), sp.getY(), xBound, yBound);
+            body[1]=body[0].near(reverse(facing));
+            body[2]=body[1].near(reverse(facing));
+            Runnable move= this::move;
+            service.scheduleAtFixedRate(move,0,(long)(1000/velocity), TimeUnit.MILLISECONDS);
+        }
+        ScheduledExecutorService service= Executors.newSingleThreadScheduledExecutor();
+        private final int xBound,yBound;
+        private int facing;
+        private final int head=0;
+        private int tail;
+        private boolean crashed=false;
+        private final drawable father;
+        private final location[] body=new location[100];
+        private boolean paused=false;
+        public void move(){
+            if(paused)return;
+            int corTail=(tail>head?0:100)+tail;
+            for(int i=corTail;i>head;i--){
+                body[i%100]=body[(i-1)%100];
+            }
+            body[head]=body[head].near(facing);
+            for(int i=corTail;i>head;i--){
+                if(body[i%100].getX()==body[head].getX()&&body[i%100].getY()==body[head].getY()){
+                    crashed=true;
+                    break;
+                }
+            }
+            father.draw();
+            if(crashed)pause();
+        }
+
+        public void destroy(){
+            this.service.close();
+        }
+
+        public boolean isCrashed() {
+            return crashed;
+        }
+
+        public static int reverse(int facing){
+            return switch (facing){
+                case 0->1;
+                case 1->0;
+                case 2->3;
+                default -> 2;
+            };
+        }
+        public void pause(){
+            this.paused=true;
+        }
+        public void resume(){
+            this.paused=false;
+        }
+        public void extend(){
+            location temp=body[tail];
+            tail=(tail+1)%100;
+            body[tail]=temp.near(0);
+        }
+        public location getHead(){
+            return body[head];
+        }
+        public void face(int facing){
+            this.facing=facing;
+        }
     }
 }

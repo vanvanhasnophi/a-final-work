@@ -27,6 +27,7 @@ public class LoadFont
         return loadFont("SarasaGothicSC-Regular.ttf", Size);
     }
 
+    /**
     public static Font InterI() {
         return InterI(12f);
     }
@@ -34,7 +35,7 @@ public class LoadFont
     public static Font InterI(float Size){
         return loadFont("SarasaGothicSC-Italic.ttf", Size);
     }
-
+     */
     public static Font InterB() {
         return InterB(12f);
     }
@@ -43,6 +44,7 @@ public class LoadFont
         return loadFont("SarasaGothicSC-Bold.ttf", Size);
     }
 
+    /**
     public static Font InterBI() {
         return InterBI(12f);
     }
@@ -58,7 +60,7 @@ public class LoadFont
     public static Font InterL(){return InterL(12f);}
     
     public static Font InterL(float Size){ return loadFont("SarasaGothicSC-Light.ttf",Size);}
-
+     */
     public static Font Password(){return Password(12f);}
 
     public static Font Password(float Size){return loadFont("Inter-UI-Regular-2.ttf",Size);}
@@ -71,6 +73,7 @@ public class LoadFont
         return loadFont("consola.ttf", Size);
     }
 
+    /**
     public static Font ConsolasB() {
         return ConsolasB(12f);
     }
@@ -99,6 +102,7 @@ public class LoadFont
 
     public static Font SymbolR(float Size){return loadFont("FontAwesome6FreeRegular400.otf",Size);}
 
+     */
     public static Font SymBolS(){return SymbolS(12f);}
 
     public static Font SymbolS(float Size){return loadFont("FontAwesome6FreeSolid900.otf",Size);}
