@@ -12,7 +12,12 @@ public class Application {
     private Date createTime;
     private Date updateTime;
     public enum Status {
-        PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED
+        PENDING, // 待审批
+        APPROVED, // 已批准
+        REJECTED, // 已拒绝
+        CANCELLED, // 已取消
+        COMPLETED, // 已完成
+        EXPIRED // 已过期
     }
 
     // getter/setter

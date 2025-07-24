@@ -1,5 +1,7 @@
 package com.roomx.entity;
 
+import java.util.Date;
+
 public class Room {
     private Long id;
     private String name;
@@ -10,9 +12,15 @@ public class Room {
     private Status status;
     private Date createTime;
     private Date updateTime;
+    private Date lastMaintenanceTime;
 
     public enum Status {
-        AVAILABLE, UNAVAILABLE, MAINTENANCE, RESERVED
+        AVAILABLE, // 可用, 默认
+        UNAVAILABLE, // 不可用
+        MAINTENANCE, // 维修中
+        RESERVED, // 已预约
+        USING, // 使用中
+        CLEANING // 清洁中
     }
 
     public enum Type {
