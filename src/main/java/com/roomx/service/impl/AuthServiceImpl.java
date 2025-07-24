@@ -5,6 +5,8 @@ import com.roomx.repository.UserRepository;
 import com.roomx.service.AuthService;
 import com.roomx.utils.JwtUtil;
 import com.roomx.utils.PasswordEncoderUtil;
+import com.roomx.model.dto.UserTokenDTO;
+import com.roomx.model.dto.UserLoginDTO;
 import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,42 +20,26 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Object> login(String username, String password) {
-        User user = userRepository.findByUsername(username);
-        if (user != null && PasswordEncoderUtil.matches(password, user.getPassword())) {
+    public UserTokenDTO login(UserLoginDTO userLoginDTO) {
+        User user = userRepository.findByUsername(userLoginDTO.getUsername());
+        if (user != null && PasswordEncoderUtil.matches(userLoginDTO.getPassword(), user.getPassword())) {
             String token = JwtUtil.generateToken(user.getUsername(), user.getRole().name());
-            Map<String, Object> result = new HashMap<>();
-            result.put("token", token);
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("id", user.getId());
-            userInfo.put("username", user.getUsername());
-            userInfo.put("nickname", user.getNickname());
-            userInfo.put("role", user.getRole().name());
-            result.put("user", userInfo);
-            return result;
+            return UserTokenDTO.fromLogin(user, token);
         }
         return null;
     }
 
-    @Override
-    public Map<String, Object> register(UserLoginDTO userLoginDTO, UserInfoDTO userInfoDTO) {
-        User user = User.fromDTO(userLoginDTO, userInfoDTO);
+        @Override
+        public UserTokenDTO register(UserRegisterDTO userRegisterDTO) {
+        User user = UserRegisterDTO.toEntity(userRegisterDTO);
         if (user == null) {
-            throw new IllegalArgumentException("Invalid user: " + userLoginDTO.getUsername() + " " + userInfoDTO.getRole());
+            throw new IllegalArgumentException("Invalid user: " + userRegisterDTO.getUsername() + " " + userRegisterDTO.getRole());
         }
         // 密码加密
         user.setPassword(PasswordEncoderUtil.encode(user.getPassword()));
         userRepository.save(user);
         String token = JwtUtil.generateToken(user.getUsername(), user.getRole().name());
-        Map<String, Object> result = new HashMap<>();
-        result.put("token", token);
-        Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("id", user.getId());
-        userInfo.put("username", user.getUsername());
-        userInfo.put("nickname", user.getNickname());
-        userInfo.put("role", user.getRole().name());
-        result.put("user", userInfo);
-        return result;
+        return UserTokenDTO.fromLogin(user, token);
     }
 
     @Override
