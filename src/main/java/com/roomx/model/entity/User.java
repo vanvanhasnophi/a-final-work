@@ -3,6 +3,8 @@ package com.roomx.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import com.roomx.enums.UserRole;
+import com.roomx.enums.UserPermission;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -16,12 +18,7 @@ public abstract class User {
     private String nickname;
     private String contact;
 
-    private enum Role {
-        APPLIER, APPROVER, MAINTAINER, SERVICE_STAFF, ADMIN
-    }
-
-    public abstract Role getRole();
-
+    public abstract UserRole getRole();
 }
 
 @Entity
@@ -29,16 +26,10 @@ public abstract class User {
 @EqualsAndHashCode(callSuper = true)
 public class Approver extends User {
     private String department;
-    private Permission permission;
+    private ApproverPermission permission;
 
-    public enum Permission {
-        RESTRICTED, 
-        NORMAL, 
-        EXTENDED
-    }
-
-    public Role getRole() {
-        return Role.APPROVER;
+    public UserRole getRole() {
+        return UserRole.APPROVER;
     }
 }
 
@@ -48,8 +39,8 @@ public class Approver extends User {
 public class Maintainer extends User {
     private String skill;
 
-    public Role getRole() {
-        return Role.MAINTAINER;
+    public UserRole getRole() {
+        return UserRole.MAINTAINER;
     }
 }
 
@@ -59,8 +50,8 @@ public class Maintainer extends User {
 public class ServiceStaff extends User {
     private String serviceArea;
 
-    public Role getRole() {
-        return Role.SERVICE_STAFF;
+    public UserRole getRole() {
+        return UserRole.SERVICE_STAFF;
     }
 }
 
@@ -68,8 +59,8 @@ public class ServiceStaff extends User {
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Admin extends User {
-    public Role getRole() {
-        return Role.ADMIN;
+    public UserRole getRole() {
+        return UserRole.ADMIN;
     }
 }
 
@@ -79,7 +70,7 @@ public class Admin extends User {
 public class Applier extends User {
     private String department;
 
-    public Role getRole() {
-        return Role.APPLIER;
+    public UserRole getRole() {
+        return UserRole.APPLIER;
     }
 }

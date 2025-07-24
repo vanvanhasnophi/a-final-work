@@ -1,31 +1,19 @@
 package com.roomx.entity;
 
 import java.util.Date;
+import com.roomx.enums.RoomType;
 
 public class Room {
     private Long id;
     private String name;
     private String description;
-    private Type type;
+    private RoomType type;
     private Long capacity;
     private String location;
-    private Status status;
+    private RoomStatus status;
     private Date createTime;
     private Date updateTime;
     private Date lastMaintenanceTime;
-
-    public enum Status {
-        AVAILABLE, // 可用, 默认
-        UNAVAILABLE, // 不可用
-        MAINTENANCE, // 维修中
-        RESERVED, // 已预约
-        USING, // 使用中
-        CLEANING // 清洁中
-    }
-
-    public enum Type {
-       LECTURE_ROOM,SEMINAR_ROOM,CASE_ROOM,NO_TYPE
-    }
 
     // getter/setter
     public Long getId() {
@@ -52,11 +40,11 @@ public class Room {
         this.description = description;
     }
 
-    public Type getType() {
+    public RoomType getType() {
         return type;
     }
 
-    public void setType(Type type) {
+    public void setType(RoomType type) {
         this.type = type;
     }
 

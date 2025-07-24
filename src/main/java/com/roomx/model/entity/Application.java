@@ -1,6 +1,7 @@
 package com.roomx.entity;
 
 import java.util.Date;
+import com.roomx.enums.ApplicationStatus;
 
 public class Application {
     private Long id;
@@ -8,17 +9,11 @@ public class Application {
     private Long roomId;
     private Long crowd;
     private String reason;
-    private Status status;
+    private ApplicationStatus status;
     private Date createTime;
     private Date updateTime;
-    public enum Status {
-        PENDING, // 待审批
-        APPROVED, // 已批准
-        REJECTED, // 已拒绝
-        CANCELLED, // 已取消
-        COMPLETED, // 已完成
-        EXPIRED // 已过期
-    }
+    private Date startTime;
+    private Date endTime;
 
     // getter/setter
     public Long getId() {
@@ -61,11 +56,11 @@ public class Application {
         this.reason = reason;
     }
 
-    public Status getStatus() {
+    public ApplicationStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(ApplicationStatus status) {
         this.status = status;
     }
 
@@ -85,5 +80,28 @@ public class Application {
         this.updateTime = updateTime;
     }
 
+    public Date getExpireTime() {
+        return expireTime;
+    }
+
+    public void setExpireTime(Date expireTime) {
+        this.expireTime = expireTime;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }   
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
 
 }
