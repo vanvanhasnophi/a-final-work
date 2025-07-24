@@ -1,36 +1,35 @@
-package com.roomx.vo;
+package com.roomx.dto;
 
 import com.roomx.enums.ApproverPermission;
 import com.roomx.enums.UserRole;
-import lombok.Data; 
 
+import lombok.Data;
 
 @Data
-public class UserInfoVO {
+public class UserInfoDTO {
     private Long id;
     private String username;
     private String nickname;
     private String contact;
     private UserRole role;
-} 
+    
+}
 
-
-public class ApplierInfoVO extends UserInfoVO {
+public class ApplierInfoDTO extends UserInfoDTO {
     private String department;
 }
 
 
-public class ApproverInfoVO extends UserInfoVO {
+public class ApproverInfoDTO extends UserInfoDTO {
     private ApproverPermission permission;
 }
 
 
-public class MaintainerInfoVO extends UserInfoVO {
+public class MaintainerInfoDTO extends UserInfoDTO {
     private String skill;
 }
 
 
-public class ServiceStaffInfoVO extends UserInfoVO {
+public class ServiceStaffInfoDTO extends UserInfoDTO {
     private String serviceArea;
 }
-

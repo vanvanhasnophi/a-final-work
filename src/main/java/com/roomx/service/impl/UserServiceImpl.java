@@ -3,6 +3,7 @@ package com.roomx.service.impl;
 import com.roomx.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.UserService;
+import com.roomx.util.PasswordEncoderUtil;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -14,26 +15,7 @@ public class UserServiceImpl implements UserService {
         this.userRepository = userRepository;
     }
 
-    @Override
-    public User login(String username, String password) {
-        User user = userRepository.findByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
-            return user;
-        }
-        return null;
-    }
-
-    @Override
-    public User register(User user) {
-        return userRepository.save(user);
-    }
-
-    @Override
-    public User updatePassword(User user, String newPassword) {
-        user.setPassword(newPassword);
-        return userRepository.save(user);
-    }
-
+   
     @Override
     public User updateUserInfo(User user, Object userInfo) {
         // 具体实现
@@ -55,19 +37,5 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByRole(role);
     }
 
-    @Override
-    public void createUser(User user) {
-        userRepository.save(user);
-    }
 
-    @Override
-    public void deleteUser(User user) {
-        userRepository.delete(user);
-    }
-
-    @Override
-    public void resetPassword(User user, String newPassword) {
-        user.setPassword(newPassword);
-        userRepository.save(user);
-    }
 } 

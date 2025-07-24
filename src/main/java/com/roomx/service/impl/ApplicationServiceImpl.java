@@ -20,6 +20,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Application modify(Long applicationId, Application application) {
+        Application existingApplication = applicationRepository.findById(applicationId).orElse(null);
+        if (existingApplication != null) {
+            existingApplication.update(application);
+            return applicationRepository.save(existingApplication);
+        }
+        return null;
+    }
+
+    @Override
     public List<Application> list() {
         return applicationRepository.findAll();
     }   
@@ -62,23 +72,6 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
     }
 
-    @Override
-    public void postpone(Long applicationId) {
-        Application application = applicationRepository.findById(applicationId).orElse(null);
-        if (application != null) {
-            application.setExpireTime(newDate);
-            applicationRepository.save(application);
-        }
-    }
-
-    @Override   
-    public void suspend(Long applicationId) {
-        Application application = applicationRepository.findById(applicationId).orElse(null);
-        if (application != null) {
-            application.setStatus(Application.Status.SUSPENDED);
-            applicationRepository.save(application);
-        }
-    }
 
     @Override
     public void cancel(Long applicationId) {
