@@ -14,5 +14,5 @@ public interface ApplicationService {
     void reject(Long applicationId, String reason);
     void cancel(Long applicationId, String reason);
     
-    // 其他申请相关业务方法...
+    
 }
