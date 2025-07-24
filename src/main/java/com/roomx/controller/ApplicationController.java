@@ -13,13 +13,29 @@ public class ApplicationController {
     @Autowired
     private ApplicationService applicationService;
 
-    @PostMapping("/apply") // 申请预约
-    public ResponseEntity<String> apply(@RequestBody Application application) { // 申请预约
-        return ResponseEntity.ok("Application submitted successfully");
+    @PostMapping("/post") // 申请预约
+    public ResponseEntity<Application> apply(@RequestBody Application application) {
+        Application savedApplication = applicationService.apply(application);
+        return ResponseEntity.ok(savedApplication);
     }
 
-    @GetMapping("/list") // 获取预约列表
-    public ResponseEntity<List<Application>> list() {// 获取预约列表
+    @GetMapping("/list") // 获取全部预约列表
+    public ResponseEntity<List<Application>> list() {
         return ResponseEntity.ok(applicationService.list());
+    }
+
+    @GetMapping("/user/{userId}") // 按用户ID获取预约列表
+    public ResponseEntity<List<Application>> listByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(applicationService.listByUser(userId));
+    }
+
+    @GetMapping("/room/{roomId}") // 按房间ID获取预约列表
+    public ResponseEntity<List<Application>> listByRoom(@PathVariable Long roomId) {
+        return ResponseEntity.ok(applicationService.listByRoom(roomId));
+    }
+
+    @GetMapping("/{id}") // 获取预约详情
+    public ResponseEntity<Application> get(@PathVariable Long id) {
+        return ResponseEntity.ok(applicationService.get(id));
     }
 }
