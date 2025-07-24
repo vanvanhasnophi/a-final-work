@@ -15,9 +15,4 @@ public class PasswordEncoderUtil {
     public static boolean matches(String rawPassword, String encodedPassword) {
         return encoder.matches(rawPassword, encodedPassword);
     }
-
-    public static String generateToken(String username) {
-        return username;
-    }
-
 }
