@@ -1,7 +1,7 @@
-package com.roomx.vo;
+package com.roomx.model.vo;
 
-import com.roomx.enums.ApproverPermission;
-import com.roomx.enums.UserRole;
+import com.roomx.constant.enums.ApproverPermission;
+import com.roomx.constant.enums.UserRole;
 import lombok.Data; 
 
 

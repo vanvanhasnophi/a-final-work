@@ -3,7 +3,6 @@ package com.roomx.service;
 import com.roomx.model.dto.ApplicationDTO;
 import com.roomx.model.dto.ApplicationQuery;
 import com.roomx.model.dto.PageResult;
-import java.util.List;
 
 public interface ApplicationService {
     ApplicationDTO apply(ApplicationDTO applicationDTO);
