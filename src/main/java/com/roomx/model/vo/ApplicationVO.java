@@ -1,7 +1,7 @@
 package com.roomx.model.vo;
 
-import com.roomx.entity.Application;
-import com.roomx.enums.ApplicationStatus;
+import com.roomx.model.entity.Application;
+import com.roomx.constant.enums.ApplicationStatus;
 import lombok.Data;
 
 @Data
