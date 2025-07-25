@@ -1,10 +1,9 @@
 package com.roomx.controller;
 
-import com.roomx.entity.User;
+import com.roomx.model.entity.User;
 import com.roomx.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController

@@ -8,4 +8,10 @@ public enum UserRole {
     MAINTAINER(3);// 维修人员
 
     private final int code;
+    private UserRole(int code) {
+        this.code = code;
+    }
+    public int getCode() {
+        return code;
+    }
 } 

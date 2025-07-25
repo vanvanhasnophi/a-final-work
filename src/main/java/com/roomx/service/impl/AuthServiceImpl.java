@@ -5,11 +5,11 @@ import com.roomx.repository.UserRepository;
 import com.roomx.service.AuthService;
 import com.roomx.utils.JwtUtil;
 import com.roomx.utils.PasswordEncoderUtil;
-import com.roomx.model.dto.UserTokenDTO;
+import com.roomx.model.dto.UserRegisterDTO; 
 import com.roomx.model.dto.UserLoginDTO;
+import com.roomx.model.dto.UserTokenDTO;
 import org.springframework.stereotype.Service;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -24,9 +24,11 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(userLoginDTO.getUsername());
         if (user != null && PasswordEncoderUtil.matches(userLoginDTO.getPassword(), user.getPassword())) {
             String token = JwtUtil.generateToken(user.getUsername(), user.getRole().name());
+            user.setLastLoginTime(userLoginDTO.getLoginTime());
+            userRepository.save(user);
             return UserTokenDTO.fromLogin(user, token);
         }
-        return null;
+        else throw new IllegalArgumentException("Invalid username or password");
     }
 
         @Override
@@ -37,6 +39,8 @@ public class AuthServiceImpl implements AuthService {
         }
         // 密码加密
         user.setPassword(PasswordEncoderUtil.encode(user.getPassword()));
+        user.setCreateTime(new Date());
+        user.setLastLoginTime(new Date());
         userRepository.save(user);
         String token = JwtUtil.generateToken(user.getUsername(), user.getRole().name());
         return UserTokenDTO.fromLogin(user, token);

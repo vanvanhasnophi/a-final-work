@@ -1,19 +1,33 @@
-package com.roomx.entity;
+package com.roomx.model.entity;
 
 import java.util.Date;
-import com.roomx.enums.ApplicationStatus;
+import com.roomx.constant.enums.ApplicationStatus;
+import lombok.Data;
+import jakarta.persistence.*;
+import com.roomx.model.entity.*;
 
+@Data
+@Entity
 public class Application {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long userId;
-    private Long roomId;
     private Long crowd;
+    private String contact;
     private String reason;
     private ApplicationStatus status;
     private Date createTime;
     private Date updateTime;
     private Date startTime;
     private Date endTime;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private Room room;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private User user;
 
     // constructor
     public Application() {
@@ -33,120 +47,6 @@ public class Application {
         this.updateTime = this.createTime;
         this.status = ApplicationStatus.PENDING;
     }
-    // getter/setter
-
-    public void update(Application application, Date updateTime) {
-        this.id = application.getId();
-        this.userId = application.getUserId();
-        this.roomId = application.getRoomId();
-        this.crowd = application.getCrowd();
-        this.reason = application.getReason();
-        this.status = application.getStatus();
-        this.createTime = application.getCreateTime();
-        this.updateTime = updateTime;
-        this.startTime = application.getStartTime();
-        this.endTime = application.getEndTime();
-    }
-
-    public void update(Application application) {
-        this.id = application.getId();
-        this.userId = application.getUserId();
-        this.roomId = application.getRoomId();
-        this.crowd = application.getCrowd();
-        this.reason = application.getReason();
-        this.status = application.getStatus();
-        this.createTime = application.getCreateTime();
-        this.updateTime = new Date();
-        this.startTime = application.getStartTime();
-        this.endTime = application.getEndTime();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Long getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
-    }
-
-    public Long getCrowd() {
-        return crowd;
-    }
-
-    public void setCrowd(Long crowd) {
-        this.crowd = crowd;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    public ApplicationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ApplicationStatus status) {
-        this.status = status;
-    }
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public Date getExpireTime() {
-        return expireTime;
-    }
-
-    public void setExpireTime(Date expireTime) {
-        this.expireTime = expireTime;
-    }
-
-    public Date getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(Date startTime) {
-        this.startTime = startTime;
-    }   
-
-    public Date getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(Date endTime) {
-        this.endTime = endTime;
-    }
+    
 
 }

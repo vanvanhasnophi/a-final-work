@@ -9,4 +9,10 @@ public enum ApplicationStatus {
     EXPIRED(-2);// 已过期
 
     private final int code;
+    private ApplicationStatus(int code) {
+        this.code = code;
+    }
+    public int getCode() {
+        return code;
+    }
 } 

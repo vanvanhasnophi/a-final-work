@@ -1,13 +1,14 @@
-package com.roomx.entity;
+package com.roomx.model.entity;
+
+import java.util.Date;
 
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import com.roomx.enums.UserRole;
-import com.roomx.enums.ApproverPermission;
-import com.roomx.dto.UserLoginDTO;
-import com.roomx.dto.UserInfoDTO;
-import com.roomx.util.PasswordEncoderUtil;
+import com.roomx.constant.enums.UserRole;
+import com.roomx.constant.enums.ApproverPermission;
+
+
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -20,9 +21,9 @@ public abstract class User {
     private String password;
     private String nickname;
     private String contact;
-
+    private Date createTime;
+    private Date lastLoginTime;
     public abstract UserRole getRole();
-
 }
 
 @Entity
@@ -32,6 +33,7 @@ public class Approver extends User {
     private String department;
     private ApproverPermission permission;
 
+    @Override   
     public UserRole getRole() {
         return UserRole.APPROVER;
     }
@@ -43,6 +45,7 @@ public class Approver extends User {
 public class Maintainer extends User {
     private String skill;
 
+    @Override
     public UserRole getRole() {
         return UserRole.MAINTAINER;
     }
@@ -54,6 +57,7 @@ public class Maintainer extends User {
 public class ServiceStaff extends User {
     private String serviceArea;
 
+    @Override
     public UserRole getRole() {
         return UserRole.SERVICE_STAFF;
     }
@@ -63,6 +67,7 @@ public class ServiceStaff extends User {
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Admin extends User {
+    @Override
     public UserRole getRole() {
         return UserRole.ADMIN;
     }
@@ -74,6 +79,7 @@ public class Admin extends User {
 public class Applier extends User {
     private String department;
 
+    @Override
     public UserRole getRole() {
         return UserRole.APPLIER;
     }

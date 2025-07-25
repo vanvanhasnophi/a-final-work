@@ -1,13 +1,20 @@
 package com.roomx.service;
 
-import com.roomx.entity.Room;
-import java.util.List;
+import com.roomx.dto.RoomInfoDTO;
+import com.roomx.model.dto.PageResult;
+import com.roomx.model.dto.RoomQuery;
 
 public interface RoomService {
-    List<Room> getAllRooms();
-    boolean applyRoom(Long userId, Long roomId);
-    Room getRoomById(Long id);
-    Room saveRoom(Room room);
+    // 获取房间信息
+    RoomInfoDTO getRoomById(Long id);
+    // 更新房间信息
+    RoomInfoDTO updateRoom(Long id, RoomInfoDTO roomInfoDTO);
+    // 删除房间
     void deleteRoom(Long id);
-    // 其他房间相关业务方法...
+    // 添加房间
+    RoomInfoDTO addRoom(RoomInfoDTO roomInfoDTO);
+    // 更新房间状态
+    void updateRoomStatus(Long id, RoomStatus status);
+    // 获取房间列表
+    PageResult<RoomInfoDTO> page(RoomQuery query, int pageNum, int pageSize);
 }

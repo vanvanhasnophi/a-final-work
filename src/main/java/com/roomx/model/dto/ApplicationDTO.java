@@ -1,7 +1,8 @@
 package com.roomx.model.dto;
 
-import com.roomx.entity.Application;
-import com.roomx.enums.ApplicationStatus;
+import com.roomx.model.entity.Application;
+import com.roomx.constant.enums.ApplicationStatus;
+import java.util.Date;
 import lombok.Data;
 
 @Data
@@ -10,20 +11,29 @@ public class ApplicationDTO {
     private Long userId;
     private Long roomId;
     private Long crowd;
+    private String contact;
     private String reason;
     private ApplicationStatus status;
-    private String createTime;
-    private String updateTime;
+    private Date createTime;
+    private Date updateTime;
+    private Date startTime;
+    private Date endTime;
 
-    public Application toEntity() {
-        Application app = new Application();
-        app.setId(this.id);
-        app.setUserId(this.userId);
-        app.setRoomId(this.roomId);
-        app.setCrowd(this.crowd);
-        app.setReason(this.reason);
-        app.setStatus(this.status);
-        // 其他字段可根据需要补充
-        return app;
+
+    public static ApplicationDTO fromEntity(Application application) {
+        ApplicationDTO applicationDTO = new ApplicationDTO();
+        applicationDTO.setId(application.getId());
+        applicationDTO.setUserId(application.getUser().getId());
+        applicationDTO.setRoomId(application.getRoom().getId());
+        applicationDTO.setCrowd(application.getCrowd());
+        applicationDTO.setContact(application.getContact());
+        applicationDTO.setReason(application.getReason());
+        applicationDTO.setStatus(application.getStatus());
+        applicationDTO.setCreateTime(application.getCreateTime());
+        applicationDTO.setUpdateTime(application.getUpdateTime());
+        applicationDTO.setStartTime(application.getStartTime());
+        applicationDTO.setEndTime(application.getEndTime());
+        return applicationDTO;
     }
+
 }

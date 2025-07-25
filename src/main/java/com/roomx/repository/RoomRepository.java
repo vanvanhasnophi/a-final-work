@@ -1,16 +1,12 @@
 package com.roomx.repository;
 
-import com.roomx.entity.Room;
+import com.roomx.model.entity.Room;
+import com.roomx.constant.enums.RoomStatus;
+import com.roomx.constant.enums.RoomType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.List;
 
-public interface RoomRepository extends JpaRepository<Room, Long> {
+public interface RoomRepository extends JpaRepository<Room, Long>, JpaSpecificationExecutor<Room> {
     // 房间数据访问
-    List<Room> findByStatus(Room.Status status);
-    List<Room> findByType(Room.Type type);
-    List<Room> findByLocation(String location);
-    List<Room> findByCapacity(int capacity);
-    List<Room> findByEquipment(String equipment);
-    List<Room> findByPrice(double price);
-    List<Room> findByStatusAndTypeAndLocationAndCapacityAndEquipmentAndPrice(Room.Status status, Room.Type type, String location, int capacity, String equipment, double price);
 }

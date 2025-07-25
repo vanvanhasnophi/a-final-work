@@ -1,6 +1,11 @@
 package com.roomx.controller;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import com.roomx.model.entity.Room;
+import com.roomx.service.RoomService;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/room")
