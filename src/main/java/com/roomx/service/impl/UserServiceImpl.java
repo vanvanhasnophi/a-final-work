@@ -1,23 +1,24 @@
 package com.roomx.service.impl;
 
-import com.roomx.entity.User;
+import com.roomx.model.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.UserService;
 import org.springframework.stereotype.Service;
-import java.util.List;
 import java.util.stream.Collectors;
 import com.roomx.model.dto.UserInfoDTO;
-import com.roomx.enums.UserRole;
-import com.roomx.enums.ApproverPermission;
 import java.util.Objects;   
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.UserQuery;
+import com.roomx.model.entity.Applier;
+import com.roomx.model.entity.Approver;
+import com.roomx.model.entity.Maintainer;
+import com.roomx.model.entity.ServiceStaff;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -37,20 +38,14 @@ public class UserServiceImpl implements UserService {
             if(!Objects.equals(userInfoDTO.getRole(),user.getRole())) throw new IllegalArgumentException("role not match");
             user.setNickname(userInfoDTO.getNickname());
             user.setContact(userInfoDTO.getContact());
-            switch(user.getRole()) {
-                case APPLIER:
-                    user.setDepartment(userInfoDTO.getDepartment());
-                    break;
-                case APPROVER:
-                    user.setPermission(userInfoDTO.getPermission());
-                    break;
-                case MAINTAINER:
-                    user.setSkill(userInfoDTO.getSkill());
-                    break;
-                case SERVICE_STAFF:
-                    user.setServiceArea(userInfoDTO.getServiceArea());
-                    break;
-                default:
+            if(user instanceof Applier) {
+                ((Applier)user).setDepartment(userInfoDTO.getDepartment());
+            } else if(user instanceof Approver) {
+                ((Approver)user).setPermission(userInfoDTO.getPermission());
+            } else if(user instanceof Maintainer) {
+                ((Maintainer)user).setSkill(userInfoDTO.getSkill());
+            } else if(user instanceof ServiceStaff) {   
+                ((ServiceStaff)user).setServiceArea(userInfoDTO.getServiceArea());
             }
             return UserInfoDTO.fromEntity(userRepository.save(user));
         
@@ -89,6 +84,13 @@ public class UserServiceImpl implements UserService {
         result.setPageNum(pageNum);
         result.setPageSize(pageSize);
         return result;
+    }
+
+    @Override
+    public UserInfoDTO getUserInfoByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if(user==null) throw new IllegalArgumentException("user not found");
+        return UserInfoDTO.fromEntity(user);
     }
 
 } 

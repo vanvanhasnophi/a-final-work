@@ -1,20 +1,20 @@
 package com.roomx.service.impl;
 
-import com.roomx.entity.Room;
+import com.roomx.model.entity.Room;
 import com.roomx.repository.RoomRepository;
 import com.roomx.service.RoomService;
 import org.springframework.stereotype.Service;
-import java.util.List;
 import java.util.stream.Collectors;
-import com.roomx.model.dto.RoomInfoDTO;
+import com.roomx.model.dto.RoomDTO;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.RoomQuery;
+import com.roomx.constant.enums.RoomStatus;
 
 @Service
 public class RoomServiceImpl implements RoomService {
@@ -25,18 +25,24 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public RoomInfoDTO getRoomById(Long id) {
+    public RoomDTO getRoomById(Long id) {
         Room room=roomRepository.findById(id).orElse(null);
         if(room==null) throw new IllegalArgumentException("room not found");
-        return RoomInfoDTO.fromEntity(room);
+        return RoomDTO.fromEntity(room);
     }
 
     @Override
-    public RoomInfoDTO updateRoom(Long id, RoomInfoDTO roomInfoDTO) {
+    public RoomDTO updateRoom(Long id, RoomDTO roomInfoDTO) {
         Room room=roomRepository.findById(id).orElse(null);
         if(room==null) throw new IllegalArgumentException("room not found");
-        room.update(roomInfoDTO);
-        return RoomInfoDTO.fromEntity(roomRepository.save(room));
+        room.setStatus(roomInfoDTO.getStatus());
+        room.setType(roomInfoDTO.getType());
+        room.setLocation(roomInfoDTO.getLocation());
+        room.setCapacity(roomInfoDTO.getCapacity());
+        room.setDescription(roomInfoDTO.getDescription());
+        room.setCreateTime(roomInfoDTO.getCreateTime());
+        room.setUpdateTime(roomInfoDTO.getUpdateTime());
+        return RoomDTO.fromEntity(roomRepository.save(room));
     }
 
     @Override
@@ -45,7 +51,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public PageResult<RoomInfoDTO> page(RoomQuery query, int pageNum, int pageSize) {
+    public PageResult<RoomDTO> page(RoomQuery query, int pageNum, int pageSize) {
         Specification<Room> spec = (root, cq, cb) -> {
             ArrayList<Predicate> predicates = new ArrayList<>();
             if (query.getStatus() != null) {
@@ -61,11 +67,35 @@ public class RoomServiceImpl implements RoomService {
         };
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
         Page<Room> page = roomRepository.findAll(spec, pageable);
-        PageResult<RoomInfoDTO> result = new PageResult<>();
-        result.setRecords(page.getContent().stream().map(RoomInfoDTO::fromEntity).collect(Collectors.toList()));
+        PageResult<RoomDTO> result = new PageResult<>();
+        result.setRecords(page.getContent().stream().map(RoomDTO::fromEntity).collect(Collectors.toList()));
         result.setTotal(page.getTotalElements());
         result.setPageNum(pageNum);
         result.setPageSize(pageSize);
         return result;
     }
+
+    @Override
+    public RoomDTO addRoom(RoomDTO roomDTO) {
+        Room room = new Room();
+        room.setName(roomDTO.getName());
+        room.setDescription(roomDTO.getDescription());
+        room.setType(roomDTO.getType());
+        room.setCapacity(roomDTO.getCapacity());
+        room.setLocation(roomDTO.getLocation());
+        room.setStatus(roomDTO.getStatus());
+        room.setCreateTime(roomDTO.getCreateTime());
+        room.setUpdateTime(roomDTO.getUpdateTime());
+        room.setLastMaintenanceTime(roomDTO.getLastMaintenanceTime());
+        return RoomDTO.fromEntity(roomRepository.save(room));
+    }
+
+    @Override
+    public void updateRoomStatus(Long id, RoomStatus status) {
+        Room room = roomRepository.findById(id).orElse(null);
+        if(room==null) throw new IllegalArgumentException("room not found");
+        room.setStatus(status);
+        roomRepository.save(room);  
+    }   
+
 } 

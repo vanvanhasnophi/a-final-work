@@ -2,42 +2,40 @@ package com.roomx.controller;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
-import com.roomx.model.entity.Application;
+import com.roomx.model.dto.ApplicationDTO;
 import com.roomx.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/approver")
 public class ApproverController {
+    @Autowired
+    private ApplicationService applicationService;
+
     // 审批相关接口
     @PostMapping("/approve")// 批准
-    public ResponseEntity<Application> approve(@RequestBody Application application) {
-        Application savedApplication = applicationService.approve(application);
-        return ResponseEntity.ok(savedApplication);
+    public ResponseEntity<ApplicationDTO> approve(@RequestBody ApplicationDTO applicationDTO) {
+        applicationService.approve(applicationDTO.getId(), applicationDTO.getReason());
+        // 查询最新状态返回
+        ApplicationDTO updated = applicationService.get(applicationDTO.getId());
+        return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/reject")// 驳回
-    public ResponseEntity<Application> reject(@RequestBody Application application) {
-        Application savedApplication = applicationService.reject(application);
-        return ResponseEntity.ok(savedApplication);
+    public ResponseEntity<ApplicationDTO> reject(@RequestBody ApplicationDTO applicationDTO) {
+        applicationService.reject(applicationDTO.getId(), applicationDTO.getReason());
+        // 查询最新状态返回
+        ApplicationDTO updated = applicationService.get(applicationDTO.getId());
+        return ResponseEntity.ok(updated);
     }
 
-    @PostMapping("/postpone")// 延期
-    public ResponseEntity<Application> postpone(@RequestBody Application application) {
-        Application savedApplication = applicationService.postpone(application);
-        return ResponseEntity.ok(savedApplication);
-    }
 
-    @PostMapping("/suspend")// 挂起
-    public ResponseEntity<Application> suspend(@RequestBody Application application) {
-        Application savedApplication = applicationService.suspend(application);
-        return ResponseEntity.ok(savedApplication);
-    }
-
-    @PostMapping("/cancel")// 取消
-    public ResponseEntity<Application> cancel(@RequestBody Application application) {
-        Application savedApplication = applicationService.cancel(application);
-        return ResponseEntity.ok(savedApplication);
+    @PostMapping("/cancel")
+    public ResponseEntity<ApplicationDTO> cancel(@RequestBody ApplicationDTO applicationDTO) {
+        applicationService.cancel(applicationDTO.getId(), applicationDTO.getReason());
+        // 查询最新状态返回
+        ApplicationDTO updated = applicationService.get(applicationDTO.getId());
+        return ResponseEntity.ok(updated);
     }
 
     

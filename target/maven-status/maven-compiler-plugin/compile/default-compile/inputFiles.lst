@@ -26,6 +26,7 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/repository/UserRepository.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/constant/enums/ApplicationStatus.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/UserTokenDTO.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Applier.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/RoomServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/constant/enums/ApproverPermission.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/AuthService.java
@@ -33,6 +34,8 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/ApproverController.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/ApplicationQuery.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/RoomDTO.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Maintainer.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Admin.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/RoomQuery.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/UserService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/vo/ApplicationVO.java
@@ -44,7 +47,9 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/UserServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/UserRegisterDTO.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Approver.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/constant/enums/RoomType.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/ServiceStaff.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/User.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/exception/GlobalExceptionHandler.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Application.java

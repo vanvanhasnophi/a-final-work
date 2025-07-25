@@ -1,10 +1,12 @@
 package com.roomx.controller;
 
-import com.roomx.model.entity.User;
+import com.roomx.model.dto.UserLoginDTO;
 import com.roomx.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import com.roomx.model.dto.UserTokenDTO;
+import com.roomx.model.dto.UserRegisterDTO;
+import com.roomx.model.dto.UserUpdatePasswordDTO;
 
 @RestController
 @RequestMapping("/api")
@@ -17,11 +19,47 @@ public class AuthController {
 
     // 登录接口
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
-        Map<String, Object> result = authService.login(user.getUsername(), user.getPassword());
+    public ResponseEntity<?> login(@RequestBody UserLoginDTO userLoginDTO) {
+        UserTokenDTO result = authService.login(userLoginDTO);
         if (result == null) {
             return ResponseEntity.status(401).body("用户名或密码错误");
         }
         return ResponseEntity.ok(result);
+    }
+
+    // 注册接口
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody UserRegisterDTO userRegisterDTO) {
+        UserTokenDTO result = authService.register(userRegisterDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    // 登出接口
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody UserLoginDTO userLoginDTO) {
+        authService.logout(userLoginDTO.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
+    // 更新密码接口
+    @PostMapping("/updatePassword")
+    public ResponseEntity<?> updatePassword(@RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
+        int result = authService.updatePassword(userUpdatePasswordDTO);
+        if (result == 0) {
+            return ResponseEntity.ok().build();
+        } else if (result == 1) {
+            return ResponseEntity.status(401).body("用户不存在");
+        } else if (result == 2) {
+            return ResponseEntity.status(401).body("旧密码错误");
+        } else {
+            return ResponseEntity.status(500).body("更新密码失败");
+        }
+    }
+    
+    // 删除用户接口
+    @PostMapping("/deleteUser")
+    public ResponseEntity<?> deleteUser(@RequestBody UserLoginDTO userLoginDTO) {
+        authService.deleteUser(userLoginDTO);
+        return ResponseEntity.ok().build();
     }
 }
