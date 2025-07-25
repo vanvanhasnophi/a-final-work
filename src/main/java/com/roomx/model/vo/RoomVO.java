@@ -2,6 +2,7 @@ package com.roomx.model.vo;
 
 import com.roomx.entity.Room;
 import com.roomx.enums.RoomType;
+import java.util.Date;
 import lombok.Data;
 
 @Data
@@ -12,10 +13,10 @@ public class RoomVO {
     private RoomType type;
     private Long capacity;
     private String location;
-    private String status;
-    private String createTime;
-    private String updateTime;
-    private String lastMaintenanceTime;
+    private RoomStatus status;
+    private Date createTime;
+    private Date updateTime;
+    private Date lastMaintenanceTime;
 
     public static RoomVO fromEntity(Room room) {
         RoomVO vo = new RoomVO();
@@ -25,7 +26,10 @@ public class RoomVO {
         vo.setType(room.getType());
         vo.setCapacity(room.getCapacity());
         vo.setLocation(room.getLocation());
-        // 其他字段可根据需要补充
+        vo.setStatus(room.getStatus());
+        vo.setCreateTime(room.getCreateTime());
+        vo.setUpdateTime(room.getUpdateTime());
+        vo.setLastMaintenanceTime(room.getLastMaintenanceTime());
         return vo;
     }
 } 

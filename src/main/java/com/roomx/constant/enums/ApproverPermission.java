@@ -7,4 +7,10 @@ public enum ApproverPermission {
     EXTENDED(1);// 扩展
 
     private final int code;
+    private ApproverPermission(int code) {
+        this.code = code;
+    }
+    public int getCode() {
+        return code;
+    }
 } 

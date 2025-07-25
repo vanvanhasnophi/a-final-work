@@ -8,4 +8,10 @@ public enum RoomType {
     OTHER_ROOM(0); // 其他
 
     private final int code;
+    private RoomType(int code) {
+        this.code = code;
+    }
+    public int getCode() {
+        return code;
+    }
 } 

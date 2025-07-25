@@ -1,7 +1,7 @@
 package com.roomx.model.dto;
 
-import com.roomx.entity.Room;
-import com.roomx.enums.RoomType;
+import com.roomx.model.entity.Room;
+import com.roomx.constant.enums.RoomType;
 import lombok.Data;
 
 @Data

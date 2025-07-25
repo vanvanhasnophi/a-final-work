@@ -3,7 +3,7 @@ package com.roomx.controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
-import com.roomx.entity.Application;
+import com.roomx.model.entity.Application;
 import com.roomx.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 

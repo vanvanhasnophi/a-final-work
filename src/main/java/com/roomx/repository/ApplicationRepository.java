@@ -1,16 +1,12 @@
 package com.roomx.repository;
 
-import com.roomx.entity.Application;
+import com.roomx.model.entity.Application;
+import com.roomx.constant.enums.ApplicationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.List;
 
-public interface ApplicationRepository extends JpaRepository<Application, Long> {
+public interface ApplicationRepository extends JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
     // 申请数据访问
-    List<Application> findByUserId(Long userId);
-    List<Application> findByRoomId(Long roomId);
-    List<Application> findByStatus(Application.Status status);
-    List<Application> findByUserIdAndRoomId(Long userId, Long roomId);
-    List<Application> findByUserIdAndStatus(Long userId, Application.Status status);
-    List<Application> findByRoomIdAndStatus(Long roomId, Application.Status status);
-    List<Application> findByUserIdAndRoomIdAndStatus(Long userId, Long roomId, Application.Status status);
+    
 }

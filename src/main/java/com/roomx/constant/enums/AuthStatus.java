@@ -10,4 +10,10 @@ public enum AuthStatus {
     USER_NOT_AUTHORIZED(6);
 
     private final int code;
+    private AuthStatus(int code) {
+        this.code = code;
+    }
+    public int getCode() {
+        return code;
+    }
 }

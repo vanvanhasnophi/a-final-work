@@ -1,6 +1,6 @@
 package com.roomx.controller;
 
-import com.roomx.entity.User;
+import com.roomx.model.entity.User;
 import com.roomx.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
