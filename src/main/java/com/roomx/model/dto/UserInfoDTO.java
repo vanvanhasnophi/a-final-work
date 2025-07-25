@@ -4,6 +4,10 @@ import java.util.Date;
 import com.roomx.constant.enums.ApproverPermission;
 import com.roomx.constant.enums.UserRole;
 import com.roomx.model.entity.User;
+import com.roomx.model.entity.Approver;
+import com.roomx.model.entity.Applier;
+import com.roomx.model.entity.ServiceStaff;
+import com.roomx.model.entity.Maintainer;
 import lombok.Data;
 
 @Data

@@ -1,8 +1,9 @@
 package com.roomx.service;
 
-import com.roomx.dto.UserLoginDTO;
-import com.roomx.dto.UserRegisterDTO;
-import com.roomx.dto.UserTokenDTO;  
+import com.roomx.model.dto.UserLoginDTO;
+import com.roomx.model.dto.UserRegisterDTO;
+import com.roomx.model.dto.UserUpdatePasswordDTO;
+import com.roomx.model.dto.UserTokenDTO;  
 
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ public interface AuthService {
     // 退出登录业务
     int logout(String username);
     // 修改密码业务
-    int updatePassword(String username, String oldPassword, String newPassword);
+    int updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO);
     // 删除用户业务
     int deleteUser(UserLoginDTO userLoginDTO);
 

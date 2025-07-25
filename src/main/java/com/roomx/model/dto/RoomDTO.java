@@ -1,6 +1,9 @@
 package com.roomx.model.dto;
 
+import java.util.Date;
+
 import com.roomx.model.entity.Room;
+import com.roomx.constant.enums.RoomStatus;
 import com.roomx.constant.enums.RoomType;
 import lombok.Data;
 
@@ -12,20 +15,24 @@ public class RoomDTO {
     private RoomType type;
     private Long capacity;
     private String location;
-    private String status;
-    private String createTime;
-    private String updateTime;
-    private String lastMaintenanceTime;
+    private RoomStatus status;
+    private Date createTime;
+    private Date updateTime;
+    private Date lastMaintenanceTime;
 
-    public Room toEntity() {
-        Room room = new Room();
-        room.setId(this.id);
-        room.setName(this.name);
-        room.setDescription(this.description);
-        room.setType(this.type);
-        room.setCapacity(this.capacity);
-        room.setLocation(this.location);
-        // 其他字段可根据需要补充
-        return room;
+
+    public static RoomDTO fromEntity(Room room) {
+        RoomDTO roomDTO = new RoomDTO();
+        roomDTO.setId(room.getId());
+        roomDTO.setName(room.getName());
+        roomDTO.setDescription(room.getDescription());
+        roomDTO.setType(room.getType());
+        roomDTO.setCapacity(room.getCapacity());
+        roomDTO.setLocation(room.getLocation());
+        roomDTO.setStatus(room.getStatus());
+        roomDTO.setCreateTime(room.getCreateTime());
+        roomDTO.setUpdateTime(room.getUpdateTime());
+        roomDTO.setLastMaintenanceTime(room.getLastMaintenanceTime());
+        return roomDTO;
     }
 }

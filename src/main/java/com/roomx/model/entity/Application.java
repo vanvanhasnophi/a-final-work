@@ -4,7 +4,6 @@ import java.util.Date;
 import com.roomx.constant.enums.ApplicationStatus;
 import lombok.Data;
 import jakarta.persistence.*;
-import com.roomx.model.entity.*;
 
 @Data
 @Entity
@@ -36,17 +35,20 @@ public class Application {
         this.status = ApplicationStatus.PENDING;
     }
 
-    public Application(Long userId, Long roomId, Long crowd, String reason, Date startTime, Date endTime) {
-        this.userId = userId;
-        this.roomId = roomId;
-        this.crowd = crowd;
-        this.reason = reason;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.createTime = new Date();
-        this.updateTime = this.createTime;
-        this.status = ApplicationStatus.PENDING;
+    public Long getRoomId(){
+        return this.room.getId();
+    }
+
+    public Long getUserId(){
+        return this.user.getId();
     }
     
+    public void setUser(User user){
+        this.user = user;
+    }
+    
+    public void setRoom(Room room){
+        this.room = room;
+    }
 
 }

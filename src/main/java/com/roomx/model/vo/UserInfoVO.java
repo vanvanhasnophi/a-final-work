@@ -12,25 +12,11 @@ public class UserInfoVO {
     private String nickname;
     private String contact;
     private UserRole role;
+    private ApproverPermission permission;
+    private String department;
+    private String skill;
+    private String serviceArea;
 } 
 
 
-public class ApplierInfoVO extends UserInfoVO {
-    private String department;
-}
-
-
-public class ApproverInfoVO extends UserInfoVO {
-    private ApproverPermission permission;
-}
-
-
-public class MaintainerInfoVO extends UserInfoVO {
-    private String skill;
-}
-
-
-public class ServiceStaffInfoVO extends UserInfoVO {
-    private String serviceArea;
-}
 

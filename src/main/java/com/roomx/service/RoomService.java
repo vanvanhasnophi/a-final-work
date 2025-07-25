@@ -1,20 +1,21 @@
 package com.roomx.service;
 
-import com.roomx.dto.RoomInfoDTO;
+import com.roomx.model.dto.RoomDTO;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.RoomQuery;
+import com.roomx.constant.enums.RoomStatus;
 
 public interface RoomService {
     // 获取房间信息
-    RoomInfoDTO getRoomById(Long id);
+    RoomDTO getRoomById(Long id);
     // 更新房间信息
-    RoomInfoDTO updateRoom(Long id, RoomInfoDTO roomInfoDTO);
+    RoomDTO updateRoom(Long id, RoomDTO roomDTO);
     // 删除房间
     void deleteRoom(Long id);
     // 添加房间
-    RoomInfoDTO addRoom(RoomInfoDTO roomInfoDTO);
+    RoomDTO addRoom(RoomDTO roomDTO);
     // 更新房间状态
     void updateRoomStatus(Long id, RoomStatus status);
     // 获取房间列表
-    PageResult<RoomInfoDTO> page(RoomQuery query, int pageNum, int pageSize);
+    PageResult<RoomDTO> page(RoomQuery query, int pageNum, int pageSize);
 }

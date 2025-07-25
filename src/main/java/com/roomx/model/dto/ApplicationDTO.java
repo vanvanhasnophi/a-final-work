@@ -23,8 +23,8 @@ public class ApplicationDTO {
     public static ApplicationDTO fromEntity(Application application) {
         ApplicationDTO applicationDTO = new ApplicationDTO();
         applicationDTO.setId(application.getId());
-        applicationDTO.setUserId(application.getUser().getId());
-        applicationDTO.setRoomId(application.getRoom().getId());
+        applicationDTO.setUserId(application.getUserId());
+        applicationDTO.setRoomId(application.getRoomId());
         applicationDTO.setCrowd(application.getCrowd());
         applicationDTO.setContact(application.getContact());
         applicationDTO.setReason(application.getReason());

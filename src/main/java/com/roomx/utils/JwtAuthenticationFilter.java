@@ -5,12 +5,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
+import com.roomx.constant.enums.UserRole;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
@@ -22,7 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Claims claims = JwtUtil.parseToken(token);
                 String username = claims.getSubject();
-                String role = (String) claims.get("role");
+                UserRole role = (UserRole) claims.get("role");
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(auth);

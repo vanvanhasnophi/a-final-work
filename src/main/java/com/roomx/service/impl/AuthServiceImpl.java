@@ -1,6 +1,6 @@
 package com.roomx.service.impl;
 
-import com.roomx.entity.User;
+import com.roomx.model.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.AuthService;
 import com.roomx.utils.JwtUtil;
@@ -8,6 +8,12 @@ import com.roomx.utils.PasswordEncoderUtil;
 import com.roomx.model.dto.UserRegisterDTO; 
 import com.roomx.model.dto.UserLoginDTO;
 import com.roomx.model.dto.UserTokenDTO;
+import com.roomx.model.dto.UserUpdatePasswordDTO;
+import com.roomx.model.entity.Applier;
+import com.roomx.model.entity.Approver;
+import com.roomx.model.entity.Maintainer;
+import com.roomx.model.entity.ServiceStaff;
+import com.roomx.model.entity.Admin;
 import org.springframework.stereotype.Service;
 import java.util.Date;
 
@@ -23,7 +29,7 @@ public class AuthServiceImpl implements AuthService {
     public UserTokenDTO login(UserLoginDTO userLoginDTO) {
         User user = userRepository.findByUsername(userLoginDTO.getUsername());
         if (user != null && PasswordEncoderUtil.matches(userLoginDTO.getPassword(), user.getPassword())) {
-            String token = JwtUtil.generateToken(user.getUsername(), user.getRole().name());
+            String token = JwtUtil.generateToken(user.getUsername(), user.getRole());
             user.setLastLoginTime(userLoginDTO.getLoginTime());
             userRepository.save(user);
             return UserTokenDTO.fromLogin(user, token);
@@ -33,16 +39,44 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         public UserTokenDTO register(UserRegisterDTO userRegisterDTO) {
-        User user = UserRegisterDTO.toEntity(userRegisterDTO);
-        if (user == null) {
-            throw new IllegalArgumentException("Invalid user: " + userRegisterDTO.getUsername() + " " + userRegisterDTO.getRole());
+            User user = null;
+        switch(userRegisterDTO.getRole()){
+            case APPLIER : {
+                user = new Applier();
+                ((Applier)user).setDepartment(userRegisterDTO.getDepartment());
+                break;
+            }
+            case APPROVER : {
+                user = new Approver();
+                ((Approver)user).setPermission(userRegisterDTO.getPermission());
+                break;
+            }   
+            case MAINTAINER : {
+                user = new Maintainer();
+                ((Maintainer)user).setSkill(userRegisterDTO.getSkill());
+                break;
+            }
+            case SERVICE_STAFF : {  
+                user = new ServiceStaff();
+                ((ServiceStaff)user).setServiceArea(userRegisterDTO.getServiceArea());
+                break;
+            }
+            case ADMIN : {
+                user = new Admin(); 
+                break;
+            }
+            default : {
+                throw new IllegalArgumentException("Invalid user: " + userRegisterDTO.getUsername() + " " + userRegisterDTO.getRole());
+            }
         }
-        // 密码加密
-        user.setPassword(PasswordEncoderUtil.encode(user.getPassword()));
+        user.setUsername(userRegisterDTO.getUsername());
+        user.setPassword(PasswordEncoderUtil.encode(userRegisterDTO.getPassword()));
+        user.setNickname(userRegisterDTO.getNickname());
+        user.setContact(userRegisterDTO.getContact());
         user.setCreateTime(new Date());
         user.setLastLoginTime(new Date());
         userRepository.save(user);
-        String token = JwtUtil.generateToken(user.getUsername(), user.getRole().name());
+        String token = JwtUtil.generateToken(user.getUsername(), user.getRole());
         return UserTokenDTO.fromLogin(user, token);
     }
 
@@ -55,15 +89,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public int updatePassword(String username, String oldPassword, String newPassword) {
-        User user = userRepository.findByUsername(username);
+    public int updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO) {
+        User user = userRepository.findByUsername(userUpdatePasswordDTO.getUsername());
         if (user == null) {
             return 1; // 用户不存在
         }
-        if (!PasswordEncoderUtil.matches(oldPassword, user.getPassword())) {
+        if (!PasswordEncoderUtil.matches(userUpdatePasswordDTO.getOldPassword(), user.getPassword())) {
             return 2; // 旧密码错误
         }
-        user.setPassword(PasswordEncoderUtil.encode(newPassword));
+        user.setPassword(PasswordEncoderUtil.encode(userUpdatePasswordDTO.getNewPassword()));
         userRepository.save(user);
         return 0; // 成功
     }

@@ -3,7 +3,7 @@ package com.roomx.model.vo;
 import com.roomx.model.entity.Application;
 import com.roomx.constant.enums.ApplicationStatus;
 import lombok.Data;
-
+import java.util.Date;
 @Data
 public class ApplicationVO {
     private Long id;
@@ -13,10 +13,10 @@ public class ApplicationVO {
     private String contact;
     private String reason;
     private ApplicationStatus status;
-    private String createTime;
-    private String updateTime;
-    private String startTime;
-    private String endTime;
+    private Date createTime;
+    private Date updateTime;
+    private Date startTime;
+    private Date endTime;
 
     public static ApplicationVO fromEntity(Application app) {
         ApplicationVO vo = new ApplicationVO();
