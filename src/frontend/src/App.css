@@ -853,6 +853,21 @@ select:hover,
   color: #fff !important;
 }
 
+/* 立即注册/立即登录按钮 hover 仅文字高亮 */
+.login-toggle-link,
+.login-toggle-link:focus {
+  background: none !important;
+  border: none !important;
+  color: var(--primary-color) !important;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.login-toggle-link:hover {
+  background: none !important;
+  color: var(--primary-color) !important;
+  text-decoration: underline;
+}
+
 
 
 
