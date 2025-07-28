@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, Typography, message, Switch } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, BulbOutlined, BulbFilled } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggleButton from '../components/ThemeToggleButton';
 
 const { Title, Text } = Typography;
 
@@ -13,7 +14,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, register } = useAuth();
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -192,19 +193,18 @@ export default function Login() {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      background: isDarkMode 
-        ? 'linear-gradient(135deg, #1E1F22 0%, #2B2D31 100%)'
-        : 'linear-gradient(135deg, #F2F2F2 0%, #E8E8E8 100%)',
-      padding: '20px'
+      background: 'var(--background-color)',
+      position: 'relative'
     }}>
+      {/* 主题切换按钮（与Dashboard一致） */}
+      <ThemeToggleButton style={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }} />
       <Card
         style={{
-          width: '100%',
-          maxWidth: '400px',
-          boxShadow: 'var(--shadow)',
-          borderRadius: '12px',
+          width: 400,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          borderRadius: '16px',
           background: 'var(--component-bg)',
-          border: '1px solid var(--border-color)',
+          position: 'relative',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -397,6 +397,7 @@ export default function Login() {
             {isLoginMode ? '还没有账号？' : '已有账号？'}
             <Button
               type="link"
+              className="login-toggle-link"
               onClick={() => setIsLoginMode(!isLoginMode)}
               style={{
                 padding: 0,
