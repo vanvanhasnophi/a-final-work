@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 import authAPI from '../api/auth';
 
@@ -17,63 +17,8 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // 检查token是否有效
-  const checkAuth = async () => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      try {
-        const response = await authAPI.getCurrentUser();
-        setUser(response.data);
-        setToken(storedToken);
-      } catch (error) {
-        console.error('Token验证失败:', error);
-        logout();
-      }
-    }
-    setLoading(false);
-  };
-
-  // 登录
-  const login = async (username, password) => {
-    try {
-      const response = await authAPI.login(username, password);
-      const { token: newToken, user: userData } = response.data;
-      
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      setToken(newToken);
-      setUser(userData);
-      
-      message.success('登录成功！');
-      return { success: true };
-    } catch (error) {
-      console.error('登录失败:', error);
-      const errorMessage = error.response?.data || '登录失败，请检查用户名和密码';
-      message.error(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  // 注册
-  const register = async (userData) => {
-    try {
-      // 移除确认密码字段，因为后端不需要
-      const { confirmPassword, ...registerData } = userData;
-      
-      const response = await authAPI.register(registerData);
-      message.success('注册成功！请登录');
-      return { success: true };
-    } catch (error) {
-      console.error('注册失败:', error);
-      const errorMessage = error.response?.data || '注册失败，请检查输入信息';
-      message.error(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
   // 登出
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       if (user?.username) {
         await authAPI.logout(user.username);
@@ -85,18 +30,90 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       setToken(null);
       setUser(null);
-      message.success('已退出登录');
+    }
+  }, [user?.username]);
+
+  // 检查token是否有效
+  const checkAuth = useCallback(async () => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      try {
+        const response = await authAPI.getCurrentUser();
+        setUser(response.data);
+        setToken(storedToken);
+      } catch (error) {
+        console.error('Token验证失败:', error);
+        // 直接清理状态，不调用logout避免循环
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
+      }
+    }
+    setLoading(false);
+  }, []); // 移除logout依赖
+
+  // 登录
+  const login = async (username, password) => {
+    try {
+      console.log('AuthContext: 开始登录请求');
+      const response = await authAPI.login(username, password);
+      console.log('AuthContext: 登录响应:', response);
+      
+      // 后端返回的是UserTokenDTO格式，包含token和用户信息
+      const { token: newToken, id, username: userName, nickname, role } = response.data;
+      console.log('AuthContext: 解析的token:', newToken);
+      console.log('AuthContext: 解析的用户信息:', { id, userName, nickname, role });
+      
+      // 构造用户对象
+      const userData = {
+        id,
+        username: userName,
+        nickname,
+        role
+      };
+      
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setToken(newToken);
+      setUser(userData);
+      
+      console.log('AuthContext: 登录完成，token已设置');
+      return { success: true };
+    } catch (error) {
+      console.error('AuthContext: 登录失败:', error);
+      const errorMessage = error.response?.data || '登录失败，请检查用户名和密码';
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // 注册
+  const register = async (userData) => {
+    try {
+      // 移除确认密码字段，因为后端不需要
+      const { confirmPassword, ...registerData } = userData;
+      
+      await authAPI.register(registerData);
+      return { success: true };
+    } catch (error) {
+      console.error('注册失败:', error);
+      const errorMessage = error.response?.data || '注册失败，请检查输入信息';
+      return { success: false, error: errorMessage };
     }
   };
 
   // 检查是否已登录
   const isAuthenticated = () => {
-    return !!token && !!user;
+    const hasToken = !!token;
+    const hasUser = !!user;
+    console.log('isAuthenticated检查:', { hasToken, hasUser, token, user });
+    return hasToken && hasUser;
   };
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   const value = {
     user,

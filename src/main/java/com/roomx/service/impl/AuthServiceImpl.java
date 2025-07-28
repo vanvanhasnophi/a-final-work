@@ -40,45 +40,52 @@ public class AuthServiceImpl implements AuthService {
         @Override
         public UserTokenDTO register(UserRegisterDTO userRegisterDTO) {
             User user = null;
-        switch(userRegisterDTO.getRole()){
-            case APPLIER : {
-                user = new Applier();
-                ((Applier)user).setDepartment(userRegisterDTO.getDepartment());
-                break;
+            user = userRepository.findByUsername(userRegisterDTO.getUsername());
+            if(user!=null) throw new IllegalArgumentException("Username already exists");
+            // 如果没有指定角色，默认为申请人
+            if (userRegisterDTO.getRole() == null) {
+                userRegisterDTO.setRole(com.roomx.constant.enums.UserRole.APPLIER);
             }
-            case APPROVER : {
-                user = new Approver();
-                ((Approver)user).setPermission(userRegisterDTO.getPermission());
-                break;
-            }   
-            case MAINTAINER : {
-                user = new Maintainer();
-                ((Maintainer)user).setSkill(userRegisterDTO.getSkill());
-                break;
+            
+            switch(userRegisterDTO.getRole()){
+                case APPLIER : {
+                    user = new Applier();
+                    ((Applier)user).setDepartment(userRegisterDTO.getDepartment());
+                    break;
+                }
+                case APPROVER : {
+                    user = new Approver();
+                    ((Approver)user).setPermission(userRegisterDTO.getPermission());
+                    break;
+                }   
+                case MAINTAINER : {
+                    user = new Maintainer();
+                    ((Maintainer)user).setSkill(userRegisterDTO.getSkill());
+                    break;
+                }
+                case SERVICE_STAFF : {  
+                    user = new ServiceStaff();
+                    ((ServiceStaff)user).setServiceArea(userRegisterDTO.getServiceArea());
+                    break;
+                }
+                case ADMIN : {
+                    user = new Admin(); 
+                    break;
+                }
+                default : {
+                    throw new IllegalArgumentException("Invalid user: " + userRegisterDTO.getUsername() + " " + userRegisterDTO.getRole());
+                }
             }
-            case SERVICE_STAFF : {  
-                user = new ServiceStaff();
-                ((ServiceStaff)user).setServiceArea(userRegisterDTO.getServiceArea());
-                break;
-            }
-            case ADMIN : {
-                user = new Admin(); 
-                break;
-            }
-            default : {
-                throw new IllegalArgumentException("Invalid user: " + userRegisterDTO.getUsername() + " " + userRegisterDTO.getRole());
-            }
+            user.setUsername(userRegisterDTO.getUsername());
+            user.setPassword(PasswordEncoderUtil.encode(userRegisterDTO.getPassword()));
+            user.setNickname(userRegisterDTO.getNickname());
+            user.setContact(userRegisterDTO.getContact());
+            user.setCreateTime(new Date());
+            user.setLastLoginTime(new Date());
+            userRepository.save(user);
+            String token = JwtUtil.generateToken(user.getUsername(), user.getRole());
+            return UserTokenDTO.fromLogin(user, token);
         }
-        user.setUsername(userRegisterDTO.getUsername());
-        user.setPassword(PasswordEncoderUtil.encode(userRegisterDTO.getPassword()));
-        user.setNickname(userRegisterDTO.getNickname());
-        user.setContact(userRegisterDTO.getContact());
-        user.setCreateTime(new Date());
-        user.setLastLoginTime(new Date());
-        userRepository.save(user);
-        String token = JwtUtil.generateToken(user.getUsername(), user.getRole());
-        return UserTokenDTO.fromLogin(user, token);
-    }
 
     @Override
     public int logout(String username) {
