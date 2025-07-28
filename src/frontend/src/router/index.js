@@ -8,6 +8,8 @@ import UserProfile from '../pages/UserProfile';
 import NotFound from '../pages/NotFound';
 import TestConnection from '../pages/TestConnection';
 import AuthTest from '../pages/AuthTest';
+import ThemeTest from '../pages/ThemeTest';
+import SimpleTest from '../pages/SimpleTest';
 import AppLayout from '../components/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,7 +23,9 @@ function AppRoutes() {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '100vh' 
+        height: '100vh',
+        background: 'var(--background-color)',
+        color: 'var(--text-color)',
       }}>
         <div>加载中...</div>
       </div>
@@ -36,6 +40,8 @@ function AppRoutes() {
       } />
       <Route path="/test" element={<TestConnection />} />
       <Route path="/auth-test" element={<AuthTest />} />
+      <Route path="/theme-test" element={<ThemeTest />} />
+      <Route path="/simple-test" element={<SimpleTest />} />
       
       {/* 需要认证的路由 */}
       <Route path="/" element={

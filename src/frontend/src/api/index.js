@@ -5,7 +5,7 @@ import { message } from 'antd';
 const instance = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
     ? process.env.REACT_APP_API_URL || 'http://localhost:8080/api'
-    : '/api', // 开发环境使用相对路径，通过代理访问
+    : 'http://localhost:8080/api', // 开发环境直接使用后端URL
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -30,12 +30,15 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
+    console.log('API响应成功:', response.config.url, response.status);
     return response;
   },
   (error) => {
+    console.error('API请求失败:', error);
     if (error.response) {
       // 服务器返回错误状态码
       const { status, data } = error.response;
+      console.error('服务器错误:', status, data);
       
       switch (status) {
         case 401:
@@ -58,9 +61,11 @@ instance.interceptors.response.use(
       }
     } else if (error.request) {
       // 请求已发出但没有收到响应
+      console.error('网络错误:', error.request);
       message.error('网络连接失败，请检查网络设置');
     } else {
       // 请求配置出错
+      console.error('请求配置错误:', error.message);
       message.error('请求配置错误');
     }
     return Promise.reject(error);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Space, Typography } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Space, Typography, Button } from 'antd';
 import {
   DashboardOutlined,
   HomeOutlined,
@@ -7,9 +7,12 @@ import {
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
+  BulbOutlined,
+  BulbFilled,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -19,6 +22,7 @@ export default function AppLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const menuItems = [
     {
@@ -80,14 +84,19 @@ export default function AppLayout({ children }) {
   )?.key || '/dashboard';
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ 
+      minHeight: '100vh',
+      background: 'var(--background-color)',
+    }}>
       <Sider 
         collapsible 
         collapsed={collapsed} 
         onCollapse={setCollapsed}
         theme="light"
         style={{
-          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+          boxShadow: 'var(--shadow)',
+          background: 'var(--component-bg)',
+          borderRight: '1px solid var(--border-color)',
         }}
       >
         <div style={{ 
@@ -95,9 +104,13 @@ export default function AppLayout({ children }) {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          borderBottom: '1px solid #f0f0f0'
+          borderBottom: '1px solid var(--border-color)',
+          background: 'var(--component-bg)',
         }}>
-          <Text strong style={{ color: '#1890ff', fontSize: collapsed ? '14px' : '18px' }}>
+          <Text strong style={{ 
+            color: 'var(--primary-color)', 
+            fontSize: collapsed ? '14px' : '18px' 
+          }}>
             {collapsed ? 'RX' : 'RoomX'}
           </Text>
         </div>
@@ -106,49 +119,85 @@ export default function AppLayout({ children }) {
           selectedKeys={[selectedKey]}
           items={menuItems}
           onClick={handleMenuClick}
-          style={{ borderRight: 0 }}
+          style={{ 
+            borderRight: 0,
+            background: 'var(--component-bg)',
+          }}
+          theme={isDarkMode ? 'dark' : 'light'}
         />
       </Sider>
       
-      <Layout>
+      <Layout style={{ background: 'var(--background-color)' }}>
         <Header style={{ 
-          background: '#fff', 
+          background: 'var(--component-bg)', 
           padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          zIndex: 1
+          justifyContent: 'space-between',
+          boxShadow: 'var(--shadow)',
+          zIndex: 1,
+          borderBottom: '1px solid var(--border-color)',
         }}>
-          <Dropdown
-            menu={{ items: userMenuItems }}
-            placement="bottomRight"
-            arrow
-          >
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar 
-                icon={<UserOutlined />} 
-                style={{ backgroundColor: '#1890ff' }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Text strong style={{ fontSize: '14px', lineHeight: '1' }}>
-                  {user?.nickname || user?.username || '用户'}
-                </Text>
-                <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1' }}>
-                  {user?.role || '普通用户'}
-                </Text>
-              </div>
-            </Space>
-          </Dropdown>
+          <div style={{ flex: 1 }} />
+          
+          <Space>
+            {/* 主题切换按钮 */}
+            <Button
+              type="text"
+              icon={isDarkMode ? <BulbFilled /> : <BulbOutlined />}
+              onClick={toggleTheme}
+              style={{
+                color: 'var(--text-color)',
+                border: '1px solid var(--border-color)',
+                background: 'var(--component-bg)',
+              }}
+              title={isDarkMode ? '切换到浅色模式' : '切换到深色模式'}
+            />
+            
+            {/* 用户信息 */}
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              arrow
+            >
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar 
+                  icon={<UserOutlined />} 
+                  style={{ 
+                    backgroundColor: 'var(--primary-color)',
+                    color: '#fff',
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Text strong style={{ 
+                    fontSize: '14px', 
+                    lineHeight: '1',
+                    color: 'var(--text-color)',
+                  }}>
+                    {user?.nickname || user?.username || '用户'}
+                  </Text>
+                  <Text type="secondary" style={{ 
+                    fontSize: '12px', 
+                    lineHeight: '1',
+                    color: 'var(--text-color-secondary)',
+                  }}>
+                    {user?.role || '普通用户'}
+                  </Text>
+                </div>
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
         
         <Content style={{ 
           margin: '24px',
           padding: '24px',
-          background: '#fff',
+          background: 'var(--component-bg)',
           borderRadius: '8px',
           minHeight: 'calc(100vh - 112px)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          boxShadow: 'var(--shadow)',
+          border: '1px solid var(--border-color)',
+          color: 'var(--text-color)',
         }}>
           {children}
         </Content>
