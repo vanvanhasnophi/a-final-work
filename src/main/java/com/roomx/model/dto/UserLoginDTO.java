@@ -4,7 +4,7 @@ import java.util.Date;
 
 import com.roomx.constant.enums.UserRole;
 
-import lombok.Data;
+import lombok.*;
 
 @Data
 public class UserLoginDTO {

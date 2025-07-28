@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Tag, Space, Input, Select } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Tag, Space, Input, Select, message } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { roomAPI } from '../api/room';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -8,52 +9,82 @@ const { Option } = Select;
 export default function RoomList() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [searchParams, setSearchParams] = useState({
+    pageNum: 1,
+    pageSize: 10,
+  });
 
-  // 模拟数据
-  useEffect(() => {
+  // 获取房间列表
+  const fetchRooms = async (params = {}) => {
     setLoading(true);
-    setTimeout(() => {
-      setRooms([
-        {
-          id: 1,
-          name: '会议室A',
-          type: '会议室',
-          capacity: 20,
-          status: '可用',
-          location: '1楼',
-          equipment: '投影仪,白板'
-        },
-        {
-          id: 2,
-          name: '会议室B',
-          type: '会议室',
-          capacity: 15,
-          status: '使用中',
-          location: '2楼',
-          equipment: '投影仪'
-        },
-        {
-          id: 3,
-          name: '培训室',
-          type: '培训室',
-          capacity: 50,
-          status: '维护中',
-          location: '3楼',
-          equipment: '投影仪,音响,麦克风'
-        },
-        {
-          id: 4,
-          name: '小会议室',
-          type: '会议室',
-          capacity: 8,
-          status: '可用',
-          location: '1楼',
-          equipment: '白板'
-        }
-      ]);
+    try {
+      const response = await roomAPI.getRoomList({
+        ...searchParams,
+        ...params,
+      });
+      
+      const { records, total, current, size } = response.data;
+      setRooms(records || []);
+      setPagination({
+        current: current || 1,
+        pageSize: size || 10,
+        total: total || 0,
+      });
+    } catch (error) {
+      console.error('获取房间列表失败:', error);
+      message.error('获取房间列表失败');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  const handleTableChange = (pagination, filters, sorter) => {
+    const newParams = {
+      pageNum: pagination.current,
+      pageSize: pagination.pageSize,
+    };
+    setSearchParams(newParams);
+    fetchRooms(newParams);
+  };
+
+  const handleSearch = (value) => {
+    const newParams = {
+      ...searchParams,
+      pageNum: 1,
+      name: value,
+    };
+    setSearchParams(newParams);
+    fetchRooms(newParams);
+  };
+
+  const handleTypeFilter = (value) => {
+    const newParams = {
+      ...searchParams,
+      pageNum: 1,
+      type: value === 'all' ? undefined : value,
+    };
+    setSearchParams(newParams);
+    fetchRooms(newParams);
+  };
+
+  const handleStatusFilter = (value) => {
+    const newParams = {
+      ...searchParams,
+      pageNum: 1,
+      status: value === 'all' ? undefined : value,
+    };
+    setSearchParams(newParams);
+    fetchRooms(newParams);
+  };
 
   const columns = [
     {
@@ -113,14 +144,15 @@ export default function RoomList() {
             <Search
               placeholder="搜索房间"
               style={{ width: 200 }}
-              onSearch={value => console.log(value)}
+              onSearch={handleSearch}
+              allowClear
             />
-            <Select defaultValue="all" style={{ width: 120 }}>
+            <Select defaultValue="all" style={{ width: 120 }} onChange={handleTypeFilter}>
               <Option value="all">全部类型</Option>
               <Option value="meeting">会议室</Option>
               <Option value="training">培训室</Option>
             </Select>
-            <Select defaultValue="all" style={{ width: 120 }}>
+            <Select defaultValue="all" style={{ width: 120 }} onChange={handleStatusFilter}>
               <Option value="all">全部状态</Option>
               <Option value="available">可用</Option>
               <Option value="occupied">使用中</Option>
@@ -138,11 +170,12 @@ export default function RoomList() {
           rowKey="id"
           loading={loading}
           pagination={{
-            total: rooms.length,
-            pageSize: 10,
+            ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
+            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
           }}
+          onChange={handleTableChange}
         />
       </Card>
     </div>

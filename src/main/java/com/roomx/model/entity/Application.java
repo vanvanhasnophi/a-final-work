@@ -2,7 +2,7 @@ package com.roomx.model.entity;
 
 import java.util.Date;
 import com.roomx.constant.enums.ApplicationStatus;
-import lombok.Data;
+import lombok.*;
 import jakarta.persistence.*;
 
 @Data
