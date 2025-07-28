@@ -1,7 +1,7 @@
 package com.roomx.model.dto;
 
 import com.roomx.model.entity.User;
-import lombok.Data;
+import lombok.*;
 
 @Data
 public class UserTokenDTO {

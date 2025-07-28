@@ -1,8 +1,7 @@
 package com.roomx.model.entity;
 
 import jakarta.persistence.Entity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import com.roomx.constant.enums.UserRole;
 import com.roomx.constant.enums.ApproverPermission;
 

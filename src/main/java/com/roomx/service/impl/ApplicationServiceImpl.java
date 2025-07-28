@@ -1,6 +1,6 @@
 package com.roomx.service.impl;
 
-import com.roomx.model.entity.Application;
+import com.roomx.model.entity.*;
 import com.roomx.repository.ApplicationRepository;
 import com.roomx.service.ApplicationService;
 import org.springframework.stereotype.Service;
@@ -139,7 +139,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = applicationRepository.findById(applicationId).orElse(null);
         if (application != null) {
             application.setStatus(ApplicationStatus.APPROVED);
-            for(Application otherApplication : applicationRepository.findByRoomId(application.getRoomId())) {
+            for(Application otherApplication : applicationRepository.findByRoom_Id(application.getRoomId())) {
                 if(otherApplication.getStatus() == ApplicationStatus.PENDING&&otherApplication.getStartTime().before(application.getEndTime())&&otherApplication.getEndTime().after(application.getStartTime())) {
                     reject(otherApplication.getId(), "other application is in the same time");
                 }

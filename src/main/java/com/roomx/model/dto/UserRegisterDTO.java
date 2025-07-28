@@ -3,7 +3,7 @@ package com.roomx.model.dto;
 import com.roomx.constant.enums.UserRole;
 import com.roomx.constant.enums.ApproverPermission;
 
-import lombok.Data;
+import lombok.*;
 
 @Data
 public class UserRegisterDTO {

@@ -1,21 +1,55 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message } from 'antd';
 import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
+import { userAPI } from '../api/user';
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
-  const userInfo = {
-    username: 'zhangsan',
-    nickname: '张三',
-    email: 'zhangsan@example.com',
-    phone: '13800138000',
-    role: '普通用户',
-    department: '技术部',
-    avatar: null
+  // 获取用户信息
+  const fetchUserInfo = async () => {
+    setLoading(true);
+    try {
+      const response = await userAPI.getCurrentUser();
+      setUserInfo(response.data);
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+      message.error('获取用户信息失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    form.setFieldsValue(userInfo);
+  };
+
+  const handleSave = async (values) => {
+    try {
+      await userAPI.updateUser(userInfo.id, values);
+      message.success('用户信息更新成功');
+      setIsEditing(false);
+      fetchUserInfo(); // 刷新用户信息
+    } catch (error) {
+      console.error('更新用户信息失败:', error);
+      message.error('更新用户信息失败');
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    form.resetFields();
+  };
+
+  // 模拟最近活动数据
   const recentActivities = [
     {
       id: 1,
@@ -37,20 +71,13 @@ export default function UserProfile() {
     }
   ];
 
-  const handleEdit = () => {
-    setIsEditing(true);
-    form.setFieldsValue(userInfo);
-  };
+  if (loading) {
+    return <div style={{ padding: '24px', textAlign: 'center' }}>加载中...</div>;
+  }
 
-  const handleSave = (values) => {
-    console.log('保存用户信息:', values);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    form.resetFields();
-  };
+  if (!userInfo) {
+    return <div style={{ padding: '24px', textAlign: 'center' }}>用户信息不存在</div>;
+  }
 
   return (
     <div style={{ padding: '24px' }}>
@@ -59,8 +86,8 @@ export default function UserProfile() {
           <Card>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <Avatar size={80} icon={<UserOutlined />} />
-              <h2 style={{ marginTop: '16px' }}>{userInfo.nickname}</h2>
-              <Tag color="blue">{userInfo.role}</Tag>
+              <h2 style={{ marginTop: '16px' }}>{userInfo.nickname || userInfo.username}</h2>
+              <Tag color="blue">{userInfo.role || '普通用户'}</Tag>
             </div>
 
             <List
@@ -74,7 +101,7 @@ export default function UserProfile() {
               renderItem={item => (
                 <List.Item>
                   <span style={{ fontWeight: 'bold', marginRight: '8px' }}>{item.label}:</span>
-                  <span>{item.value}</span>
+                  <span>{item.value || '未设置'}</span>
                 </List.Item>
               )}
             />
@@ -160,11 +187,11 @@ export default function UserProfile() {
               </Form>
             ) : (
               <div>
-                <p><strong>昵称:</strong> {userInfo.nickname}</p>
+                <p><strong>昵称:</strong> {userInfo.nickname || '未设置'}</p>
                 <p><strong>用户名:</strong> {userInfo.username}</p>
-                <p><strong>邮箱:</strong> {userInfo.email}</p>
-                <p><strong>电话:</strong> {userInfo.phone}</p>
-                <p><strong>部门:</strong> {userInfo.department}</p>
+                <p><strong>邮箱:</strong> {userInfo.email || '未设置'}</p>
+                <p><strong>电话:</strong> {userInfo.phone || '未设置'}</p>
+                <p><strong>部门:</strong> {userInfo.department || '未设置'}</p>
               </div>
             )}
           </Card>

@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface ApplicationRepository extends JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
     // 申请数据访问
-    List<Application> findByRoomId(Long roomId);
+    List<Application> findByRoom_Id(Long roomId);
 }

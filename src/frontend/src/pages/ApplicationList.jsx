@@ -1,55 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Tag, Space, Modal, Form, Input, DatePicker, Select } from 'antd';
+import { Table, Card, Button, Tag, Space, Modal, Form, Input, DatePicker, Select, message } from 'antd';
 import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { applicationAPI } from '../api/application';
+import { roomAPI } from '../api/room';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 export default function ApplicationList() {
   const [applications, setApplications] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
-  // 模拟数据
-  useEffect(() => {
+  // 获取申请列表
+  const fetchApplications = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setApplications([
-        {
-          id: 1,
-          roomName: '会议室A',
-          applicant: '张三',
-          startTime: '2024-01-15 09:00',
-          endTime: '2024-01-15 11:00',
-          purpose: '项目讨论会议',
-          status: '待审批',
-          createTime: '2024-01-14 15:30'
-        },
-        {
-          id: 2,
-          roomName: '培训室',
-          applicant: '李四',
-          startTime: '2024-01-16 14:00',
-          endTime: '2024-01-16 17:00',
-          purpose: '新员工培训',
-          status: '已批准',
-          createTime: '2024-01-14 10:20'
-        },
-        {
-          id: 3,
-          roomName: '会议室B',
-          applicant: '王五',
-          startTime: '2024-01-17 13:00',
-          endTime: '2024-01-17 15:00',
-          purpose: '客户会议',
-          status: '已拒绝',
-          createTime: '2024-01-14 16:45'
-        }
-      ]);
+    try {
+      const response = await applicationAPI.getAllApplications();
+      setApplications(response.data || []);
+    } catch (error) {
+      console.error('获取申请列表失败:', error);
+      message.error('获取申请列表失败');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  // 获取房间列表（用于下拉选择）
+  const fetchRooms = async () => {
+    try {
+      const response = await roomAPI.getRoomList({ pageSize: 100 });
+      setRooms(response.data.records || []);
+    } catch (error) {
+      console.error('获取房间列表失败:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchApplications();
+    fetchRooms();
   }, []);
+
+  const handleSubmit = async (values) => {
+    try {
+      // 处理时间范围
+      const [startTime, endTime] = values.timeRange;
+      const applicationData = {
+        ...values,
+        startTime: startTime.format('YYYY-MM-DD HH:mm:ss'),
+        endTime: endTime.format('YYYY-MM-DD HH:mm:ss'),
+        roomId: values.room,
+      };
+      
+      await applicationAPI.createApplication(applicationData);
+      message.success('申请提交成功');
+      setIsModalVisible(false);
+      form.resetFields();
+      fetchApplications(); // 刷新列表
+    } catch (error) {
+      console.error('提交申请失败:', error);
+      message.error('提交申请失败');
+    }
+  };
 
   const columns = [
     {
@@ -59,8 +73,8 @@ export default function ApplicationList() {
     },
     {
       title: '申请人',
-      dataIndex: 'applicant',
-      key: 'applicant',
+      dataIndex: 'applicantName',
+      key: 'applicantName',
     },
     {
       title: '使用时间',
@@ -116,12 +130,6 @@ export default function ApplicationList() {
     },
   ];
 
-  const handleSubmit = (values) => {
-    console.log('申请表单:', values);
-    setIsModalVisible(false);
-    form.resetFields();
-  };
-
   return (
     <div style={{ padding: '24px' }}>
       <Card 
@@ -164,10 +172,11 @@ export default function ApplicationList() {
             rules={[{ required: true, message: '请选择房间' }]}
           >
             <Select placeholder="请选择房间">
-              <Option value="meeting-a">会议室A</Option>
-              <Option value="meeting-b">会议室B</Option>
-              <Option value="training">培训室</Option>
-              <Option value="small-meeting">小会议室</Option>
+              {rooms.map(room => (
+                <Option key={room.id} value={room.id}>
+                  {room.name} ({room.location})
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 

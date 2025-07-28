@@ -1,6 +1,6 @@
 package com.roomx.model.dto;
 
-import lombok.Data;
+import lombok.*;
 
 @Data
 public class UserUpdatePasswordDTO {

@@ -3,7 +3,7 @@ package com.roomx.model.entity;
 import java.util.Date;
 import com.roomx.constant.enums.RoomStatus;
 import com.roomx.constant.enums.RoomType;
-import lombok.Data;
+import lombok.*;
 import jakarta.persistence.*;
 
 @Data
