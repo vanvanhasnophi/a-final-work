@@ -13,10 +13,10 @@ export default function ThemeToggleButton({ style }) {
         icon={isDarkMode ? <BulbFilled /> : <BulbOutlined />}
         onClick={toggleTheme}
         style={{
-          background: isDarkMode ? '#232428' : '#fff',
-          color: isDarkMode ? '#FFD700' : '#8C3CBF',
-          border: 'none',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          background: 'var(--component-bg)',
+          color: 'var(--primary-color)',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--shadow)',
           ...style,
         }}
       />

@@ -8,6 +8,7 @@ export default function UserProfile() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
 
   // 获取用户信息
   const fetchUserInfo = async () => {
@@ -17,7 +18,11 @@ export default function UserProfile() {
       setUserInfo(response.data);
     } catch (error) {
       console.error('获取用户信息失败:', error);
-      message.error('获取用户信息失败');
+      messageApi.open({
+        type: 'error',
+        content: '获取用户信息失败',
+        duration: 2,
+      });
     } finally {
       setLoading(false);
     }
@@ -35,12 +40,20 @@ export default function UserProfile() {
   const handleSave = async (values) => {
     try {
       await userAPI.updateUser(userInfo.id, values);
-      message.success('用户信息更新成功');
+      messageApi.open({
+        type: 'success',
+        content: '用户信息更新成功',
+        duration: 2,
+      });
       setIsEditing(false);
       fetchUserInfo(); // 刷新用户信息
     } catch (error) {
       console.error('更新用户信息失败:', error);
-      message.error('更新用户信息失败');
+      messageApi.open({
+        type: 'error',
+        content: '更新用户信息失败',
+        duration: 2,
+      });
     }
   };
 
@@ -80,7 +93,9 @@ export default function UserProfile() {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <>
+      {contextHolder}
+      <div style={{ padding: '24px' }}>
       <Row gutter={24}>
         <Col span={8}>
           <Card>
@@ -217,5 +232,6 @@ export default function UserProfile() {
         </Col>
       </Row>
     </div>
+    </>
   );
 } 

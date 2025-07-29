@@ -4,10 +4,6 @@ import java.util.Date;
 import com.roomx.constant.enums.ApproverPermission;
 import com.roomx.constant.enums.UserRole;
 import com.roomx.model.entity.User;
-import com.roomx.model.entity.Approver;
-import com.roomx.model.entity.Applier;
-import com.roomx.model.entity.ServiceStaff;
-import com.roomx.model.entity.Maintainer;
 import lombok.Data;
 
 @Data
@@ -35,17 +31,10 @@ public class UserInfoDTO {
         this.role = user.getRole();
         this.createTime = user.getCreateTime();
         this.lastLoginTime = user.getLastLoginTime();
-        if (user instanceof Approver) {
-            this.department = ((Approver) user).getDepartment();
-            this.permission = ((Approver) user).getPermission();
-        } else if (user instanceof Maintainer) {
-            this.skill = ((Maintainer) user).getSkill();
-        } else if (user instanceof ServiceStaff) {
-            this.serviceArea = ((ServiceStaff) user).getServiceArea();
-        } else if (user instanceof Applier) {
-            this.department = ((Applier) user).getDepartment();
-        } 
-
+        this.department = user.getDepartment();
+        this.permission = user.getPermission();
+        this.skill = user.getSkill();
+        this.serviceArea = user.getServiceArea();
     }
 
     public static UserInfoDTO fromEntity(User user) {

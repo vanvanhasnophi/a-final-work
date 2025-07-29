@@ -1,9 +1,9 @@
 import React from 'react';
-import { ConfigProvider, message } from 'antd';
+import { ConfigProvider, message, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import AppRouter from './router';
 import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
@@ -17,18 +17,41 @@ message.config({
   prefixCls: 'ant-message',
 });
 
+// 内部组件，用于应用主题
+function AppContent() {
+  const { isDarkMode } = useTheme();
+  
+  const themeConfig = {
+    token: {
+      colorPrimary: isDarkMode ? '#990CAE' : '#660874',
+      colorBgContainer: isDarkMode ? '#2B2D31' : '#FFFFFF',
+      colorBgLayout: isDarkMode ? '#1E1F22' : '#F2F2F2',
+      colorText: isDarkMode ? '#FFFFFF' : '#000000',
+      colorTextSecondary: isDarkMode ? '#CCCCCC' : '#666666',
+      colorBorder: isDarkMode ? '#3C3F45' : '#E5E5E5',
+      borderRadius: 8,
+    },
+    algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+  };
+  
+  return (
+    <ConfigProvider 
+      locale={zhCN}
+      theme={themeConfig}
+    >
+      <div className="App">
+        <AppRouter />
+      </div>
+    </ConfigProvider>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <ConfigProvider 
-            locale={zhCN}
-          >
-            <div className="App">
-              <AppRouter />
-            </div>
-          </ConfigProvider>
+          <AppContent />
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

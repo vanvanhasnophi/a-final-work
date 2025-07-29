@@ -10,12 +10,13 @@ import TestConnection from '../pages/TestConnection';
 import AuthTest from '../pages/AuthTest';
 import ThemeTest from '../pages/ThemeTest';
 import SimpleTest from '../pages/SimpleTest';
+import TokenTest from '../pages/TokenTest';
 import AppLayout from '../components/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
 
 function AppRoutes() {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -35,13 +36,12 @@ function AppRoutes() {
   return (
     <Routes>
       {/* 公开路由 */}
-      <Route path="/login" element={
-        isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />
-      } />
+      <Route path="/login" element={<Login />} />
       <Route path="/test" element={<TestConnection />} />
       <Route path="/auth-test" element={<AuthTest />} />
       <Route path="/theme-test" element={<ThemeTest />} />
       <Route path="/simple-test" element={<SimpleTest />} />
+      <Route path="/token-test" element={<TokenTest />} />
       
       {/* 需要认证的路由 */}
       <Route path="/" element={
