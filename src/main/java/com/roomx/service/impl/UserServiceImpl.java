@@ -15,10 +15,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.UserQuery;
-import com.roomx.model.entity.Applier;
-import com.roomx.model.entity.Approver;
-import com.roomx.model.entity.Maintainer;
-import com.roomx.model.entity.ServiceStaff;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -38,14 +35,18 @@ public class UserServiceImpl implements UserService {
             if(!Objects.equals(userInfoDTO.getRole(),user.getRole())) throw new IllegalArgumentException("role not match");
             user.setNickname(userInfoDTO.getNickname());
             user.setContact(userInfoDTO.getContact());
-            if(user instanceof Applier) {
-                ((Applier)user).setDepartment(userInfoDTO.getDepartment());
-            } else if(user instanceof Approver) {
-                ((Approver)user).setPermission(userInfoDTO.getPermission());
-            } else if(user instanceof Maintainer) {
-                ((Maintainer)user).setSkill(userInfoDTO.getSkill());
-            } else if(user instanceof ServiceStaff) {   
-                ((ServiceStaff)user).setServiceArea(userInfoDTO.getServiceArea());
+            // 根据角色设置相应字段
+            if (userInfoDTO.getDepartment() != null) {
+                user.setDepartment(userInfoDTO.getDepartment());
+            }
+            if (userInfoDTO.getPermission() != null) {
+                user.setPermission(userInfoDTO.getPermission());
+            }
+            if (userInfoDTO.getSkill() != null) {
+                user.setSkill(userInfoDTO.getSkill());
+            }
+            if (userInfoDTO.getServiceArea() != null) {
+                user.setServiceArea(userInfoDTO.getServiceArea());
             }
             return UserInfoDTO.fromEntity(userRepository.save(user));
         

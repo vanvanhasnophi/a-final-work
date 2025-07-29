@@ -34,9 +34,19 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public ApplicationDTO apply(ApplicationDTO applicationDTO) {
+        // 获取用户和房间信息
+        User user = userRepository.findById(applicationDTO.getUserId())
+            .orElseThrow(() -> new IllegalArgumentException("user not found"));
+        Room room = roomRepository.findById(applicationDTO.getRoomId())
+            .orElseThrow(() -> new IllegalArgumentException("room not found"));
+        
         Application application = new Application();
-        application.setUser(userRepository.findById(applicationDTO.getUserId()).orElseThrow(() -> new IllegalArgumentException("user not found")));
-        application.setRoom(roomRepository.findById(applicationDTO.getRoomId()).orElseThrow(() -> new IllegalArgumentException("room not found")));
+        
+        // 同步用户和房间信息到冗余字段
+        application.syncUserInfo(user);
+        application.syncRoomInfo(room);
+        
+        // 设置申请信息
         application.setCrowd(applicationDTO.getCrowd());
         application.setReason(applicationDTO.getReason());
         application.setStatus(applicationDTO.getStatus());
@@ -44,6 +54,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setUpdateTime(applicationDTO.getUpdateTime());
         application.setStartTime(applicationDTO.getStartTime());
         application.setEndTime(applicationDTO.getEndTime());
+        
         return ApplicationDTO.fromEntity(applicationRepository.save(application));
     }
 
@@ -66,56 +77,55 @@ public class ApplicationServiceImpl implements ApplicationService {
     public PageResult<ApplicationDTO> page(ApplicationQuery query, int pageNum, int pageSize) {
         Specification<Application> spec = (root, cq, cb) -> {
             ArrayList<Predicate> predicates = new ArrayList<>();
+            
+            // 直接使用冗余字段进行查询，避免JOIN
             if (query.getUserId() != null) {
-                predicates.add(cb.equal(root.get("userId").as(Long.class), query.getUserId()));
+                predicates.add(cb.equal(root.get("userId"), query.getUserId()));
             }
             if (query.getRoomId() != null) {
-                predicates.add(cb.equal(root.get("roomId").as(Long.class), query.getRoomId()));
+                predicates.add(cb.equal(root.get("roomId"), query.getRoomId()));
             }
             if (query.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status").as(ApplicationStatus.class), query.getStatus()));
+                predicates.add(cb.equal(root.get("status"), query.getStatus()));
             }
             if (query.getCreateTime() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createTime").as(java.util.Date.class), query.getCreateTime()));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createTime"), query.getCreateTime()));
             }
             if (query.getStartTime() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime").as(java.util.Date.class), query.getStartTime()));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), query.getStartTime()));
             }
             if (query.getEndTime() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("endTime").as(java.util.Date.class), query.getEndTime()));
+                predicates.add(cb.lessThanOrEqualTo(root.get("endTime"), query.getEndTime()));
             }
-            // user相关字段
+            
+            // 用户相关字段 - 使用冗余字段
             if (query.getUsername() != null && !query.getUsername().isEmpty()) {
-                Join userJoin = root.join("user", JoinType.LEFT);
-                predicates.add(cb.like(userJoin.get("username").as(String.class), "%" + query.getUsername() + "%"));
+                predicates.add(cb.like(root.get("username"), "%" + query.getUsername() + "%"));
             }
             if (query.getNickname() != null && !query.getNickname().isEmpty()) {
-                Join userJoin = root.join("user", JoinType.LEFT);
-                predicates.add(cb.like(userJoin.get("nickname").as(String.class), "%" + query.getNickname() + "%"));
+                predicates.add(cb.like(root.get("userNickname"), "%" + query.getNickname() + "%"));
             }
             if (query.getContact() != null && !query.getContact().isEmpty()) {
-                Join userJoin = root.join("user", JoinType.LEFT);
-                predicates.add(cb.like(userJoin.get("contact").as(String.class), "%" + query.getContact() + "%"));
+                predicates.add(cb.like(root.get("userContact"), "%" + query.getContact() + "%"));
             }
-            // room相关字段
+            
+            // 房间相关字段 - 使用冗余字段
             if (query.getRoomName() != null && !query.getRoomName().isEmpty()) {
-                Join roomJoin = root.join("room", JoinType.LEFT);
-                predicates.add(cb.like(roomJoin.get("name").as(String.class), "%" + query.getRoomName() + "%"));
+                predicates.add(cb.like(root.get("roomName"), "%" + query.getRoomName() + "%"));
             }
             if (query.getRoomLocation() != null && !query.getRoomLocation().isEmpty()) {
-                Join roomJoin = root.join("room", JoinType.LEFT);
-                predicates.add(cb.like(roomJoin.get("location").as(String.class), "%" + query.getRoomLocation() + "%"));
+                predicates.add(cb.like(root.get("roomLocation"), "%" + query.getRoomLocation() + "%"));
             }
             if (query.getRoomType() != null) {
-                Join roomJoin = root.join("room", JoinType.LEFT);
-                predicates.add(cb.equal(roomJoin.get("type").as(com.roomx.constant.enums.RoomType.class), query.getRoomType()));
+                predicates.add(cb.equal(root.get("roomType"), query.getRoomType().name()));
             }
             if (query.getRoomCapacity() != null) {
-                Join roomJoin = root.join("room", JoinType.LEFT);
-                predicates.add(cb.greaterThanOrEqualTo(roomJoin.get("capacity").as(Long.class), query.getRoomCapacity()));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("roomCapacity"), query.getRoomCapacity()));
             }
+            
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+        
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
         Page<Application> page = applicationRepository.findAll(spec, pageable);
         PageResult<ApplicationDTO> result = new PageResult<>();
@@ -139,8 +149,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = applicationRepository.findById(applicationId).orElse(null);
         if (application != null) {
             application.setStatus(ApplicationStatus.APPROVED);
-            for(Application otherApplication : applicationRepository.findByRoom_Id(application.getRoomId())) {
-                if(otherApplication.getStatus() == ApplicationStatus.PENDING&&otherApplication.getStartTime().before(application.getEndTime())&&otherApplication.getEndTime().after(application.getStartTime())) {
+            // 使用冗余字段roomId进行查询，避免JOIN
+            for(Application otherApplication : applicationRepository.findByRoomId(application.getRoomId())) {
+                if(otherApplication.getStatus() == ApplicationStatus.PENDING 
+                   && otherApplication.getStartTime().before(application.getEndTime())
+                   && otherApplication.getEndTime().after(application.getStartTime())) {
                     reject(otherApplication.getId(), "other application is in the same time");
                 }
             }

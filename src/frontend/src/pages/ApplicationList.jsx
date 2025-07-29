@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Card, Button, Tag, Space, Modal, Form, Input, DatePicker, Select, message } from 'antd';
 import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
+import { useApiWithRetry } from '../hooks/useApiWithRetry';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -10,38 +11,52 @@ const { RangePicker } = DatePicker;
 export default function ApplicationList() {
   const [applications, setApplications] = useState([]);
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
+  
+  const { loading, error: applicationsError, executeWithRetry: executeApplications } = useApiWithRetry();
+  const { loading: roomsLoading, error: roomsError, executeWithRetry: executeRooms } = useApiWithRetry();
 
   // 获取申请列表
-  const fetchApplications = async () => {
-    setLoading(true);
-    try {
-      const response = await applicationAPI.getAllApplications();
-      setApplications(response.data || []);
-    } catch (error) {
-      console.error('获取申请列表失败:', error);
-      message.error('获取申请列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchApplications = useCallback(async () => {
+    const result = await executeApplications(
+      async () => {
+        const response = await applicationAPI.getAllApplications();
+        setApplications(response.data || []);
+        return response.data;
+      },
+      {
+        errorMessage: '获取申请列表失败，请检查网络连接',
+        maxRetries: 2,
+        retryDelay: 3000
+      }
+    );
+    return result;
+  }, [executeApplications]);
 
   // 获取房间列表（用于下拉选择）
-  const fetchRooms = async () => {
-    try {
-      const response = await roomAPI.getRoomList({ pageSize: 100 });
-      setRooms(response.data.records || []);
-    } catch (error) {
-      console.error('获取房间列表失败:', error);
-    }
-  };
+  const fetchRooms = useCallback(async () => {
+    const result = await executeRooms(
+      async () => {
+        const response = await roomAPI.getRoomList({ pageSize: 100 });
+        setRooms(response.data.records || []);
+        return response.data.records;
+      },
+      {
+        errorMessage: '获取房间列表失败',
+        maxRetries: 2,
+        retryDelay: 3000,
+        showRetryMessage: false
+      }
+    );
+    return result;
+  }, [executeRooms]);
 
   useEffect(() => {
     fetchApplications();
     fetchRooms();
-  }, []);
+  }, [fetchApplications, fetchRooms]);
 
   const handleSubmit = async (values) => {
     try {
@@ -55,13 +70,21 @@ export default function ApplicationList() {
       };
       
       await applicationAPI.createApplication(applicationData);
-      message.success('申请提交成功');
+      messageApi.open({
+        type: 'success',
+        content: '申请提交成功',
+        duration: 2,
+      });
       setIsModalVisible(false);
       form.resetFields();
       fetchApplications(); // 刷新列表
     } catch (error) {
       console.error('提交申请失败:', error);
-      message.error('提交申请失败');
+      messageApi.open({
+        type: 'error',
+        content: '提交申请失败',
+        duration: 2,
+      });
     }
   };
 
@@ -131,7 +154,9 @@ export default function ApplicationList() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <>
+      {contextHolder}
+      <div style={{ padding: '24px' }}>
       <Card 
         title="申请管理" 
         extra={
@@ -213,5 +238,6 @@ export default function ApplicationList() {
         </Form>
       </Modal>
     </div>
+    </>
   );
 } 

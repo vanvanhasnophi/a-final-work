@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message, Switch } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, BulbOutlined, BulbFilled } from '@ant-design/icons';
+import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -9,12 +9,13 @@ import ThemeToggleButton from '../components/ThemeToggleButton';
 const { Title, Text } = Typography;
 
 export default function Login() {
+  const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, register } = useAuth();
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { login, register, isAuthenticated } = useAuth();
+  const { isDarkMode } = useTheme();
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -33,18 +34,35 @@ export default function Login() {
         console.log('存储的token:', storedToken);
         console.log('存储的user:', storedUser);
         
-        message.success('登录成功！正在跳转...');
-        // 延迟导航，确保message显示
+        messageApi.open({
+          type: 'success',
+          content: '登录成功！正在跳转...',
+          duration: 1.5,
+        });
+        
+        // 延迟导航，确保状态更新完成
         setTimeout(() => {
           console.log('准备跳转到:', from);
+          console.log('最终localStorage检查:', {
+            token: localStorage.getItem('token'),
+            user: localStorage.getItem('user')
+          });
           navigate(from, { replace: true });
         }, 1500);
       } else {
-        message.error(result.error || '用户名或密码错误，请重试');
+        messageApi.open({
+          type: 'error',
+          content: result.error || '用户名或密码错误，请重试',
+          duration: 1.5,
+        });
       }
     } catch (error) {
       console.error('登录错误:', error);
-      message.error('网络连接失败，请检查网络后重试');
+      messageApi.open({
+        type: 'error',
+        content: '网络连接失败，请检查网络后重试',
+        duration: 1.5,
+      });
     } finally {
       setLoading(false);
     }
@@ -57,17 +75,29 @@ export default function Login() {
       const result = await register(values);
       console.log('注册结果:', result);
       if (result.success) {
-        message.success('注册成功！请使用新账号登录');
+        messageApi.open({
+          type: 'success',
+          content: '注册成功！请使用新账号登录',
+          duration: 1.5,
+        });
         // 延迟切换到登录模式，让用户看到成功消息
         setTimeout(() => {
           setIsLoginMode(true);
         }, 2000);
       } else {
-        message.error(result.error || '注册失败，请检查输入信息');
+        messageApi.open({
+          type: 'error',
+          content: result.error || '注册失败，请检查输入信息',
+          duration: 1.5,
+        });
       }
     } catch (error) {
       console.error('注册错误:', error);
-      message.error('网络连接失败，请检查网络后重试');
+      messageApi.open({
+        type: 'error',
+        content: '网络连接失败，请检查网络后重试',
+        duration: 1.5,
+      });
     } finally {
       setLoading(false);
     }
@@ -187,15 +217,23 @@ export default function Login() {
     };
   }, [isDarkMode]);
 
+  // 如果已经登录，直接跳转到目标页面
+  if (isAuthenticated()) {
+    navigate(from, { replace: true });
+    return null;
+  }
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: 'var(--background-color)',
-      position: 'relative'
-    }}>
+    <>
+      {contextHolder}
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'var(--background-color)',
+        position: 'relative'
+      }}>
       {/* 主题切换按钮（与Dashboard一致） */}
       <ThemeToggleButton style={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }} />
       <Card
@@ -419,5 +457,6 @@ export default function Login() {
         </div>
       </Card>
     </div>
+    </>
   );
 } 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Space, Alert, Divider, Typography } from 'antd';
+import { Card, Button, Space, Alert, Divider, Typography, message } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { testConnection, testLogin, testRoomList, testApplicationList } from '../utils/testConnection';
 
@@ -8,6 +8,7 @@ const { Title, Text } = Typography;
 export default function TestConnection() {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const runTest = async (testName, testFunction) => {
     setLoading(true);
@@ -17,11 +18,13 @@ export default function TestConnection() {
         ...prev,
         [testName]: { success: true, data: result }
       }));
+      messageApi.success(`${testName}测试成功`);
     } catch (error) {
       setResults(prev => ({
         ...prev,
         [testName]: { success: false, error: error.message }
       }));
+      messageApi.error(`${testName}测试失败: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -31,11 +34,14 @@ export default function TestConnection() {
     setLoading(true);
     setResults({});
     
+    messageApi.info('开始运行所有测试...');
+    
     await runTest('connection', testConnection);
     await runTest('login', () => testLogin('testuser', 'testpass'));
     await runTest('rooms', testRoomList);
     await runTest('applications', testApplicationList);
     
+    messageApi.success('所有测试完成');
     setLoading(false);
   };
 
@@ -52,8 +58,10 @@ export default function TestConnection() {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2}>前后端连接测试</Title>
+    <>
+      {contextHolder}
+      <div style={{ padding: '24px' }}>
+        <Title level={2}>前后端连接测试</Title>
       
       <Alert
         message="连接测试说明"
@@ -149,5 +157,6 @@ export default function TestConnection() {
         <Text>Token: {localStorage.getItem('token') ? '已设置' : '未设置'}</Text>
       </Card>
     </div>
+    </>
   );
 } 

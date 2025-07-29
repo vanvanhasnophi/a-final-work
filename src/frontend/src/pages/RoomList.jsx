@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Card, Button, Tag, Space, Input, Select, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { roomAPI } from '../api/room';
+import { useApiWithRetry } from '../hooks/useApiWithRetry';
+import { useDebounce } from '../hooks/useDebounce';
 
 const { Search } = Input;
 const { Option } = Select;
 
 export default function RoomList() {
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -18,34 +19,50 @@ export default function RoomList() {
     pageNum: 1,
     pageSize: 10,
   });
+  const [messageApi, contextHolder] = message.useMessage();
+  
+  const { loading, error, executeWithRetry } = useApiWithRetry();
+  const { debounce, clearDebounce } = useDebounce(500);
 
   // 获取房间列表
-  const fetchRooms = async (params = {}) => {
-    setLoading(true);
-    try {
-      const response = await roomAPI.getRoomList({
-        ...searchParams,
-        ...params,
-      });
-      
-      const { records, total, current, size } = response.data;
-      setRooms(records || []);
-      setPagination({
-        current: current || 1,
-        pageSize: size || 10,
-        total: total || 0,
-      });
-    } catch (error) {
-      console.error('获取房间列表失败:', error);
-      message.error('获取房间列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchRooms = useCallback(async (params = {}) => {
+    const result = await executeWithRetry(
+      async () => {
+        const response = await roomAPI.getRoomList({
+          ...searchParams,
+          ...params,
+        });
+        
+        const { records, total, current, size } = response.data;
+        setRooms(records || []);
+        setPagination({
+          current: current || 1,
+          pageSize: size || 10,
+          total: total || 0,
+        });
+        
+        return response.data;
+      },
+      {
+        errorMessage: '获取房间列表失败，请检查网络连接',
+        maxRetries: 2,
+        retryDelay: 3000
+      }
+    );
+    
+    return result;
+  }, [executeWithRetry, searchParams]);
 
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      clearDebounce();
+    };
+  }, [clearDebounce]);
 
   const handleTableChange = (pagination, filters, sorter) => {
     const newParams = {
@@ -63,7 +80,7 @@ export default function RoomList() {
       name: value,
     };
     setSearchParams(newParams);
-    fetchRooms(newParams);
+    debounce(() => fetchRooms(newParams));
   };
 
   const handleTypeFilter = (value) => {
@@ -73,7 +90,7 @@ export default function RoomList() {
       type: value === 'all' ? undefined : value,
     };
     setSearchParams(newParams);
-    fetchRooms(newParams);
+    debounce(() => fetchRooms(newParams));
   };
 
   const handleStatusFilter = (value) => {
@@ -83,7 +100,7 @@ export default function RoomList() {
       status: value === 'all' ? undefined : value,
     };
     setSearchParams(newParams);
-    fetchRooms(newParams);
+    debounce(() => fetchRooms(newParams));
   };
 
   const columns = [
@@ -137,7 +154,9 @@ export default function RoomList() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <>
+      {contextHolder}
+      <div style={{ padding: '24px' }}>
       <Card title="房间管理">
         <div style={{ marginBottom: '16px' }}>
           <Space>
@@ -179,5 +198,6 @@ export default function RoomList() {
         />
       </Card>
     </div>
+    </>
   );
 } 

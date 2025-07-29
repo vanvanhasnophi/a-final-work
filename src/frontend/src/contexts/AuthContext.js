@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { message } from 'antd';
 import authAPI from '../api/auth';
 
 const AuthContext = createContext();
@@ -59,6 +58,13 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthContext: 开始登录请求');
       const response = await authAPI.login(username, password);
       console.log('AuthContext: 登录响应:', response);
+      console.log('AuthContext: 响应数据:', response.data);
+      
+      // 检查响应数据结构
+      if (!response.data || !response.data.token) {
+        console.error('AuthContext: 响应数据格式错误:', response.data);
+        return { success: false, error: '服务器响应格式错误' };
+      }
       
       // 后端返回的是UserTokenDTO格式，包含token和用户信息
       const { token: newToken, id, username: userName, nickname, role } = response.data;
@@ -73,13 +79,20 @@ export const AuthProvider = ({ children }) => {
         role
       };
       
+      // 保存到localStorage
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(userData));
       
+      // 更新状态
       setToken(newToken);
       setUser(userData);
       
       console.log('AuthContext: 登录完成，token已设置');
+      console.log('AuthContext: localStorage检查:', {
+        token: localStorage.getItem('token'),
+        user: localStorage.getItem('user')
+      });
+      
       return { success: true };
     } catch (error) {
       console.error('AuthContext: 登录失败:', error);
@@ -105,9 +118,18 @@ export const AuthProvider = ({ children }) => {
 
   // 检查是否已登录
   const isAuthenticated = () => {
-    const hasToken = !!token;
-    const hasUser = !!user;
-    console.log('isAuthenticated检查:', { hasToken, hasUser, token, user });
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    const hasToken = !!storedToken;
+    const hasUser = !!storedUser;
+    console.log('isAuthenticated检查:', { 
+      hasToken, 
+      hasUser, 
+      storedToken: storedToken ? '存在' : '不存在',
+      storedUser: storedUser ? '存在' : '不存在',
+      stateToken: token,
+      stateUser: user
+    });
     return hasToken && hasUser;
   };
 
