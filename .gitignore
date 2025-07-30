@@ -33,7 +33,6 @@ bin/
 
 ### Debug
 logs/
-*.sh
 *.pid
 *.md
 *.log
