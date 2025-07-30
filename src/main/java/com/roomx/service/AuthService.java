@@ -2,12 +2,9 @@ package com.roomx.service;
 
 import com.roomx.model.dto.UserLoginDTO;
 import com.roomx.model.dto.UserRegisterDTO;
-import com.roomx.model.dto.UserUpdatePasswordDTO;
-import com.roomx.model.dto.UserTokenDTO;  
+import com.roomx.model.dto.UserTokenDTO;
+import com.roomx.model.dto.UserUpdatePasswordDTO;  
 
-import org.springframework.stereotype.Service;
-
-@Service
 public interface AuthService {
     // 登录业务
     UserTokenDTO login(UserLoginDTO userLoginDTO);

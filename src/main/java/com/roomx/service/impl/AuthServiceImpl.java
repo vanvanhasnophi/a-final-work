@@ -1,21 +1,19 @@
 package com.roomx.service.impl;
 
+import java.util.Date;
+
+import org.springframework.stereotype.Service;
+
+import com.roomx.constant.enums.UserRole;
+import com.roomx.model.dto.UserLoginDTO;
+import com.roomx.model.dto.UserRegisterDTO;
+import com.roomx.model.dto.UserTokenDTO;
+import com.roomx.model.dto.UserUpdatePasswordDTO;
 import com.roomx.model.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.AuthService;
 import com.roomx.utils.JwtUtil;
 import com.roomx.utils.PasswordEncoderUtil;
-import com.roomx.model.dto.UserRegisterDTO; 
-import com.roomx.model.dto.UserLoginDTO;
-import com.roomx.model.dto.UserTokenDTO;
-import com.roomx.model.dto.UserUpdatePasswordDTO;
-import com.roomx.model.entity.Applier;
-import com.roomx.model.entity.Approver;
-import com.roomx.model.entity.Maintainer;
-import com.roomx.model.entity.ServiceStaff;
-import com.roomx.model.entity.Admin;
-import org.springframework.stereotype.Service;
-import java.util.Date;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -39,50 +37,76 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         public UserTokenDTO register(UserRegisterDTO userRegisterDTO) {
-            User user = null;
-            user = userRepository.findByUsername(userRegisterDTO.getUsername());
-            if(user!=null) throw new IllegalArgumentException("Username already exists");
-            // 如果没有指定角色，默认为申请人
-            if (userRegisterDTO.getRole() == null) {
-                userRegisterDTO.setRole(com.roomx.constant.enums.UserRole.APPLIER);
+            // 检查用户名是否已存在
+            User existingUser = userRepository.findByUsername(userRegisterDTO.getUsername());
+            if(existingUser != null) {
+                throw new IllegalArgumentException("Username already exists");
             }
             
-            switch(userRegisterDTO.getRole()){
-                case APPLIER : {
-                    user = new Applier();
-                    ((Applier)user).setDepartment(userRegisterDTO.getDepartment());
-                    break;
-                }
-                case APPROVER : {
-                    user = new Approver();
-                    ((Approver)user).setPermission(userRegisterDTO.getPermission());
-                    break;
-                }   
-                case MAINTAINER : {
-                    user = new Maintainer();
-                    ((Maintainer)user).setSkill(userRegisterDTO.getSkill());
-                    break;
-                }
-                case SERVICE_STAFF : {  
-                    user = new ServiceStaff();
-                    ((ServiceStaff)user).setServiceArea(userRegisterDTO.getServiceArea());
-                    break;
-                }
-                case ADMIN : {
-                    user = new Admin(); 
-                    break;
-                }
-                default : {
-                    throw new IllegalArgumentException("Invalid user: " + userRegisterDTO.getUsername() + " " + userRegisterDTO.getRole());
-                }
-            }
+            // 创建新用户
+            User user = new User();
+            
+            // 设置基本信息
             user.setUsername(userRegisterDTO.getUsername());
             user.setPassword(PasswordEncoderUtil.encode(userRegisterDTO.getPassword()));
             user.setNickname(userRegisterDTO.getNickname());
             user.setContact(userRegisterDTO.getContact());
             user.setCreateTime(new Date());
             user.setLastLoginTime(new Date());
+            
+            // 设置角色和相关信息
+            UserRole role = userRegisterDTO.getRole();
+            if (role == null) {
+                role = com.roomx.constant.enums.UserRole.APPLIER;
+            }
+            user.setRole(role);
+
+            // 根据角色设置特定信息
+            switch(role){
+                case APPLIER : {
+                    user.setDepartment(userRegisterDTO.getDepartment());
+                    user.setPermission(null);
+                    user.setSkill(null);
+                    user.setServiceArea(null);
+                    break;
+                }
+                case APPROVER : {
+                    user.setPermission(userRegisterDTO.getPermission());
+                    user.setDepartment(null);
+                    user.setSkill(null);
+                    user.setServiceArea(null);
+                    break;
+                }   
+                case MAINTAINER : {
+                    user.setSkill(userRegisterDTO.getSkill());
+                    user.setDepartment(null);
+                    user.setPermission(null);
+                    user.setServiceArea(null);
+                    break;
+                }
+                case SERVICE_STAFF : {  
+                    user.setServiceArea(userRegisterDTO.getServiceArea());
+                    user.setDepartment(null);
+                    user.setPermission(null);
+                    user.setSkill(null);
+                    break;
+                }
+                case ADMIN : {
+                    user.setDepartment(null);
+                    user.setPermission(null);
+                    user.setSkill(null);
+                    user.setServiceArea(null);
+                    break;
+                }
+                default : {
+                    throw new IllegalArgumentException("Invalid user role: " + userRegisterDTO.getRole());
+                }
+            }
+            
+            // 保存用户
             userRepository.save(user);
+            
+            // 生成token并返回
             String token = JwtUtil.generateToken(user.getUsername(), user.getRole());
             return UserTokenDTO.fromLogin(user, token);
         }

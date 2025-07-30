@@ -102,7 +102,7 @@ export default function UserProfile() {
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <Avatar size={80} icon={<UserOutlined />} />
               <h2 style={{ marginTop: '16px' }}>{userInfo.nickname || userInfo.username}</h2>
-              <Tag color="blue">{userInfo.role || '普通用户'}</Tag>
+              <Tag color="processing">{userInfo.role || '普通用户'}</Tag>
             </div>
 
             <List
@@ -222,7 +222,7 @@ export default function UserProfile() {
                     title={item.action}
                     description={item.time}
                   />
-                  <Tag color={item.status === '已完成' ? 'green' : item.status === '已批准' ? 'blue' : 'orange'}>
+                  <Tag color={item.status === '已完成' ? 'success' : item.status === '已批准' ? 'processing' : 'warning'}>
                     {item.status}
                   </Tag>
                 </List.Item>

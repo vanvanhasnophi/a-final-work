@@ -25,5 +25,10 @@ export const roomAPI = {
   // 删除房间
   deleteRoom: (id) => {
     return api.delete(`/room/${id}`);
+  },
+
+  // 申请房间
+  applyRoom: (data) => {
+    return api.post('/room/apply', data);
   }
 }; 

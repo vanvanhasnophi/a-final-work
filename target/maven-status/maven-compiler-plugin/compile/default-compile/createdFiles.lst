@@ -1,3 +1,4 @@
+com/roomx/config/DataInitializer.class
 com/roomx/service/impl/UserServiceImpl.class
 com/roomx/repository/UserRepository.class
 com/roomx/model/dto/RoomQuery.class
@@ -9,7 +10,6 @@ com/roomx/model/vo/RoomVO.class
 com/roomx/service/ApplicationService.class
 com/roomx/service/impl/RoomServiceImpl.class
 com/roomx/model/dto/UserRegisterDTO.class
-com/roomx/model/entity/Applier.class
 com/roomx/service/impl/ApplicationServiceImpl.class
 com/roomx/config/WebConfig.class
 com/roomx/utils/JwtUtil.class
@@ -19,7 +19,6 @@ com/roomx/utils/PasswordEncoderUtil.class
 com/roomx/controller/ApproverController.class
 com/roomx/model/vo/ApplicationVO.class
 com/roomx/model/dto/UserUpdatePasswordDTO.class
-com/roomx/model/entity/ServiceStaff.class
 com/roomx/model/entity/Room.class
 com/roomx/App.class
 com/roomx/constant/enums/UserRole.class
@@ -32,7 +31,6 @@ com/roomx/constant/enums/ApproverPermission.class
 com/roomx/repository/ApplicationRepository.class
 com/roomx/security/JwtTokenProvider.class
 com/roomx/model/entity/User.class
-com/roomx/model/entity/Admin.class
 com/roomx/repository/RoomRepository.class
 com/roomx/model/vo/UserInfoVO.class
 com/roomx/controller/AuthController.class
@@ -52,7 +50,5 @@ com/roomx/exception/UserNotFoundException.class
 com/roomx/model/dto/RoomDTO.class
 com/roomx/service/AuthService.class
 com/roomx/security/JwtAuthenticationFilter.class
-com/roomx/model/entity/Approver.class
 com/roomx/exception/RoomNotFoundException.class
-com/roomx/model/entity/Maintainer.class
 com/roomx/utils/JwtAuthenticationFilter.class

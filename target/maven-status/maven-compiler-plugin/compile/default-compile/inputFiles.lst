@@ -1,5 +1,6 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/App.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/CorsConfig.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/DataInitializer.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebSecurityConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/constant/enums/ApplicationStatus.java
@@ -28,13 +29,8 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/UserRegisterDTO.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/UserTokenDTO.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/UserUpdatePasswordDTO.java
-/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Admin.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Application.java
-/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Applier.java
-/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Approver.java
-/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Maintainer.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/Room.java
-/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/ServiceStaff.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/entity/User.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/vo/ApplicationVO.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/vo/RoomVO.java

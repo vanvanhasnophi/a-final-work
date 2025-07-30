@@ -1,16 +1,23 @@
 package com.roomx.config;
 
-import com.roomx.constant.enums.*;
-import com.roomx.model.entity.*;
-import com.roomx.repository.ApplicationRepository;
-import com.roomx.repository.RoomRepository;
-import com.roomx.repository.UserRepository;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import com.roomx.constant.enums.ApplicationStatus;
+import com.roomx.constant.enums.ApproverPermission;
+import com.roomx.constant.enums.RoomStatus;
+import com.roomx.constant.enums.RoomType;
+import com.roomx.constant.enums.UserRole;
+import com.roomx.model.entity.Application;
+import com.roomx.model.entity.Room;
+import com.roomx.model.entity.User;
+import com.roomx.repository.ApplicationRepository;
+import com.roomx.repository.RoomRepository;
+import com.roomx.repository.UserRepository;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -190,7 +197,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createRooms() {
-        // 会议室A
+        // 会议室A - 研讨间，可用
         Room room1 = new Room();
         room1.setName("会议室A");
         room1.setDescription("大型会议室，配备投影仪和音响设备");
@@ -203,20 +210,20 @@ public class DataInitializer implements CommandLineRunner {
         room1.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000));
         roomRepository.save(room1);
 
-        // 会议室B
+        // 会议室B - 研讨间，已预约
         Room room2 = new Room();
         room2.setName("会议室B");
         room2.setDescription("中型会议室，适合小组讨论");
         room2.setType(RoomType.SEMINAR_ROOM);
         room2.setCapacity(12L);
         room2.setLocation("1楼102室");
-        room2.setStatus(RoomStatus.AVAILABLE);
+        room2.setStatus(RoomStatus.RESERVED);
         room2.setCreateTime(new Date());
         room2.setUpdateTime(new Date());
         room2.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 25L * 24 * 60 * 60 * 1000));
         roomRepository.save(room2);
 
-        // 培训室A
+        // 培训室A - 平面教室，可用
         Room room3 = new Room();
         room3.setName("培训室A");
         room3.setDescription("专业培训教室，配备多媒体设备");
@@ -229,20 +236,20 @@ public class DataInitializer implements CommandLineRunner {
         room3.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 20L * 24 * 60 * 60 * 1000));
         roomRepository.save(room3);
 
-        // 培训室B
+        // 培训室B - 平面教室，使用中
         Room room4 = new Room();
         room4.setName("培训室B");
         room4.setDescription("小型培训室，适合技能培训");
         room4.setType(RoomType.LECTURE_ROOM);
         room4.setCapacity(15L);
         room4.setLocation("2楼202室");
-        room4.setStatus(RoomStatus.RESERVED);
+        room4.setStatus(RoomStatus.USING);
         room4.setCreateTime(new Date());
         room4.setUpdateTime(new Date());
         room4.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 15L * 24 * 60 * 60 * 1000));
         roomRepository.save(room4);
 
-        // 案例教室A
+        // 案例教室A - 案例教室，可用
         Room room5 = new Room();
         room5.setName("案例教室A");
         room5.setDescription("案例讨论专用教室");
@@ -255,7 +262,7 @@ public class DataInitializer implements CommandLineRunner {
         room5.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 10L * 24 * 60 * 60 * 1000));
         roomRepository.save(room5);
 
-        // 实验室A
+        // 实验室A - 实验室，维修中
         Room room6 = new Room();
         room6.setName("实验室A");
         room6.setDescription("计算机实验室，配备专业设备");
@@ -268,7 +275,7 @@ public class DataInitializer implements CommandLineRunner {
         room6.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 5L * 24 * 60 * 60 * 1000));
         roomRepository.save(room6);
 
-        // 研讨间A
+        // 研讨间A - 研讨间，可用
         Room room7 = new Room();
         room7.setName("研讨间A");
         room7.setDescription("小型研讨间，适合3-5人讨论");
@@ -281,20 +288,20 @@ public class DataInitializer implements CommandLineRunner {
         room7.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 35L * 24 * 60 * 60 * 1000));
         roomRepository.save(room7);
 
-        // 研讨间B
+        // 研讨间B - 研讨间，清洁中
         Room room8 = new Room();
         room8.setName("研讨间B");
         room8.setDescription("中型研讨间，适合8-10人讨论");
         room8.setType(RoomType.SEMINAR_ROOM);
         room8.setCapacity(10L);
         room8.setLocation("5楼502室");
-        room8.setStatus(RoomStatus.USING);
+        room8.setStatus(RoomStatus.CLEANING);
         room8.setCreateTime(new Date());
         room8.setUpdateTime(new Date());
         room8.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 40L * 24 * 60 * 60 * 1000));
         roomRepository.save(room8);
 
-        // 会议室C
+        // 会议室C - 研讨间，可用
         Room room9 = new Room();
         room9.setName("会议室C");
         room9.setDescription("VIP会议室，配备高级设备");
@@ -307,14 +314,14 @@ public class DataInitializer implements CommandLineRunner {
         room9.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 45L * 24 * 60 * 60 * 1000));
         roomRepository.save(room9);
 
-        // 多功能厅
+        // 多功能厅 - 其他，可用
         Room room10 = new Room();
         room10.setName("多功能厅");
         room10.setDescription("大型多功能厅，可容纳100人");
         room10.setType(RoomType.OTHER_ROOM);
         room10.setCapacity(100L);
         room10.setLocation("1楼大厅");
-        room10.setStatus(RoomStatus.CLEANING);
+        room10.setStatus(RoomStatus.AVAILABLE);
         room10.setCreateTime(new Date());
         room10.setUpdateTime(new Date());
         room10.setLastMaintenanceTime(new Date(System.currentTimeMillis() - 50L * 24 * 60 * 60 * 1000));
@@ -348,6 +355,8 @@ public class DataInitializer implements CommandLineRunner {
             app1.setEndTime(new Date(System.currentTimeMillis() - 5L * 24 * 60 * 60 * 1000));
             app1.setRoom(room1);
             app1.setUser(zhangsan);
+            app1.syncUserInfo(zhangsan);
+            app1.syncRoomInfo(room1);
             applicationRepository.save(app1);
 
             // 张三的申请 - 待审批
@@ -362,6 +371,8 @@ public class DataInitializer implements CommandLineRunner {
             app6.setEndTime(new Date(System.currentTimeMillis() + 3L * 24 * 60 * 60 * 1000));
             app6.setRoom(room1);
             app6.setUser(zhangsan);
+            app6.syncUserInfo(zhangsan);
+            app6.syncRoomInfo(room1);
             applicationRepository.save(app6);
         }
 
@@ -378,20 +389,24 @@ public class DataInitializer implements CommandLineRunner {
             app2.setEndTime(new Date(System.currentTimeMillis() + 2L * 24 * 60 * 60 * 1000));
             app2.setRoom(room2);
             app2.setUser(lisi);
+            app2.syncUserInfo(lisi);
+            app2.syncRoomInfo(room2);
             applicationRepository.save(app2);
 
-            // 李四的申请 - 待审批
+            // 李四的申请 - 已驳回
             Application app7 = new Application();
             app7.setCrowd(10L);
             app7.setContact("lisi@company.com");
             app7.setReason("市场部客户需求分析");
-            app7.setStatus(ApplicationStatus.PENDING);
+            app7.setStatus(ApplicationStatus.REJECTED);
             app7.setCreateTime(new Date());
             app7.setUpdateTime(new Date());
             app7.setStartTime(new Date(System.currentTimeMillis() + 5L * 24 * 60 * 60 * 1000));
             app7.setEndTime(new Date(System.currentTimeMillis() + 5L * 24 * 60 * 60 * 1000));
             app7.setRoom(room2);
             app7.setUser(lisi);
+            app7.syncUserInfo(lisi);
+            app7.syncRoomInfo(room2);
             applicationRepository.save(app7);
         }
 
@@ -408,6 +423,8 @@ public class DataInitializer implements CommandLineRunner {
             app3.setEndTime(new Date(System.currentTimeMillis() - 8L * 24 * 60 * 60 * 1000));
             app3.setRoom(room3);
             app3.setUser(wangwu);
+            app3.syncUserInfo(wangwu);
+            app3.syncRoomInfo(room3);
             applicationRepository.save(app3);
 
             // 王五的申请 - 已完成
@@ -422,6 +439,8 @@ public class DataInitializer implements CommandLineRunner {
             app8.setEndTime(new Date(System.currentTimeMillis() - 13L * 24 * 60 * 60 * 1000));
             app8.setRoom(room3);
             app8.setUser(wangwu);
+            app8.syncUserInfo(wangwu);
+            app8.syncRoomInfo(room3);
             applicationRepository.save(app8);
         }
     }

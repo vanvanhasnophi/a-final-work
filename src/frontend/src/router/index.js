@@ -11,6 +11,10 @@ import AuthTest from '../pages/AuthTest';
 import ThemeTest from '../pages/ThemeTest';
 import SimpleTest from '../pages/SimpleTest';
 import TokenTest from '../pages/TokenTest';
+import TestRetry from '../pages/TestRetry';
+import TestLoading from '../pages/TestLoading';
+import TestTags from '../pages/TestTags';
+import DevPage from '../pages/DevPage';
 import AppLayout from '../components/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,6 +46,10 @@ function AppRoutes() {
       <Route path="/theme-test" element={<ThemeTest />} />
       <Route path="/simple-test" element={<SimpleTest />} />
       <Route path="/token-test" element={<TokenTest />} />
+      <Route path="/retry-test" element={<TestRetry />} />
+      <Route path="/loading-test" element={<TestLoading />} />
+      <Route path="/tags-test" element={<TestTags />} />
+      <Route path="/dev" element={<DevPage />} />
       
       {/* 需要认证的路由 */}
       <Route path="/" element={

@@ -92,6 +92,10 @@ export const AuthProvider = ({ children }) => {
         token: localStorage.getItem('token'),
         user: localStorage.getItem('user')
       });
+      console.log('AuthContext: 状态更新完成:', {
+        token: newToken,
+        user: userData
+      });
       
       return { success: true };
     } catch (error) {
@@ -122,14 +126,23 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem('user');
     const hasToken = !!storedToken;
     const hasUser = !!storedUser;
+    
+    // 同时检查localStorage和state中的值
+    const stateHasToken = !!token;
+    const stateHasUser = !!user;
+    
     console.log('isAuthenticated检查:', { 
       hasToken, 
       hasUser, 
       storedToken: storedToken ? '存在' : '不存在',
       storedUser: storedUser ? '存在' : '不存在',
-      stateToken: token,
-      stateUser: user
+      stateToken: token ? '存在' : '不存在',
+      stateUser: user ? '存在' : '不存在',
+      stateHasToken,
+      stateHasUser
     });
+    
+    // 只要localStorage中有token和user就认为已认证
     return hasToken && hasUser;
   };
 
