@@ -20,5 +20,10 @@ export const applicationAPI = {
   // 创建申请
   createApplication: (data) => {
     return api.post('/application/post', data);
+  },
+
+  // 审批申请
+  approveApplication: (data) => {
+    return api.post('/application/approve', data);
   }
 }; 

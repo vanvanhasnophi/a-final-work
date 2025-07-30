@@ -4,8 +4,8 @@ import { message } from 'antd';
 // 创建axios实例
 const instance = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
-    ? process.env.REACT_APP_API_URL || 'http://localhost:8080/api' 
-    : '/api',
+    ? process.env.REACT_APP_API_URL || '/api' 
+    : 'http://localhost:8080/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

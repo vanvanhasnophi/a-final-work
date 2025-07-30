@@ -26,19 +26,10 @@ export const refreshToken = () => {
 };
 
 // 修改密码
-export const changePassword = (oldPassword, newPassword) => {
+export const updatePassword = (oldPassword, newPassword) => {
   return request.post('/updatePassword', { oldPassword, newPassword });
 };
 
-// 忘记密码
-export const forgotPassword = (email) => {
-  return request.post('/auth/forgot-password', { email });
-};
-
-// 重置密码
-export const resetPassword = (token, newPassword) => {
-  return request.post('/auth/reset-password', { token, newPassword });
-};
 
 const authAPI = {
   login,
@@ -46,9 +37,7 @@ const authAPI = {
   logout,
   getCurrentUser,
   refreshToken,
-  changePassword,
-  forgotPassword,
-  resetPassword,
+  updatePassword
 };
 
 export default authAPI; 

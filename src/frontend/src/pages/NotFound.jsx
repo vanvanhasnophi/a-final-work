@@ -15,7 +15,7 @@ export default function NotFound() {
       <Result
         status="404"
         title="404"
-        subTitle="抱歉，您访问的页面不存在。"
+        subTitle="哦豁，RoomX走丢了"
         extra={[
           <Button type="primary" key="dashboard" onClick={() => navigate('/dashboard')}>
             返回首页

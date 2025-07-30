@@ -19,35 +19,39 @@ export const useApiWithRetry = () => {
     setLoading(true);
     setError(null);
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const result = await apiCall();
-        
-        if (successMessage) {
-          message.success(successMessage);
-        }
-        
-        return result;
-      } catch (error) {
-        console.error(`API调用失败 (尝试 ${attempt + 1}/${maxRetries + 1}):`, error);
-        
-        if (attempt === maxRetries) {
-          // 最后一次尝试失败
-          setError(error);
-          message.error(errorMessage);
-          return null;
-        } else {
-          // 还有重试机会
-          if (showRetryMessage) {
-            message.warning(`请求失败，${retryDelay / 1000}秒后重试...`);
+    try {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const result = await apiCall();
+          
+          if (successMessage) {
+            message.success(successMessage);
           }
           
-          // 等待后重试
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          return result;
+        } catch (error) {
+          console.error(`API调用失败 (尝试 ${attempt + 1}/${maxRetries + 1}):`, error);
+          
+          if (attempt === maxRetries) {
+            // 最后一次尝试失败
+            setError(error);
+            message.error(errorMessage);
+            return null;
+          } else {
+            // 还有重试机会
+            if (showRetryMessage) {
+              message.warning(`请求失败，${retryDelay / 1000}秒后重试...`);
+            }
+            
+            // 等待后重试
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
         }
       }
+    } finally {
+      setLoading(false);
     }
-  }, [loading]);
+  }, []); // 移除loading依赖，避免无限循环
 
   return {
     loading,

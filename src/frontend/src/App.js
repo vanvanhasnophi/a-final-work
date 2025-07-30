@@ -30,6 +30,12 @@ function AppContent() {
       colorTextSecondary: isDarkMode ? '#CCCCCC' : '#666666',
       colorBorder: isDarkMode ? '#3C3F45' : '#E5E5E5',
       borderRadius: 8,
+      // 使用Ant Design官方建议的Tag颜色
+      colorSuccess: isDarkMode ? '#52C41A' : '#52C41A',
+      colorError: isDarkMode ? '#FF4D4F' : '#FF4D4F',
+      colorWarning: isDarkMode ? '#FAAD14' : '#FAAD14',
+      colorInfo: isDarkMode ? '#1890FF' : '#1890FF',
+      colorProcessing: isDarkMode ? '#722ED1' : '#722ED1',
     },
     algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
   };

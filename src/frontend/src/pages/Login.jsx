@@ -47,6 +47,7 @@ export default function Login() {
             token: localStorage.getItem('token'),
             user: localStorage.getItem('user')
           });
+          console.log('isAuthenticated检查:', isAuthenticated());
           navigate(from, { replace: true });
         }, 1500);
       } else {
@@ -219,6 +220,7 @@ export default function Login() {
 
   // 如果已经登录，直接跳转到目标页面
   if (isAuthenticated()) {
+    console.log('Login组件: 检测到已登录，跳转到:', from);
     navigate(from, { replace: true });
     return null;
   }
