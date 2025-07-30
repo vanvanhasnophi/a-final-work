@@ -1,0 +1,867 @@
+/* 全局CSS变量 - 浅色模式 */
+:root {
+  --primary-color: #660874;
+  --primary-hover: #7A0A8A;
+  --primary-active: #5A0668;
+  --background-color: #F2F2F2;
+  --component-bg: #FFFFFF;
+  --component-bg-elevated: #FFFFFF;
+  --text-color: #000000;
+  --text-color-secondary: #666666;
+  --text-color-tertiary: #999999;
+  --text-color-quaternary: #CCCCCC;
+  --border-color: #E5E5E5;
+  --border-color-secondary: #F0F0F0;
+  --fill-color: #F5F5F5;
+  --fill-color-secondary: #FAFAFA;
+  --fill-color-tertiary: #FFFFFF;
+  --fill-color-quaternary: #F0F0F0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-secondary: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-sm: 4px;
+}
+
+/* 深色模式变量 */
+[data-theme="dark"] {
+  --primary-color: #990CAE;
+  --primary-hover: #B30FCC;
+  --primary-active: #7A0A8A;
+  --background-color: #1E1F22;
+  --component-bg: #2B2D31;
+  --component-bg-elevated: #2B2D31;
+  --text-color: #FFFFFF;
+  --text-color-secondary: #CCCCCC;
+  --text-color-tertiary: #999999;
+  --text-color-quaternary: #666666;
+  --border-color: #3C3F45;
+  --border-color-secondary: #3C3F45;
+  --fill-color: #3C3F45;
+  --fill-color-secondary: #2B2D31;
+  --fill-color-tertiary: #1E1F22;
+  --fill-color-quaternary: #3C3F45;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-secondary: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-sm: 4px;
+}
+
+/* 全局样式 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color) !important;
+  color: var(--text-color) !important;
+  transition: all 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--background-color) !important;
+}
+
+.App {
+  min-height: 100vh;
+  background-color: var(--background-color) !important;
+  transition: all 0.3s ease;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--component-bg) !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 输入框样式 */
+.ant-input {
+  background-color: var(--component-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 输入框发光效果 - 使用全局主题色 */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-password:focus,
+.ant-input-password-focused,
+.ant-select-focused .ant-select-selector,
+.ant-select-open .ant-select-selector,
+.ant-picker-focused,
+.ant-cascader-picker-focused,
+.ant-mentions-focused,
+.ant-input-number-focused {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(153, 12, 174, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 输入框悬停效果 */
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-input-password:hover,
+.ant-select-selector:hover,
+.ant-picker:hover,
+.ant-cascader-picker:hover,
+.ant-mentions:hover,
+.ant-input-number:hover {
+  border-color: var(--primary-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+.ant-input-password {
+  background-color: var(--component-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 其他输入类组件的发光效果 */
+.ant-select-selector,
+.ant-picker,
+.ant-cascader-picker,
+.ant-mentions,
+.ant-input-number {
+  transition: all 0.3s ease !important;
+}
+
+
+
+/* 按钮样式 */
+.ant-btn {
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  background-color: var(--component-bg) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 主要按钮使用强调色 */
+.ant-btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-primary:active {
+  background-color: var(--primary-active) !important;
+  border-color: var(--primary-active) !important;
+  color: #ffffff !important;
+}
+
+/* 其他按钮类型的悬停效果 */
+.ant-btn:hover {
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
+}
+
+.ant-btn:active {
+  border-color: var(--primary-active) !important;
+  color: var(--primary-active) !important;
+}
+
+/* 卡片样式 */
+.ant-card {
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--component-bg) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.ant-card-head {
+  background-color: var(--component-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ant-card-head-title {
+  color: var(--text-color) !important;
+}
+
+.ant-card-body {
+  color: var(--text-color) !important;
+}
+
+/* 表格样式 */
+.ant-table {
+  background-color: var(--component-bg) !important;
+  color: var(--text-color) !important;
+}
+
+.ant-table-thead > tr > th {
+  background-color: var(--component-bg) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ant-table-tbody > tr > td {
+  background-color: var(--component-bg) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 深色模式下的表格特殊样式 */
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+[data-theme="dark"] .ant-table-thead > tr > th {
+  background-color: #2B2D31 !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-table-tbody > tr > td {
+  background-color: #2B2D31 !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid #3C3F45 !important;
+}
+
+/* 空状态样式 */
+.ant-empty {
+  color: var(--text-color-secondary) !important;
+}
+
+[data-theme="dark"] .ant-empty {
+  color: #CCCCCC !important;
+}
+
+.ant-empty-description {
+  color: var(--text-color-secondary) !important;
+}
+
+[data-theme="dark"] .ant-empty-description {
+  color: #CCCCCC !important;
+}
+
+/* 菜单样式 */
+.ant-menu {
+  background-color: var(--component-bg) !important;
+  color: var(--text-color) !important;
+}
+
+.ant-menu-item {
+  color: var(--text-color) !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 深色模式下的菜单特殊样式 */
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 下拉菜单样式 */
+.ant-dropdown-menu {
+  background-color: var(--component-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.ant-dropdown-menu-item {
+  color: var(--text-color) !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 深色模式下的下拉菜单特殊样式 */
+[data-theme="dark"] .ant-dropdown-menu {
+  background-color: #2B2D31 !important;
+  border: 1px solid #3C3F45 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .ant-dropdown-menu-item {
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+
+
+/* 模态框样式 */
+.ant-modal-content {
+  background-color: var(--component-bg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.ant-modal-header {
+  background-color: var(--component-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ant-modal-title {
+  color: var(--text-color) !important;
+}
+
+.ant-modal-body {
+  color: var(--text-color) !important;
+}
+
+/* 深色模式下的模态框特殊样式 */
+[data-theme="dark"] .ant-modal-content {
+  background-color: #2B2D31 !important;
+  border: 1px solid #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-modal-header {
+  background-color: #2B2D31 !important;
+  border-bottom: 1px solid #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-modal-title {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-modal-body {
+  color: #FFFFFF !important;
+}
+
+/* 分页样式 */
+.ant-pagination {
+  color: var(--text-color) !important;
+}
+
+.ant-pagination-item {
+  background-color: var(--component-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 深色模式下的分页特殊样式 */
+[data-theme="dark"] .ant-pagination {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-pagination-item {
+  background-color: #2B2D31 !important;
+  border: 1px solid #3C3F45 !important;
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 标签页样式 */
+.ant-tabs-tab {
+  color: var(--text-color) !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+.ant-tabs-content-holder {
+  color: var(--text-color) !important;
+}
+
+/* 深色模式下的标签页特殊样式 */
+[data-theme="dark"] .ant-tabs-tab {
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+[data-theme="dark"] .ant-tabs-content-holder {
+  color: #FFFFFF !important;
+}
+
+/* 统计卡片样式 */
+.ant-statistic-title {
+  color: var(--text-color-secondary) !important;
+}
+
+.ant-statistic-content {
+  color: var(--text-color) !important;
+}
+
+/* 深色模式下的统计卡片特殊样式 */
+[data-theme="dark"] .ant-statistic-title {
+  color: #CCCCCC !important;
+}
+
+[data-theme="dark"] .ant-statistic-content {
+  color: #FFFFFF !important;
+}
+
+/* 标签样式 */
+.ant-tag {
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* 深色模式下的标签特殊样式 */
+[data-theme="dark"] .ant-tag {
+  color: #FFFFFF !important;
+  border-color: #3C3F45 !important;
+}
+
+/* 加载动画 */
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+.ant-spin-text {
+  color: var(--text-color) !important;
+}
+
+/* 深色模式下的加载动画特殊样式 */
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+[data-theme="dark"] .ant-spin-text {
+  color: #FFFFFF !important;
+}
+
+/* 结果页面样式 */
+.ant-result-title {
+  color: var(--text-color) !important;
+}
+
+.ant-result-subtitle {
+  color: var(--text-color-secondary) !important;
+}
+
+/* 深色模式下的结果页面特殊样式 */
+[data-theme="dark"] .ant-result-title {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-result-subtitle {
+  color: #CCCCCC !important;
+}
+
+/* 分割线样式 */
+.ant-divider {
+  border-color: var(--border-color) !important;
+}
+
+.ant-divider-inner-text {
+  color: var(--text-color-secondary) !important;
+}
+
+/* 深色模式下的分割线特殊样式 */
+[data-theme="dark"] .ant-divider {
+  border-color: #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-divider-inner-text {
+  color: #CCCCCC !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .App {
+    padding: 0;
+  }
+  
+  .ant-layout-content {
+    margin: 12px !important;
+    padding: 16px !important;
+  }
+  
+  /* 移动端 Message 样式 */
+  .ant-message {
+    max-width: 95vw !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  
+  .ant-message-notice {
+    max-width: 95vw !important;
+    width: auto !important;
+  }
+  
+  .ant-message-notice-content {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    padding: 12px 16px !important;
+  }
+}
+
+/* 动画效果 */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Message 动画优化 */
+.ant-message-notice {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 主题切换动画 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 强制覆盖一些可能被其他样式覆盖的颜色 */
+.ant-typography {
+  color: var(--text-color) !important;
+}
+
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4,
+.ant-typography h5,
+.ant-typography h6 {
+  color: var(--text-color) !important;
+}
+
+.ant-typography p {
+  color: var(--text-color) !important;
+}
+
+.ant-typography span {
+  color: inherit !important;
+}
+
+/* 确保所有文本元素都使用正确的颜色 */
+div, span, p, h1, h2, h3, h4, h5, h6, label, a {
+  color: inherit !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 优化的Message/Toast样式 */
+.ant-message {
+  z-index: 999999 !important;
+  position: fixed !important;
+  top: 80px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  max-width: 120vw !important;
+  width: auto !important;
+}
+
+.ant-message-notice {
+  background: var(--component-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow) !important;
+  margin-bottom: 8px !important;
+  max-width: 600px !important;
+  width: auto !important;
+  display: inline-block !important;
+}
+
+.ant-message-notice-content {
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  background: var(--component-bg) !important;
+  color: var(--text-color) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+.ant-message-success .ant-message-notice-content {
+  background: rgba(82, 196, 26, 0.1) !important;
+  border: 1px solid rgba(82, 196, 26, 0.3) !important;
+  color: #52c41a !important;
+}
+
+.ant-message-error .ant-message-notice-content {
+  background: rgba(255, 77, 79, 0.1) !important;
+  border: 1px solid rgba(255, 77, 79, 0.3) !important;
+  color: #ff4d4f !important;
+}
+
+.ant-message-info .ant-message-notice-content {
+  background: rgba(24, 144, 255, 0.1) !important;
+  border: 1px solid rgba(24, 144, 255, 0.3) !important;
+  color: #1890ff !important;
+}
+
+.ant-message-warning .ant-message-notice-content {
+  background: rgba(250, 173, 20, 0.1) !important;
+  border: 1px solid rgba(250, 173, 20, 0.3) !important;
+  color: #faad14 !important;
+}
+
+/* 深色模式下的 Message 样式 */
+[data-theme="dark"] .ant-message-notice {
+  background: #2B2D31 !important;
+  border: 1px solid #3C3F45 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  max-width: 400px !important;
+  width: auto !important;
+  display: inline-block !important;
+}
+
+[data-theme="dark"] .ant-message-notice-content {
+  background: #2B2D31 !important;
+  color: #FFFFFF !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+/* Message 图标样式 */
+.ant-message .anticon {
+  color: inherit !important;
+}
+
+.ant-message-success .anticon {
+  color: #52c41a !important;
+}
+
+.ant-message-error .anticon {
+  color: #ff4d4f !important;
+}
+
+.ant-message-info .anticon {
+  color: #1890ff !important;
+}
+
+.ant-message-warning .anticon {
+  color: #faad14 !important;
+}
+
+[data-theme="dark"] .ant-message-success .ant-message-notice-content {
+  background: rgba(82, 196, 26, 0.1) !important;
+  border: 1px solid rgba(82, 196, 26, 0.3) !important;
+  color: #52c41a !important;
+}
+
+[data-theme="dark"] .ant-message-error .ant-message-notice-content {
+  background: rgba(255, 77, 79, 0.1) !important;
+  border: 1px solid rgba(255, 77, 79, 0.3) !important;
+  color: #ff4d4f !important;
+}
+
+[data-theme="dark"] .ant-message-info .ant-message-notice-content {
+  background: rgba(24, 144, 255, 0.1) !important;
+  border: 1px solid rgba(24, 144, 255, 0.3) !important;
+  color: #1890ff !important;
+}
+
+[data-theme="dark"] .ant-message-warning .ant-message-notice-content {
+  background: rgba(250, 173, 20, 0.1) !important;
+  border: 1px solid rgba(250, 173, 20, 0.3) !important;
+  color: #faad14 !important;
+}
+
+/* 深色模式下的额外优化 */
+[data-theme="dark"] .ant-select {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-select-selector {
+  background-color: #2B2D31 !important;
+  border-color: #3C3F45 !important;
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+[data-theme="dark"] .ant-select-dropdown {
+  background-color: #2B2D31 !important;
+  border: 1px solid #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-select-item {
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 搜索框深色模式 */
+[data-theme="dark"] .ant-input-search .ant-input {
+  background-color: #2B2D31 !important;
+  border-color: #3C3F45 !important;
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 按钮深色模式优化 */
+[data-theme="dark"] .ant-btn {
+  background-color: #2B2D31 !important;
+  border-color: #3C3F45 !important;
+  color: #FFFFFF !important;
+}
+
+/* 深色模式下的主要按钮 */
+[data-theme="dark"] .ant-btn-primary {
+  background-color: #990CAE !important;
+  border-color: #990CAE !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-btn-primary:hover {
+  background-color: #B02CC8 !important;
+  border-color: #B02CC8 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-btn-primary:active {
+  background-color: #8A0B9E !important;
+  border-color: #8A0B9E !important;
+  color: #ffffff !important;
+}
+
+/* 深色模式下的其他按钮悬停效果 */
+[data-theme="dark"] .ant-btn:hover {
+  border-color: #990CAE !important;
+  color: #990CAE !important;
+}
+
+[data-theme="dark"] .ant-btn:active {
+  border-color: #8A0B9E !important;
+  color: #8A0B9E !important;
+}
+
+/* 卡片深色模式优化 */
+[data-theme="dark"] .ant-card {
+  background-color: #2B2D31 !important;
+  border-color: #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-card-head {
+  background-color: #2B2D31 !important;
+  border-bottom-color: #3C3F45 !important;
+}
+
+[data-theme="dark"] .ant-card-head-title {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-card-body {
+  color: #FFFFFF !important;
+}
+
+/* 导航栏展开/收起按钮深色模式 */
+[data-theme="dark"] .ant-layout-sider-trigger {
+  background: #232428 !important;
+  color: #CCCCCC !important;
+  border-top: 1px solid #3C3F45 !important;
+  border-bottom: none !important;
+  transition: all 0.3s ease;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+[data-theme="dark"] .ant-layout-sider-trigger .anticon {
+  color: inherit !important;
+}
+
+/* 搜索框深色模式优化 */
+[data-theme="dark"] .ant-input-affix-wrapper {
+  background: #232428 !important;
+  border-color: #3C3F45 !important;
+  color: #FFFFFF !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+[data-theme="dark"] .ant-input-affix-wrapper .ant-input {
+  background: transparent !important;
+  color: #FFFFFF !important;
+}
+
+/* 深色模式下的输入框发光效果 */
+[data-theme="dark"] .ant-input:focus,
+[data-theme="dark"] .ant-input-focused,
+[data-theme="dark"] .ant-input-affix-wrapper:focus,
+[data-theme="dark"] .ant-input-affix-wrapper-focused,
+[data-theme="dark"] .ant-input-password:focus,
+[data-theme="dark"] .ant-input-password-focused,
+[data-theme="dark"] .ant-select-focused .ant-select-selector,
+[data-theme="dark"] .ant-select-open .ant-select-selector,
+[data-theme="dark"] .ant-picker-focused,
+[data-theme="dark"] .ant-cascader-picker-focused,
+[data-theme="dark"] .ant-mentions-focused,
+[data-theme="dark"] .ant-input-number-focused {
+  border-color: #990CAE !important;
+  box-shadow: 0 0 0 2px rgba(153, 12, 174, 0.3) !important;
+}
+
+/* 深色模式下的输入框悬停效果 */
+[data-theme="dark"] .ant-input:hover,
+[data-theme="dark"] .ant-input-affix-wrapper:hover,
+[data-theme="dark"] .ant-input-password:hover,
+[data-theme="dark"] .ant-select-selector:hover,
+[data-theme="dark"] .ant-picker:hover,
+[data-theme="dark"] .ant-cascader-picker:hover,
+[data-theme="dark"] .ant-mentions:hover,
+[data-theme="dark"] .ant-input-number:hover {
+  border-color: #990CAE !important;
+}
+
+[data-theme="dark"] .ant-input-affix-wrapper .ant-input::placeholder {
+  color: #888888 !important;
+}
+
+[data-theme="dark"] .ant-input-suffix {
+  color: #CCCCCC !important;
+}
+
+[data-theme="dark"] .ant-input-clear-icon {
+  color: #CCCCCC !important;
+}
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+
+/* 错误提示文本颜色与输入框错误边框一致 */
+.ant-form-item-explain-error,
+.ant-form-item-extra,
+.ant-form-item .ant-form-item-explain-error {
+  color: #ff4d4f !important;
+}
+
+/* 侧边栏工具提示浅色外观 */
+.ant-tooltip-inner {
+  background: #F8F8FA !important;
+  color: #333 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+[data-theme="dark"] .ant-tooltip-inner {
+  background: #232428 !important;
+  color: #fff !important;
+}
