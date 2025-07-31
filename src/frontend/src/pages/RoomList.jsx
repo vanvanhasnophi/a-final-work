@@ -106,20 +106,37 @@ export default function RoomList() {
   };
 
   const handleTypeFilter = (value) => {
+    // 将前端值映射到后端枚举值
+    const typeMapping = {
+      'caseroom': 'CASE_ROOM',
+      'seminar': 'SEMINAR_ROOM',
+      'lab': 'LAB_ROOM',
+      'lecture': 'LECTURE_ROOM'
+    };
+    
     const newParams = {
       ...searchParams,
       pageNum: 1,
-      type: value === 'all' ? undefined : value,
+      type: value === 'all' ? undefined : typeMapping[value],
     };
     setSearchParams(newParams);
     debounce(() => fetchRooms(newParams));
   };
 
   const handleStatusFilter = (value) => {
+    // 将前端值映射到后端枚举值
+    const statusMapping = {
+      'available': 'AVAILABLE',
+      'occupied': 'USING',
+      'reserved': 'RESERVED',
+      'maintenance': 'MAINTENANCE',
+      'cleaning': 'CLEANING'
+    };
+    
     const newParams = {
       ...searchParams,
       pageNum: 1,
-      status: value === 'all' ? undefined : value,
+      status: value === 'all' ? undefined : statusMapping[value],
     };
     setSearchParams(newParams);
     debounce(() => fetchRooms(newParams));
@@ -229,6 +246,16 @@ export default function RoomList() {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
+      render: (type) => {
+        const typeMapping = {
+          'CASE_ROOM': '案例教室',
+          'SEMINAR_ROOM': '研讨间',
+          'LAB_ROOM': '实验室',
+          'LECTURE_ROOM': '平面教室',
+          'OTHER_ROOM': '其他'
+        };
+        return typeMapping[type] || type;
+      },
     },
     {
       title: '容量',
@@ -241,12 +268,23 @@ export default function RoomList() {
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
+        const statusMapping = {
+          'AVAILABLE': '空闲',
+          'USING': '使用中',
+          'RESERVED': '已预约',
+          'MAINTENANCE': '维护中',
+          'CLEANING': '清洁中',
+          'UNAVAILABLE': '不可用'
+        };
+        
         let color = 'success';
-        if (status === '使用中'||status==='USING') color = 'warning';
-        if (status === '维护中' || status === '清洁中'||status==='MAINTENANCE'||status==='CLEANING') color = 'error';
-        if (status === '已预约'||status==='RESERVED') color = 'processing';
-        if (status === '空闲'||status==='AVAILABLE') color = 'success';
-        return <Tag color={color}>{status}</Tag>;
+        if (status === 'USING') color = 'warning';
+        if (status === 'MAINTENANCE' || status === 'CLEANING') color = 'error';
+        if (status === 'RESERVED') color = 'processing';
+        if (status === 'AVAILABLE') color = 'success';
+        if (status === 'UNAVAILABLE') color = 'default';
+        
+        return <Tag color={color}>{statusMapping[status] || status}</Tag>;
       },
     },
     {
@@ -432,7 +470,13 @@ export default function RoomList() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>房间类型：</strong>
-              <span>{currentRoom.type}</span>
+              <span>{
+                currentRoom.type === 'CASE_ROOM' ? '案例教室' :
+                currentRoom.type === 'SEMINAR_ROOM' ? '研讨间' :
+                currentRoom.type === 'LAB_ROOM' ? '实验室' :
+                currentRoom.type === 'LECTURE_ROOM' ? '平面教室' :
+                currentRoom.type === 'OTHER_ROOM' ? '其他' : currentRoom.type
+              }</span>
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>容量：</strong>
@@ -441,12 +485,17 @@ export default function RoomList() {
             <div style={{ marginBottom: 16 }}>
               <strong>状态：</strong>
               <Tag color={
-                currentRoom.status === '空闲' ? 'green' :
-                currentRoom.status === '使用中' ? 'orange' :
-                currentRoom.status === '已预约' ? 'blue' :
-                currentRoom.status === '维护中' || currentRoom.status === '清洁中' ? 'red' : 'default'
+                currentRoom.status === 'AVAILABLE' ? 'green' :
+                currentRoom.status === 'USING' ? 'orange' :
+                currentRoom.status === 'RESERVED' ? 'blue' :
+                currentRoom.status === 'MAINTENANCE' || currentRoom.status === 'CLEANING' ? 'red' : 'default'
               }>
-                {currentRoom.status}
+                {currentRoom.status === 'AVAILABLE' ? '空闲' :
+                 currentRoom.status === 'USING' ? '使用中' :
+                 currentRoom.status === 'RESERVED' ? '已预约' :
+                 currentRoom.status === 'MAINTENANCE' ? '维护中' :
+                 currentRoom.status === 'CLEANING' ? '清洁中' :
+                 currentRoom.status === 'UNAVAILABLE' ? '不可用' : currentRoom.status}
               </Tag>
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -467,7 +516,13 @@ export default function RoomList() {
             <div style={{ marginBottom: 16, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
               <h4>申请房间信息</h4>
               <p><strong>房间名称：</strong>{currentRoom.name}</p>
-              <p><strong>房间类型：</strong>{currentRoom.type}</p>
+              <p><strong>房间类型：</strong>{
+                currentRoom.type === 'CASE_ROOM' ? '案例教室' :
+                currentRoom.type === 'SEMINAR_ROOM' ? '研讨间' :
+                currentRoom.type === 'LAB_ROOM' ? '实验室' :
+                currentRoom.type === 'LECTURE_ROOM' ? '平面教室' :
+                currentRoom.type === 'OTHER_ROOM' ? '其他' : currentRoom.type
+              }</p>
               <p><strong>容量：</strong>{currentRoom.capacity}人</p>
               <p><strong>位置：</strong>{currentRoom.location}</p>
             </div>

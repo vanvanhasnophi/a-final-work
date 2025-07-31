@@ -62,7 +62,8 @@ public class DataInitializer implements CommandLineRunner {
         admin.setUsername("admin");
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setNickname("系统管理员");
-        admin.setContact("admin@roomx.com");
+        admin.setEmail("admin@roomx.com");
+        admin.setPhone("13333333333");
         admin.setRole(UserRole.ADMIN);
         admin.setCreateTime(new Date());
         admin.setLastLoginTime(new Date());
@@ -73,7 +74,8 @@ public class DataInitializer implements CommandLineRunner {
         applier1.setUsername("zhangsan");
         applier1.setPassword(passwordEncoder.encode("123456"));
         applier1.setNickname("张三");
-        applier1.setContact("zhangsan@company.com");
+        applier1.setEmail("zhangsan@tsinghua.edu.cn");
+        applier1.setPhone("13234567890");
         applier1.setRole(UserRole.APPLIER);
         applier1.setDepartment("技术部");
         applier1.setCreateTime(new Date());
@@ -84,9 +86,10 @@ public class DataInitializer implements CommandLineRunner {
         applier2.setUsername("lisi");
         applier2.setPassword(passwordEncoder.encode("123456"));
         applier2.setNickname("李四");
-        applier2.setContact("lisi@company.com");
+        applier2.setEmail("lisi@tsinghua.edu.cn");
+        applier2.setPhone("132345645678");
         applier2.setRole(UserRole.APPLIER);
-        applier2.setDepartment("市场部");
+        applier2.setDepartment("管理科学与工程系");
         applier2.setCreateTime(new Date());
         applier2.setLastLoginTime(new Date());
         userRepository.save(applier2);
@@ -95,9 +98,10 @@ public class DataInitializer implements CommandLineRunner {
         applier3.setUsername("wangwu");
         applier3.setPassword(passwordEncoder.encode("123456"));
         applier3.setNickname("王五");
-        applier3.setContact("wangwu@company.com");
+        applier3.setEmail("wangwu@tsinghua.edu.cn");
+        applier3.setPhone("13234567890");
         applier3.setRole(UserRole.APPLIER);
-        applier3.setDepartment("人事部");
+        applier3.setDepartment("自动化系");
         applier3.setCreateTime(new Date());
         applier3.setLastLoginTime(new Date());
         userRepository.save(applier3);
@@ -106,9 +110,10 @@ public class DataInitializer implements CommandLineRunner {
         applier4.setUsername("zhaoliu");
         applier4.setPassword(passwordEncoder.encode("123456"));
         applier4.setNickname("赵六");
-        applier4.setContact("zhaoliu@company.com");
+        applier4.setEmail("zhaoliu@tsinghua.edu.cn");
+        applier4.setPhone("13233232323");
         applier4.setRole(UserRole.APPLIER);
-        applier4.setDepartment("财务部");
+        applier4.setDepartment("计算机系");
         applier4.setCreateTime(new Date());
         applier4.setLastLoginTime(new Date());
         userRepository.save(applier4);
@@ -117,9 +122,10 @@ public class DataInitializer implements CommandLineRunner {
         applier5.setUsername("qianqi");
         applier5.setPassword(passwordEncoder.encode("123456"));
         applier5.setNickname("钱七");
-        applier5.setContact("qianqi@company.com");
+        applier5.setEmail("qianqi@tsinghua.edu.cn");
+        applier5.setPhone("1323325523");
         applier5.setRole(UserRole.APPLIER);
-        applier5.setDepartment("运营部");
+        applier5.setDepartment("电子系");
         applier5.setCreateTime(new Date());
         applier5.setLastLoginTime(new Date());
         userRepository.save(applier5);
@@ -129,9 +135,10 @@ public class DataInitializer implements CommandLineRunner {
         approver1.setUsername("approver1");
         approver1.setPassword(passwordEncoder.encode("123456"));
         approver1.setNickname("审批员1");
-        approver1.setContact("approver1@company.com");
+        approver1.setEmail("approver1@tsinghua.edu.cn");
+        approver1.setPhone("13233255983");
         approver1.setRole(UserRole.APPROVER);
-        approver1.setDepartment("行政部");
+        approver1.setDepartment("IT中心");
         approver1.setPermission(ApproverPermission.EXTENDED);
         approver1.setCreateTime(new Date());
         approver1.setLastLoginTime(new Date());
@@ -141,9 +148,10 @@ public class DataInitializer implements CommandLineRunner {
         approver2.setUsername("approver2");
         approver2.setPassword(passwordEncoder.encode("123456"));
         approver2.setNickname("审批员2");
-        approver2.setContact("approver2@company.com");
+        approver2.setEmail("approver2@tsinghua.edu.cn");
+        approver2.setPhone("13232344383");
         approver2.setRole(UserRole.APPROVER);
-        approver2.setDepartment("行政部");
+        approver2.setDepartment("IT中心");
         approver2.setPermission(ApproverPermission.EXTENDED);
         approver2.setCreateTime(new Date());
         approver2.setLastLoginTime(new Date());
@@ -154,7 +162,8 @@ public class DataInitializer implements CommandLineRunner {
         serviceStaff1.setUsername("service1");
         serviceStaff1.setPassword(passwordEncoder.encode("123456"));
         serviceStaff1.setNickname("服务人员1");
-        serviceStaff1.setContact("service1@company.com");
+        serviceStaff1.setEmail("service1@tsinghua.edu.cn");
+        serviceStaff1.setPhone("13277255983");
         serviceStaff1.setRole(UserRole.SERVICE_STAFF);
         serviceStaff1.setServiceArea("前台服务");
         serviceStaff1.setCreateTime(new Date());
@@ -165,7 +174,8 @@ public class DataInitializer implements CommandLineRunner {
         serviceStaff2.setUsername("service2");
         serviceStaff2.setPassword(passwordEncoder.encode("123456"));
         serviceStaff2.setNickname("服务人员2");
-        serviceStaff2.setContact("service2@company.com");
+        serviceStaff2.setEmail("service2@tsinghua.edu.cn");
+        serviceStaff2.setPhone("13662255983");
         serviceStaff2.setRole(UserRole.SERVICE_STAFF);
         serviceStaff2.setServiceArea("后勤服务");
         serviceStaff2.setCreateTime(new Date());
@@ -177,7 +187,8 @@ public class DataInitializer implements CommandLineRunner {
         maintainer1.setUsername("maintainer1");
         maintainer1.setPassword(passwordEncoder.encode("123456"));
         maintainer1.setNickname("维修人员1");
-        maintainer1.setContact("maintainer1@company.com");
+        maintainer1.setEmail("maintainer1@tsinghua.edu.cn");
+        maintainer1.setPhone("13233255654");
         maintainer1.setRole(UserRole.MAINTAINER);
         maintainer1.setSkill("电气维修");
         maintainer1.setCreateTime(new Date());
@@ -188,7 +199,8 @@ public class DataInitializer implements CommandLineRunner {
         maintainer2.setUsername("maintainer2");
         maintainer2.setPassword(passwordEncoder.encode("123456"));
         maintainer2.setNickname("维修人员2");
-        maintainer2.setContact("maintainer2@company.com");
+        maintainer2.setEmail("maintainer2@tsinghua.edu.cn");
+        maintainer2.setPhone("13237655654");
         maintainer2.setRole(UserRole.MAINTAINER);
         maintainer2.setSkill("设备维护");
         maintainer2.setCreateTime(new Date());
@@ -346,7 +358,7 @@ public class DataInitializer implements CommandLineRunner {
             // 张三的申请 - 已批准
             Application app1 = new Application();
             app1.setCrowd(15L);
-            app1.setContact("zhangsan@company.com");
+            app1.setContact("zhangsan@tsinghua.edu.cn");
             app1.setReason("技术部周会讨论项目进展");
             app1.setStatus(ApplicationStatus.APPROVED);
             app1.setCreateTime(new Date(System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000));
@@ -362,7 +374,7 @@ public class DataInitializer implements CommandLineRunner {
             // 张三的申请 - 待审批
             Application app6 = new Application();
             app6.setCrowd(20L);
-            app6.setContact("zhangsan@company.com");
+            app6.setContact("zhangsan@tsinghua.edu.cn");
             app6.setReason("技术部代码评审会议");
             app6.setStatus(ApplicationStatus.PENDING);
             app6.setCreateTime(new Date());
@@ -380,8 +392,8 @@ public class DataInitializer implements CommandLineRunner {
             // 李四的申请 - 待审批
             Application app2 = new Application();
             app2.setCrowd(8L);
-            app2.setContact("lisi@company.com");
-            app2.setReason("市场部产品发布会");
+            app2.setContact("lisi@tsinghua.edu.cn");
+            app2.setReason("管理科学与工程系产品发布会");
             app2.setStatus(ApplicationStatus.PENDING);
             app2.setCreateTime(new Date(System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000));
             app2.setUpdateTime(new Date(System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000));
@@ -396,8 +408,8 @@ public class DataInitializer implements CommandLineRunner {
             // 李四的申请 - 已驳回
             Application app7 = new Application();
             app7.setCrowd(10L);
-            app7.setContact("lisi@company.com");
-            app7.setReason("市场部客户需求分析");
+            app7.setContact("lisi@tsinghua.edu.cn");
+            app7.setReason("管理科学与工程系客户需求分析");
             app7.setStatus(ApplicationStatus.REJECTED);
             app7.setCreateTime(new Date());
             app7.setUpdateTime(new Date());
@@ -414,8 +426,8 @@ public class DataInitializer implements CommandLineRunner {
             // 王五的申请 - 已批准
             Application app3 = new Application();
             app3.setCrowd(25L);
-            app3.setContact("wangwu@company.com");
-            app3.setReason("人事部新员工培训");
+            app3.setContact("wangwu@tsinghua.edu.cn");
+            app3.setReason("自动化系新员工培训");
             app3.setStatus(ApplicationStatus.APPROVED);
             app3.setCreateTime(new Date(System.currentTimeMillis() - 10L * 24 * 60 * 60 * 1000));
             app3.setUpdateTime(new Date(System.currentTimeMillis() - 9L * 24 * 60 * 60 * 1000));
@@ -430,8 +442,8 @@ public class DataInitializer implements CommandLineRunner {
             // 王五的申请 - 已完成
             Application app8 = new Application();
             app8.setCrowd(30L);
-            app8.setContact("wangwu@company.com");
-            app8.setReason("人事部年度总结会议");
+            app8.setContact("wangwu@tsinghua.edu.cn");
+            app8.setReason("自动化系年度总结会议");
             app8.setStatus(ApplicationStatus.COMPLETED);
             app8.setCreateTime(new Date(System.currentTimeMillis() - 15L * 24 * 60 * 60 * 1000));
             app8.setUpdateTime(new Date(System.currentTimeMillis() - 14L * 24 * 60 * 60 * 1000));

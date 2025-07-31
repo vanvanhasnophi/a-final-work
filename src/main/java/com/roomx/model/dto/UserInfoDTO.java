@@ -1,9 +1,11 @@
 package com.roomx.model.dto;
 
 import java.util.Date;
+
 import com.roomx.constant.enums.ApproverPermission;
 import com.roomx.constant.enums.UserRole;
 import com.roomx.model.entity.User;
+
 import lombok.Data;
 
 @Data
@@ -11,7 +13,8 @@ public class UserInfoDTO {
     private Long id;
     private String username;
     private String nickname;
-    private String contact;
+    private String email;
+    private String phone;
     private UserRole role;
     private Date createTime;
     private Date updateTime;
@@ -27,7 +30,8 @@ public class UserInfoDTO {
         this.id = user.getId();
         this.username = user.getUsername();
         this.nickname = user.getNickname();
-        this.contact = user.getContact();
+        this.email = user.getEmail();
+        this.phone = user.getPhone();
         this.role = user.getRole();
         this.createTime = user.getCreateTime();
         this.lastLoginTime = user.getLastLoginTime();

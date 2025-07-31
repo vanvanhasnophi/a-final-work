@@ -1,20 +1,23 @@
 package com.roomx.service.impl;
 
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import com.roomx.model.dto.PageResult;
+import com.roomx.model.dto.UserInfoDTO;
+import com.roomx.model.dto.UserQuery;
 import com.roomx.model.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.UserService;
-import org.springframework.stereotype.Service;
-import java.util.stream.Collectors;
-import com.roomx.model.dto.UserInfoDTO;
-import java.util.Objects;   
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
 import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import com.roomx.model.dto.PageResult;
-import com.roomx.model.dto.UserQuery;
 
 
 @Service
@@ -34,7 +37,8 @@ public class UserServiceImpl implements UserService {
             if(user==null) throw new IllegalArgumentException("user not found");
             if(!Objects.equals(userInfoDTO.getRole(),user.getRole())) throw new IllegalArgumentException("role not match");
             user.setNickname(userInfoDTO.getNickname());
-            user.setContact(userInfoDTO.getContact());
+            user.setEmail(userInfoDTO.getEmail());
+            user.setPhone(userInfoDTO.getPhone());
             // 根据角色设置相应字段
             if (userInfoDTO.getDepartment() != null) {
                 user.setDepartment(userInfoDTO.getDepartment());
@@ -69,8 +73,11 @@ public class UserServiceImpl implements UserService {
             if (query.getNickname() != null && !query.getNickname().isEmpty()) {
                 predicates.add(cb.like(root.get("nickname"), "%" + query.getNickname() + "%"));
     }
-            if (query.getContact() != null && !query.getContact().isEmpty()) {
-                predicates.add(cb.like(root.get("contact"), "%" + query.getContact() + "%"));
+            if (query.getEmail() != null && !query.getEmail().isEmpty()) {
+                predicates.add(cb.like(root.get("email"), "%" + query.getEmail() + "%"));
+            }
+            if (query.getPhone() != null && !query.getPhone().isEmpty()) {
+                predicates.add(cb.like(root.get("phone"), "%" + query.getPhone() + "%"));
             }
             if (query.getRole() != null) {
                 predicates.add(cb.equal(root.get("role"), query.getRole()));

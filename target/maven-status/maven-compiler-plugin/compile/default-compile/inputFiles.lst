@@ -1,4 +1,6 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/App.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/annotation/RequireAuth.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/aspect/AuthAspect.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/CorsConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/DataInitializer.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebConfig.java

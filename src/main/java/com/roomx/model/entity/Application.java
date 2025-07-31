@@ -1,9 +1,21 @@
 package com.roomx.model.entity;
 
 import java.util.Date;
+
 import com.roomx.constant.enums.ApplicationStatus;
-import lombok.*;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Data
 @Entity
@@ -26,9 +38,6 @@ public class Application {
     
     @Column(name = "user_nickname", length = 100)
     private String userNickname;
-    
-    @Column(name = "user_contact", length = 100)
-    private String userContact;
     
     @Column(name = "user_role", length = 50)
     private String userRole;
@@ -80,7 +89,6 @@ public class Application {
             this.userId = user.getId();
             this.username = user.getUsername();
             this.userNickname = user.getNickname();
-            this.userContact = user.getContact();
             this.userRole = user.getRole() != null ? user.getRole().name() : null;
         }
     }

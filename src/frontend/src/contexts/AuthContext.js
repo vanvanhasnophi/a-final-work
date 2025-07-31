@@ -35,11 +35,27 @@ export const AuthProvider = ({ children }) => {
   // 检查token是否有效
   const checkAuth = useCallback(async () => {
     const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
       try {
-        const response = await authAPI.getCurrentUser();
-        setUser(response.data);
+        // 先使用localStorage中的用户信息作为初始值
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
         setToken(storedToken);
+        
+        // 从服务器获取最新的用户信息
+        try {
+          const response = await authAPI.getCurrentUser();
+          const latestUserData = response.data;
+          
+          // 更新localStorage和状态
+          localStorage.setItem('user', JSON.stringify(latestUserData));
+          setUser(latestUserData);
+        } catch (apiError) {
+          console.error('获取最新用户信息失败:', apiError);
+          // 如果获取最新信息失败，继续使用localStorage中的数据
+        }
       } catch (error) {
         console.error('Token验证失败:', error);
         // 直接清理状态，不调用logout避免循环
@@ -120,6 +136,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 更新用户信息
+  const updateUserInfo = useCallback((updatedUserData) => {
+    // 更新localStorage中的用户信息
+    localStorage.setItem('user', JSON.stringify(updatedUserData));
+    // 更新状态
+    setUser(updatedUserData);
+  }, []);
+
+  // 刷新用户信息（从服务器获取最新数据）
+  const refreshUserInfo = useCallback(async () => {
+    try {
+      const response = await authAPI.getCurrentUser();
+      const latestUserData = response.data;
+      
+      // 更新localStorage和状态
+      localStorage.setItem('user', JSON.stringify(latestUserData));
+      setUser(latestUserData);
+      
+      return latestUserData;
+    } catch (error) {
+      console.error('刷新用户信息失败:', error);
+      throw error;
+    }
+  }, []);
+
   // 检查是否已登录
   const isAuthenticated = () => {
     const storedToken = localStorage.getItem('token');
@@ -158,6 +199,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated,
+    updateUserInfo,
+    refreshUserInfo,
   };
 
   return (

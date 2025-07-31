@@ -13,6 +13,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { getRoleDisplayName } from '../utils/roleMapping';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -23,6 +24,8 @@ export default function AppLayout({ children }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+
+
 
   const menuItems = [
     {
@@ -181,7 +184,7 @@ export default function AppLayout({ children }) {
                     lineHeight: '1',
                     color: 'var(--text-color-secondary)',
                   }}>
-                    {user?.role || '普通用户'}
+                    {getRoleDisplayName(user?.role)}
                   </Text>
                 </div>
               </Space>
