@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Tag, Space, Input, Select, message, Alert, Drawer, Form, InputNumber, DatePicker, TimePicker } from 'antd';
+import { Table, Card, Button, Tag, Space, Input, Select, message, Alert, Drawer, Form, InputNumber, DatePicker, TimePicker, Pagination } from 'antd';
 import { PlusOutlined, ReloadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { roomAPI } from '../api/room';
+import { applicationAPI } from '../api/application';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
+import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
+import { getRoomTypeDisplayName, getRoomTypeEnumValue, roomTypeOptions } from '../utils/roomMapping';
+import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
+import { useTimeConflictCheck } from '../hooks/useTimeConflictCheck';
 import dayjs from 'dayjs';
 
-const { Search } = Input;
 const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 export default function RoomList() {
   const navigate = useNavigate();
@@ -30,7 +35,19 @@ export default function RoomList() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerType, setDrawerType] = useState(''); // 'add', 'detail', 'apply'
   const [currentRoom, setCurrentRoom] = useState(null);
+  const [futureApplications, setFutureApplications] = useState([]);
   const [form] = Form.useForm();
+  
+  // 筛选控件状态管理
+  const [selectedType, setSelectedType] = useState(undefined);
+  const [selectedStatus, setSelectedStatus] = useState(undefined);
+  const typeSelectRef = useRef(null);
+  const statusSelectRef = useRef(null);
+  
+  // 时间冲突检查Hook
+  const { isChecking, hasConflict, conflictMessage, checkTimeConflict, clearConflict } = useTimeConflictCheck(
+    currentRoom?.id
+  );
   
   const { loading, error, executeWithRetry } = useApiWithRetry();
   const { debounce, clearDebounce } = useDebounce(500);
@@ -39,16 +56,23 @@ export default function RoomList() {
   const fetchRooms = useCallback(async (params = {}) => {
     const result = await executeWithRetry(
       async () => {
-        const response = await roomAPI.getRoomList({
-          ...searchParams,
+        // 获取当前的searchParams，避免闭包问题
+        const currentSearchParams = searchParams;
+        const requestParams = {
+          ...currentSearchParams,
           ...params,
-        });
+        };
         
-        const { records, total, current, size } = response.data;
+        console.log('发送分页请求参数:', requestParams);
+        const response = await roomAPI.getRoomList(requestParams);
+        
+        const { records, total, pageNum, pageSize } = response.data;
+        console.log('分页响应数据:', response.data);
+        
         setRooms(records || []);
         setPagination({
-          current: current || 1,
-          pageSize: size || 10,
+          current: pageNum || 1,
+          pageSize: pageSize || 10,
           total: total || 0,
         });
         
@@ -56,13 +80,13 @@ export default function RoomList() {
       },
       {
         errorMessage: '获取房间列表失败，请检查网络连接',
-        maxRetries: 2,
-        retryDelay: 3000
+        maxRetries: 0, // 不重试，避免反复请求
+        retryDelay: 0
       }
     );
     
     return result;
-  }, [executeWithRetry, searchParams]);
+  }, [executeWithRetry]); // 移除searchParams依赖
 
   // 页面刷新Hook
   const handlePageRefresh = usePageRefresh(fetchRooms);
@@ -87,11 +111,12 @@ export default function RoomList() {
   }, [clearDebounce]);
 
   const handleTableChange = (pagination, filters, sorter) => {
+    console.log('表格分页变化:', pagination);
     const newParams = {
       pageNum: pagination.current,
       pageSize: pagination.pageSize,
     };
-    setSearchParams(newParams);
+    setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchRooms(newParams);
   };
 
@@ -99,25 +124,17 @@ export default function RoomList() {
     const newParams = {
       ...searchParams,
       pageNum: 1,
-      name: value,
+      name: value || undefined, // 如果value为空字符串，则设为undefined
     };
     setSearchParams(newParams);
     debounce(() => fetchRooms(newParams));
   };
 
   const handleTypeFilter = (value) => {
-    // 将前端值映射到后端枚举值
-    const typeMapping = {
-      'caseroom': 'CASE_ROOM',
-      'seminar': 'SEMINAR_ROOM',
-      'lab': 'LAB_ROOM',
-      'lecture': 'LECTURE_ROOM'
-    };
-    
     const newParams = {
       ...searchParams,
       pageNum: 1,
-      type: value === 'all' ? undefined : typeMapping[value],
+      type: value === 'all' ? undefined : getRoomTypeEnumValue(value),
     };
     setSearchParams(newParams);
     debounce(() => fetchRooms(newParams));
@@ -158,11 +175,26 @@ export default function RoomList() {
   };
 
   // 打开申请房间抽屉
-  const handleApply = (record) => {
+  const handleApply = async (record) => {
     setDrawerType('apply');
     setCurrentRoom(record);
     form.resetFields();
+    // 预填充房间信息
+    form.setFieldsValue({
+      room: record.id,
+      roomName: record.name,
+      roomLocation: record.location
+    });
     setDrawerVisible(true);
+    
+    // 获取房间未来的已批准预约
+    try {
+      const response = await applicationAPI.getFutureApprovedApplications(record.id);
+      setFutureApplications(response.data || []);
+    } catch (error) {
+      console.error('获取未来预约失败:', error);
+      setFutureApplications([]);
+    }
   };
 
   // 关闭抽屉
@@ -179,7 +211,11 @@ export default function RoomList() {
       if (drawerType === 'add') {
         await executeWithRetry(
           async () => {
-            const response = await roomAPI.createRoom(values);
+            const roomData = {
+              ...values,
+              type: getRoomTypeEnumValue(values.type)
+            };
+            const response = await roomAPI.createRoom(roomData);
             message.success('房间创建成功');
             handleCloseDrawer();
             fetchRooms(); // 刷新列表
@@ -191,35 +227,33 @@ export default function RoomList() {
           }
         );
       } else if (drawerType === 'apply') {
-        // 验证时间
-        const startDate = values.startDate;
-        const startTime = values.startTime;
-        const endTime = values.endTime;
+        // 验证时间范围
+        const [startTime, endTime] = values.timeRange;
         
-        if (startDate && startTime && endTime) {
-          const startDateTime = dayjs(startDate).hour(startTime.hour()).minute(startTime.minute());
-          const endDateTime = dayjs(startDate).hour(endTime.hour()).minute(endTime.minute());
-          
-          if (endDateTime.isBefore(startDateTime)) {
-            message.error('结束时间不能早于开始时间');
-            return;
-          }
-          
-          if (endDateTime.isSame(startDateTime)) {
-            message.error('结束时间不能等于开始时间');
-            return;
-          }
+        const validation = validateTimeRange(startTime, endTime);
+        if (!validation.valid) {
+          message.error(validation.message);
+          return;
+        }
+        
+        // 检查时间冲突
+        if (hasConflict) {
+          message.error('所选时间段与已有预约冲突，请选择其他时间');
+          return;
         }
         
         await executeWithRetry(
           async () => {
-            const response = await roomAPI.applyRoom({
+            const applicationData = {
               roomId: currentRoom.id,
-              startDate: values.startDate?.format('YYYY-MM-DD'),
-              startTime: values.startTime?.format('HH:mm'),
-              endTime: values.endTime?.format('HH:mm'),
-              ...values
-            });
+              startTime: formatDateTimeForBackend(startTime),
+              endTime: formatDateTimeForBackend(endTime),
+              reason: values.reason,
+              crowd: values.crowd,
+              contact: values.contact,
+            };
+            
+            const response = await applicationAPI.createApplication(applicationData);
             message.success('申请提交成功');
             handleCloseDrawer();
             fetchRooms(); // 刷新列表
@@ -246,16 +280,7 @@ export default function RoomList() {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
-      render: (type) => {
-        const typeMapping = {
-          'CASE_ROOM': '案例教室',
-          'SEMINAR_ROOM': '研讨间',
-          'LAB_ROOM': '实验室',
-          'LECTURE_ROOM': '平面教室',
-          'OTHER_ROOM': '其他'
-        };
-        return typeMapping[type] || type;
-      },
+      render: (type) => getRoomTypeDisplayName(type),
     },
     {
       title: '容量',
@@ -307,79 +332,201 @@ export default function RoomList() {
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
-      <div style={{ padding: '24px' }}>
-      <Card title="房间管理">
-        {/* 错误提示和重试按钮 */}
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Card 
+        title="房间管理"
+        extra={
+          <Space>
+            <Button 
+              icon={<ReloadOutlined />} 
+              onClick={() => {
+                // 清空筛选控件内容
+                setSelectedType(undefined);
+                setSelectedStatus(undefined);
+                // 清空搜索参数并刷新数据
+                const newParams = {
+                  pageNum: 1,
+                  name: undefined,
+                  type: undefined,
+                  status: undefined
+                };
+                setSearchParams(newParams);
+                fetchRooms(newParams);
+              }}
+              loading={loading}
+            >
+              刷新
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
+              添加房间
+            </Button>
+          </Space>
+        }
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+        bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
+      >
+        {/* 错误提示 */}
         {error && (
           <Alert
             message="数据获取失败"
             description={error}
             type="error"
             showIcon
-            action={
-              <Button 
-                size="small" 
-                danger 
-                icon={<ReloadOutlined />}
-                onClick={handleManualRetry}
-                loading={loading}
-              >
-                重试
-              </Button>
-            }
             style={{ marginBottom: '16px' }}
           />
         )}
         
-        <div style={{ marginBottom: '16px' }}>
-          <Space>
-            <Search
-              placeholder="搜索房间"
-              style={{ width: 200 }}
-              onSearch={handleSearch}
-              allowClear
-            />
-            <Select defaultValue="all" style={{ width: 120 }} onChange={handleTypeFilter}>
-              <Option value="all">全部类型</Option>
-              <Option value="caseroom">案例教室</Option>
-              <Option value="seminar">研讨间</Option>
-              <Option value="lab">实验室</Option>
-              <Option value="lecture">平面教室</Option>
-            </Select>
-            <Select defaultValue="all" style={{ width: 120 }} onChange={handleStatusFilter}>
-              <Option value="all">全部状态</Option>
-              <Option value="available">空闲</Option>
-              <Option value="occupied">使用中</Option>
-              <Option value="reserved">已预约</Option>
-              <Option value="maintenance">维护中</Option>
-              <Option value="cleaning">清洁中</Option>
-            </Select>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
-              添加房间
-            </Button>
-            <Button 
-              icon={<ReloadOutlined />} 
-              onClick={handleManualRetry}
-              loading={loading}
-            >
-              刷新
-            </Button>
-          </Space>
+        {/* 筛选区域 */}
+        <div style={{
+          padding: '16px',
+          borderBottom: '1px solid var(--border-color)',
+          backgroundColor: 'var(--component-bg)'
+        }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            {/* 房间搜索 */}
+            <div style={{ minWidth: '200px' }}>
+              <Input
+                placeholder="搜索房间名称"
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
+            
+            {/* 房间类型筛选 */}
+            <div style={{ minWidth: '120px' }}>
+              <Select
+                ref={typeSelectRef}
+                placeholder="全部类型"
+                allowClear
+                style={{ width: '100%' }}
+                value={selectedType}
+                onChange={(value) => {
+                  setSelectedType(value);
+                  handleTypeFilter(value);
+                }}
+              >
+                <Option value="all">全部类型</Option>
+                <Option value="caseroom">案例教室</Option>
+                <Option value="seminar">研讨间</Option>
+                <Option value="lab">实验室</Option>
+                <Option value="lecture">平面教室</Option>
+              </Select>
+            </div>
+            
+            {/* 房间状态筛选 */}
+            <div style={{ minWidth: '120px' }}>
+              <Select
+                ref={statusSelectRef}
+                placeholder="全部状态"
+                allowClear
+                style={{ width: '100%' }}
+                value={selectedStatus}
+                onChange={(value) => {
+                  setSelectedStatus(value);
+                  handleStatusFilter(value);
+                }}
+              >
+                <Option value="all">全部状态</Option>
+                <Option value="available">空闲</Option>
+                <Option value="occupied">使用中</Option>
+                <Option value="reserved">已预约</Option>
+                <Option value="maintenance">维护中</Option>
+                <Option value="cleaning">清洁中</Option>
+              </Select>
+            </div>
+            
+            {/* 操作按钮 */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                onClick={() => {
+                  // 清空筛选控件内容
+                  setSelectedType(undefined);
+                  setSelectedStatus(undefined);
+                  // 清空搜索参数并刷新数据
+                  const newParams = {
+                    pageNum: 1,
+                    name: undefined,
+                    type: undefined,
+                    status: undefined
+                  };
+                  setSearchParams(newParams);
+                  fetchRooms(newParams);
+                }}
+              >
+                清空筛选
+              </Button>
+            </div>
+          </div>
         </div>
         
-        <Table
-          columns={columns}
-          dataSource={rooms}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            ...pagination,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
-          }}
-          onChange={handleTableChange}
-        />
+        <div style={{ 
+          flex: 1,
+          minHeight: '280px',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid var(--border-color)',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          height: '100%',
+          maxHeight: '100%',
+          position: 'relative'
+        }}>
+
+          
+          {/* 表格内容区域 - 可滚动 */}
+          <div style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '60px', // 为分页组件留出空间
+            overflow: 'auto'
+          }}>
+            <Table
+              columns={columns}
+              dataSource={rooms}
+              rowKey="id"
+              loading={loading}
+              scroll={{ x: 800, y: '100%' }}
+              pagination={false}
+              onChange={handleTableChange}
+              size="middle"
+              style={{ height: '100%' }}
+            />
+          </div>
+          
+          {/* 分页组件 - 常驻 */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '60px',
+            padding: '12px 16px',
+            borderTop: '1px solid var(--border-color)',
+            backgroundColor: 'var(--component-bg)',
+            display: 'flex',
+            justifyContent: 'center'
+          }}>
+            <Pagination
+              {...pagination}
+              showSizeChanger={true}
+              showQuickJumper={true}
+              showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`}
+              pageSizeOptions={['10', '20', '50', '100']}
+              size="default"
+              onChange={(page, pageSize) => {
+                const newParams = {
+                  pageNum: page,
+                  pageSize: pageSize,
+                };
+                setSearchParams(prev => ({ ...prev, ...newParams }));
+                fetchRooms(newParams);
+              }}
+            />
+          </div>
+        </div>
       </Card>
 
       {/* 抽屉组件 */}
@@ -425,10 +572,11 @@ export default function RoomList() {
               rules={[{ required: true, message: '请选择房间类型' }]}
             >
               <Select placeholder="请选择房间类型">
-                <Option value="caseroom">案例教室</Option>
-                <Option value="seminar">研讨间</Option>
-                <Option value="lab">实验室</Option>
-                <Option value="lecture">平面教室</Option>
+                {roomTypeOptions.map(option => (
+                  <Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
             
@@ -464,68 +612,98 @@ export default function RoomList() {
 
         {drawerType === 'detail' && currentRoom && (
           <div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>房间名称：</strong>
-              <span>{currentRoom.name}</span>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>房间类型：</strong>
-              <span>{
-                currentRoom.type === 'CASE_ROOM' ? '案例教室' :
-                currentRoom.type === 'SEMINAR_ROOM' ? '研讨间' :
-                currentRoom.type === 'LAB_ROOM' ? '实验室' :
-                currentRoom.type === 'LECTURE_ROOM' ? '平面教室' :
-                currentRoom.type === 'OTHER_ROOM' ? '其他' : currentRoom.type
-              }</span>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>容量：</strong>
-              <span>{currentRoom.capacity}人</span>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>状态：</strong>
-              <Tag color={
-                currentRoom.status === 'AVAILABLE' ? 'green' :
-                currentRoom.status === 'USING' ? 'orange' :
-                currentRoom.status === 'RESERVED' ? 'blue' :
-                currentRoom.status === 'MAINTENANCE' || currentRoom.status === 'CLEANING' ? 'red' : 'default'
-              }>
-                {currentRoom.status === 'AVAILABLE' ? '空闲' :
-                 currentRoom.status === 'USING' ? '使用中' :
-                 currentRoom.status === 'RESERVED' ? '已预约' :
-                 currentRoom.status === 'MAINTENANCE' ? '维护中' :
-                 currentRoom.status === 'CLEANING' ? '清洁中' :
-                 currentRoom.status === 'UNAVAILABLE' ? '不可用' : currentRoom.status}
-              </Tag>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>位置：</strong>
-              <span>{currentRoom.location}</span>
-            </div>
-            {currentRoom.description && (
-              <div style={{ marginBottom: 16 }}>
-                <strong>描述：</strong>
-                <p>{currentRoom.description}</p>
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
+              border: '1px solid var(--border-color)',
+              borderRadius: 6 
+            }}>
+              <div style={{ color: 'var(--text-color)' }}>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>房间名称：</strong>
+                  <span>{currentRoom.name}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>房间类型：</strong>
+                  <span>{getRoomTypeDisplayName(currentRoom.type)}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>容量：</strong>
+                  <span>{currentRoom.capacity}人</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>状态：</strong>
+                  <Tag color={
+                    currentRoom.status === 'AVAILABLE' ? 'success' :
+                    currentRoom.status === 'USING' ? 'warning' :
+                    currentRoom.status === 'RESERVED' ? 'processing' :
+                    currentRoom.status === 'MAINTENANCE' || currentRoom.status === 'CLEANING' ? 'error' : 'default'
+                  }>
+                    {currentRoom.status === 'AVAILABLE' ? '空闲' :
+                     currentRoom.status === 'USING' ? '使用中' :
+                     currentRoom.status === 'RESERVED' ? '已预约' :
+                     currentRoom.status === 'MAINTENANCE' ? '维护中' :
+                     currentRoom.status === 'CLEANING' ? '清洁中' :
+                     currentRoom.status === 'UNAVAILABLE' ? '不可用' : currentRoom.status}
+                  </Tag>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>位置：</strong>
+                  <span>{currentRoom.location}</span>
+                </div>
+                {currentRoom.description && (
+                  <div style={{ marginBottom: 12 }}>
+                    <strong>描述：</strong>
+                    <p style={{ marginTop: 4, marginBottom: 0 }}>{currentRoom.description}</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
         {drawerType === 'apply' && currentRoom && (
           <div>
-            <div style={{ marginBottom: 16, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
-              <h4>申请房间信息</h4>
-              <p><strong>房间名称：</strong>{currentRoom.name}</p>
-              <p><strong>房间类型：</strong>{
-                currentRoom.type === 'CASE_ROOM' ? '案例教室' :
-                currentRoom.type === 'SEMINAR_ROOM' ? '研讨间' :
-                currentRoom.type === 'LAB_ROOM' ? '实验室' :
-                currentRoom.type === 'LECTURE_ROOM' ? '平面教室' :
-                currentRoom.type === 'OTHER_ROOM' ? '其他' : currentRoom.type
-              }</p>
-              <p><strong>容量：</strong>{currentRoom.capacity}人</p>
-              <p><strong>位置：</strong>{currentRoom.location}</p>
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
+              border: '1px solid var(--border-color)',
+              borderRadius: 6 
+            }}>
+              <p style={{ color: 'var(--text-color)' }}><strong>房间名称：</strong>{currentRoom.name}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>房间类型：</strong>{getRoomTypeDisplayName(currentRoom.type)}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>容量：</strong>{currentRoom.capacity}人</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>位置：</strong>{currentRoom.location}</p>
             </div>
+            
+            {/* 未来预约信息 */}
+            {futureApplications.length > 0 && (
+              <div style={{ 
+                marginBottom: 16, 
+                padding: 16, 
+                backgroundColor: 'var(--component-bg)', 
+                border: '1px solid var(--border-color)',
+                borderRadius: 6 
+              }}>
+                <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
+                  未来已批准预约 ({futureApplications.length}个)
+                </h4>
+                <div style={{ color: 'var(--text-color)' }}>
+                  {futureApplications.map((app, index) => (
+                    <div key={app.id} style={{ marginBottom: 8, fontSize: '12px' }}>
+                      <span style={{ color: 'var(--text-color-secondary)' }}>
+                        {formatTimeRange(app.startTime, app.endTime)}
+                      </span>
+                      <span style={{ marginLeft: 8, color: 'var(--text-color-secondary)' }}>
+                        - {app.reason}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <Form
               form={form}
@@ -533,54 +711,54 @@ export default function RoomList() {
               onFinish={handleSubmit}
             >
               <Form.Item
-                name="purpose"
-                label="使用目的"
-                rules={[{ required: true, message: '请输入使用目的' }]}
+                name="timeRange"
+                label="使用时间"
+                rules={[{ required: true, message: '请选择使用时间' }]}
+                validateStatus={hasConflict ? 'error' : ''}
+                help={hasConflict ? conflictMessage : ''}
               >
-                <Input.TextArea rows={3} placeholder="请详细描述使用目的" />
-              </Form.Item>
-              
-              <Form.Item
-                name="startDate"
-                label="开始日期"
-                rules={[{ required: true, message: '请选择开始日期' }]}
-              >
-                <DatePicker 
+                <RangePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
                   disabledDate={(current) => {
                     return current && current < dayjs().startOf('day');
                   }}
-                />
-              </Form.Item>
-              
-              <Form.Item
-                name="startTime"
-                label="开始时间"
-                rules={[{ required: true, message: '请选择开始时间' }]}
-              >
-                <TimePicker 
-                  format="HH:mm" 
-                  style={{ width: '100%' }}
+                  disabledTime={(date, type) => {
+                    if (type === 'start') {
+                      return {
+                        disabledHours: () => [],
+                        disabledMinutes: () => [],
+                        disabledSeconds: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+                      };
+                    }
+                    return {
+                      disabledHours: () => [],
+                      disabledMinutes: () => [],
+                      disabledSeconds: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+                    };
+                  }}
                   minuteStep={15}
-                  showNow={false}
+                  onChange={(dates) => {
+                    if (dates && dates[0] && dates[1]) {
+                      checkTimeConflict(dates[0], dates[1]);
+                    } else {
+                      clearConflict();
+                    }
+                  }}
                 />
               </Form.Item>
-              
+
               <Form.Item
-                name="endTime"
-                label="结束时间"
-                rules={[{ required: true, message: '请选择结束时间' }]}
+                name="reason"
+                label="使用原因"
+                rules={[{ required: true, message: '请输入使用原因' }]}
               >
-                <TimePicker 
-                  format="HH:mm" 
-                  style={{ width: '100%' }}
-                  minuteStep={15}
-                  showNow={false}
-                />
+                <Input.TextArea rows={3} placeholder="请详细描述使用原因" />
               </Form.Item>
-              
+
               <Form.Item
-                name="attendees"
+                name="crowd"
                 label="参与人数"
                 rules={[{ required: true, message: '请输入参与人数' }]}
               >
@@ -591,7 +769,7 @@ export default function RoomList() {
                   style={{ width: '100%' }}
                 />
               </Form.Item>
-              
+
               <Form.Item
                 name="contact"
                 label="联系方式"
@@ -599,7 +777,7 @@ export default function RoomList() {
               >
                 <Input placeholder="请输入联系方式" />
               </Form.Item>
-              
+
               <Form.Item
                 name="remark"
                 label="备注"

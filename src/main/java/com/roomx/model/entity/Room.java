@@ -1,10 +1,15 @@
 package com.roomx.model.entity;
 
 import java.util.Date;
+
 import com.roomx.constant.enums.RoomStatus;
 import com.roomx.constant.enums.RoomType;
-import lombok.*;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Data;
 
 @Data
 @Entity

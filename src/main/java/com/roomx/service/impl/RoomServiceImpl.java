@@ -89,7 +89,7 @@ public class RoomServiceImpl implements RoomService {
         room.setType(roomDTO.getType());
         room.setCapacity(roomDTO.getCapacity());
         room.setLocation(roomDTO.getLocation());
-        room.setStatus(roomDTO.getStatus());
+        room.setStatus(RoomStatus.AVAILABLE);
         room.setCreateTime(roomDTO.getCreateTime());
         room.setUpdateTime(roomDTO.getUpdateTime());
         room.setLastMaintenanceTime(roomDTO.getLastMaintenanceTime());

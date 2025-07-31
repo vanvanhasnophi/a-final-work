@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag } from 'antd';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag, Pagination } from 'antd';
 import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
@@ -7,16 +7,36 @@ import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import { getRoleDisplayName } from '../utils/roleMapping';
+import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
+import { getRoomTypeDisplayName } from '../utils/roomMapping';
+import { useNavigate } from 'react-router-dom';
+import { formatDateTime, formatTimeRange, formatRelativeTime } from '../utils/dateFormat';
+import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
+import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 export default function ApplicationList() {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [searchParams, setSearchParams] = useState({
+    pageNum: 1,
+    pageSize: 10,
+  });
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const datePickerRef = useRef(null);
+  const statusSelectRef = useRef(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(undefined);
 
 
   
@@ -33,23 +53,54 @@ export default function ApplicationList() {
     fetchApplications();
     fetchRooms();
   });
+  
+  // 防抖搜索Hook
+  const roomSearch = useDebounceSearchV2((value) => {
+    const newParams = { roomName: value || undefined, pageNum: 1 };
+    setSearchParams(prev => ({ ...prev, ...newParams }));
+    fetchApplications(newParams);
+  }, 500);
+  
+  const applicantSearch = useDebounceSearchV2((value) => {
+    const newParams = { nickname: value || undefined, pageNum: 1 };
+    setSearchParams(prev => ({ ...prev, ...newParams }));
+    fetchApplications(newParams);
+  }, 500);
 
   // 获取申请列表
-  const fetchApplications = useCallback(async () => {
+  const fetchApplications = useCallback(async (params = {}) => {
     const result = await executeApplications(
       async () => {
-        const response = await applicationAPI.getAllApplications();
-        setApplications(response.data || []);
+        // 获取当前的searchParams，避免闭包问题
+        const currentSearchParams = searchParams;
+        const requestParams = {
+          ...currentSearchParams,
+          ...params,
+        };
+        
+        console.log('发送申请分页请求参数:', requestParams);
+        const response = await applicationAPI.getApplicationList(requestParams);
+        
+        const { records, total, pageNum, pageSize } = response.data;
+        console.log('申请分页响应数据:', response.data);
+        
+        setApplications(records || []);
+        setPagination({
+          current: pageNum || 1,
+          pageSize: pageSize || 10,
+          total: total || 0,
+        });
+        
         return response.data;
       },
       {
         errorMessage: '获取申请列表失败，请检查网络连接',
-        maxRetries: 2,
-        retryDelay: 3000
+        maxRetries: 0, // 不重试，避免反复请求
+        retryDelay: 0
       }
     );
     return result;
-  }, [executeApplications]);
+  }, [executeApplications]); // 移除searchParams依赖
 
   // 获取房间列表（用于下拉选择）
   const fetchRooms = useCallback(async () => {
@@ -61,8 +112,8 @@ export default function ApplicationList() {
       },
       {
         errorMessage: '获取房间列表失败',
-        maxRetries: 2,
-        retryDelay: 3000,
+        maxRetries: 0, // 不重试，避免反复请求
+        retryDelay: 0,
         showRetryMessage: false
       }
     );
@@ -75,12 +126,20 @@ export default function ApplicationList() {
     fetchRooms();
   }, []); // 只在组件挂载时执行一次
 
-  // 打开新增申请抽屉
+  // 处理表格分页变化
+  const handleTableChange = (pagination, filters, sorter) => {
+    console.log('申请表格分页变化:', pagination);
+    const newParams = {
+      pageNum: pagination.current,
+      pageSize: pagination.pageSize,
+    };
+    setSearchParams(prev => ({ ...prev, ...newParams }));
+    fetchApplications(newParams);
+  };
+
+  // 跳转到房间列表页面进行申请
   const handleAddApplication = () => {
-    setDrawerType('add');
-    setCurrentApplication(null);
-    form.resetFields();
-    setDrawerVisible(true);
+    navigate('/rooms');
   };
 
   // 打开查看详情抽屉
@@ -112,11 +171,20 @@ export default function ApplicationList() {
       if (drawerType === 'add') {
         // 处理时间范围
         const [startTime, endTime] = values.timeRange;
+        
+        const validation = validateTimeRange(startTime, endTime);
+        if (!validation.valid) {
+          message.error(validation.message);
+          return;
+        }
+        
         const applicationData = {
-          ...values,
-          startTime: startTime.format('YYYY-MM-DD HH:mm:ss'),
-          endTime: endTime.format('YYYY-MM-DD HH:mm:ss'),
           roomId: values.room,
+          startTime: formatDateTimeForBackend(startTime),
+          endTime: formatDateTimeForBackend(endTime),
+          reason: values.reason,
+          crowd: values.crowd,
+          contact: values.contact,
         };
         
         await executeApplications(
@@ -164,39 +232,38 @@ export default function ApplicationList() {
     },
     {
       title: '申请人',
-      dataIndex: 'applicantName',
-      key: 'applicantName',
+      dataIndex: 'userNickname',
+      key: 'userNickname',
     },
     {
       title: '使用时间',
       key: 'time',
       render: (_, record) => (
         <div>
-          <div>{record.startTime}</div>
-          <div>至 {record.endTime}</div>
+          {formatTimeRange(record.startTime, record.endTime)}
         </div>
       ),
     },
     {
-      title: '用途',
-      dataIndex: 'purpose',
-      key: 'purpose',
+      title: '使用原因',
+      dataIndex: 'reason',
+      key: 'reason',
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
-        let color = 'processing';
-        if (status === '已批准') color = 'success';
-        if (status === '已拒绝') color = 'error';
-        return <Tag color={color}>{status}</Tag>;
+        const displayName = getApplicationStatusDisplayName(status);
+        const color = getApplicationStatusColor(status);
+        return <Tag color={color}>{displayName}</Tag>;
       },
     },
     {
       title: '申请时间',
       dataIndex: 'createTime',
       key: 'createTime',
+      render: (createTime) => formatDateTime(createTime),
     },
     {
       title: '操作',
@@ -211,7 +278,7 @@ export default function ApplicationList() {
           >
             查看详情
           </Button>
-          {record.status === '待审批' && (
+          {record.status === 'PENDING' && (
             <Button 
               type="link" 
               icon={<CheckOutlined />} 
@@ -230,14 +297,32 @@ export default function ApplicationList() {
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
-      <div style={{ padding: '24px' }}>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
         title="申请管理" 
         extra={
           <Space>
             <Button 
               icon={<ReloadOutlined />} 
-              onClick={fetchApplications}
+              onClick={() => {
+                // 清空筛选控件内容
+                roomSearch.updateSearchValue('');
+                applicantSearch.updateSearchValue('');
+                // 清除日期选择器
+                setSelectedDate(null);
+                // 清空状态选择器
+                setSelectedStatus(undefined);
+                // 清空搜索参数并刷新数据
+                const newParams = {
+                  pageNum: 1,
+                  roomName: undefined,
+                  nickname: undefined,
+                  status: undefined,
+                  queryDate: undefined
+                };
+                setSearchParams(newParams);
+                fetchApplications(newParams);
+              }}
               loading={applicationsLoading}
             >
               刷新
@@ -247,29 +332,200 @@ export default function ApplicationList() {
             </Button>
           </Space>
         }
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+        bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
       >
         {/* 错误提示 */}
         {(applicationsError || roomsError) && (
           <Alert
             message="数据获取失败"
-            description={applicationsError || roomsError}
+            description={String(applicationsError || roomsError)}
             type="error"
             showIcon
             style={{ marginBottom: '16px' }}
           />
         )}
-        <Table
-          columns={columns}
-          dataSource={applications}
-          rowKey="id"
-          loading={applicationsLoading}
-          pagination={{
-            total: applications.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-          }}
-        />
+        
+        {/* 筛选区域 */}
+        <div style={{
+          padding: '16px',
+          borderBottom: '1px solid var(--border-color)',
+          backgroundColor: 'var(--component-bg)'
+        }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            {/* 房间搜索 */}
+            <div style={{ minWidth: '200px' }}>
+              <Input
+                placeholder="搜索房间名称"
+                allowClear
+                style={{ width: '100%' }}
+                value={roomSearch.searchValue}
+                onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
+                onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
+              />
+            </div>
+            
+            {/* 申请人搜索 */}
+            <div style={{ minWidth: '150px' }}>
+              <Input
+                placeholder="搜索申请人"
+                allowClear
+                style={{ width: '100%' }}
+                value={applicantSearch.searchValue}
+                onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
+                onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+              />
+            </div>
+            
+            {/* 状态筛选 */}
+            <div style={{ minWidth: '120px' }}>
+              <Select
+                ref={statusSelectRef}
+                placeholder="全部状态"
+                allowClear
+                style={{ width: '100%' }}
+                value={selectedStatus}
+                onChange={(value) => {
+                  setSelectedStatus(value);
+                  const newParams = { status: value || undefined, pageNum: 1 };
+                  setSearchParams(prev => ({ ...prev, ...newParams }));
+                  fetchApplications(newParams);
+                }}
+              >
+                <Option value="PENDING">待审批</Option>
+                <Option value="APPROVED">已批准</Option>
+                <Option value="REJECTED">已拒绝</Option>
+                <Option value="CANCELLED">已取消</Option>
+                <Option value="COMPLETED">已完成</Option>
+                <Option value="EXPIRED">已过期</Option>
+              </Select>
+            </div>
+            
+            {/* 使用时间筛选 */}
+            <div style={{ minWidth: '150px' }}>
+              <DatePicker
+                ref={datePickerRef}
+                style={{ width: '100%' }}
+                placeholder="选择日期"
+                format="YYYY-MM-DD"
+                value={selectedDate}
+                onChange={(date) => {
+                  setSelectedDate(date);
+                  let newParams = { pageNum: 1 };
+                  if (date) {
+                    // 将dayjs对象转换为YYYY-MM-DD格式的字符串
+                    newParams = {
+                      ...newParams,
+                      queryDate: date.format('YYYY-MM-DD'),
+                    };
+                  } else {
+                    newParams = {
+                      ...newParams,
+                      queryDate: undefined,
+                    };
+                  }
+                  setSearchParams(prev => ({ ...prev, ...newParams }));
+                  fetchApplications(newParams);
+                }}
+              />
+            </div>
+            
+            {/* 操作按钮 */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                onClick={() => {
+                  // 清空筛选控件内容
+                  roomSearch.updateSearchValue('');
+                  applicantSearch.updateSearchValue('');
+                  // 清除日期选择器
+                  setSelectedDate(null);
+                  // 清空状态选择器
+                  setSelectedStatus(undefined);
+                  // 清空搜索参数并刷新数据
+                  const newParams = {
+                    pageNum: 1,
+                    roomName: undefined,
+                    nickname: undefined,
+                    status: undefined,
+                    queryDate: undefined
+                  };
+                  setSearchParams(newParams);
+                  fetchApplications(newParams);
+                }}
+              >
+                清空筛选
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ 
+          flex: 1,
+          minHeight: '280px',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid var(--border-color)',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          height: '100%',
+          maxHeight: '100%',
+          position: 'relative'
+        }}>
+
+          
+          {/* 表格内容区域 - 可滚动 */}
+          <div style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '60px', // 为分页组件留出空间
+            overflow: 'auto'
+          }}>
+            <Table
+              columns={columns}
+              dataSource={applications}
+              rowKey="id"
+              loading={applicationsLoading}
+              scroll={{ x: 800, y: '100%' }}
+              pagination={false}
+              onChange={handleTableChange}
+              size="middle"
+              style={{ height: '100%' }}
+            />
+          </div>
+          
+          {/* 分页组件 - 常驻 */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '60px',
+            padding: '12px 16px',
+            borderTop: '1px solid var(--border-color)',
+            backgroundColor: 'var(--component-bg)',
+            display: 'flex',
+            justifyContent: 'center'
+          }}>
+            <Pagination
+              {...pagination}
+              showSizeChanger={true}
+              showQuickJumper={true}
+              showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`}
+              pageSizeOptions={['10', '20', '50', '100']}
+              size="default"
+              onChange={(page, pageSize) => {
+                const newParams = {
+                  pageNum: page,
+                  pageSize: pageSize,
+                };
+                setSearchParams(prev => ({ ...prev, ...newParams }));
+                fetchApplications(newParams);
+              }}
+            />
+          </div>
+        </div>
       </Card>
 
       {/* 抽屉组件 */}
@@ -309,7 +565,7 @@ export default function ApplicationList() {
               <Select placeholder="请选择房间">
                 {rooms.map(room => (
                   <Option key={room.id} value={room.id}>
-                    {room.name} ({room.location})
+                    {room.name} ({room.location}) - {getRoomTypeDisplayName(room.type)}
                   </Option>
                 ))}
               </Select>
@@ -327,19 +583,34 @@ export default function ApplicationList() {
                 disabledDate={(current) => {
                   return current && current < dayjs().startOf('day');
                 }}
+                disabledTime={(date, type) => {
+                  if (type === 'start') {
+                    return {
+                      disabledHours: () => [],
+                      disabledMinutes: () => [],
+                      disabledSeconds: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+                    };
+                  }
+                  return {
+                    disabledHours: () => [],
+                    disabledMinutes: () => [],
+                    disabledSeconds: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+                  };
+                }}
+                minuteStep={15}
               />
             </Form.Item>
 
             <Form.Item
-              name="purpose"
-              label="使用用途"
-              rules={[{ required: true, message: '请输入使用用途' }]}
+              name="reason"
+              label="使用原因"
+              rules={[{ required: true, message: '请输入使用原因' }]}
             >
-              <Input.TextArea rows={3} placeholder="请详细描述使用用途" />
+              <Input.TextArea rows={3} placeholder="请详细描述使用原因" />
             </Form.Item>
 
             <Form.Item
-              name="attendees"
+              name="crowd"
               label="参与人数"
               rules={[{ required: true, message: '请输入参与人数' }]}
             >
@@ -376,7 +647,7 @@ export default function ApplicationList() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>申请人：</strong>
-              <span>{currentApplication.applicantName}</span>
+              <span>{currentApplication.userNickname || currentApplication.username}</span>
               {currentApplication.userRole && (
                 <Tag color="processing" style={{ marginLeft: '8px' }}>
                   {getRoleDisplayName(currentApplication.userRole)}
@@ -386,32 +657,27 @@ export default function ApplicationList() {
             <div style={{ marginBottom: 16 }}>
               <strong>使用时间：</strong>
               <div>
-                <div>开始：{currentApplication.startTime}</div>
-                <div>结束：{currentApplication.endTime}</div>
+                {formatTimeRange(currentApplication.startTime, currentApplication.endTime)}
               </div>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <strong>用途：</strong>
-              <p>{currentApplication.purpose}</p>
+              <strong>使用原因：</strong>
+              <p>{currentApplication.reason}</p>
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>状态：</strong>
-              <Tag color={
-                currentApplication.status === '待审批'||currentApplication.status==='PENDING' ? 'processing' :
-                currentApplication.status === '已批准'||currentApplication.status==='APPROVED' ? 'success' :
-                currentApplication.status === '已拒绝'||currentApplication.status==='REJECTED' ? 'error' : 'default'
-              }>
-                {currentApplication.status}
+              <Tag color={getApplicationStatusColor(currentApplication.status)}>
+                {getApplicationStatusDisplayName(currentApplication.status)}
               </Tag>
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>申请时间：</strong>
-              <span>{currentApplication.createTime}</span>
+              <span>{formatDateTime(currentApplication.createTime)}</span>
             </div>
-            {currentApplication.attendees && (
+            {currentApplication.crowd && (
               <div style={{ marginBottom: 16 }}>
                 <strong>参与人数：</strong>
-                <span>{currentApplication.attendees}人</span>
+                <span>{currentApplication.crowd}人</span>
               </div>
             )}
             {currentApplication.contact && (
@@ -431,18 +697,32 @@ export default function ApplicationList() {
 
         {drawerType === 'approve' && currentApplication && (
           <div>
-            <div style={{ marginBottom: 16, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
-              <h4>申请信息</h4>
-              <p><strong>申请房间：</strong>{currentApplication.roomName}</p>
-              <p><strong>申请人：</strong>{currentApplication.applicantName}
-                {currentApplication.userRole && (
-                  <Tag color="processing" style={{ marginLeft: '8px' }}>
-                    {getRoleDisplayName(currentApplication.userRole)}
-                  </Tag>
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
+              border: '1px solid var(--border-color)',
+              borderRadius: 6 
+            }}>
+              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>申请信息</h4>
+              <div style={{ color: 'var(--text-color)' }}>
+                <p><strong>申请房间：</strong>{currentApplication.roomName}</p>
+                <p><strong>申请人：</strong>{currentApplication.userNickname || currentApplication.username}
+                  {currentApplication.userRole && (
+                    <Tag color="processing" style={{ marginLeft: '8px' }}>
+                      {getRoleDisplayName(currentApplication.userRole)}
+                    </Tag>
+                  )}
+                </p>
+                <p><strong>使用时间：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
+                <p><strong>使用原因：</strong>{currentApplication.reason}</p>
+                {currentApplication.crowd && (
+                  <p><strong>参与人数：</strong>{currentApplication.crowd}人</p>
                 )}
-              </p>
-              <p><strong>使用时间：</strong>{currentApplication.startTime} 至 {currentApplication.endTime}</p>
-              <p><strong>用途：</strong>{currentApplication.purpose}</p>
+                {currentApplication.contact && (
+                  <p><strong>联系方式：</strong>{currentApplication.contact}</p>
+                )}
+              </div>
             </div>
             
             <Form

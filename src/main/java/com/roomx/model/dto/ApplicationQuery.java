@@ -1,8 +1,10 @@
 package com.roomx.model.dto;
 
+import java.util.Date;
+
 import com.roomx.constant.enums.ApplicationStatus;
 import com.roomx.constant.enums.RoomType;
-import java.util.Date;
+
 import lombok.Data;
 
 @Data
@@ -23,4 +25,5 @@ public class ApplicationQuery {
     private Date updateTime;
     private Date startTime;
     private Date endTime;
+    // queryDate字段已移除，现在在控制器中手动处理
 } 

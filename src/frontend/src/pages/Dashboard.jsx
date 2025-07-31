@@ -5,6 +5,7 @@ import { roomAPI } from '../api/room';
 import { applicationAPI } from '../api/application';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getApplicationStatusDisplayName } from '../utils/statusMapping';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -32,7 +33,7 @@ export default function Dashboard() {
         // 计算统计数据
         const totalRooms = rooms.length;
         const availableRooms = rooms.filter(room => room.status === '可用').length;
-        const pendingApplications = applications.filter(app => app.status === '待审批').length;
+        const pendingApplications = applications.filter(app => app.status === 'PENDING').length;
         
         setStats({
           totalRooms,

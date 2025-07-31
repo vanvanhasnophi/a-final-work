@@ -4,6 +4,7 @@ import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
 import RoomList from '../pages/RoomList';
 import ApplicationList from '../pages/ApplicationList';
+import UserList from '../pages/UserList';
 import UserProfile from '../pages/UserProfile';
 import NotFound from '../pages/NotFound';
 import TestConnection from '../pages/TestConnection';
@@ -17,6 +18,7 @@ import TestTags from '../pages/TestTags';
 import DevPage from '../pages/DevPage';
 import AppLayout from '../components/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
+import AdminRoute from '../components/AdminRoute';
 import { useAuth } from '../contexts/AuthContext';
 
 function AppRoutes() {
@@ -76,6 +78,11 @@ function AppRoutes() {
         <ProtectedRoute>
           <AppLayout><UserProfile /></AppLayout>
         </ProtectedRoute>
+      } />
+      <Route path="/users" element={
+        <AdminRoute>
+          <AppLayout><UserList /></AppLayout>
+        </AdminRoute>
       } />
       
       {/* 404页面 */}

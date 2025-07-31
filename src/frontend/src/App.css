@@ -215,6 +215,9 @@ body {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
   border-bottom: 1px solid var(--border-color) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
 }
 
 .ant-table-tbody > tr > td {
@@ -232,6 +235,9 @@ body {
   background-color: #2B2D31 !important;
   color: #FFFFFF !important;
   border-bottom: 1px solid #3C3F45 !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
 }
 
 [data-theme="dark"] .ant-table-tbody > tr > td {
