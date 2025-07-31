@@ -25,5 +25,22 @@ export const applicationAPI = {
   // 审批申请
   approveApplication: (data) => {
     return api.post('/application/approve', data);
+  },
+
+  // 获取房间未来的已批准预约
+  getFutureApprovedApplications: (roomId) => {
+    return api.get(`/application/room/${roomId}/future-approved`);
+  },
+
+  // 检查时间冲突
+  checkTimeConflict: (roomId, startTime, endTime, excludeApplicationId = null) => {
+    const params = {
+      startTime: startTime,
+      endTime: endTime
+    };
+    if (excludeApplicationId) {
+      params.excludeApplicationId = excludeApplicationId;
+    }
+    return api.get(`/application/room/${roomId}/check-conflict`, { params });
   }
 }; 

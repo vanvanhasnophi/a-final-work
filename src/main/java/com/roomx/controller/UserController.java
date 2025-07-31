@@ -10,9 +10,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.roomx.annotation.RequireAuth;
+import com.roomx.constant.enums.UserRole;
+import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.UserInfoDTO;
+import com.roomx.model.dto.UserQuery;
 import com.roomx.service.UserService;
 
 
@@ -44,6 +49,28 @@ public class UserController {
         String username = (String) auth.getPrincipal();
         UserInfoDTO user = userService.getUserInfoByUsername(username);
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/list") // 获取用户列表 - 仅管理员可用
+    @RequireAuth(roles = {UserRole.ADMIN})
+    public ResponseEntity<PageResult<UserInfoDTO>> getUserList(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) UserRole role) {
+        
+        UserQuery query = new UserQuery();
+        query.setUsername(username);
+        query.setNickname(nickname);
+        query.setEmail(email);
+        query.setPhone(phone);
+        query.setRole(role);
+        
+        PageResult<UserInfoDTO> result = userService.page(query, pageNum, pageSize);
+        return ResponseEntity.ok(result);
     }
 
 

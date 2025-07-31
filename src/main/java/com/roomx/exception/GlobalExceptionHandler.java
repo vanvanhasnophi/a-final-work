@@ -13,6 +13,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+    @ExceptionHandler(ConcurrentModificationException.class)
+    public ResponseEntity<String> handleConcurrentModification(ConcurrentModificationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     // 可以继续添加其他异常处理
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleOther(Exception ex) {

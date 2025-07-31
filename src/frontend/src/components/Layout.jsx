@@ -14,6 +14,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getRoleDisplayName } from '../utils/roleMapping';
+import NotificationCenter from './NotificationCenter';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -43,6 +44,12 @@ export default function AppLayout({ children }) {
       icon: <FileTextOutlined />,
       label: '申请管理',
     },
+    // 仅管理员可见的用户管理菜单
+    ...(user?.role === 'ADMIN' ? [{
+      key: '/users',
+      icon: <UserOutlined />,
+      label: '用户管理',
+    }] : []),
     {
       key: '/profile',
       icon: <UserOutlined />,
@@ -97,6 +104,11 @@ export default function AppLayout({ children }) {
         onCollapse={setCollapsed}
         theme="light"
         style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 1000,
           boxShadow: 'var(--shadow)',
           background: 'var(--component-bg)',
           borderRight: '1px solid var(--border-color)',
@@ -130,20 +142,32 @@ export default function AppLayout({ children }) {
         />
       </Sider>
       
-      <Layout style={{ background: 'var(--background-color)' }}>
+      <Layout style={{ 
+        background: 'var(--background-color)',
+        marginLeft: collapsed ? '80px' : '200px',
+        transition: 'margin-left 0.2s',
+      }}>
         <Header style={{ 
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          left: collapsed ? '80px' : '200px',
+          zIndex: 999,
           background: 'var(--component-bg)', 
           padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           boxShadow: 'var(--shadow)',
-          zIndex: 1,
           borderBottom: '1px solid var(--border-color)',
+          transition: 'left 0.2s',
         }}>
           <div style={{ flex: 1 }} />
           
           <Space>
+            {/* 通知中心 */}
+            <NotificationCenter />
+            
             {/* 主题切换按钮 */}
             <Button
               type="text"
@@ -193,11 +217,11 @@ export default function AppLayout({ children }) {
         </Header>
         
         <Content style={{ 
-          margin: '24px',
+          margin: '88px 24px 24px 24px',
           padding: '24px',
           background: 'var(--component-bg)',
           borderRadius: '8px',
-          minHeight: 'calc(100vh - 112px)',
+          minHeight: 'calc(100vh - 136px)',
           boxShadow: 'var(--shadow)',
           border: '1px solid var(--border-color)',
           color: 'var(--text-color)',

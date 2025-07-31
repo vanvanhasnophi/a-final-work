@@ -1,10 +1,12 @@
 package com.roomx.repository;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import com.roomx.constant.enums.ApplicationStatus;
 import com.roomx.model.entity.Application;
 
 public interface ApplicationRepository extends JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
@@ -28,4 +30,19 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     
     // 时间范围查询
     List<Application> findByStartTimeBetween(java.util.Date startTime, java.util.Date endTime);
+    
+    // 查询房间未来的已批准预约
+    List<Application> findByRoomIdAndStatusAndEndTimeAfter(Long roomId, ApplicationStatus status, Date endTime);
+    
+    // 查询房间的待审批申请
+    List<Application> findByRoomIdAndStatus(Long roomId, ApplicationStatus status);
+    
+    // 按天筛选使用时间范围
+    List<Application> findByStartTimeGreaterThanEqualAndEndTimeLessThanEqual(Date startDate, Date endDate);
+    
+    // 按天筛选使用时间范围（带状态）
+    List<Application> findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndStatus(Date startDate, Date endDate, ApplicationStatus status);
+    
+    // 按天筛选使用时间范围（带房间ID）
+    List<Application> findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndRoomId(Date startDate, Date endDate, Long roomId);
 }

@@ -53,6 +53,9 @@ instance.interceptors.response.use(
         case 404:
           message.error('请求的资源不存在');
           break;
+        case 409:
+          message.error(data || '操作冲突，请稍后重试');
+          break;
         case 500:
           message.error('服务器内部错误');
           break;

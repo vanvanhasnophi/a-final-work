@@ -3,6 +3,8 @@ import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space,
 import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { getRoleDisplayName } from '../utils/roleMapping';
+import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
+import { formatDateTime, formatRelativeTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function UserProfile() {
@@ -89,19 +91,19 @@ export default function UserProfile() {
       id: 1,
       action: '申请了会议室A',
       time: '2024-01-14 15:30',
-      status: '待审批'
+      status: 'PENDING'
     },
     {
       id: 2,
       action: '使用了培训室',
       time: '2024-01-13 14:00-17:00',
-      status: '已完成'
+      status: 'COMPLETED'
     },
     {
       id: 3,
       action: '申请了会议室B',
       time: '2024-01-12 10:20',
-      status: '已批准'
+      status: 'APPROVED'
     }
   ];
 
@@ -232,10 +234,10 @@ export default function UserProfile() {
                 <List.Item>
                   <List.Item.Meta
                     title={item.action}
-                    description={item.time}
+                    description={formatDateTime(item.time)}
                   />
-                  <Tag color={item.status === 'COMPLETED' ? 'success' : item.status === 'APPROVED' ? 'processing' : 'warning'}>
-                    {item.status}
+                  <Tag color={getApplicationStatusColor(item.status)}>
+                    {getApplicationStatusDisplayName(item.status)}
                   </Tag>
                 </List.Item>
               )}
