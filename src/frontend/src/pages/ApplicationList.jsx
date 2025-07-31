@@ -6,6 +6,7 @@ import { roomAPI } from '../api/room';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
+import { getRoleDisplayName } from '../utils/roleMapping';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -16,6 +17,8 @@ export default function ApplicationList() {
   const [rooms, setRooms] = useState([]);
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+
+
   
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -374,6 +377,11 @@ export default function ApplicationList() {
             <div style={{ marginBottom: 16 }}>
               <strong>申请人：</strong>
               <span>{currentApplication.applicantName}</span>
+              {currentApplication.userRole && (
+                <Tag color="processing" style={{ marginLeft: '8px' }}>
+                  {getRoleDisplayName(currentApplication.userRole)}
+                </Tag>
+              )}
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>使用时间：</strong>
@@ -426,7 +434,13 @@ export default function ApplicationList() {
             <div style={{ marginBottom: 16, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
               <h4>申请信息</h4>
               <p><strong>申请房间：</strong>{currentApplication.roomName}</p>
-              <p><strong>申请人：</strong>{currentApplication.applicantName}</p>
+              <p><strong>申请人：</strong>{currentApplication.applicantName}
+                {currentApplication.userRole && (
+                  <Tag color="processing" style={{ marginLeft: '8px' }}>
+                    {getRoleDisplayName(currentApplication.userRole)}
+                  </Tag>
+                )}
+              </p>
               <p><strong>使用时间：</strong>{currentApplication.startTime} 至 {currentApplication.endTime}</p>
               <p><strong>用途：</strong>{currentApplication.purpose}</p>
             </div>

@@ -2,10 +2,16 @@ package com.roomx.model.entity;
 
 import java.util.Date;
 
-import jakarta.persistence.*;
-import lombok.*;
-import com.roomx.constant.enums.UserRole;
 import com.roomx.constant.enums.ApproverPermission;
+import com.roomx.constant.enums.UserRole;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Data;
 
 @Entity
 @Data
@@ -17,7 +23,8 @@ public class User {
     private String username;
     private String password;
     private String nickname;
-    private String contact;
+    private String email;
+    private String phone;
     private Date createTime;
     private Date lastLoginTime;
     

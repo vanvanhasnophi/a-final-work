@@ -38,10 +38,12 @@ com/roomx/service/impl/AuthServiceImpl.class
 com/roomx/model/entity/Application.class
 com/roomx/service/impl/AuthServiceImpl$1.class
 com/roomx/model/dto/UserLoginDTO.class
+com/roomx/aspect/AuthAspect.class
 com/roomx/constant/enums/RoomType.class
 com/roomx/constant/enums/AuthStatus.class
 com/roomx/exception/GlobalExceptionHandler.class
 com/roomx/constant/enums/RoomStatus.class
+com/roomx/annotation/RequireAuth.class
 com/roomx/model/dto/UserInfoDTO.class
 com/roomx/model/dto/ApplicationDTO.class
 com/roomx/config/CorsConfig.class

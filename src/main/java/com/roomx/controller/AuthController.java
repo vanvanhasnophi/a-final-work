@@ -1,12 +1,17 @@
 package com.roomx.controller;
 
-import com.roomx.model.dto.UserLoginDTO;
-import com.roomx.service.AuthService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import com.roomx.model.dto.UserTokenDTO;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.roomx.model.dto.UserLoginDTO;
 import com.roomx.model.dto.UserRegisterDTO;
+import com.roomx.model.dto.UserTokenDTO;
 import com.roomx.model.dto.UserUpdatePasswordDTO;
+import com.roomx.service.AuthService;
+
 
 @RestController
 @RequestMapping("/api")

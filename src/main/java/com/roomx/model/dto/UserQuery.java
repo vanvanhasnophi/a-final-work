@@ -1,15 +1,18 @@
 package com.roomx.model.dto;
 
-import com.roomx.constant.enums.UserRole;
-import com.roomx.constant.enums.ApproverPermission;
 import java.util.Date;
-import lombok.*;
+
+import com.roomx.constant.enums.ApproverPermission;
+import com.roomx.constant.enums.UserRole;
+
+import lombok.Data;
 
 @Data
 public class UserQuery {
     private String username;
     private String nickname;
-    private String contact;
+    private String email;
+    private String phone;
     private UserRole role;
     private Date createTime;
     private Date lastLoginTime;

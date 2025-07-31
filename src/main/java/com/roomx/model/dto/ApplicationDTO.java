@@ -1,8 +1,10 @@
 package com.roomx.model.dto;
 
-import com.roomx.model.entity.Application;
-import com.roomx.constant.enums.ApplicationStatus;
 import java.util.Date;
+
+import com.roomx.constant.enums.ApplicationStatus;
+import com.roomx.model.entity.Application;
+
 import lombok.Data;
 
 @Data
@@ -42,7 +44,6 @@ public class ApplicationDTO {
         // 用户信息
         applicationDTO.setUsername(application.getUsername());
         applicationDTO.setUserNickname(application.getUserNickname());
-        applicationDTO.setUserContact(application.getUserContact());
         applicationDTO.setUserRole(application.getUserRole());
         
         // 房间信息

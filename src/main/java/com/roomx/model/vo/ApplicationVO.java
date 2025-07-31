@@ -1,9 +1,11 @@
 package com.roomx.model.vo;
 
-import com.roomx.model.entity.Application;
-import com.roomx.constant.enums.ApplicationStatus;
-import lombok.Data;
 import java.util.Date;
+
+import com.roomx.constant.enums.ApplicationStatus;
+import com.roomx.model.entity.Application;
+
+import lombok.Data;
 
 @Data
 public class ApplicationVO {
@@ -14,7 +16,6 @@ public class ApplicationVO {
     // 用户冗余信息
     private String username;
     private String userNickname;
-    private String userContact;
     private String userRole;
     
     // 房间冗余信息
@@ -42,7 +43,6 @@ public class ApplicationVO {
         // 用户信息
         vo.setUsername(app.getUsername());
         vo.setUserNickname(app.getUserNickname());
-        vo.setUserContact(app.getUserContact());
         vo.setUserRole(app.getUserRole());
         
         // 房间信息

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message } from 'antd';
 import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
+import { getRoleDisplayName } from '../utils/roleMapping';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -9,13 +11,17 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const { updateUserInfo, refreshUserInfo } = useAuth();
+
+
 
   // 获取用户信息
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await userAPI.getCurrentUser();
-      setUserInfo(response.data);
+      // 使用AuthContext的refreshUserInfo来获取最新用户信息
+      const userData = await refreshUserInfo();
+      setUserInfo(userData);
     } catch (error) {
       console.error('获取用户信息失败:', error);
       messageApi.open({
@@ -26,11 +32,11 @@ export default function UserProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi, refreshUserInfo]);
 
   useEffect(() => {
     fetchUserInfo();
-  }, []);
+  }, [fetchUserInfo]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -39,7 +45,22 @@ export default function UserProfile() {
 
   const handleSave = async (values) => {
     try {
-      await userAPI.updateUser(userInfo.id, values);
+      // 确保包含用户ID
+      const updateData = {
+        ...values,
+        id: userInfo.id,
+        role: userInfo.role // 保持原有角色不变
+      };
+      
+      await userAPI.updateUser(userInfo.id, updateData);
+      
+      // 更新AuthContext中的用户信息
+      const updatedUserData = {
+        ...userInfo,
+        ...values
+      };
+      updateUserInfo(updatedUserData);
+      
       messageApi.open({
         type: 'success',
         content: '用户信息更新成功',
@@ -102,16 +123,14 @@ export default function UserProfile() {
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <Avatar size={80} icon={<UserOutlined />} />
               <h2 style={{ marginTop: '16px' }}>{userInfo.nickname || userInfo.username}</h2>
-              <Tag color="processing">{userInfo.role || '普通用户'}</Tag>
+              <Tag color="processing">{getRoleDisplayName(userInfo.role)}</Tag>
             </div>
 
             <List
               size="small"
               dataSource={[
+                { label: 'id', value: userInfo.id },
                 { label: '用户名', value: userInfo.username },
-                { label: '邮箱', value: userInfo.email },
-                { label: '电话', value: userInfo.phone },
-                { label: '部门', value: userInfo.department }
               ]}
               renderItem={item => (
                 <List.Item>
@@ -159,12 +178,12 @@ export default function UserProfile() {
                   </Col>
                   <Col span={12}>
                     <Form.Item
-                      name="username"
-                      label="用户名"
-                      rules={[{ required: true, message: '请输入用户名' }]}
-                    >
-                      <Input disabled />
-                    </Form.Item>
+                    name="department"
+                    label="部门"
+                    rules={[{ required: true, message: '请输入部门' }]}
+                  >
+                  <Input />
+                  </Form.Item>
                   </Col>
                 </Row>
 
@@ -192,18 +211,11 @@ export default function UserProfile() {
                   </Col>
                 </Row>
 
-                <Form.Item
-                  name="department"
-                  label="部门"
-                  rules={[{ required: true, message: '请输入部门' }]}
-                >
-                  <Input />
-                </Form.Item>
+                
               </Form>
             ) : (
               <div>
                 <p><strong>昵称:</strong> {userInfo.nickname || '未设置'}</p>
-                <p><strong>用户名:</strong> {userInfo.username}</p>
                 <p><strong>邮箱:</strong> {userInfo.email || '未设置'}</p>
                 <p><strong>电话:</strong> {userInfo.phone || '未设置'}</p>
                 <p><strong>部门:</strong> {userInfo.department || '未设置'}</p>
@@ -222,7 +234,7 @@ export default function UserProfile() {
                     title={item.action}
                     description={item.time}
                   />
-                  <Tag color={item.status === '已完成' ? 'success' : item.status === '已批准' ? 'processing' : 'warning'}>
+                  <Tag color={item.status === 'COMPLETED' ? 'success' : item.status === 'APPROVED' ? 'processing' : 'warning'}>
                     {item.status}
                   </Tag>
                 </List.Item>

@@ -1,20 +1,23 @@
 package com.roomx.service.impl;
 
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import com.roomx.constant.enums.RoomStatus;
+import com.roomx.model.dto.PageResult;
+import com.roomx.model.dto.RoomDTO;
+import com.roomx.model.dto.RoomQuery;
 import com.roomx.model.entity.Room;
 import com.roomx.repository.RoomRepository;
 import com.roomx.service.RoomService;
-import org.springframework.stereotype.Service;
-import java.util.stream.Collectors;
-import com.roomx.model.dto.RoomDTO;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
 import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import com.roomx.model.dto.PageResult;
-import com.roomx.model.dto.RoomQuery;
-import com.roomx.constant.enums.RoomStatus;
 
 @Service
 public class RoomServiceImpl implements RoomService {
@@ -62,6 +65,9 @@ public class RoomServiceImpl implements RoomService {
             }
             if (query.getLocation() != null && !query.getLocation().isEmpty()) {
                 predicates.add(cb.like(root.get("location"), "%" + query.getLocation() + "%"));
+            }
+            if (query.getName() != null && !query.getName().isEmpty()) {
+                predicates.add(cb.like(root.get("name"), "%" + query.getName() + "%"));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

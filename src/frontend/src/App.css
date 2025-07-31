@@ -404,17 +404,6 @@ body {
   color: #FFFFFF !important;
 }
 
-/* 标签样式 */
-.ant-tag {
-  color: var(--text-color) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的标签特殊样式 */
-[data-theme="dark"] .ant-tag {
-  color: #FFFFFF !important;
-  border-color: #3C3F45 !important;
-}
 
 /* 加载动画 */
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */

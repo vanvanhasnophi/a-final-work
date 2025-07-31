@@ -1,15 +1,16 @@
 package com.roomx.model.dto;
 
-import com.roomx.constant.enums.UserRole;
 import com.roomx.constant.enums.ApproverPermission;
+import com.roomx.constant.enums.UserRole;
 
-import lombok.*;
+import lombok.Data;
 
 @Data
 public class UserRegisterDTO {
     private Long id;
     private String nickname;
-    private String contact;
+    private String email;
+    private String phone;
     private String username;
     private String password;
     private UserRole role;
