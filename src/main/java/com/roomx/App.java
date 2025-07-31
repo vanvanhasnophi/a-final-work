@@ -8,6 +8,6 @@ public class App {
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
         // 打印启动信息
-        System.out.println("RoomX Backend started");
+        System.out.println("\033[32mRoomX 后端已启动\033[0m");
     }
 }

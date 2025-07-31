@@ -38,11 +38,11 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // 检查是否已有数据
         if (userRepository.count() > 0) {
-            System.out.println("数据库中已有数据，跳过初始化");
+            System.out.println("\033[33m数据库中已有数据，跳过初始化\033[0m");
             return;
         }
 
-        System.out.println("开始初始化示例数据...");
+        System.out.println("\033[34m开始初始化示例数据...\033[0m");
 
         // 创建用户
         createUsers();
@@ -53,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
         // 创建申请
         createApplications();
 
-        System.out.println("示例数据初始化完成！");
+        System.out.println("\033[32m示例数据初始化完成！\033[0m");
     }
 
     private void createUsers() {
@@ -359,7 +359,7 @@ public class DataInitializer implements CommandLineRunner {
             Application app1 = new Application();
             app1.setCrowd(15L);
             app1.setContact("zhangsan@tsinghua.edu.cn");
-            app1.setReason("技术部周会讨论项目进展");
+            app1.setReason("IT中心周会");
             app1.setStatus(ApplicationStatus.APPROVED);
             app1.setCreateTime(new Date(System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000));
             app1.setUpdateTime(new Date(System.currentTimeMillis() - 6L * 24 * 60 * 60 * 1000));
@@ -375,7 +375,7 @@ public class DataInitializer implements CommandLineRunner {
             Application app6 = new Application();
             app6.setCrowd(20L);
             app6.setContact("zhangsan@tsinghua.edu.cn");
-            app6.setReason("技术部代码评审会议");
+            app6.setReason("IT中心上线会议");
             app6.setStatus(ApplicationStatus.PENDING);
             app6.setCreateTime(new Date());
             app6.setUpdateTime(new Date());
@@ -393,7 +393,7 @@ public class DataInitializer implements CommandLineRunner {
             Application app2 = new Application();
             app2.setCrowd(8L);
             app2.setContact("lisi@tsinghua.edu.cn");
-            app2.setReason("管理科学与工程系产品发布会");
+            app2.setReason("经31班会");
             app2.setStatus(ApplicationStatus.PENDING);
             app2.setCreateTime(new Date(System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000));
             app2.setUpdateTime(new Date(System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000));
@@ -409,7 +409,7 @@ public class DataInitializer implements CommandLineRunner {
             Application app7 = new Application();
             app7.setCrowd(10L);
             app7.setContact("lisi@tsinghua.edu.cn");
-            app7.setReason("管理科学与工程系客户需求分析");
+            app7.setReason("管理科学与工程系seminar");
             app7.setStatus(ApplicationStatus.REJECTED);
             app7.setCreateTime(new Date());
             app7.setUpdateTime(new Date());
@@ -427,7 +427,7 @@ public class DataInitializer implements CommandLineRunner {
             Application app3 = new Application();
             app3.setCrowd(25L);
             app3.setContact("wangwu@tsinghua.edu.cn");
-            app3.setReason("自动化系新员工培训");
+            app3.setReason("自动化系一二九合唱排练");
             app3.setStatus(ApplicationStatus.APPROVED);
             app3.setCreateTime(new Date(System.currentTimeMillis() - 10L * 24 * 60 * 60 * 1000));
             app3.setUpdateTime(new Date(System.currentTimeMillis() - 9L * 24 * 60 * 60 * 1000));
