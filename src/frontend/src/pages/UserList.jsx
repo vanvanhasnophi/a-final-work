@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination } from 'antd';
-import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal } from 'antd';
+import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
+import { register, deleteUser as authDeleteUser } from '../api/auth';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { formatDateTime } from '../utils/dateFormat';
+import { useAuth } from '../contexts/AuthContext';
+import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../utils/permissionUtils';
+import { getUserDisplayName } from '../utils/userDisplay';
 
 const { Option } = Select;
 
 export default function UserList() {
+  const { user, clearAuth } = useAuth();
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -24,12 +29,14 @@ export default function UserList() {
   });
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const [modal, contextHolderModal] = Modal.useModal();
   const roleSelectRef = useRef(null);
   const [selectedRole, setSelectedRole] = useState(undefined);
+  const [authError, setAuthError] = useState(null);
 
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [drawerType, setDrawerType] = useState(''); // 'detail', 'edit'
+  const [drawerType, setDrawerType] = useState(''); // 'detail', 'edit', 'create'
   const [currentUser, setCurrentUser] = useState(null);
   
   const { loading: usersLoading, error: usersError, executeWithRetry: executeUsers } = useApiWithRetry();
@@ -76,21 +83,39 @@ export default function UserList() {
           total: total || 0,
         });
         
+        // 清除认证错误
+        setAuthError(null);
+        
         return response.data;
       },
       {
         errorMessage: '获取用户列表失败，请检查网络连接',
         maxRetries: 0, // 不重试，避免反复请求
-        retryDelay: 0
+        retryDelay: 0,
+        onError: (error) => {
+          // 处理认证错误
+          if (error.response?.status === 401) {
+            setAuthError('Token已过期，请重新登录');
+            messageApi.error('Token已过期，请重新登录');
+            // 延迟清理认证状态，给用户时间看到错误信息
+            setTimeout(() => {
+              clearAuth();
+              window.location.href = '/login';
+            }, 2000);
+          } else if (error.response?.status === 403) {
+            setAuthError('权限不足，需要管理员权限');
+            messageApi.error('权限不足，需要管理员权限');
+          }
+        }
       }
     );
     return result;
-  }, [executeUsers]); // 移除searchParams依赖
+  }, [executeUsers, searchParams, messageApi, clearAuth]); // 修复依赖
 
   // 初始化加载
   useEffect(() => {
     fetchUsers();
-  }, []); // 只在组件挂载时执行一次
+  }, [fetchUsers]); // 修复依赖
 
   // 处理表格分页变化
   const handleTableChange = (pagination, filters, sorter) => {
@@ -107,6 +132,14 @@ export default function UserList() {
   const handleViewDetail = (record) => {
     setDrawerType('detail');
     setCurrentUser(record);
+    setDrawerVisible(true);
+  };
+
+  // 打开创建用户抽屉
+  const handleCreateUser = () => {
+    setDrawerType('create');
+    setCurrentUser(null);
+    form.resetFields();
     setDrawerVisible(true);
   };
 
@@ -127,6 +160,28 @@ export default function UserList() {
     setDrawerVisible(true);
   };
 
+  // 删除用户
+  const handleDeleteUser = (record) => {
+    modal.confirm({
+      title: '确认删除',
+      icon: <ExclamationCircleOutlined />,
+      content: `确定要删除用户 "${record.username}" 吗？此操作不可恢复。`,
+      okText: '确认',
+      cancelText: '取消',
+      okType: 'danger',
+              onOk: async () => {
+          try {
+            await authDeleteUser(record.id);
+            messageApi.success('用户删除成功');
+            fetchUsers(); // 刷新列表
+          } catch (error) {
+            console.error('删除用户失败:', error);
+            messageApi.error('删除用户失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+          }
+        }
+    });
+  };
+
   // 关闭抽屉
   const handleCloseDrawer = () => {
     setDrawerVisible(false);
@@ -138,7 +193,30 @@ export default function UserList() {
   // 提交表单
   const handleSubmit = async (values) => {
     try {
-      if (drawerType === 'edit') {
+      if (drawerType === 'create') {
+        await executeUsers(
+          async () => {
+            // 使用auth的register接口创建用户，需要包含密码
+            const userData = {
+              username: values.username,
+              password: values.password, // 添加密码字段
+              nickname: values.nickname,
+              email: values.email,
+              phone: values.phone,
+              role: values.role
+            };
+            const response = await register(userData);
+            messageApi.success('用户创建成功');
+            handleCloseDrawer();
+            fetchUsers(); // 刷新列表
+            return response;
+          },
+          {
+            errorMessage: '用户创建失败',
+            successMessage: '用户创建成功'
+          }
+        );
+      } else if (drawerType === 'edit') {
         await executeUsers(
           async () => {
             const userData = {
@@ -146,7 +224,7 @@ export default function UserList() {
               ...values
             };
             const response = await userAPI.updateUser(currentUser.id, userData);
-            message.success('用户信息更新成功');
+            messageApi.success('用户信息更新成功');
             handleCloseDrawer();
             fetchUsers(); // 刷新列表
             return response;
@@ -161,6 +239,49 @@ export default function UserList() {
       console.error('提交失败:', error);
     }
   };
+
+  // 如果用户没有用户查看权限，显示权限不足页面
+  if (user && !canViewUsers(user.role)) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Result
+          status="403"
+          title="403"
+          subTitle="抱歉，您没有权限访问此页面。"
+          extra={
+            <div>
+              <p>当前用户角色: {getRoleDisplayName(user?.role)}</p>
+              <p>需要用户查看权限才能访问用户管理功能。</p>
+              <Button type="primary" onClick={() => window.history.back()}>
+                返回上一页
+              </Button>
+            </div>
+          }
+        />
+      </div>
+    );
+  }
+
+  // 如果有认证错误，显示错误页面
+  if (authError) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Result
+          status="error"
+          title="访问失败"
+          subTitle={authError}
+          extra={[
+            <Button key="back" onClick={() => window.history.back()}>
+              返回上一页
+            </Button>,
+            <Button key="login" type="primary" onClick={() => window.location.href = '/login'}>
+              重新登录
+            </Button>
+          ]}
+        />
+      </div>
+    );
+  }
 
   const columns = [
     {
@@ -210,32 +331,50 @@ export default function UserList() {
     {
       title: '操作',
       key: 'action',
-      render: (_, record) => (
-        <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleViewDetail(record)}
-          >
-            查看详情
-          </Button>
-          <Button 
-            type="link" 
-            icon={<EditOutlined />} 
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-        </Space>
-      ),
+      render: (_, record) => {
+        return (
+          <Space size="middle">
+            <Button 
+              type="link" 
+              icon={<EyeOutlined />} 
+              size="small"
+              onClick={() => handleViewDetail(record)}
+            >
+              查看详情
+            </Button>
+            <Button 
+              type="link" 
+              icon={<EditOutlined />} 
+              size="small"
+              onClick={() => handleEdit(record)}
+            >
+              编辑
+            </Button>
+            {canDeleteUser(user?.role) ? (
+              <Button 
+                type="link" 
+                icon={<DeleteOutlined />} 
+                size="small"
+                danger
+                              onClick={() => handleDeleteUser(record)}
+              >
+                删除
+              </Button>
+            ) : (
+              <span style={{ color: '#999', fontSize: '12px' }}>
+                无删除权限
+              </span>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
+      {contextHolderModal}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
         title="用户管理" 
@@ -263,6 +402,15 @@ export default function UserList() {
             >
               刷新
             </Button>
+            {canCreateUser(user?.role) && (
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />} 
+                onClick={handleCreateUser}
+              >
+                创建用户
+              </Button>
+            )}
           </Space>
         }
         style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -378,7 +526,7 @@ export default function UserList() {
               dataSource={users}
               rowKey="id"
               loading={usersLoading}
-              scroll={{ x: 800, y: '100%' }}
+              scroll={{ x: 1200, y: '100%' }}
               pagination={false}
               onChange={handleTableChange}
               size="middle"
@@ -423,19 +571,20 @@ export default function UserList() {
       <Drawer
         title={
           drawerType === 'detail' ? '用户详情' :
-          drawerType === 'edit' ? '编辑用户' : ''
+          drawerType === 'edit' ? '编辑用户' :
+          drawerType === 'create' ? '创建用户' : ''
         }
         width={600}
         open={drawerVisible}
         onClose={handleCloseDrawer}
         footer={
-          drawerType === 'edit' ? (
+          drawerType === 'edit' || drawerType === 'create' ? (
             <div style={{ textAlign: 'right' }}>
               <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
                 取消
               </Button>
               <Button type="primary" onClick={() => form.submit()}>
-                保存
+                {drawerType === 'create' ? '创建' : '保存'}
               </Button>
             </div>
           ) : null
@@ -452,12 +601,16 @@ export default function UserList() {
             }}>
               <div style={{ color: 'var(--text-color)' }}>
                 <div style={{ marginBottom: 12 }}>
+                  <strong>显示名称：</strong>
+                  <span>{getUserDisplayName(currentUser)}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
                   <strong>用户名：</strong>
                   <span>{currentUser.username}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>昵称：</strong>
-                  <span>{currentUser.nickname}</span>
+                  <span>{currentUser.nickname || '-'}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>角色：</strong>
@@ -509,6 +662,90 @@ export default function UserList() {
           </div>
         )}
 
+        {drawerType === 'create' && (
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+          >
+            <Form.Item
+              name="username"
+              label="用户名"
+              rules={[{ required: true, message: '请输入用户名' }]}
+            >
+              <Input placeholder="请输入用户名" />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="密码"
+              rules={[{ required: true, message: '请输入密码' }]}
+            >
+              <Input.Password placeholder="请输入密码" />
+            </Form.Item>
+
+            <Form.Item
+              name="role"
+              label="角色"
+              rules={[{ required: true, message: '请选择角色' }]}
+            >
+              <Select placeholder="请选择角色">
+                <Option value="APPLIER">申请者</Option>
+                <Option value="APPROVER">审批者</Option>
+                <Option value="SERVICE_STAFF">服务人员</Option>
+                <Option value="MAINTAINER">维护人员</Option>
+                <Option value="ADMIN">管理员</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="nickname"
+              label="昵称"
+              rules={[{ required: true, message: '请输入昵称' }]}
+            >
+              <Input placeholder="请输入昵称" />
+            </Form.Item>
+
+            <Form.Item
+              name="email"
+              label="邮箱"
+              rules={[
+                { type: 'email', message: '请输入有效的邮箱地址' }
+              ]}
+            >
+              <Input placeholder="请输入邮箱" />
+            </Form.Item>
+
+            <Form.Item
+              name="phone"
+              label="电话"
+            >
+              <Input placeholder="请输入电话" />
+            </Form.Item>
+
+            <Form.Item
+              name="department"
+              label="部门"
+            >
+              <Input placeholder="请输入部门" />
+            </Form.Item>
+
+            <Form.Item
+              name="serviceArea"
+              label="服务区域"
+            >
+              <Input placeholder="请输入服务区域" />
+            </Form.Item>
+
+            <Form.Item
+              name="skill"
+              label="技能"
+            >
+              <Input placeholder="请输入技能" />
+            </Form.Item>
+          </Form>
+        )}
+
         {drawerType === 'edit' && currentUser && (
           <div>
             <div style={{ 
@@ -518,6 +755,7 @@ export default function UserList() {
               border: '1px solid var(--border-color)',
               borderRadius: 6 
             }}>
+              <p style={{ color: 'var(--text-color)' }}><strong>显示名称：</strong>{getUserDisplayName(currentUser)}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>用户名：</strong>{currentUser.username}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>角色：</strong>
                 <Tag color={

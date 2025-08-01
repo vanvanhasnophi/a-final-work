@@ -16,6 +16,14 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  // 清理认证状态
+  const clearAuth = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  }, []);
+
   // 登出
   const logout = useCallback(async () => {
     try {
@@ -25,12 +33,22 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('登出API调用失败:', error);
     } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setToken(null);
-      setUser(null);
+      clearAuth();
     }
-  }, [user?.username]);
+  }, [user?.username, clearAuth]);
+
+  // 验证token是否有效
+  const validateToken = useCallback(async (tokenToValidate) => {
+    if (!tokenToValidate) return false;
+    
+    try {
+      const response = await authAPI.getCurrentUser();
+      return !!response.data;
+    } catch (error) {
+      console.error('Token验证失败:', error);
+      return false;
+    }
+  }, []);
 
   // 检查token是否有效
   const checkAuth = useCallback(async () => {
@@ -43,6 +61,15 @@ export const AuthProvider = ({ children }) => {
         const userData = JSON.parse(storedUser);
         setUser(userData);
         setToken(storedToken);
+        
+        // 验证token是否有效
+        const isValid = await validateToken(storedToken);
+        if (!isValid) {
+          console.log('Token已过期或无效，清理认证状态');
+          clearAuth();
+          setLoading(false);
+          return;
+        }
         
         // 从服务器获取最新的用户信息
         try {
@@ -58,15 +85,14 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Token验证失败:', error);
-        // 直接清理状态，不调用logout避免循环
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setToken(null);
-        setUser(null);
+        clearAuth();
       }
+    } else {
+      // 没有存储的token和user，清理状态
+      clearAuth();
     }
     setLoading(false);
-  }, []); // 移除logout依赖
+  }, [validateToken, clearAuth]);
 
   // 登录
   const login = async (username, password) => {
@@ -157,9 +183,11 @@ export const AuthProvider = ({ children }) => {
       return latestUserData;
     } catch (error) {
       console.error('刷新用户信息失败:', error);
+      // 如果刷新失败，可能是token过期，清理认证状态
+      clearAuth();
       throw error;
     }
-  }, []);
+  }, [clearAuth]);
 
   // 检查是否已登录
   const isAuthenticated = () => {
@@ -201,6 +229,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     updateUserInfo,
     refreshUserInfo,
+    clearAuth,
   };
 
   return (

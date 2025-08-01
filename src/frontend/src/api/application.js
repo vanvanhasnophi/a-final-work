@@ -27,6 +27,11 @@ export const applicationAPI = {
     return api.post('/application/approve', data);
   },
 
+  // 撤销申请
+  cancelApplication: (data) => {
+    return api.post('/application/cancel', data);
+  },
+
   // 获取房间未来的已批准预约
   getFutureApprovedApplications: (roomId) => {
     return api.get(`/application/room/${roomId}/future-approved`);

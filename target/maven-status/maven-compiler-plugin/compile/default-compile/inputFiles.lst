@@ -3,6 +3,7 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/aspect/AuthAspect.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/CorsConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/DataInitializer.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/JacksonConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebSecurityConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/constant/consist/appinfo.java
@@ -26,6 +27,7 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/exception/UserNotFoundException.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/ApplicationDTO.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/ApplicationQuery.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/ApprovalDTO.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/NotificationDTO.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/PageResult.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/model/dto/RoomDTO.java
@@ -60,7 +62,10 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/RoomServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/UserServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/ConcurrencyTestUtil.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/DateUtil.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/JwtAuthenticationFilter.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/JwtUtil.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/NotificationUtil.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/PasswordEncoderUtil.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/PermissionUtil.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/utils/TokenValidationLogger.java

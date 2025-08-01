@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Tag, Space, Input, Select, message, Alert, Drawer, Form, InputNumber, DatePicker, TimePicker, Pagination } from 'antd';
-import { PlusOutlined, ReloadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Tag, Space, Input, Select, message, Alert, Drawer, Form, InputNumber, DatePicker, TimePicker, Pagination, Modal } from 'antd';
+import { PlusOutlined, ReloadOutlined, EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { roomAPI } from '../api/room';
 import { applicationAPI } from '../api/application';
@@ -12,6 +12,8 @@ import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
 import { getRoomTypeDisplayName, getRoomTypeEnumValue, roomTypeOptions } from '../utils/roomMapping';
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useTimeConflictCheck } from '../hooks/useTimeConflictCheck';
+import { useAuth } from '../contexts/AuthContext';
+import { canCreateRoom, canDeleteRoom } from '../utils/permissionUtils';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -19,6 +21,7 @@ const { RangePicker } = DatePicker;
 
 export default function RoomList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -96,6 +99,28 @@ export default function RoomList() {
     fetchRooms();
   }, [fetchRooms]);
 
+  // 删除房间
+  const handleDeleteRoom = (record) => {
+    Modal.confirm({
+      title: '确认删除',
+      icon: <ExclamationCircleOutlined />,
+      content: `确定要删除房间 "${record.name}" 吗？此操作不可恢复。`,
+      okText: '确认',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          await roomAPI.deleteRoom(record.id);
+          messageApi.success('房间删除成功');
+          fetchRooms(); // 刷新列表
+        } catch (error) {
+          console.error('删除房间失败:', error);
+          messageApi.error('删除房间失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+        }
+      }
+    });
+  };
+
   // 初始化加载
   useEffect(() => {
     fetchRooms();
@@ -168,10 +193,20 @@ export default function RoomList() {
   };
 
   // 打开查看详情抽屉
-  const handleViewDetail = (record) => {
+  const handleViewDetail = async (record) => {
     setDrawerType('detail');
     setCurrentRoom(record);
     setDrawerVisible(true);
+    
+    // 获取房间未来的已批准预约
+    try {
+      const response = await applicationAPI.getFutureApprovedApplications(record.id);
+      console.log('详情抽屉未来预约数据:', response.data);
+      setFutureApplications(response.data || []);
+    } catch (error) {
+      console.error('获取未来预约失败:', error);
+      setFutureApplications([]);
+    }
   };
 
   // 打开申请房间抽屉
@@ -190,6 +225,7 @@ export default function RoomList() {
     // 获取房间未来的已批准预约
     try {
       const response = await applicationAPI.getFutureApprovedApplications(record.id);
+      console.log('未来预约数据:', response.data);
       setFutureApplications(response.data || []);
     } catch (error) {
       console.error('获取未来预约失败:', error);
@@ -216,7 +252,7 @@ export default function RoomList() {
               type: getRoomTypeEnumValue(values.type)
             };
             const response = await roomAPI.createRoom(roomData);
-            message.success('房间创建成功');
+            messageApi.success('房间创建成功');
             handleCloseDrawer();
             fetchRooms(); // 刷新列表
             return response;
@@ -232,19 +268,20 @@ export default function RoomList() {
         
         const validation = validateTimeRange(startTime, endTime);
         if (!validation.valid) {
-          message.error(validation.message);
+          messageApi.error(validation.message);
           return;
         }
         
         // 检查时间冲突
         if (hasConflict) {
-          message.error('所选时间段与已有预约冲突，请选择其他时间');
+          messageApi.error('所选时间段与已有预约冲突，请选择其他时间');
           return;
         }
         
         await executeWithRetry(
           async () => {
             const applicationData = {
+              userId: user.id, // 添加用户ID
               roomId: currentRoom.id,
               startTime: formatDateTimeForBackend(startTime),
               endTime: formatDateTimeForBackend(endTime),
@@ -253,10 +290,12 @@ export default function RoomList() {
               contact: values.contact,
             };
             
+            console.log('提交申请数据:', applicationData);
             const response = await applicationAPI.createApplication(applicationData);
-            message.success('申请提交成功');
+            messageApi.success('申请提交成功，正在跳转到申请列表...');
             handleCloseDrawer();
-            fetchRooms(); // 刷新列表
+            // 跳转到申请列表页面
+            navigate('/applications');
             return response;
           },
           {
@@ -267,6 +306,7 @@ export default function RoomList() {
       }
     } catch (error) {
       console.error('提交失败:', error);
+      messageApi.error('操作失败，请重试');
     }
   };
 
@@ -324,6 +364,17 @@ export default function RoomList() {
         <Space size="middle">
           <Button type="link" size="small" onClick={() => handleViewDetail(record)}>详情</Button>
           <Button type="link" size="small" onClick={() => handleApply(record)}>申请</Button>
+          {canDeleteRoom(user?.role) && (
+            <Button 
+              type="link" 
+              size="small" 
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteRoom(record)}
+            >
+              删除
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -334,7 +385,7 @@ export default function RoomList() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title="房间管理"
+        title="教室列表"
         extra={
           <Space>
             <Button 
@@ -357,9 +408,11 @@ export default function RoomList() {
             >
               刷新
             </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
-              添加房间
-            </Button>
+            {canCreateRoom(user?.role) && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
+                添加房间
+              </Button>
+            )}
           </Space>
         }
         style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -488,7 +541,7 @@ export default function RoomList() {
               dataSource={rooms}
               rowKey="id"
               loading={loading}
-              scroll={{ x: 800, y: '100%' }}
+              scroll={{ x: 1200, y: '100%' }}
               pagination={false}
               onChange={handleTableChange}
               size="middle"
@@ -660,6 +713,42 @@ export default function RoomList() {
                 )}
               </div>
             </div>
+            
+            {/* 未来预约信息 */}
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
+              border: '1px solid var(--border-color)',
+              borderRadius: 6 
+            }}>
+              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
+                未来已批准预约 ({futureApplications.length}个)
+              </h4>
+              {futureApplications.length > 0 ? (
+                <div style={{ color: 'var(--text-color)' }}>
+                  {futureApplications.map((app, index) => (
+                    <div key={app.id} style={{ marginBottom: 8, fontSize: '12px' }}>
+                      <span style={{ color: 'var(--text-color-secondary)' }}>
+                        {formatTimeRange(app.startTime, app.endTime)}
+                      </span>
+                      <span style={{ marginLeft: 8, color: 'var(--text-color-secondary)' }}>
+                        - {app.reason}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ 
+                  color: 'var(--text-color-secondary)', 
+                  textAlign: 'center', 
+                  padding: '20px',
+                  fontSize: '14px'
+                }}>
+                  暂无未来预约
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -679,17 +768,17 @@ export default function RoomList() {
             </div>
             
             {/* 未来预约信息 */}
-            {futureApplications.length > 0 && (
-              <div style={{ 
-                marginBottom: 16, 
-                padding: 16, 
-                backgroundColor: 'var(--component-bg)', 
-                border: '1px solid var(--border-color)',
-                borderRadius: 6 
-              }}>
-                <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
-                  未来已批准预约 ({futureApplications.length}个)
-                </h4>
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
+              border: '1px solid var(--border-color)',
+              borderRadius: 6 
+            }}>
+              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
+                未来已批准预约 ({futureApplications.length}个)
+              </h4>
+              {futureApplications.length > 0 ? (
                 <div style={{ color: 'var(--text-color)' }}>
                   {futureApplications.map((app, index) => (
                     <div key={app.id} style={{ marginBottom: 8, fontSize: '12px' }}>
@@ -702,8 +791,17 @@ export default function RoomList() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div style={{ 
+                  color: 'var(--text-color-secondary)', 
+                  textAlign: 'center', 
+                  padding: '20px',
+                  fontSize: '14px'
+                }}>
+                  暂无未来预约
+                </div>
+              )}
+            </div>
             
             <Form
               form={form}
@@ -718,25 +816,11 @@ export default function RoomList() {
                 help={hasConflict ? conflictMessage : ''}
               >
                 <RangePicker
-                  showTime
+                  showTime={{ format: 'HH:mm' }}
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
                   disabledDate={(current) => {
                     return current && current < dayjs().startOf('day');
-                  }}
-                  disabledTime={(date, type) => {
-                    if (type === 'start') {
-                      return {
-                        disabledHours: () => [],
-                        disabledMinutes: () => [],
-                        disabledSeconds: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
-                      };
-                    }
-                    return {
-                      disabledHours: () => [],
-                      disabledMinutes: () => [],
-                      disabledSeconds: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
-                    };
                   }}
                   minuteStep={15}
                   onChange={(dates) => {

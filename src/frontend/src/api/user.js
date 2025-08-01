@@ -33,5 +33,7 @@ export const userAPI = {
       url: '/api/user/me',
       method: 'GET'
     });
-  }
+  },
+
+
 }; 

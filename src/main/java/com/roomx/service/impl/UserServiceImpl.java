@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.roomx.constant.enums.UserRole;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.UserInfoDTO;
 import com.roomx.model.dto.UserQuery;
@@ -99,6 +100,20 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUsername(username);
         if(user==null) throw new IllegalArgumentException("user not found");
         return UserInfoDTO.fromEntity(user);
+    }
+    
+    @Override
+    public UserRole getUserRoleByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if(user==null) throw new IllegalArgumentException("user not found");
+        return user.getRole();
+    }
+    
+
+    
+    @Override
+    public boolean isUserExists(String username) {
+        return userRepository.findByUsername(username) != null;
     }
 
 } 

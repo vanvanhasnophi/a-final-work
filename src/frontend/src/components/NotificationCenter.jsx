@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Badge, Dropdown, List, Button, Space, Typography, Tag, message, Popconfirm } from 'antd';
-import { BellOutlined, CheckOutlined, DeleteOutlined, ReadOutlined } from '@ant-design/icons';
+import { List, Button, Space, Typography, Tag, Popconfirm, Drawer } from 'antd';
+import { CheckOutlined, DeleteOutlined, ReadOutlined } from '@ant-design/icons';
 import { notificationAPI } from '../api/notification';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import { formatDateTime, formatRelativeTime } from '../utils/dateFormat';
+import { formatRelativeTime } from '../utils/dateFormat';
 
 const { Text } = Typography;
 
-export default function NotificationCenter() {
+export default function NotificationCenter({ visible, onClose }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [visible, setVisible] = useState(false);
 
   const { executeWithRetry } = useApiWithRetry();
 
@@ -253,28 +252,17 @@ export default function NotificationCenter() {
     </List.Item>
   );
 
-  // 通知面板内容
-  const notificationPanel = (
-    <div style={{
-      width: 400,
-      maxHeight: 500,
-      backgroundColor: 'var(--component-bg)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '8px',
-      boxShadow: 'var(--shadow)'
-    }}>
-      {/* 面板头部 */}
-      <div style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid var(--border-color)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <Text strong style={{ color: 'var(--text-color)' }}>
-          通知中心
-        </Text>
-        {unreadCount > 0 && (
+
+
+  return (
+    <Drawer
+      title="通知中心"
+      placement="right"
+      width={400}
+      open={visible}
+      onClose={onClose}
+      extra={
+        unreadCount > 0 && (
           <Button
             type="text"
             size="small"
@@ -283,11 +271,10 @@ export default function NotificationCenter() {
           >
             全部已读
           </Button>
-        )}
-      </div>
-
-      {/* 通知列表 */}
-      <div style={{ maxHeight: 400, overflow: 'auto' }}>
+        )
+      }
+    >
+      <div style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }}>
         {notifications.length > 0 ? (
           <List
             dataSource={notifications}
@@ -315,13 +302,13 @@ export default function NotificationCenter() {
           </div>
         )}
       </div>
-
-      {/* 面板底部 */}
+      
       {notifications.length > 0 && (
         <div style={{
-          padding: '8px 16px',
+          padding: '8px 0',
           borderTop: '1px solid var(--border-color)',
-          textAlign: 'center'
+          textAlign: 'center',
+          marginTop: '16px'
         }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
             共 {notifications.length} 条通知
@@ -329,30 +316,6 @@ export default function NotificationCenter() {
           </Text>
         </div>
       )}
-    </div>
-  );
-
-  return (
-    <Dropdown
-      overlay={notificationPanel}
-      trigger={['click']}
-      placement="bottomRight"
-      arrow
-      open={visible}
-      onOpenChange={setVisible}
-    >
-      <Badge count={unreadCount} size="small" offset={[-5, 5]}>
-        <Button
-          type="text"
-          icon={<BellOutlined />}
-          style={{
-            color: 'var(--text-color)',
-            border: '1px solid var(--border-color)',
-            background: 'var(--component-bg)',
-          }}
-          title="通知中心"
-        />
-      </Badge>
-    </Dropdown>
+    </Drawer>
   );
 } 

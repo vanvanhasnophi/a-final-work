@@ -15,6 +15,6 @@ public interface AuthService {
     // 修改密码业务
     int updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO);
     // 删除用户业务
-    int deleteUser(UserLoginDTO userLoginDTO);
+    void deleteUser(Long userId);
 
 }

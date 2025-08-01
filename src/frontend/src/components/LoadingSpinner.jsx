@@ -67,7 +67,7 @@ const LoadingSpinner = ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         backdropFilter: 'blur(1px)',
         zIndex: 100,
         borderRadius: 'inherit'
@@ -76,9 +76,11 @@ const LoadingSpinner = ({
           style={{
             maxWidth: '300px',
             width: '90%',
-            boxShadow: 'var(--shadow)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
             borderRadius: 'var(--border-radius-lg)',
-            textAlign: 'center'
+            textAlign: 'center',
+            backgroundColor: 'var(--component-bg)',
+            border: '1px solid var(--border-color)'
           }}
           bodyStyle={{
             padding: '20px'
