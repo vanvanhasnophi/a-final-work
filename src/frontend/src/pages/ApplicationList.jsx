@@ -236,6 +236,16 @@ export default function ApplicationList() {
       key: 'userNickname',
     },
     {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => {
+        const displayName = getApplicationStatusDisplayName(status);
+        const color = getApplicationStatusColor(status);
+        return <Tag color={color}>{displayName}</Tag>;
+      },
+    },
+    {
       title: '使用时间',
       key: 'time',
       render: (_, record) => (
@@ -248,16 +258,6 @@ export default function ApplicationList() {
       title: '使用原因',
       dataIndex: 'reason',
       key: 'reason',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        const displayName = getApplicationStatusDisplayName(status);
-        const color = getApplicationStatusColor(status);
-        return <Tag color={color}>{displayName}</Tag>;
-      },
     },
     {
       title: '申请时间',

@@ -65,3 +65,4 @@ com/roomx/security/JwtAuthenticationFilter.class
 com/roomx/service/NotificationService.class
 com/roomx/exception/RoomNotFoundException.class
 com/roomx/utils/JwtAuthenticationFilter.class
+com/roomx/constant/consist/appinfo.class
