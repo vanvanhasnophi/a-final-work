@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag, Pagination } from 'antd';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag, Pagination, Switch } from 'antd';
 import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDateTime, formatTimeRange, formatRelativeTime } from '../utils/dateFormat';
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
+import { useAuth } from '../contexts/AuthContext';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -20,8 +21,10 @@ const { RangePicker } = DatePicker;
 
 export default function ApplicationList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [applications, setApplications] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [showOnlyMyApplications, setShowOnlyMyApplications] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -78,6 +81,17 @@ export default function ApplicationList() {
           ...params,
         };
         
+        // 如果勾选了"仅查看自己的申请"，添加用户ID筛选
+        if (showOnlyMyApplications && user?.id) {
+          requestParams.userId = user.id;
+          // 清空申请人搜索，因为只查看自己的申请
+          requestParams.nickname = undefined;
+        } else {
+          // 如果没有勾选"仅查看自己的申请"，移除用户ID筛选
+          requestParams.userId = undefined;
+          requestParams.nickname = undefined;
+        }
+        
         console.log('发送申请分页请求参数:', requestParams);
         const response = await applicationAPI.getApplicationList(requestParams);
         
@@ -100,7 +114,7 @@ export default function ApplicationList() {
       }
     );
     return result;
-  }, [executeApplications]); // 移除searchParams依赖
+  }, [executeApplications, searchParams, user?.id]); // 移除showOnlyMyApplications依赖
 
   // 获取房间列表（用于下拉选择）
   const fetchRooms = useCallback(async () => {
@@ -124,7 +138,7 @@ export default function ApplicationList() {
   useEffect(() => {
     fetchApplications();
     fetchRooms();
-  }, []); // 只在组件挂载时执行一次
+  }, [fetchApplications, fetchRooms]); // 修复依赖
 
   // 处理表格分页变化
   const handleTableChange = (pagination, filters, sorter) => {
@@ -174,7 +188,7 @@ export default function ApplicationList() {
         
         const validation = validateTimeRange(startTime, endTime);
         if (!validation.valid) {
-          message.error(validation.message);
+          messageApi.error(validation.message);
           return;
         }
         
@@ -190,7 +204,7 @@ export default function ApplicationList() {
         await executeApplications(
           async () => {
             const response = await applicationAPI.createApplication(applicationData);
-            message.success('申请提交成功');
+            messageApi.success('申请提交成功');
             handleCloseDrawer();
             fetchApplications(); // 刷新列表
             return response;
@@ -208,7 +222,7 @@ export default function ApplicationList() {
               approved: values.approved,
               reason: values.reason
             });
-            message.success(values.approved ? '申请已批准' : '申请已拒绝');
+            messageApi.success(values.approved ? '申请已批准' : '申请已拒绝');
             handleCloseDrawer();
             fetchApplications(); // 刷新列表
             return response;
@@ -370,11 +384,67 @@ export default function ApplicationList() {
               <Input
                 placeholder="搜索申请人"
                 allowClear
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  ...(showOnlyMyApplications && {
+                    backgroundColor: 'var(--disabled-bg)',
+                    color: 'var(--text-color-disabled)',
+                    cursor: 'not-allowed',
+                    opacity: 0.6
+                  })
+                }}
                 value={applicantSearch.searchValue}
                 onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
                 onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+                disabled={showOnlyMyApplications}
               />
+            </div>
+            
+                        {/* 仅查看自己的申请 */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '150px',
+              gap: '8px',
+              height: '32px'
+            }}>
+              <Switch
+                checked={showOnlyMyApplications}
+                onChange={(checked) => {
+                  // 如果勾选了"仅查看自己的申请"，清空申请人搜索
+                  if (checked) {
+                    // 直接设置搜索值，避免触发防抖搜索
+                    applicantSearch.updateSearchValue('');
+                  }
+                  
+                  // 构建新的搜索参数
+                  const newParams = {
+                    pageNum: 1,
+                    roomName: roomSearch.searchValue || undefined,
+                    nickname: checked ? undefined : (applicantSearch.searchValue || undefined),
+                    status: selectedStatus,
+                    queryDate: selectedDate ? selectedDate.format('YYYY-MM-DD') : undefined,
+                    userId: checked ? user?.id : undefined
+                  };
+                  
+                  // 先更新搜索参数
+                  setSearchParams(newParams);
+                  
+                  // 更新状态
+                  setShowOnlyMyApplications(checked);
+                  
+                  
+                }}
+                size="small"
+              />
+              <span style={{ 
+                fontSize: '14px', 
+                color: 'var(--text-color)',
+                lineHeight: '32px'
+              }}>
+                仅查看自己的申请
+              </span>
             </div>
             
             {/* 状态筛选 */}
@@ -430,31 +500,36 @@ export default function ApplicationList() {
               />
             </div>
             
+
+            
             {/* 操作按钮 */}
             <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                onClick={() => {
-                  // 清空筛选控件内容
-                  roomSearch.updateSearchValue('');
-                  applicantSearch.updateSearchValue('');
-                  // 清除日期选择器
-                  setSelectedDate(null);
-                  // 清空状态选择器
-                  setSelectedStatus(undefined);
-                  // 清空搜索参数并刷新数据
-                  const newParams = {
-                    pageNum: 1,
-                    roomName: undefined,
-                    nickname: undefined,
-                    status: undefined,
-                    queryDate: undefined
-                  };
-                  setSearchParams(newParams);
-                  fetchApplications(newParams);
-                }}
-              >
-                清空筛选
-              </Button>
+                          <Button
+              onClick={() => {
+                // 清空筛选控件内容
+                roomSearch.updateSearchValue('');
+                applicantSearch.updateSearchValue('');
+                // 清除日期选择器
+                setSelectedDate(null);
+                // 清空状态选择器
+                setSelectedStatus(undefined);
+                // 清空"仅查看自己的申请"复选框
+                setShowOnlyMyApplications(false);
+                // 清空搜索参数并刷新数据
+                const newParams = {
+                  pageNum: 1,
+                  roomName: undefined,
+                  nickname: undefined,
+                  status: undefined,
+                  queryDate: undefined,
+                  userId: undefined
+                };
+                setSearchParams(newParams);
+                fetchApplications(newParams);
+              }}
+            >
+              清空筛选
+            </Button>
             </div>
           </div>
         </div>
@@ -487,7 +562,7 @@ export default function ApplicationList() {
               dataSource={applications}
               rowKey="id"
               loading={applicationsLoading}
-              scroll={{ x: 800, y: '100%' }}
+              scroll={{ x: 1200, y: '100%' }}
               pagination={false}
               onChange={handleTableChange}
               size="middle"

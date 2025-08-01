@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,24 +15,41 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.roomx.annotation.RequireAuth;
+import com.roomx.constant.enums.UserRole;
 import com.roomx.model.dto.ApplicationDTO;
 import com.roomx.model.dto.ApplicationQuery;
+import com.roomx.model.dto.ApprovalDTO;
 import com.roomx.model.dto.PageResult;
 import com.roomx.service.ApplicationService;
+import com.roomx.service.UserService;
+import com.roomx.utils.DateUtil;
 
 @RestController
 @RequestMapping("/api/application")
 public class ApplicationController {
     @Autowired
     private ApplicationService applicationService;
+    
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/post") // 申请预约
+    @RequireAuth(roles = {UserRole.APPLIER, UserRole.ADMIN})
     public ResponseEntity<ApplicationDTO> apply(@RequestBody ApplicationDTO applicationDTO) {
+        // 手动处理日期转换
+        if (applicationDTO.getStartTime() == null && applicationDTO.getEndTime() == null) {
+            // 如果日期字段为null，尝试从字符串字段转换
+            // 这里假设前端发送的是字符串格式的日期
+            return ResponseEntity.badRequest().build();
+        }
+        
         ApplicationDTO savedApplication = applicationService.apply(applicationDTO);
         return ResponseEntity.ok(savedApplication);
     }
 
     @GetMapping("/page") // 分页查询预约列表
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER})
     public ResponseEntity<PageResult<ApplicationDTO>> page(@RequestParam(required = false) Long userId,
                                                           @RequestParam(required = false) String username,
                                                           @RequestParam(required = false) String nickname,
@@ -81,11 +100,22 @@ public class ApplicationController {
             }
         }
         
+        // 根据用户角色过滤数据
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        UserRole userRole = userService.getUserRoleByUsername(currentUsername);
+        
+        // 如果是APPLIER，只能查看自己的申请
+        if (userRole == UserRole.APPLIER) {
+            query.setUsername(currentUsername);
+        }
+        
         PageResult<ApplicationDTO> pageResult = applicationService.page(query, pageNum, pageSize, parsedQueryDate);
         return ResponseEntity.ok(pageResult);
     }
 
     @GetMapping("/list") // 获取全部预约列表（不支持筛选）
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPROVER})
     public ResponseEntity<List<ApplicationDTO>> list() {
         // 直接获取所有申请，不调用page方法
         List<ApplicationDTO> allApplications = applicationService.getAllApplications();
@@ -93,6 +123,7 @@ public class ApplicationController {
     }
 
     @GetMapping("/{id}") // 获取预约详情
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER})
     public ResponseEntity<ApplicationDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(applicationService.get(id));
     }
@@ -104,10 +135,70 @@ public class ApplicationController {
     
     @GetMapping("/room/{roomId}/check-conflict") // 检查时间冲突
     public ResponseEntity<Boolean> checkTimeConflict(@PathVariable Long roomId,
-                                                   @RequestParam Date startTime,
-                                                   @RequestParam Date endTime,
+                                                   @RequestParam String startTime,
+                                                   @RequestParam String endTime,
                                                    @RequestParam(required = false) Long excludeApplicationId) {
-        boolean hasConflict = applicationService.hasTimeConflict(roomId, startTime, endTime, excludeApplicationId);
-        return ResponseEntity.ok(hasConflict);
+        try {
+            // 使用DateUtil进行日期转换
+            Date startDate = DateUtil.string2date(startTime);
+            Date endDate = DateUtil.string2date(endTime);
+            
+            if (startDate == null || endDate == null) {
+                System.err.println("日期解析失败: startTime=" + startTime + ", endTime=" + endTime);
+                return ResponseEntity.badRequest().body(false);
+            }
+            
+            boolean hasConflict = applicationService.hasTimeConflict(roomId, startDate, endDate, excludeApplicationId);
+            return ResponseEntity.ok(hasConflict);
+        } catch (Exception e) {
+            System.err.println("时间冲突检查错误: " + e.getMessage());
+            return ResponseEntity.badRequest().body(false);
+        }
+    }
+    
+    @PostMapping("/approve") // 审批申请
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPROVER})
+    public ResponseEntity<String> approveApplication(@RequestBody ApprovalDTO approvalDTO) {
+        try {
+            if (approvalDTO.getApplicationId() == null) {
+                return ResponseEntity.badRequest().body("申请ID不能为空");
+            }
+            if (approvalDTO.getApproved() == null) {
+                return ResponseEntity.badRequest().body("审批结果不能为空");
+            }
+            if (approvalDTO.getReason() == null || approvalDTO.getReason().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("审批意见不能为空");
+            }
+            
+            if (approvalDTO.getApproved()) {
+                applicationService.approve(approvalDTO.getApplicationId(), approvalDTO.getReason());
+                return ResponseEntity.ok("申请已批准");
+            } else {
+                applicationService.reject(approvalDTO.getApplicationId(), approvalDTO.getReason());
+                return ResponseEntity.ok("申请已拒绝");
+            }
+        } catch (Exception e) {
+            System.err.println("审批操作失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body("审批操作失败: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/cancel") // 撤销申请
+    @RequireAuth(roles = {UserRole.APPLIER, UserRole.ADMIN, UserRole.APPROVER})
+    public ResponseEntity<String> cancelApplication(@RequestBody ApprovalDTO approvalDTO) {
+        try {
+            if (approvalDTO.getApplicationId() == null) {
+                return ResponseEntity.badRequest().body("申请ID不能为空");
+            }
+            if (approvalDTO.getReason() == null || approvalDTO.getReason().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("撤销原因不能为空");
+            }
+            
+            applicationService.cancel(approvalDTO.getApplicationId(), approvalDTO.getReason());
+            return ResponseEntity.ok("申请已撤销");
+        } catch (Exception e) {
+            System.err.println("撤销操作失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body("撤销操作失败: " + e.getMessage());
+        }
     }
 }

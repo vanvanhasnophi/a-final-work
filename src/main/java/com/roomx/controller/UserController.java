@@ -33,12 +33,14 @@ public class UserController {
 
     
     @PutMapping("/{id}") // 更新用户
+    @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<UserInfoDTO> update(@PathVariable Long id, @RequestBody UserInfoDTO userInfoDTO) {
         return ResponseEntity.ok(userService.updateUserInfo(id, userInfoDTO));
     }
 
 
     @GetMapping("/{id}") // 获取用户详情
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPROVER})
     public ResponseEntity<UserInfoDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserInfo(id));
     }
@@ -72,6 +74,7 @@ public class UserController {
         PageResult<UserInfoDTO> result = userService.page(query, pageNum, pageSize);
         return ResponseEntity.ok(result);
     }
+
 
 
     

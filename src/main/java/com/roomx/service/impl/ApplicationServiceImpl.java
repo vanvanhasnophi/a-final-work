@@ -54,6 +54,23 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     @Transactional
     public ApplicationDTO apply(ApplicationDTO applicationDTO) {
+        // 验证必要字段
+        if (applicationDTO.getRoomId() == null) {
+            throw new IllegalArgumentException("房间ID不能为空");
+        }
+        if (applicationDTO.getUserId() == null) {
+            throw new IllegalArgumentException("用户ID不能为空");
+        }
+        if (applicationDTO.getStartTime() == null) {
+            throw new IllegalArgumentException("开始时间不能为空");
+        }
+        if (applicationDTO.getEndTime() == null) {
+            throw new IllegalArgumentException("结束时间不能为空");
+        }
+        if (applicationDTO.getReason() == null || applicationDTO.getReason().trim().isEmpty()) {
+            throw new IllegalArgumentException("使用原因不能为空");
+        }
+        
         Long roomId = applicationDTO.getRoomId();
         Lock roomLock = getRoomLock(roomId);
         
@@ -65,9 +82,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         try {
             // 获取用户和房间信息
             User user = userRepository.findById(applicationDTO.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
             Room room = roomRepository.findById(applicationDTO.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("room not found"));
+                .orElseThrow(() -> new IllegalArgumentException("房间不存在"));
             
             // 在事务中重新检查时间冲突，确保数据一致性
             if (hasTimeConflict(applicationDTO.getRoomId(), applicationDTO.getStartTime(), applicationDTO.getEndTime(), null)) {
@@ -83,9 +100,9 @@ public class ApplicationServiceImpl implements ApplicationService {
             // 设置申请信息
             application.setCrowd(applicationDTO.getCrowd());
             application.setReason(applicationDTO.getReason());
-            application.setStatus(applicationDTO.getStatus());
-            application.setCreateTime(applicationDTO.getCreateTime());  
-            application.setUpdateTime(applicationDTO.getUpdateTime());
+            application.setStatus(ApplicationStatus.PENDING); // 确保状态为待审批
+            application.setCreateTime(new Date());  // 设置创建时间
+            application.setUpdateTime(new Date());  // 设置更新时间
             application.setStartTime(applicationDTO.getStartTime());
             application.setEndTime(applicationDTO.getEndTime());
             
@@ -200,7 +217,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 predicates.add(cb.like(root.get("userNickname"), "%" + query.getNickname() + "%"));
             }
             if (query.getContact() != null && !query.getContact().isEmpty()) {
-                predicates.add(cb.like(root.get("userContact"), "%" + query.getContact() + "%"));
+                predicates.add(cb.like(root.get("contact"), "%" + query.getContact() + "%"));
             }
             
             // 房间相关字段 - 使用冗余字段

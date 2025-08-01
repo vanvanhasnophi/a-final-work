@@ -3,22 +3,16 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
 import RoomList from '../pages/RoomList';
-import ApplicationList from '../pages/ApplicationList';
+import ApplicationManagement from '../pages/ApplicationManagement';
+import MyApplications from '../pages/MyApplications';
 import UserList from '../pages/UserList';
 import UserProfile from '../pages/UserProfile';
 import NotFound from '../pages/NotFound';
-import TestConnection from '../pages/TestConnection';
-import AuthTest from '../pages/AuthTest';
-import ThemeTest from '../pages/ThemeTest';
-import SimpleTest from '../pages/SimpleTest';
-import TokenTest from '../pages/TokenTest';
-import TestRetry from '../pages/TestRetry';
-import TestLoading from '../pages/TestLoading';
-import TestTags from '../pages/TestTags';
-import DevPage from '../pages/DevPage';
 import AppLayout from '../components/Layout';
+import RoleBasedLayout from '../components/RoleBasedLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
+import RoleBasedRoute from '../components/RoleBasedRoute';
 import { useAuth } from '../contexts/AuthContext';
 
 function AppRoutes() {
@@ -43,45 +37,60 @@ function AppRoutes() {
     <Routes>
       {/* 公开路由 */}
       <Route path="/login" element={<Login />} />
-      <Route path="/test" element={<TestConnection />} />
-      <Route path="/auth-test" element={<AuthTest />} />
-      <Route path="/theme-test" element={<ThemeTest />} />
-      <Route path="/simple-test" element={<SimpleTest />} />
-      <Route path="/token-test" element={<TokenTest />} />
-      <Route path="/retry-test" element={<TestRetry />} />
-      <Route path="/loading-test" element={<TestLoading />} />
-      <Route path="/tags-test" element={<TestTags />} />
-      <Route path="/dev" element={<DevPage />} />
       
-      {/* 需要认证的路由 */}
+      {/* 需要认证的路由 - 使用基于角色的布局 */}
       <Route path="/" element={
         <ProtectedRoute>
-          <AppLayout><Dashboard /></AppLayout>
+          <RoleBasedLayout><Dashboard /></RoleBasedLayout>
         </ProtectedRoute>
       } />
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <AppLayout><Dashboard /></AppLayout>
+          <RoleBasedLayout><Dashboard /></RoleBasedLayout>
         </ProtectedRoute>
       } />
-      <Route path="/rooms" element={
+      <Route path="/room-list" element={
         <ProtectedRoute>
-          <AppLayout><RoomList /></AppLayout>
+          <RoleBasedLayout><RoomList /></RoleBasedLayout>
         </ProtectedRoute>
       } />
-      <Route path="/applications" element={
+      <Route path="/room-management" element={
+        <AdminRoute>
+          <RoleBasedLayout><RoomList /></RoleBasedLayout>
+        </AdminRoute>
+      } />
+      <Route path="/application-management" element={
+        <RoleBasedRoute pageName="application-management">
+          <RoleBasedLayout>
+            <ApplicationManagement />
+          </RoleBasedLayout>
+        </RoleBasedRoute>
+      } />
+      <Route path="/my-applications" element={
         <ProtectedRoute>
-          <AppLayout><ApplicationList /></AppLayout>
+          <RoleBasedLayout><MyApplications /></RoleBasedLayout>
         </ProtectedRoute>
       } />
       <Route path="/profile" element={
         <ProtectedRoute>
-          <AppLayout><UserProfile /></AppLayout>
+          <RoleBasedLayout><UserProfile /></RoleBasedLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/user-management" element={
+        <AdminRoute>
+          <RoleBasedLayout><UserList /></RoleBasedLayout>
+        </AdminRoute>
+      } />
+      
+      {/* 兼容旧路由 */}
+      <Route path="/rooms" element={
+        <ProtectedRoute>
+          <RoleBasedLayout><RoomList /></RoleBasedLayout>
         </ProtectedRoute>
       } />
       <Route path="/users" element={
         <AdminRoute>
-          <AppLayout><UserList /></AppLayout>
+          <RoleBasedLayout><UserList /></RoleBasedLayout>
         </AdminRoute>
       } />
       

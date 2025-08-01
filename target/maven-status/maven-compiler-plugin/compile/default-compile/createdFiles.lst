@@ -3,10 +3,12 @@ com/roomx/service/impl/UserServiceImpl.class
 com/roomx/repository/UserRepository.class
 com/roomx/model/dto/RoomQuery.class
 com/roomx/controller/ApplicationController.class
+com/roomx/service/impl/UserServiceImpl$1.class
 com/roomx/exception/ApplicationNotFoundException.class
 com/roomx/controller/ConcurrencyTestController.class
 com/roomx/model/dto/UserTokenDTO.class
 com/roomx/service/RoomService.class
+com/roomx/utils/PermissionUtil$1.class
 com/roomx/model/vo/RoomVO.class
 com/roomx/service/ApplicationService.class
 com/roomx/service/impl/RoomServiceImpl.class
@@ -18,6 +20,7 @@ com/roomx/utils/JwtUtil.class
 com/roomx/model/dto/ApplicationQuery.class
 com/roomx/controller/UserController.class
 com/roomx/utils/PasswordEncoderUtil.class
+com/roomx/model/dto/ApprovalDTO.class
 com/roomx/controller/ApproverController.class
 com/roomx/model/vo/ApplicationVO.class
 com/roomx/model/dto/UserUpdatePasswordDTO.class
@@ -35,9 +38,11 @@ com/roomx/constant/enums/ApproverPermission.class
 com/roomx/repository/ApplicationRepository.class
 com/roomx/security/JwtTokenProvider.class
 com/roomx/model/entity/User.class
+com/roomx/utils/TokenValidationLogger.class
 com/roomx/controller/NotificationController.class
 com/roomx/model/entity/Notification.class
 com/roomx/repository/RoomRepository.class
+com/roomx/utils/PermissionUtil.class
 com/roomx/model/vo/UserInfoVO.class
 com/roomx/controller/AuthController.class
 com/roomx/service/impl/NotificationServiceImpl.class
@@ -51,6 +56,8 @@ com/roomx/aspect/AuthAspect.class
 com/roomx/constant/enums/RoomType.class
 com/roomx/constant/enums/AuthStatus.class
 com/roomx/exception/GlobalExceptionHandler.class
+com/roomx/utils/DateUtil.class
+com/roomx/config/JacksonConfig.class
 com/roomx/constant/enums/RoomStatus.class
 com/roomx/annotation/RequireAuth.class
 com/roomx/model/dto/UserInfoDTO.class

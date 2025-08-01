@@ -1,6 +1,8 @@
 package com.roomx.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +13,7 @@ import com.roomx.model.dto.UserRegisterDTO;
 import com.roomx.model.dto.UserTokenDTO;
 import com.roomx.model.dto.UserUpdatePasswordDTO;
 import com.roomx.service.AuthService;
+import com.roomx.utils.TokenValidationLogger;
 
 
 @RestController
@@ -25,18 +28,33 @@ public class AuthController {
     // 登录接口
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginDTO userLoginDTO) {
-        UserTokenDTO result = authService.login(userLoginDTO);
-        if (result == null) {
-            return ResponseEntity.status(401).body("用户名或密码错误");
+        try {
+            TokenValidationLogger.logValidationStart("/api/login", "N/A", "Login request");
+            UserTokenDTO result = authService.login(userLoginDTO);
+            if (result == null) {
+                TokenValidationLogger.logValidationComplete("/api/login", false, "Login failed - invalid credentials");
+                return ResponseEntity.status(401).body("用户名或密码错误");
+            }
+            TokenValidationLogger.logValidationComplete("/api/login", true, "Login successful for user: " + userLoginDTO.getUsername());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            TokenValidationLogger.logException("Login", e.getMessage(), "Login failed for user: " + userLoginDTO.getUsername());
+            return ResponseEntity.status(500).body("登录失败: " + e.getMessage());
         }
-        return ResponseEntity.ok(result);
     }
 
     // 注册接口
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserRegisterDTO userRegisterDTO) {
-        UserTokenDTO result = authService.register(userRegisterDTO);
-        return ResponseEntity.ok(result);
+        try {
+            TokenValidationLogger.logValidationStart("/api/register", "N/A", "Register request");
+            UserTokenDTO result = authService.register(userRegisterDTO);
+            TokenValidationLogger.logValidationComplete("/api/register", true, "Register successful for user: " + userRegisterDTO.getUsername());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            TokenValidationLogger.logException("Register", e.getMessage(), "Register failed for user: " + userRegisterDTO.getUsername());
+            return ResponseEntity.status(500).body("注册失败: " + e.getMessage());
+        }
     }
 
     // 登出接口
@@ -61,10 +79,14 @@ public class AuthController {
         }
     }
     
-    // 删除用户接口
-    @PostMapping("/deleteUser")
-    public ResponseEntity<?> deleteUser(@RequestBody UserLoginDTO userLoginDTO) {
-        authService.deleteUser(userLoginDTO);
-        return ResponseEntity.ok().build();
+    // 删除用户接口（ADMIN权限）
+    @DeleteMapping("/auth/user/{userId}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+        try {
+            authService.deleteUser(userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("删除用户失败: " + e.getMessage());
+        }
     }
 }

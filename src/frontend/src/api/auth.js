@@ -30,6 +30,11 @@ export const updatePassword = (oldPassword, newPassword) => {
   return request.post('/updatePassword', { oldPassword, newPassword });
 };
 
+// 删除用户（ADMIN权限）
+export const deleteUser = (userId) => {
+  return request.delete(`/auth/user/${userId}`);
+};
+
 
 const authAPI = {
   login,
@@ -37,7 +42,8 @@ const authAPI = {
   logout,
   getCurrentUser,
   refreshToken,
-  updatePassword
+  updatePassword,
+  deleteUser
 };
 
 export default authAPI; 

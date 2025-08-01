@@ -16,7 +16,7 @@ public class ApplicationDTO {
     // 用户冗余信息
     private String username;
     private String userNickname;
-    private String userContact;
+    private String contact;
     private String userRole;
     
     // 房间冗余信息
@@ -27,7 +27,6 @@ public class ApplicationDTO {
     
     // 申请信息
     private Long crowd;
-    private String contact;
     private String reason;
     private ApplicationStatus status;
     private Date createTime;

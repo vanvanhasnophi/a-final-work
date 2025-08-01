@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.roomx.annotation.RequireAuth;
+import com.roomx.constant.enums.UserRole;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.RoomDTO;
 import com.roomx.model.dto.RoomQuery;
@@ -25,6 +27,7 @@ public class RoomController {
     private RoomService roomService;
 
     @GetMapping("/page") // 获取房间列表
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER})
     public ResponseEntity<PageResult<RoomDTO>> page(RoomQuery query,
                                                           @RequestParam(defaultValue = "1") int pageNum,
                                                           @RequestParam(defaultValue = "10") int pageSize) {
@@ -33,21 +36,25 @@ public class RoomController {
     }
 
     @GetMapping("/{id}") // 获取房间详情
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER})
     public ResponseEntity<RoomDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getRoomById(id));
     }
 
     @PostMapping("/create") // 创建房间
+    @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<RoomDTO> create(@RequestBody RoomDTO room) {
         return ResponseEntity.ok(roomService.addRoom(room));
     }
 
     @PutMapping("/{id}") // 更新房间
+    @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<RoomDTO> update(@PathVariable Long id, @RequestBody RoomDTO room) {
         return ResponseEntity.ok(roomService.updateRoom(id, room));
     }
 
     @DeleteMapping("/{id}") // 删除房间
+    @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         roomService.deleteRoom(id);
         return ResponseEntity.noContent().build();

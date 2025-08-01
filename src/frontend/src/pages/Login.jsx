@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggleButton from '../components/ThemeToggleButton';
@@ -13,11 +13,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
   const { login, register, isAuthenticated } = useAuth();
   const { isDarkMode } = useTheme();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = '/dashboard';
 
 
 

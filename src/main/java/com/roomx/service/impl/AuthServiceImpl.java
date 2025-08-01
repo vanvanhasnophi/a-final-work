@@ -135,15 +135,25 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public int deleteUser(UserLoginDTO userLoginDTO) {
-        // 无效化token
-        JwtUtil.invalidateToken(userLoginDTO.getUsername());
-        User user = userRepository.findByUsername(userLoginDTO.getUsername());
-        if (user != null) {
-            userRepository.delete(user);
-            return 0;
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
         }
-        return 1;
+        
+        // 检查是否为最后一个ADMIN用户
+        if (user.getRole() == UserRole.ADMIN) {
+            long adminCount = userRepository.countByRole(UserRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new IllegalArgumentException("不能删除最后一个管理员用户");
+            }
+        }
+        
+        // 无效化token
+        JwtUtil.invalidateToken(user.getUsername());
+        
+        // 删除用户
+        userRepository.delete(user);
     }
 
 
