@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # 函数定义
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${CYAN}[INFO]${NC} $1"
 }
 
 log_warn() {
@@ -26,7 +26,7 @@ log_error() {
 }
 
 log_success() {
-    echo -e "${CYAN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 # 获取正确的PID

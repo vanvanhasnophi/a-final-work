@@ -63,7 +63,7 @@ export default function Dashboard() {
       {contextHolder}
       <LoadingSpinner loading={loading} text="正在加载统计数据...">
         <div style={{ padding: '24px' }}>
-          <h1>RoomX 管理系统</h1>
+          <h1>概览</h1>
           
           <Row gutter={16} style={{ marginBottom: '24px' }}>
             <Col span={6}>

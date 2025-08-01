@@ -44,8 +44,9 @@ public class JwtUtil {
     public static Claims parseToken(String token) {
         try {
             logger.debug("Parsing token: {}", token.substring(0, Math.min(50, token.length())) + "...");
-            Claims claims = Jwts.parser()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(SECRET_KEY)
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
             
@@ -67,8 +68,9 @@ public class JwtUtil {
 
     public static boolean validateToken(String token) {
         try {
-            Jwts.parser()
+            Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY)
+                .build()
                 .parseClaimsJws(token);
             logger.debug("Token validation successful");
             return true;

@@ -56,7 +56,7 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'SF Pro',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -127,7 +127,6 @@ body {
   transition: all 0.3s ease !important;
 }
 
-/* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
 .ant-input-password {
   background-color: var(--component-bg) !important;
@@ -155,7 +154,7 @@ body {
   transition: all 0.3s ease !important;
 }
 
-/* 主要按钮使用强调色 */
+
 .ant-btn-primary {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
