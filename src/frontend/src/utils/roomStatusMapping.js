@@ -1,7 +1,7 @@
-// 房间状态映射工具函数
+// 教室状态映射工具函数
 export const getRoomStatusDisplayName = (status) => {
   const statusMapping = {
-    'AVAILABLE': '可用',
+    'AVAILABLE': '空闲',
     'RESERVED': '已预约',
     'USING': '使用中',
     'MAINTENANCE': '维修中',
@@ -13,7 +13,7 @@ export const getRoomStatusDisplayName = (status) => {
   return statusMapping[status] || status || '未知状态';
 };
 
-// 房间状态颜色映射
+// 教室状态颜色映射
 export const getRoomStatusColor = (status) => {
   const colorMapping = {
     'AVAILABLE': 'success',
@@ -28,12 +28,12 @@ export const getRoomStatusColor = (status) => {
   return colorMapping[status] || 'default';
 };
 
-// 房间状态图标映射（已弃用，保持兼容性）
+// 教室状态图标映射（已弃用，保持兼容性）
 export const getRoomStatusIcon = (status) => {
   return ''; // 不再使用图标
 };
 
-// 房间状态选项（用于表单）
+// 教室状态选项（用于表单）
 export const roomStatusOptions = [
   { value: 'AVAILABLE', label: '空闲', color: 'success' },
   { value: 'RESERVED', label: '已预约', color: 'processing' },
@@ -45,22 +45,22 @@ export const roomStatusOptions = [
   { value: 'UNAVAILABLE', label: '不可用', color: 'default' }
 ];
 
-// 判断房间是否可用
+// 判断教室是否可用
 export const isRoomAvailable = (status) => {
   return status === 'AVAILABLE';
 };
 
-// 判断房间是否可预约
+// 判断教室是否可预约
 export const isRoomReservable = (status) => {
   return status === 'AVAILABLE' || status === 'PENDING_CLEANING' || status === 'PENDING_MAINTENANCE';
 };
 
-// 判断房间是否需要维护
+// 判断教室是否需要维护
 export const isRoomNeedsMaintenance = (status) => {
   return status === 'MAINTENANCE' || status === 'PENDING_MAINTENANCE';
 };
 
-// 判断房间是否需要清洁
+// 判断教室是否需要清洁
 export const isRoomNeedsCleaning = (status) => {
   return status === 'CLEANING' || status === 'PENDING_CLEANING';
 }; 

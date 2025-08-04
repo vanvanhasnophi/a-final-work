@@ -73,7 +73,7 @@ class ActivityService {
       .slice(0, limit);
   }
 
-  // 获取房间相关活动
+  // 获取教室相关活动
   getRoomActivities(limit = 10) {
     return this.activities
       .filter(activity => activity.type.startsWith('ROOM_'))

@@ -12,13 +12,13 @@ class ActivityGenerator {
       room: application.roomName,
       roomId: application.roomId,
       applicationId: application.id,
-      description: application.reason || '申请使用房间'
+      description: application.reason || '申请使用教室'
     };
 
     return activityService.addActivity(activity);
   }
 
-  // 生成房间相关活动
+  // 生成教室相关活动
   static generateRoomActivity(type, room, user) {
     const activity = {
       type,
@@ -26,7 +26,7 @@ class ActivityGenerator {
       userId: user.id,
       room: room.name,
       roomId: room.id,
-      description: `房间: ${room.name}`
+      description: `教室: ${room.name}`
     };
 
     return activityService.addActivity(activity);
@@ -86,22 +86,22 @@ class ActivityGenerator {
     return this.generateApplicationActivity(ActivityType.APPLICATION_EXPIRED, application, user);
   }
 
-  // 房间创建活动
+  // 教室创建活动
   static roomCreated(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_CREATED, room, user);
   }
 
-  // 房间更新活动
+  // 教室更新活动
   static roomUpdated(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_UPDATED, room, user);
   }
 
-  // 房间删除活动
+  // 教室删除活动
   static roomDeleted(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_DELETED, room, user);
   }
 
-  // 房间状态变更活动
+  // 教室状态变更活动
   static roomStatusChanged(room, user, oldStatus, newStatus) {
     const activity = {
       type: ActivityType.ROOM_STATUS_CHANGED,
@@ -114,22 +114,22 @@ class ActivityGenerator {
     return activityService.addActivity(activity);
   }
 
-  // 房间开始维修活动
+  // 教室开始维修活动
   static roomMaintenanceStarted(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_MAINTENANCE_STARTED, room, user);
   }
 
-  // 房间维修完成活动
+  // 教室维修完成活动
   static roomMaintenanceCompleted(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_MAINTENANCE_COMPLETED, room, user);
   }
 
-  // 房间开始清洁活动
+  // 教室开始清洁活动
   static roomCleaningStarted(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_CLEANING_STARTED, room, user);
   }
 
-  // 房间清洁完成活动
+  // 教室清洁完成活动
   static roomCleaningCompleted(room, user) {
     return this.generateRoomActivity(ActivityType.ROOM_CLEANING_COMPLETED, room, user);
   }

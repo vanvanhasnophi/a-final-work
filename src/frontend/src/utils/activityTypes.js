@@ -8,7 +8,7 @@ export const ActivityType = {
   APPLICATION_COMPLETED: 'APPLICATION_COMPLETED',
   APPLICATION_EXPIRED: 'APPLICATION_EXPIRED',
   
-  // 房间相关
+  // 教室相关
   ROOM_CREATED: 'ROOM_CREATED',
   ROOM_UPDATED: 'ROOM_UPDATED',
   ROOM_DELETED: 'ROOM_DELETED',
@@ -31,16 +31,16 @@ export const ActivityType = {
 // 活动类型中文映射
 export const getActivityTypeDisplayName = (type) => {
   const typeMapping = {
-    [ActivityType.APPLICATION_CREATED]: '申请房间',
+    [ActivityType.APPLICATION_CREATED]: '申请教室',
     [ActivityType.APPLICATION_APPROVED]: '申请获批',
     [ActivityType.APPLICATION_REJECTED]: '申请被拒',
     [ActivityType.APPLICATION_CANCELLED]: '取消申请',
     [ActivityType.APPLICATION_COMPLETED]: '申请完成',
     [ActivityType.APPLICATION_EXPIRED]: '申请过期',
-    [ActivityType.ROOM_CREATED]: '创建房间',
-    [ActivityType.ROOM_UPDATED]: '更新房间',
-    [ActivityType.ROOM_DELETED]: '删除房间',
-    [ActivityType.ROOM_STATUS_CHANGED]: '房间状态变更',
+    [ActivityType.ROOM_CREATED]: '创建教室',
+    [ActivityType.ROOM_UPDATED]: '更新教室',
+    [ActivityType.ROOM_DELETED]: '删除教室',
+    [ActivityType.ROOM_STATUS_CHANGED]: '教室状态变更',
     [ActivityType.ROOM_MAINTENANCE_STARTED]: '开始维修',
     [ActivityType.ROOM_MAINTENANCE_COMPLETED]: '维修完成',
     [ActivityType.ROOM_CLEANING_STARTED]: '开始清洁',
@@ -103,21 +103,21 @@ export const generateActivityDescription = (activity) => {
     case ActivityType.APPLICATION_EXPIRED:
       return `${user} 的申请已过期`;
     case ActivityType.ROOM_CREATED:
-      return `创建了新房间 ${room}`;
+      return `创建了新教室 ${room}`;
     case ActivityType.ROOM_UPDATED:
-      return `更新了房间 ${room}`;
+      return `更新了教室 ${room}`;
     case ActivityType.ROOM_DELETED:
-      return `删除了房间 ${room}`;
+      return `删除了教室 ${room}`;
     case ActivityType.ROOM_STATUS_CHANGED:
-      return `房间 ${room} 状态发生变更`;
+      return `教室 ${room} 状态发生变更`;
     case ActivityType.ROOM_MAINTENANCE_STARTED:
-      return `房间 ${room} 开始维修`;
+      return `教室 ${room} 开始维修`;
     case ActivityType.ROOM_MAINTENANCE_COMPLETED:
-      return `房间 ${room} 维修完成`;
+      return `教室 ${room} 维修完成`;
     case ActivityType.ROOM_CLEANING_STARTED:
-      return `房间 ${room} 开始清洁`;
+      return `教室 ${room} 开始清洁`;
     case ActivityType.ROOM_CLEANING_COMPLETED:
-      return `房间 ${room} 清洁完成`;
+      return `教室 ${room} 清洁完成`;
     case ActivityType.USER_REGISTERED:
       return `新用户 ${user} 注册了账号`;
     case ActivityType.USER_UPDATED:

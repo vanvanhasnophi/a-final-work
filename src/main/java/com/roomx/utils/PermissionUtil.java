@@ -20,7 +20,7 @@ public class PermissionUtil {
     public static final Set<UserRole> ROOM_CREATE_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN));
     public static final Set<UserRole> ROOM_UPDATE_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN));
     public static final Set<UserRole> ROOM_DELETE_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN));
-    public static final Set<UserRole> ROOM_VIEW_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER));
+    public static final Set<UserRole> ROOM_VIEW_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER));
     
     // 申请管理权限
     public static final Set<UserRole> APPLICATION_CREATE_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.APPLIER, UserRole.ADMIN));
@@ -36,7 +36,7 @@ public class PermissionUtil {
     public static final Set<UserRole> USER_DELETE_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN));
     
     // 通知管理权限
-    public static final Set<UserRole> NOTIFICATION_VIEW_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER));
+    public static final Set<UserRole> NOTIFICATION_VIEW_PERMISSIONS = new HashSet<>(Arrays.asList(UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER));
     
     /**
      * 检查用户是否有指定操作的权限
@@ -173,7 +173,7 @@ public class PermissionUtil {
                 pages.add("user-list");
                 pages.add("room-list");
                 break;
-            case SERVICE_STAFF:
+            case SERVICE:
                 pages.add("room-list");
                 break;
             case MAINTAINER:
@@ -195,7 +195,7 @@ public class PermissionUtil {
                 return "申请人";
             case APPROVER:
                 return "审批人";
-            case SERVICE_STAFF:
+            case SERVICE:
                 return "服务人员";
             case MAINTAINER:
                 return "维修人员";
@@ -215,7 +215,7 @@ public class PermissionUtil {
                 return "green";
             case APPROVER:
                 return "blue";
-            case SERVICE_STAFF:
+            case SERVICE:
                 return "orange";
             case MAINTAINER:
                 return "purple";

@@ -27,7 +27,7 @@ public class RoomController {
     private RoomService roomService;
 
     @GetMapping("/page") // 获取房间列表
-    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER})
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER})
     public ResponseEntity<PageResult<RoomDTO>> page(RoomQuery query,
                                                           @RequestParam(defaultValue = "1") int pageNum,
                                                           @RequestParam(defaultValue = "10") int pageSize) {
@@ -36,7 +36,7 @@ public class RoomController {
     }
 
     @GetMapping("/{id}") // 获取房间详情
-    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER})
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER})
     public ResponseEntity<RoomDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getRoomById(id));
     }

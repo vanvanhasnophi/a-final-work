@@ -35,5 +35,13 @@ export const userAPI = {
     });
   },
 
+  // 修改密码
+  updatePassword: (data) => {
+    return request({
+      url: '/api/updatePassword',
+      method: 'POST',
+      data
+    });
+  },
 
 }; 

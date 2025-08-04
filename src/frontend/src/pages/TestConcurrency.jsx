@@ -66,7 +66,7 @@ export default function TestConcurrency() {
       
       <Card title="并发申请测试" style={{ marginBottom: 16 }}>
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Text>测试10个线程同时申请同一个房间</Text>
+          <Text>测试10个线程同时申请同一个教室</Text>
           <Button 
             type="primary" 
             onClick={testConcurrentApply} 
@@ -111,7 +111,7 @@ export default function TestConcurrency() {
       <Card title="并发控制说明">
         <Space direction="vertical" style={{ width: '100%' }}>
           <Text>
-            <strong>房间级锁:</strong> 同一房间的申请和审批操作使用房间级别的锁进行同步
+            <strong>教室级锁:</strong> 同一教室的申请和审批操作使用教室级别的锁进行同步
           </Text>
           <Text>
             <strong>事务控制:</strong> 所有关键操作都在事务中执行，确保数据一致性

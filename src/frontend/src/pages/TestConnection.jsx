@@ -105,7 +105,7 @@ export default function TestConnection() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Space>
               {getStatusIcon('rooms')}
-              <Text strong>房间列表测试</Text>
+              <Text strong>教室列表测试</Text>
             </Space>
             <Text>{getStatusText('rooms')}</Text>
           </div>

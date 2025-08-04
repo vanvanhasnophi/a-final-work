@@ -1,4 +1,4 @@
-// 房间类型映射工具函数
+// 教室类型映射工具函数
 export const getRoomTypeDisplayName = (type) => {
   const typeMapping = {
     'CASE_ROOM': '案例教室',
@@ -34,7 +34,7 @@ export const getRoomTypeFrontendValue = (enumValue) => {
   return frontendMapping[enumValue] || enumValue;
 };
 
-// 房间类型选项（用于表单）
+// 教室类型选项（用于表单）
 export const roomTypeOptions = [
   { value: 'caseroom', label: '案例教室' },
   { value: 'seminar', label: '研讨间' },

@@ -33,7 +33,7 @@ public class UserController {
 
     
     @PutMapping("/{id}") // 更新用户
-    @RequireAuth(roles = {UserRole.ADMIN})
+    @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER})
     public ResponseEntity<UserInfoDTO> update(@PathVariable Long id, @RequestBody UserInfoDTO userInfoDTO) {
         return ResponseEntity.ok(userService.updateUserInfo(id, userInfoDTO));
     }

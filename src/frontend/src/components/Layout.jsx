@@ -37,13 +37,19 @@ export default function AppLayout({ children }) {
     {
       key: '/rooms',
       icon: <HomeOutlined />,
-      label: '房间管理',
+      label: '教室管理',
     },
-    {
+    // 根据角色显示申请相关菜单
+    ...(user?.role === 'ADMIN' || user?.role === 'APPROVER' ? [{
       key: '/applications',
       icon: <FileTextOutlined />,
       label: '申请管理',
-    },
+    }] : []),
+    ...(user?.role === 'APPLIER' ? [{
+      key: '/my-applications',
+      icon: <FileTextOutlined />,
+      label: '我的申请',
+    }] : []),
     // 仅管理员可见的用户管理菜单
     ...(user?.role === 'ADMIN' ? [{
       key: '/users',

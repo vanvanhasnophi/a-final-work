@@ -4,7 +4,7 @@ import { applicationAPI } from '../api/application';
 import { formatTimeRange } from '../utils/dateFormat';
 
 export default function TestTimeConflict() {
-  const [roomId, setRoomId] = useState(1); // 测试房间ID
+  const [roomId, setRoomId] = useState(1); // 测试教室ID
   const [futureApplications, setFutureApplications] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +55,7 @@ export default function TestTimeConflict() {
         </Space>
       </Card>
 
-      <Card title={`房间 ${roomId} 的未来已批准预约 (${futureApplications.length}个)`}>
+      <Card title={`教室 ${roomId} 的未来已批准预约 (${futureApplications.length}个)`}>
         {futureApplications.length === 0 ? (
           <p>暂无未来预约</p>
         ) : (

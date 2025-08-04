@@ -1191,13 +1191,3 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #ff4d4f !important;
 }
 
-/* 侧边栏工具提示浅色外观 */
-.ant-tooltip-inner {
-  background: #F8F8FA !important;
-  color: #333 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-}
-[data-theme="dark"] .ant-tooltip-inner {
-  background: #232428 !important;
-  color: #fff !important;
-}

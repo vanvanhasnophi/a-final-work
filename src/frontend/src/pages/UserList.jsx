@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal } from 'antd';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { register, deleteUser as authDeleteUser } from '../api/auth';
@@ -13,6 +13,7 @@ import { formatDateTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../utils/permissionUtils';
 import { getUserDisplayName } from '../utils/userDisplay';
+import FixedTop from '../components/FixedTop';
 
 const { Option } = Select;
 
@@ -130,7 +131,7 @@ export default function UserList() {
     fetchUsers(newParams);
   };
 
-  // 打开查看详情抽屉
+  // 打开详情抽屉
   const handleViewDetail = (record) => {
     setDrawerType('detail');
     setCurrentUser(record);
@@ -225,7 +226,7 @@ export default function UserList() {
           </Form.Item>
         );
       
-      case 'SERVICE_STAFF':
+      case 'SERVICE':
         return (
           <Form.Item
             name="serviceArea"
@@ -364,7 +365,7 @@ export default function UserList() {
         const color = role === 'ADMIN' ? 'red' : 
                      role === 'APPROVER' ? 'blue' : 
                      role === 'APPLIER' ? 'green' : 
-                     role === 'SERVICE_STAFF' ? 'orange' : 'purple';
+                     role === 'SERVICE' ? 'orange' : 'purple';
         return <Tag color={color}>{getRoleDisplayName(role)}</Tag>;
       },
     },
@@ -396,32 +397,32 @@ export default function UserList() {
       render: (_, record) => {
         return (
           <Space size="middle">
-            <Button 
-              type="link" 
-              icon={<EyeOutlined />} 
-              size="small"
-              onClick={() => handleViewDetail(record)}
-            >
-              查看详情
-            </Button>
-            <Button 
-              type="link" 
-              icon={<EditOutlined />} 
-              size="small"
-              onClick={() => handleEdit(record)}
-            >
-              编辑
-            </Button>
-            {canDeleteUser(user?.role) ? (
+            <Tooltip title="查看详情">
               <Button 
-                type="link" 
-                icon={<DeleteOutlined />} 
+                type="text" 
+                icon={<EyeOutlined />} 
                 size="small"
-                danger
-                              onClick={() => handleDeleteUser(record)}
-              >
-                删除
-              </Button>
+                onClick={() => handleViewDetail(record)}
+              />
+            </Tooltip>
+            <Tooltip title="编辑用户">
+              <Button 
+                type="text" 
+                icon={<EditOutlined />} 
+                size="small"
+                onClick={() => handleEdit(record)}
+              />
+            </Tooltip>
+            {canDeleteUser(user?.role) ? (
+              <Tooltip title="删除用户">
+                <Button 
+                  type="text" 
+                  icon={<DeleteOutlined />} 
+                  size="small"
+                  danger
+                  onClick={() => handleDeleteUser(record)}
+                />
+              </Tooltip>
             ) : (
               <span style={{ color: '#999', fontSize: '12px' }}>
                 无删除权限
@@ -538,7 +539,7 @@ export default function UserList() {
                 <Option value="ADMIN">管理员</Option>
                 <Option value="APPLIER">申请人</Option>
                 <Option value="APPROVER">审批人</Option>
-                <Option value="SERVICE_STAFF">服务人员</Option>
+                <Option value="SERVICE">服务人员</Option>
                 <Option value="MAINTAINER">维修人员</Option>
               </Select>
             </div>
@@ -581,19 +582,36 @@ export default function UserList() {
             left: 0,
             right: 0,
             bottom: '60px', // 为分页组件留出空间
-            overflow: 'auto'
+            overflow: 'hidden' // 禁止容器的垂直滚动
           }}>
-            <Table
-              columns={columns}
-              dataSource={users}
-              rowKey="id"
-              loading={usersLoading}
-              scroll={{ x: 1200, y: '100%' }}
-              pagination={false}
-              onChange={handleTableChange}
-              size="middle"
-              style={{ height: '100%' }}
-            />
+            <FixedTop>
+              <div style={{
+                overflowX: 'auto', // 允许水平滚动
+                overflowY: 'hidden', // 禁止垂直滚动
+                height: '100%'
+              }}>
+                <Table
+                  columns={columns}
+                  dataSource={users}
+                  rowKey="id"
+                  loading={usersLoading}
+                  scroll={{ 
+                    x: 1200, 
+                    y: 'calc(100vh - 300px)',
+                    scrollToFirstRowOnChange: false
+                  }}
+                  pagination={false}
+                  onChange={handleTableChange}
+                  size="middle"
+                  style={{ 
+                    height: '100%',
+                    minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
+                  }}
+                  overflowX='hidden'
+                  sticky={{ offsetHeader: 0 }}
+                />
+              </div>
+            </FixedTop>
           </div>
           
           {/* 分页组件 - 常驻 */}
@@ -680,7 +698,7 @@ export default function UserList() {
                     currentUser.role === 'ADMIN' ? 'red' : 
                     currentUser.role === 'APPROVER' ? 'blue' : 
                     currentUser.role === 'APPLIER' ? 'green' : 
-                    currentUser.role === 'SERVICE_STAFF' ? 'orange' : 'purple'
+                    currentUser.role === 'SERVICE' ? 'orange' : 'purple'
                   }>
                     {getRoleDisplayName(currentUser.role)}
                   </Tag>
@@ -772,7 +790,7 @@ export default function UserList() {
               >
                 <Option value="APPLIER">申请者</Option>
                 <Option value="APPROVER">审批者</Option>
-                <Option value="SERVICE_STAFF">服务人员</Option>
+                <Option value="SERVICE">服务人员</Option>
                 <Option value="MAINTAINER">维护人员</Option>
                 <Option value="ADMIN">管理员</Option>
               </Select>
@@ -824,7 +842,7 @@ export default function UserList() {
                   currentUser.role === 'ADMIN' ? 'red' : 
                   currentUser.role === 'APPROVER' ? 'blue' : 
                   currentUser.role === 'APPLIER' ? 'green' : 
-                  currentUser.role === 'SERVICE_STAFF' ? 'orange' : 'purple'
+                  currentUser.role === 'SERVICE' ? 'orange' : 'purple'
                 }>
                   {getRoleDisplayName(currentUser.role)}
                 </Tag>
@@ -885,7 +903,7 @@ export default function UserList() {
                 </Form.Item>
               )}
 
-              {currentUser.role === 'SERVICE_STAFF' && (
+              {currentUser.role === 'SERVICE' && (
                 <Form.Item
                   name="serviceArea"
                   label="负责区域"

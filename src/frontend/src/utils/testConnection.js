@@ -29,16 +29,16 @@ export const testLogin = async (username, password) => {
   }
 };
 
-// 测试房间列表
+// 测试教室列表
 export const testRoomList = async () => {
   try {
-    console.log('测试房间列表...');
+    console.log('测试教室列表...');
     
     const response = await api.get('/room/page');
-    console.log('房间列表:', response.data);
+    console.log('教室列表:', response.data);
     return response.data;
   } catch (error) {
-    console.error('获取房间列表失败:', error);
+    console.error('获取教室列表失败:', error);
     throw error;
   }
 };

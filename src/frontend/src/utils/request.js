@@ -13,12 +13,19 @@ const instance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('Request拦截器 - 当前请求URL:', config.url);
+    console.log('Request拦截器 - 获取到的token:', token ? token.substring(0, 50) + '...' : 'null');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Request拦截器 - 已设置Authorization头');
+    } else {
+      console.log('Request拦截器 - 未找到token，跳过Authorization头设置');
     }
     return config;
   },
   (error) => {
+    console.error('Request拦截器 - 错误:', error);
     return Promise.reject(error);
   }
 );

@@ -1,9 +1,11 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/App.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/annotation/RequireAuth.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/aspect/AuthAspect.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/CacheConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/CorsConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/DataInitializer.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/JacksonConfig.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/SchedulingConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/config/WebSecurityConfig.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/constant/consist/appinfo.java
@@ -17,6 +19,7 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/ApplicationStatusController.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/ApproverController.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/AuthController.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/CacheController.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/ConcurrencyTestController.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/NotificationController.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/controller/RoomController.java
@@ -55,12 +58,14 @@
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/security/JwtTokenProvider.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/ApplicationService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/AuthService.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/DataRefreshService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/NotificationService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/RoomService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/RoomStatusSchedulerService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/UserService.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/ApplicationServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/AuthServiceImpl.java
+/Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/DataRefreshServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/NotificationServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/RoomServiceImpl.java
 /Users/chenyufan.15/roomX/a-final-work/src/main/java/com/roomx/service/impl/UserServiceImpl.java

@@ -131,27 +131,41 @@ public class JwtUtil {
             Claims claims = parseToken(token);
             Object roleObj = claims.get("role");
             
+            logger.debug("JwtUtil: 从token解析角色 - 原始roleObj: {}, 类型: {}", 
+                roleObj, roleObj != null ? roleObj.getClass().getName() : "null");
+            
             // 处理角色转换
             UserRole role = null;
             if (roleObj instanceof String) {
+                String roleStr = (String) roleObj;
+                
+                // 兼容性处理：将SERVICE_STAFF映射为SERVICE
+                if ("SERVICE_STAFF".equals(roleStr)) {
+                    roleStr = "SERVICE";
+                    logger.warn("JwtUtil: 检测到旧的SERVICE_STAFF角色，自动映射为SERVICE");
+                }
+                
                 try {
-                    role = UserRole.valueOf((String) roleObj);
+                    role = UserRole.valueOf(roleStr);
+                    logger.debug("JwtUtil: 成功解析角色字符串: {} -> {}", roleObj, role);
                 } catch (IllegalArgumentException e) {
-                    logger.warn("Invalid role string in token: {}", roleObj);
+                    logger.warn("JwtUtil: 无效的角色字符串: {}", roleObj);
                     TokenValidationLogger.logException("Role parsing", e.getMessage(), "Invalid role string: " + roleObj);
                     throw e;
                 }
             } else if (roleObj instanceof UserRole) {
                 role = (UserRole) roleObj;
+                logger.debug("JwtUtil: 直接使用UserRole对象: {}", role);
             } else {
-                logger.warn("Unexpected role type in token: {}", roleObj != null ? roleObj.getClass().getName() : "null");
+                logger.warn("JwtUtil: 意外的角色类型: {}", roleObj != null ? roleObj.getClass().getName() : "null");
                 TokenValidationLogger.logException("Role parsing", "Unexpected role type", "Role type: " + (roleObj != null ? roleObj.getClass().getName() : "null"));
                 throw new IllegalArgumentException("Unexpected role type: " + (roleObj != null ? roleObj.getClass().getName() : "null"));
             }
             
+            logger.debug("JwtUtil: 最终解析的角色: {}", role);
             return role;
         } catch (Exception e) {
-            logger.error("Error getting role from token: {}", e.getMessage());
+            logger.error("JwtUtil: 从token获取角色时出错: {}", e.getMessage());
             TokenValidationLogger.logException("Role extraction", e.getMessage(), "Failed to extract role from token");
             throw e;
         }

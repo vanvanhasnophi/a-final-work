@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag, Pagination, Switch } from 'antd';
-import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag, Pagination, Switch, Tooltip } from 'antd';
+import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
@@ -14,6 +14,7 @@ import { formatDateTime, formatTimeRange, formatRelativeTime } from '../utils/da
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { useAuth } from '../contexts/AuthContext';
+import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -116,7 +117,7 @@ export default function ApplicationList() {
     return result;
   }, [executeApplications, searchParams, user?.id]); // 移除showOnlyMyApplications依赖
 
-  // 获取房间列表（用于下拉选择）
+  // 获取教室列表（用于下拉选择）
   const fetchRooms = useCallback(async () => {
     const result = await executeRooms(
       async () => {
@@ -125,7 +126,7 @@ export default function ApplicationList() {
         return response.data.records;
       },
       {
-        errorMessage: '获取房间列表失败',
+        errorMessage: '获取教室列表失败',
         maxRetries: 0, // 不重试，避免反复请求
         retryDelay: 0,
         showRetryMessage: false
@@ -151,12 +152,12 @@ export default function ApplicationList() {
     fetchApplications(newParams);
   };
 
-  // 跳转到房间列表页面进行申请
+  // 跳转到教室列表页面进行申请
   const handleAddApplication = () => {
     navigate('/rooms');
   };
 
-  // 打开查看详情抽屉
+  // 打开详情抽屉
   const handleViewDetail = (record) => {
     setDrawerType('detail');
     setCurrentApplication(record);
@@ -222,7 +223,7 @@ export default function ApplicationList() {
               approved: values.approved,
               reason: values.reason
             });
-            messageApi.success(values.approved ? '申请已批准' : '申请已拒绝');
+            messageApi.success(values.approved ? '申请已批准' : '申请已驳回');
             handleCloseDrawer();
             fetchApplications(); // 刷新列表
             return response;
@@ -240,7 +241,7 @@ export default function ApplicationList() {
 
   const columns = [
     {
-      title: '房间名称',
+      title: '教室名称',
       dataIndex: 'roomName',
       key: 'roomName',
     },
@@ -284,24 +285,24 @@ export default function ApplicationList() {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleViewDetail(record)}
-          >
-            查看详情
-          </Button>
-          {record.status === 'PENDING' && (
+          <Tooltip title="查看详情">
             <Button 
-              type="link" 
-              icon={<CheckOutlined />} 
-              size="small" 
-              style={{ color: '#52c41a' }}
-              onClick={() => handleApprove(record)}
-            >
-              审批
-            </Button>
+              type="text" 
+              icon={<EyeOutlined />} 
+              size="small"
+              onClick={() => handleViewDetail(record)}
+            />
+          </Tooltip>
+          {record.status === 'PENDING' && (
+            <Tooltip title="审批申请">
+              <Button 
+                type="text" 
+                icon={<CheckOutlined />} 
+                size="small" 
+                style={{ color: '#52c41a' }}
+                onClick={() => handleApprove(record)}
+              />
+            </Tooltip>
           )}
         </Space>
       ),
@@ -313,7 +314,21 @@ export default function ApplicationList() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title="申请管理" 
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>申请管理</span>
+            <span style={{ 
+              fontSize: '12px', 
+              color: '#666', 
+              fontWeight: 'normal',
+              backgroundColor: '#f0f0f0',
+              padding: '2px 6px',
+              borderRadius: '4px'
+            }}>
+              申请记录过期后最多保留60天
+            </span>
+          </div>
+        }
         extra={
           <Space>
             <Button 
@@ -367,10 +382,10 @@ export default function ApplicationList() {
           backgroundColor: 'var(--component-bg)'
         }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* 房间搜索 */}
+            {/* 教室搜索 */}
             <div style={{ minWidth: '200px' }}>
               <Input
-                placeholder="搜索房间名称"
+                placeholder="搜索教室名称"
                 allowClear
                 style={{ width: '100%' }}
                 value={roomSearch.searchValue}
@@ -464,7 +479,7 @@ export default function ApplicationList() {
               >
                 <Option value="PENDING">待审批</Option>
                 <Option value="APPROVED">已批准</Option>
-                <Option value="REJECTED">已拒绝</Option>
+                <Option value="REJECTED">已驳回</Option>
                 <Option value="CANCELLED">已取消</Option>
                 <Option value="COMPLETED">已完成</Option>
                 <Option value="EXPIRED">已过期</Option>
@@ -555,19 +570,36 @@ export default function ApplicationList() {
             left: 0,
             right: 0,
             bottom: '60px', // 为分页组件留出空间
-            overflow: 'auto'
+            overflow: 'hidden' // 禁止容器的垂直滚动
           }}>
-            <Table
-              columns={columns}
-              dataSource={applications}
-              rowKey="id"
-              loading={applicationsLoading}
-              scroll={{ x: 1200, y: '100%' }}
-              pagination={false}
-              onChange={handleTableChange}
-              size="middle"
-              style={{ height: '100%' }}
-            />
+            <FixedTop>
+              <div style={{
+                overflowX: 'auto', // 允许水平滚动
+                overflowY: 'hidden', // 禁止垂直滚动
+                height: '100%'
+              }}>
+                <Table
+                  columns={columns}
+                  dataSource={applications}
+                  rowKey="id"
+                  loading={applicationsLoading}
+                  scroll={{ 
+                    x: 1200, 
+                    y: 'calc(100vh - 300px)',
+                    scrollToFirstRowOnChange: false
+                  }}
+                  pagination={false}
+                  onChange={handleTableChange}
+                  size="middle"
+                  style={{ 
+                    height: '100%',
+                    minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
+                  }}
+                  overflowX='hidden'
+                  sticky={{ offsetHeader: 0 }}
+                />
+              </div>
+            </FixedTop>
           </div>
           
           {/* 分页组件 - 常驻 */}
@@ -634,10 +666,10 @@ export default function ApplicationList() {
           >
             <Form.Item
               name="room"
-              label="选择房间"
-              rules={[{ required: true, message: '请选择房间' }]}
+              label="选择教室"
+              rules={[{ required: true, message: '请选择教室' }]}
             >
-              <Select placeholder="请选择房间">
+              <Select placeholder="请选择教室">
                 {rooms.map(room => (
                   <Option key={room.id} value={room.id}>
                     {room.name} ({room.location}) - {getRoomTypeDisplayName(room.type)}
@@ -717,7 +749,7 @@ export default function ApplicationList() {
         {drawerType === 'detail' && currentApplication && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <strong>申请房间：</strong>
+              <strong>申请教室：</strong>
               <span>{currentApplication.roomName}</span>
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -781,7 +813,7 @@ export default function ApplicationList() {
             }}>
               <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>申请信息</h4>
               <div style={{ color: 'var(--text-color)' }}>
-                <p><strong>申请房间：</strong>{currentApplication.roomName}</p>
+                <p><strong>申请教室：</strong>{currentApplication.roomName}</p>
                 <p><strong>申请人：</strong>{currentApplication.userNickname || currentApplication.username}
                   {currentApplication.userRole && (
                     <Tag color="processing" style={{ marginLeft: '8px' }}>
