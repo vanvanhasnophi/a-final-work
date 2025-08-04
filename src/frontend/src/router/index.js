@@ -49,15 +49,11 @@ function AppRoutes() {
           <RoleBasedLayout><Dashboard /></RoleBasedLayout>
         </ProtectedRoute>
       } />
-      <Route path="/room-list" element={
-        <ProtectedRoute>
+
+      <Route path="/rooms" element={
+        <RoleBasedRoute pageName="rooms">
           <RoleBasedLayout><RoomList /></RoleBasedLayout>
-        </ProtectedRoute>
-      } />
-      <Route path="/room-management" element={
-        <AdminRoute>
-          <RoleBasedLayout><RoomList /></RoleBasedLayout>
-        </AdminRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/application-management" element={
         <RoleBasedRoute pageName="application-management">
@@ -82,12 +78,7 @@ function AppRoutes() {
         </AdminRoute>
       } />
       
-      {/* 兼容旧路由 */}
-      <Route path="/rooms" element={
-        <ProtectedRoute>
-          <RoleBasedLayout><RoomList /></RoleBasedLayout>
-        </ProtectedRoute>
-      } />
+
       <Route path="/users" element={
         <AdminRoute>
           <RoleBasedLayout><UserList /></RoleBasedLayout>

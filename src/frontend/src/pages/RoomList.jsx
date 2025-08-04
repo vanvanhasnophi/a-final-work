@@ -10,6 +10,7 @@ import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
 import { getRoomTypeDisplayName, getRoomTypeEnumValue, roomTypeOptions } from '../utils/roomMapping';
+import { getRoomStatusDisplayName, getRoomStatusColor } from '../utils/roomStatusMapping';
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useTimeConflictCheck } from '../hooks/useTimeConflictCheck';
 import { useAuth } from '../contexts/AuthContext';
@@ -101,25 +102,101 @@ export default function RoomList() {
 
   // 删除房间
   const handleDeleteRoom = (record) => {
+    console.log('handleDeleteRoom called with record:', record);
+    
+    // 检查房间状态
+    if (record.status === 'USING' || record.status === 'RESERVED') {
+      messageApi.warning('房间正在使用中或已预约，无法删除。请等待房间空闲后再删除。');
+      return;
+    }
+    
+    // 先显示一个简单的测试对话框
     Modal.confirm({
-      title: '确认删除',
-      icon: <ExclamationCircleOutlined />,
-      content: `确定要删除房间 "${record.name}" 吗？此操作不可恢复。`,
-      okText: '确认',
-      cancelText: '取消',
-      okType: 'danger',
-      onOk: async () => {
-        try {
-          await roomAPI.deleteRoom(record.id);
-          messageApi.success('房间删除成功');
-          fetchRooms(); // 刷新列表
-        } catch (error) {
-          console.error('删除房间失败:', error);
-          messageApi.error('删除房间失败: ' + (error.response?.data?.message || error.message || '未知错误'));
-        }
+      title: '测试删除对话框',
+      content: `确定要删除房间 "${record.name}" 吗？`,
+      onOk: () => {
+        console.log('用户确认删除');
+        // 如果测试对话框正常，再显示详细对话框
+        Modal.confirm({
+          title: '确认删除房间',
+          icon: <ExclamationCircleOutlined />,
+          content: (
+            <div>
+              <div style={{ marginBottom: '16px' }}>
+                <p style={{ fontSize: '14px', marginBottom: '8px' }}>
+                  您确定要删除以下房间吗？
+                </p>
+                <div style={{ 
+                  background: '#f5f5f5', 
+                  padding: '12px', 
+                  borderRadius: '6px',
+                  border: '1px solid #d9d9d9'
+                }}>
+                  <p style={{ margin: '4px 0', fontWeight: 'bold' }}>
+                    房间名称：{record.name}
+                  </p>
+                  <p style={{ margin: '4px 0' }}>
+                    房间类型：{getRoomTypeDisplayName(record.type)}
+                  </p>
+                  <p style={{ margin: '4px 0' }}>
+                    房间位置：{record.location}
+                  </p>
+                  <p style={{ margin: '4px 0' }}>
+                    房间容量：{record.capacity}人
+                  </p>
+                  <p style={{ margin: '4px 0' }}>
+                    当前状态：
+                    <Tag color={getRoomStatusColor(record.status)} style={{ marginLeft: '4px' }}>
+                      {getRoomStatusDisplayName(record.status)}
+                    </Tag>
+                  </p>
+                </div>
+              </div>
+              <div style={{ 
+                background: '#fff2e8', 
+                padding: '12px', 
+                borderRadius: '6px',
+                border: '1px solid #ffd591'
+              }}>
+                <p style={{ color: '#d46b08', fontSize: '12px', margin: 0 }}>
+                  ⚠️ 警告：此操作不可恢复，删除房间将同时删除所有相关的申请记录。
+                </p>
+              </div>
+            </div>
+          ),
+          okText: '确认删除',
+          cancelText: '取消',
+          okType: 'danger',
+          width: 500,
+          onOk: async () => {
+            try {
+              console.log('开始删除房间:', record.id);
+              await roomAPI.deleteRoom(record.id);
+              messageApi.success('房间删除成功');
+              fetchRooms(); // 刷新列表
+            } catch (error) {
+              console.error('删除房间失败:', error);
+              const errorMessage = error.response?.data?.message || error.message || '未知错误';
+              
+              // 根据错误类型显示不同的提示
+              if (errorMessage.includes('相关申请记录')) {
+                messageApi.error('删除失败：该房间存在相关申请记录，请先处理相关申请后再删除。');
+              } else if (errorMessage.includes('正在使用中')) {
+                messageApi.error('删除失败：房间正在使用中，无法删除。');
+              } else if (errorMessage.includes('房间不存在')) {
+                messageApi.error('删除失败：房间不存在或已被删除。');
+              } else {
+                messageApi.error('删除房间失败: ' + errorMessage);
+              }
+            }
+          }
+        });
       }
     });
   };
+
+  // 删除房间前的检查
+
 
   // 初始化加载
   useEffect(() => {
@@ -332,25 +409,11 @@ export default function RoomList() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
-        const statusMapping = {
-          'AVAILABLE': '空闲',
-          'USING': '使用中',
-          'RESERVED': '已预约',
-          'MAINTENANCE': '维护中',
-          'CLEANING': '清洁中',
-          'UNAVAILABLE': '不可用'
-        };
-        
-        let color = 'success';
-        if (status === 'USING') color = 'warning';
-        if (status === 'MAINTENANCE' || status === 'CLEANING') color = 'error';
-        if (status === 'RESERVED') color = 'processing';
-        if (status === 'AVAILABLE') color = 'success';
-        if (status === 'UNAVAILABLE') color = 'default';
-        
-        return <Tag color={color}>{statusMapping[status] || status}</Tag>;
-      },
+      render: (status) => (
+        <Tag color={getRoomStatusColor(status)}>
+          {getRoomStatusDisplayName(status)}
+        </Tag>
+      ),
     },
     {
       title: '位置',
@@ -370,7 +433,20 @@ export default function RoomList() {
               size="small" 
               danger
               icon={<DeleteOutlined />}
-              onClick={() => handleDeleteRoom(record)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('删除按钮被点击，房间:', record);
+                console.log('用户角色:', user?.role);
+                console.log('是否有删除权限:', canDeleteRoom(user?.role));
+                handleDeleteRoom(record);
+              }}
+              disabled={record.status === 'USING' || record.status === 'RESERVED'}
+              title={
+                record.status === 'USING' || record.status === 'RESERVED' 
+                  ? '房间正在使用中，无法删除' 
+                  : '删除房间'
+              }
             >
               删除
             </Button>
@@ -482,10 +558,13 @@ export default function RoomList() {
               >
                 <Option value="all">全部状态</Option>
                 <Option value="available">空闲</Option>
-                <Option value="occupied">使用中</Option>
                 <Option value="reserved">已预约</Option>
-                <Option value="maintenance">维护中</Option>
+                <Option value="using">使用中</Option>
+                <Option value="maintenance">维修中</Option>
                 <Option value="cleaning">清洁中</Option>
+                <Option value="pending_cleaning">待清洁</Option>
+                <Option value="pending_maintenance">待维修</Option>
+                <Option value="unavailable">不可用</Option>
               </Select>
             </div>
             
@@ -518,8 +597,8 @@ export default function RoomList() {
           minHeight: '280px',
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid var(--border-color)',
-          borderRadius: '8px',
+          border: '0px solid var(--border-color)',
+          borderRadius: '0px',
           overflow: 'hidden',
           height: '100%',
           maxHeight: '100%',
@@ -687,18 +766,8 @@ export default function RoomList() {
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>状态：</strong>
-                  <Tag color={
-                    currentRoom.status === 'AVAILABLE' ? 'success' :
-                    currentRoom.status === 'USING' ? 'warning' :
-                    currentRoom.status === 'RESERVED' ? 'processing' :
-                    currentRoom.status === 'MAINTENANCE' || currentRoom.status === 'CLEANING' ? 'error' : 'default'
-                  }>
-                    {currentRoom.status === 'AVAILABLE' ? '空闲' :
-                     currentRoom.status === 'USING' ? '使用中' :
-                     currentRoom.status === 'RESERVED' ? '已预约' :
-                     currentRoom.status === 'MAINTENANCE' ? '维护中' :
-                     currentRoom.status === 'CLEANING' ? '清洁中' :
-                     currentRoom.status === 'UNAVAILABLE' ? '不可用' : currentRoom.status}
+                  <Tag color={getRoomStatusColor(currentRoom.status)}>
+                    {getRoomStatusDisplayName(currentRoom.status)}
                   </Tag>
                 </div>
                 <div style={{ marginBottom: 12 }}>

@@ -1,6 +1,7 @@
 package com.roomx.service.impl;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -8,12 +9,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.roomx.constant.enums.RoomStatus;
 import com.roomx.model.dto.PageResult;
 import com.roomx.model.dto.RoomDTO;
 import com.roomx.model.dto.RoomQuery;
+import com.roomx.model.entity.Application;
 import com.roomx.model.entity.Room;
+import com.roomx.repository.ApplicationRepository;
 import com.roomx.repository.RoomRepository;
 import com.roomx.service.RoomService;
 
@@ -22,9 +26,11 @@ import jakarta.persistence.criteria.Predicate;
 @Service
 public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
+    private final ApplicationRepository applicationRepository;
 
-    public RoomServiceImpl(RoomRepository roomRepository) {
+    public RoomServiceImpl(RoomRepository roomRepository, ApplicationRepository applicationRepository) {
         this.roomRepository = roomRepository;
+        this.applicationRepository = applicationRepository;
     }
 
     @Override
@@ -49,7 +55,26 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Transactional
     public void deleteRoom(Long id) {
+        // 检查房间是否存在
+        Room room = roomRepository.findById(id).orElse(null);
+        if (room == null) {
+            throw new IllegalArgumentException("房间不存在");
+        }
+        
+        // 检查是否有相关的申请数据
+        List<Application> relatedApplications = applicationRepository.findByRoomId(id);
+        if (!relatedApplications.isEmpty()) {
+            throw new IllegalArgumentException("该房间存在相关申请记录，无法删除。请先处理相关申请。");
+        }
+        
+        // 检查房间状态，如果房间正在使用中，不允许删除
+        if (room.getStatus() == RoomStatus.USING || room.getStatus() == RoomStatus.RESERVED) {
+            throw new IllegalArgumentException("房间正在使用中或已预约，无法删除。请等待房间空闲后再删除。");
+        }
+        
+        // 删除房间
         roomRepository.deleteById(id);
     }
 

@@ -7,6 +7,7 @@ import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import { getRoleDisplayName } from '../utils/roleMapping';
+import { getPermissionDisplayName } from '../utils/permissionMapping';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { formatDateTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,6 +34,7 @@ export default function UserList() {
   const roleSelectRef = useRef(null);
   const [selectedRole, setSelectedRole] = useState(undefined);
   const [authError, setAuthError] = useState(null);
+  const [createFormRole, setCreateFormRole] = useState(undefined);
 
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -140,6 +142,7 @@ export default function UserList() {
     setDrawerType('create');
     setCurrentUser(null);
     form.resetFields();
+    setCreateFormRole(undefined);
     setDrawerVisible(true);
   };
 
@@ -188,6 +191,65 @@ export default function UserList() {
     setDrawerType('');
     setCurrentUser(null);
     form.resetFields();
+    setCreateFormRole(undefined);
+  };
+
+  // 根据角色获取创建用户时的特有字段
+  const getCreateFormRoleSpecificFields = () => {
+    if (!createFormRole) return null;
+
+    switch (createFormRole) {
+      case 'APPLIER':
+        return (
+          <Form.Item
+            name="department"
+            label="部门"
+            rules={[{ required: true, message: '请输入部门' }]}
+          >
+            <Input placeholder="请输入部门" />
+          </Form.Item>
+        );
+      
+      case 'APPROVER':
+        return (
+          <Form.Item
+            name="permission"
+            label="审批权限"
+          >
+            <Select placeholder="请选择审批权限">
+              <Option value="READ_ONLY">只读</Option>
+              <Option value="RESTRICTED">受限</Option>
+              <Option value="NORMAL">正常</Option>
+              <Option value="EXTENDED">扩展</Option>
+            </Select>
+          </Form.Item>
+        );
+      
+      case 'SERVICE_STAFF':
+        return (
+          <Form.Item
+            name="serviceArea"
+            label="负责区域"
+            rules={[{ required: true, message: '请输入负责区域' }]}
+          >
+            <Input placeholder="请输入负责区域" />
+          </Form.Item>
+        );
+      
+      case 'MAINTAINER':
+        return (
+          <Form.Item
+            name="skill"
+            label="维修范围"
+            rules={[{ required: true, message: '请输入维修范围' }]}
+          >
+            <Input placeholder="请输入维修范围" />
+          </Form.Item>
+        );
+      
+      default:
+        return null;
+    }
   };
 
   // 提交表单
@@ -503,8 +565,8 @@ export default function UserList() {
           minHeight: '280px',
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid var(--border-color)',
-          borderRadius: '8px',
+          border: '0px solid var(--border-color)',
+          borderRadius: '0px',
           overflow: 'hidden',
           height: '100%',
           maxHeight: '100%',
@@ -647,13 +709,19 @@ export default function UserList() {
                 )}
                 {currentUser.serviceArea && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>服务区域：</strong>
+                    <strong>负责区域：</strong>
                     <span>{currentUser.serviceArea}</span>
+                  </div>
+                )}
+                {currentUser.permission && (
+                  <div style={{ marginBottom: 12 }}>
+                    <strong>审批权限：</strong>
+                    <span>{getPermissionDisplayName(currentUser.permission)}</span>
                   </div>
                 )}
                 {currentUser.skill && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>技能：</strong>
+                    <strong>维修范围：</strong>
                     <span>{currentUser.skill}</span>
                   </div>
                 )}
@@ -689,7 +757,19 @@ export default function UserList() {
               label="角色"
               rules={[{ required: true, message: '请选择角色' }]}
             >
-              <Select placeholder="请选择角色">
+              <Select 
+                placeholder="请选择角色"
+                onChange={(value) => {
+                  setCreateFormRole(value);
+                  // 清空角色特有字段的值
+                  form.setFieldsValue({
+                    department: undefined,
+                    permission: undefined,
+                    serviceArea: undefined,
+                    skill: undefined
+                  });
+                }}
+              >
                 <Option value="APPLIER">申请者</Option>
                 <Option value="APPROVER">审批者</Option>
                 <Option value="SERVICE_STAFF">服务人员</Option>
@@ -723,26 +803,8 @@ export default function UserList() {
               <Input placeholder="请输入电话" />
             </Form.Item>
 
-            <Form.Item
-              name="department"
-              label="部门"
-            >
-              <Input placeholder="请输入部门" />
-            </Form.Item>
-
-            <Form.Item
-              name="serviceArea"
-              label="服务区域"
-            >
-              <Input placeholder="请输入服务区域" />
-            </Form.Item>
-
-            <Form.Item
-              name="skill"
-              label="技能"
-            >
-              <Input placeholder="请输入技能" />
-            </Form.Item>
+            {/* 根据选择的角色显示特有字段 */}
+            {getCreateFormRoleSpecificFields()}
           </Form>
         )}
 
@@ -799,6 +861,7 @@ export default function UserList() {
                 <Input placeholder="请输入电话" />
               </Form.Item>
 
+              {/* 根据用户角色显示特有字段 */}
               {currentUser.role === 'APPLIER' && (
                 <Form.Item
                   name="department"
@@ -808,21 +871,35 @@ export default function UserList() {
                 </Form.Item>
               )}
 
+              {currentUser.role === 'APPROVER' && (
+                <Form.Item
+                  name="permission"
+                  label="审批权限"
+                >
+                  <Select placeholder="请选择审批权限">
+                    <Option value="READ_ONLY">只读</Option>
+                    <Option value="RESTRICTED">受限</Option>
+                    <Option value="NORMAL">正常</Option>
+                    <Option value="EXTENDED">扩展</Option>
+                  </Select>
+                </Form.Item>
+              )}
+
               {currentUser.role === 'SERVICE_STAFF' && (
                 <Form.Item
                   name="serviceArea"
-                  label="服务区域"
+                  label="负责区域"
                 >
-                  <Input placeholder="请输入服务区域" />
+                  <Input placeholder="请输入负责区域" />
                 </Form.Item>
               )}
 
               {currentUser.role === 'MAINTAINER' && (
                 <Form.Item
                   name="skill"
-                  label="技能"
+                  label="维修范围"
                 >
-                  <Input placeholder="请输入技能" />
+                  <Input placeholder="请输入维修范围" />
                 </Form.Item>
               )}
             </Form>

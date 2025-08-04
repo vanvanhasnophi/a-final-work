@@ -10,6 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate } from 'react-router-dom';
 import { canViewOwnApplications } from '../utils/permissionUtils';
+import LatestNews from '../components/LatestNews';
+import { useActivities } from '../hooks/useActivities';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -23,6 +25,18 @@ export default function Dashboard() {
   });
   const [messageApi, contextHolder] = message.useMessage();
   const { loading, error, executeWithRetry } = useApiWithRetry();
+  
+  // 使用活动Hook
+  const { 
+    activities: recentActivities, 
+    refreshActivities: refreshRecentActivities 
+  } = useActivities({
+    type: 'all',
+    userId: user?.id,
+    userRole: user?.role,
+    limit: 6,
+    autoRefresh: false
+  });
 
   // 获取统计数据
   const fetchStats = useCallback(async () => {
@@ -69,6 +83,8 @@ export default function Dashboard() {
     fetchStats();
   }, [fetchStats]);
 
+  // 移除重复的活动获取逻辑，使用Hook
+
   // 根据用户角色决定显示哪些卡片
   const isAdmin = user?.role === 'ADMIN';
   const isApprover = user?.role === 'APPROVER';
@@ -84,13 +100,13 @@ export default function Dashboard() {
         navigate('/my-applications');
         break;
       case 'allApplications':
-        navigate('/applications');
+        navigate('/application-management');
         break;
       case 'userManagement':
         navigate('/users');
         break;
       case 'roomManagement':
-        messageApi.info('房间管理功能开发中...');
+        navigate('/rooms');
         break;
       default:
         break;
@@ -204,10 +220,23 @@ export default function Dashboard() {
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="最近活动">
-                <p>用户张三申请了会议室A</p>
-                <p>管理员批准了李四的申请</p>
-                <p>王五取消了会议室B的预约</p>
+              <Card title="最新动态" extra={
+                <Button 
+                  type="link" 
+                  size="small" 
+                  onClick={refreshRecentActivities}
+                >
+                  刷新
+                </Button>
+              }>
+                <LatestNews
+                  activities={recentActivities}
+                  loading={false}
+                  maxItems={6}
+                  emptyText="暂无最新动态"
+                  height="calc(100vh - 350px)"
+                  minHeight="200px"
+                />
               </Card>
             </Col>
           </Row>
