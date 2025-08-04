@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Button, Space, Table, Tag, message, Alert } from 'antd';
+import { Card, Row, Col, Statistic, Button, Space, Table, Tag, message, Alert, Tooltip } from 'antd';
 import { ReloadOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
 import { formatDateTime } from '../utils/dateFormat';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
+import FixedTop from '../components/FixedTop';
 
 export default function ApplicationStatusMonitor() {
   const [stats, setStats] = useState({
@@ -86,7 +87,7 @@ export default function ApplicationStatusMonitor() {
       render: (text, record) => text || record.username,
     },
     {
-      title: '房间',
+      title: '教室',
       dataIndex: 'roomName',
       key: 'roomName',
     },
@@ -117,23 +118,24 @@ export default function ApplicationStatusMonitor() {
       key: 'action',
       width: 120,
       render: (_, record) => (
-        <Button 
-          type="link" 
-          size="small"
-          onClick={() => {
-            // 手动更新单个申请状态
-            fetch(`/api/application-status/update/${record.id}`, {
-              method: 'POST'
-            }).then(() => {
-              messageApi.success('申请状态更新成功');
-              fetchExpiringApplications();
-            }).catch(() => {
-              messageApi.error('申请状态更新失败');
-            });
-          }}
-        >
-          更新状态
-        </Button>
+        <Tooltip title="更新状态">
+          <Button 
+            type="text" 
+            size="small"
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              // 手动更新单个申请状态
+              fetch(`/api/application-status/update/${record.id}`, {
+                method: 'POST'
+              }).then(() => {
+                messageApi.success('申请状态更新成功');
+                fetchExpiringApplications();
+              }).catch(() => {
+                messageApi.error('申请状态更新失败');
+              });
+            }}
+          />
+        </Tooltip>
       ),
     },
   ];
@@ -145,7 +147,19 @@ export default function ApplicationStatusMonitor() {
         <Card>
           <Row gutter={16} style={{ marginBottom: '24px' }}>
             <Col span={24}>
-              <h2>申请状态监控</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <h2 style={{ margin: 0 }}>申请状态监控</h2>
+                <span style={{ 
+                  fontSize: '12px', 
+                  color: '#666', 
+                  fontWeight: 'normal',
+                  backgroundColor: '#f0f0f0',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}>
+                  申请记录过期后最多保留60天
+                </span>
+              </div>
               <p style={{ color: 'var(--text-color-secondary)' }}>
                 监控申请状态，自动处理过期申请
               </p>
@@ -248,20 +262,24 @@ export default function ApplicationStatusMonitor() {
                   />
                 )}
 
-                <Table
-                  columns={expiringColumns}
-                  dataSource={expiringApplications}
-                  rowKey="id"
-                  loading={loading}
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
-                  }}
-                  size="middle"
-                  scroll={{ x: 800 }}
-                />
+                <FixedTop>
+                  <Table
+                    columns={expiringColumns}
+                    dataSource={expiringApplications}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
+                    }}
+                    size="middle"
+                    scroll={{ x: 800, y: 'calc(100vh - 500px)' }}
+                    overflowX='hidden'
+                    sticky={{ offsetHeader: 0 }}
+                  />
+                </FixedTop>
               </Card>
             </Col>
           </Row>
@@ -280,7 +298,7 @@ export default function ApplicationStatusMonitor() {
                   <h4>状态更新频率：</h4>
                   <ul>
                     <li>申请状态：每5分钟自动检查一次</li>
-                    <li>房间状态：每1分钟自动检查一次</li>
+                    <li>教室状态：每1分钟自动检查一次</li>
                   </ul>
                   
                   <h4>手动操作：</h4>

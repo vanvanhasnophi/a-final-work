@@ -62,7 +62,7 @@ export default function ThemeTest() {
         <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
-              title="总房间数"
+              title="总教室数"
               value={112}
               prefix={<HomeOutlined />}
               valueStyle={{ color: 'var(--primary-color)' }}
@@ -72,7 +72,7 @@ export default function ThemeTest() {
         <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
-              title="可用房间"
+              title="可用教室"
               value={89}
               prefix={<DashboardOutlined />}
               valueStyle={{ color: 'var(--primary-color)' }}

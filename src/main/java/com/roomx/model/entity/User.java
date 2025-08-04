@@ -30,6 +30,7 @@ public class User {
     
     // 用户角色
     @Enumerated(EnumType.STRING)
+    @jakarta.persistence.Column(length = 50)
     private UserRole role;
     
     // 申请人特有字段
@@ -37,6 +38,7 @@ public class User {
     
     // 审批人特有字段
     @Enumerated(EnumType.STRING)
+    @jakarta.persistence.Column(length = 50)
     private ApproverPermission permission;
     
     // 服务人员特有字段

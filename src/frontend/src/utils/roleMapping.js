@@ -4,7 +4,7 @@ export const getRoleDisplayName = (role) => {
     'APPLIER': '申请人',
     'APPROVER': '审批人',
     'ADMIN': '管理员',
-    'SERVICE_STAFF': '服务人员',
+    'SERVICE': '服务人员',
     'MAINTAINER': '维护人员'
   };
   return roleMapping[role] || role || '普通用户';

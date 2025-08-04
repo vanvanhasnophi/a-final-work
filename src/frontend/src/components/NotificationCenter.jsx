@@ -160,7 +160,7 @@ export default function NotificationCenter({ visible, onClose }) {
     switch (type) {
       case 'system': return '系统';
       case 'application': return '申请';
-      case 'room': return '房间';
+      case 'room': return '教室';
       case 'user': return '用户';
       default: return '通知';
     }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Alert } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Alert, Modal } from 'antd';
+import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { getPermissionDisplayName } from '../utils/permissionMapping';
@@ -17,6 +17,8 @@ export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordForm] = Form.useForm();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const { updateUserInfo, refreshUserInfo } = useAuth();
@@ -107,6 +109,45 @@ export default function UserProfile() {
     form.resetFields();
   };
 
+  // 修改密码相关函数
+  const handleChangePassword = () => {
+    setPasswordModalVisible(true);
+    passwordForm.resetFields();
+  };
+
+  const handlePasswordSubmit = async (values) => {
+    try {
+      const updatePasswordData = {
+        username: userInfo.username,
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword
+      };
+      
+      await userAPI.updatePassword(updatePasswordData);
+      
+      messageApi.open({
+        type: 'success',
+        content: '密码修改成功',
+        duration: 2,
+      });
+      
+      setPasswordModalVisible(false);
+      passwordForm.resetFields();
+    } catch (error) {
+      console.error('修改密码失败:', error);
+      messageApi.open({
+        type: 'error',
+        content: '修改密码失败: ' + (error.response?.data || error.message),
+        duration: 2,
+      });
+    }
+  };
+
+  const handlePasswordCancel = () => {
+    setPasswordModalVisible(false);
+    passwordForm.resetFields();
+  };
+
   // 移除模拟活动数据，使用真实的活动服务
 
   // 根据角色获取特有字段的显示组件
@@ -148,7 +189,7 @@ export default function UserProfile() {
           </Row>
         );
       
-      case 'SERVICE_STAFF':
+      case 'SERVICE':
         return (
           <Row gutter={16}>
             <Col span={12}>
@@ -202,7 +243,7 @@ export default function UserProfile() {
           </div>
         );
       
-      case 'SERVICE_STAFF':
+      case 'SERVICE':
         return (
           <div style={{ marginBottom: '12px' }}>
             <strong>负责区域:</strong> {userInfo.serviceArea || '未设置'}
@@ -227,7 +268,7 @@ export default function UserProfile() {
       case 'ADMIN': return 'red';
       case 'APPROVER': return 'blue';
       case 'APPLIER': return 'green';
-      case 'SERVICE_STAFF': return 'orange';
+      case 'SERVICE': return 'orange';
       case 'MAINTAINER': return 'purple';
       default: return 'default';
     }
@@ -283,9 +324,14 @@ export default function UserProfile() {
                     <Button onClick={handleCancel}>取消</Button>
                   </Space>
                 ) : (
-                  <Button icon={<EditOutlined />} onClick={handleEdit}>
-                    编辑
-                  </Button>
+                  <Space>
+                    <Button icon={<EditOutlined />} onClick={handleEdit}>
+                      编辑
+                    </Button>
+                    <Button icon={<LockOutlined />} onClick={handleChangePassword}>
+                      修改密码
+                    </Button>
+                  </Space>
                 )
               }
             >
@@ -379,6 +425,78 @@ export default function UserProfile() {
           </Col>
         </Row>
       </div>
+
+      {/* 修改密码模态框 */}
+      <Modal
+        title="修改密码"
+        open={passwordModalVisible}
+        onOk={() => passwordForm.submit()}
+        onCancel={handlePasswordCancel}
+        okText="确认修改"
+        cancelText="取消"
+        maskClosable={false}
+        keyboard={false}
+        closable={false}
+      >
+        <Form
+          form={passwordForm}
+          layout="vertical"
+          onFinish={handlePasswordSubmit}
+        >
+          <Form.Item
+            name="oldPassword"
+            label="当前密码"
+            rules={[
+              { required: true, message: '请输入当前密码' },
+              { min: 6, message: '密码长度至少6位' }
+            ]}
+          >
+            <Input.Password 
+              prefix={<LockOutlined />} 
+              placeholder="请输入当前密码"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="newPassword"
+            label="新密码"
+            rules={[
+              { required: true, message: '请输入新密码' },
+              { min: 6, message: '密码长度至少6位' }
+            ]}
+          >
+            <Input.Password 
+              prefix={<LockOutlined />} 
+              placeholder="请输入新密码"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmPassword"
+            label="确认新密码"
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: '请确认新密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password 
+              prefix={<LockOutlined />} 
+              placeholder="请确认新密码"
+              size="large"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 } 

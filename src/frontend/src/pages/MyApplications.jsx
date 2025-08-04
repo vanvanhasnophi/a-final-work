@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Checkbox } from 'antd';
-import { EyeOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Checkbox, Tooltip } from 'antd';
+import { EyeOutlined, CloseOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
@@ -11,6 +11,7 @@ import { getRoomTypeDisplayName } from '../utils/roomMapping';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
+import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -88,7 +89,7 @@ export default function MyApplications() {
     return result;
   }, [executeApplications, user?.id]);
 
-  // 获取房间列表（用于下拉选择）
+  // 获取教室列表（用于下拉选择）
   const fetchRooms = useCallback(async () => {
     const result = await executeRooms(
       async () => {
@@ -97,7 +98,7 @@ export default function MyApplications() {
         return response.data.records;
       },
       {
-        errorMessage: '获取房间列表失败',
+        errorMessage: '获取教室列表失败',
         maxRetries: 0,
         retryDelay: 0,
         showRetryMessage: false
@@ -125,12 +126,12 @@ export default function MyApplications() {
     fetchApplications(newParams);
   };
 
-  // 跳转到房间列表页面进行申请
+  // 跳转到教室列表页面进行申请
   const handleAddApplication = () => {
     navigate('/rooms');
   };
 
-  // 打开查看详情抽屉
+  // 打开详情抽屉
   const handleViewDetail = (record) => {
     setDrawerType('detail');
     setCurrentApplication(record);
@@ -182,7 +183,7 @@ export default function MyApplications() {
 
   const columns = [
     {
-      title: '房间名称',
+      title: '教室名称',
       dataIndex: 'roomName',
       key: 'roomName',
     },
@@ -221,24 +222,24 @@ export default function MyApplications() {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleViewDetail(record)}
-          >
-            查看详情
-          </Button>
-          {record.status === 'PENDING' && (
+          <Tooltip title="查看详情">
             <Button 
-              type="link" 
-              icon={<CloseOutlined />} 
-              size="small" 
-              style={{ color: '#ff4d4f' }}
-              onClick={() => handleCancelApplication(record)}
-            >
-              撤销申请
-            </Button>
+              type="text" 
+              icon={<EyeOutlined />} 
+              size="small"
+              onClick={() => handleViewDetail(record)}
+            />
+          </Tooltip>
+          {record.status === 'PENDING' && (
+            <Tooltip title="撤销申请">
+              <Button 
+                type="text" 
+                icon={<DeleteOutlined />} 
+                size="small" 
+                style={{ color: '#ff4d4f' }}
+                onClick={() => handleCancelApplication(record)}
+              />
+            </Tooltip>
           )}
         </Space>
       ),
@@ -250,7 +251,21 @@ export default function MyApplications() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title="我的申请" 
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>我的申请</span>
+            <span style={{ 
+              fontSize: '12px', 
+              color: '#666', 
+              fontWeight: 'normal',
+              backgroundColor: '#f0f0f0',
+              padding: '2px 6px',
+              borderRadius: '4px'
+            }}>
+              申请记录过期后最多保留60天
+            </span>
+          </div>
+        }
         extra={
           <Space>
             <Button 
@@ -300,10 +315,10 @@ export default function MyApplications() {
           backgroundColor: 'var(--component-bg)'
         }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* 房间筛选 */}
+            {/* 教室筛选 */}
             <div style={{ minWidth: '200px' }}>
               <Select
-                placeholder="全部房间"
+                placeholder="全部教室"
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedRoom}
@@ -339,7 +354,7 @@ export default function MyApplications() {
               >
                 <Option value="PENDING">待审批</Option>
                 <Option value="APPROVED">已批准</Option>
-                <Option value="REJECTED">已拒绝</Option>
+                <Option value="REJECTED">已驳回</Option>
                 <Option value="CANCELLED">已取消</Option>
                 <Option value="COMPLETED">已完成</Option>
                 <Option value="EXPIRED">已过期</Option>
@@ -419,19 +434,36 @@ export default function MyApplications() {
             left: 0,
             right: 0,
             bottom: '60px', // 为分页组件留出空间
-            overflow: 'auto'
+            overflow: 'hidden' // 禁止容器的垂直滚动
           }}>
-            <Table
-              columns={columns}
-              dataSource={applications}
-              rowKey="id"
-              loading={applicationsLoading}
-              scroll={{ x: 1200, y: '100%' }}
-              pagination={false}
-              onChange={handleTableChange}
-              size="middle"
-              style={{ height: '100%' }}
-            />
+            <FixedTop>
+              <div style={{
+                overflowX: 'auto', // 允许水平滚动
+                overflowY: 'hidden', // 禁止垂直滚动
+                height: '100%'
+              }}>
+                <Table
+                  columns={columns}
+                  dataSource={applications}
+                  rowKey="id"
+                  loading={applicationsLoading}
+                  scroll={{ 
+                    x: 1200, 
+                    y: 'calc(100vh - 300px)',
+                    scrollToFirstRowOnChange: false
+                  }}
+                  pagination={false}
+                  onChange={handleTableChange}
+                  size="middle"
+                  style={{ 
+                    height: '100%',
+                    minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
+                  }}
+                  overflowX='hidden'
+                  sticky={{ offsetHeader: 0 }}
+                />
+              </div>
+            </FixedTop>
           </div>
           
           {/* 分页组件 - 常驻 */}
@@ -492,7 +524,7 @@ export default function MyApplications() {
         {drawerType === 'detail' && currentApplication && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <strong>申请房间：</strong>
+              <strong>申请教室：</strong>
               <span>{currentApplication.roomName}</span>
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -547,7 +579,7 @@ export default function MyApplications() {
             }}>
               <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>申请信息</h4>
               <div style={{ color: 'var(--text-color)' }}>
-                <p><strong>申请房间：</strong>{currentApplication.roomName}</p>
+                <p><strong>申请教室：</strong>{currentApplication.roomName}</p>
                 <p><strong>使用时间：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
                 <p><strong>使用原因：</strong>{currentApplication.reason}</p>
                 {currentApplication.crowd && (

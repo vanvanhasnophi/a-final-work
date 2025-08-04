@@ -121,7 +121,11 @@ export const AuthProvider = ({ children }) => {
         role
       };
       
-      // 保存到localStorage
+      // 清除旧的token和用户信息
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // 保存新的token和用户信息到localStorage
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(userData));
       
@@ -138,6 +142,18 @@ export const AuthProvider = ({ children }) => {
         token: newToken,
         user: userData
       });
+      
+      // 验证token是否正确设置
+      setTimeout(() => {
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        console.log('AuthContext: 延迟验证 - 存储的token:', storedToken);
+        console.log('AuthContext: 延迟验证 - 存储的用户:', storedUser);
+        
+        if (storedToken !== newToken) {
+          console.error('AuthContext: Token存储不一致!');
+        }
+      }, 100);
       
       return { success: true };
     } catch (error) {

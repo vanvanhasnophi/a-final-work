@@ -2,16 +2,17 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Table, Card, Button, Space, Form, Input, DatePicker, Select, 
   message, Alert, Tag, Pagination, Result, Drawer, Descriptions, 
-  Divider 
+  Divider, Tooltip 
 } from 'antd';
 import { 
   EyeOutlined, ReloadOutlined, 
-  CheckOutlined, UndoOutlined
+  CheckOutlined, UndoOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
+import FixedTop from '../components/FixedTop';
 
 import { 
   canViewAllApplications, canViewOwnApplications, canApproveApplication, 
@@ -136,7 +137,7 @@ export default function ApplicationManagement() {
     fetchApplications(newParams);
   };
 
-  // 打开查看详情抽屉
+  // 打开详情抽屉
   const handleViewDetail = (record) => {
     setDrawerType('detail');
     setCurrentApplication(record);
@@ -179,7 +180,7 @@ export default function ApplicationManagement() {
               reason: values.reason
             };
             const response = await applicationAPI.approveApplication(approvalData);
-            messageApi.success(values.approved ? '申请已批准' : '申请已拒绝');
+            messageApi.success(values.approved ? '申请已批准' : '申请已驳回');
             handleCloseDrawer();
             fetchApplications();
             return response;
@@ -260,7 +261,7 @@ export default function ApplicationManagement() {
 
   const columns = [
     {
-      title: '房间名称',
+      title: '教室名称',
       dataIndex: 'roomName',
       key: 'roomName',
     },
@@ -308,34 +309,34 @@ export default function ApplicationManagement() {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EyeOutlined />} 
-            size="small"
-            onClick={() => handleViewDetail(record)}
-          >
-            查看详情
-          </Button>
-          {canApprove && record.status === 'PENDING' && (
+          <Tooltip title="查看详情">
             <Button 
-              type="link" 
-              icon={<CheckOutlined />} 
-              size="small" 
-              style={{ color: '#52c41a' }}
-              onClick={() => handleApprove(record)}
-            >
-              审批
-            </Button>
+              type="text" 
+              icon={<EyeOutlined />} 
+              size="small"
+              onClick={() => handleViewDetail(record)}
+            />
+          </Tooltip>
+          {canApprove && record.status === 'PENDING' && (
+            <Tooltip title="审批申请">
+              <Button 
+                type="text" 
+                icon={<CheckOutlined />} 
+                size="small" 
+                style={{ color: '#52c41a' }}
+                onClick={() => handleApprove(record)}
+              />
+            </Tooltip>
           )}
           {canCancel && record.status === 'PENDING' && (
-            <Button 
-              type="link" 
-              icon={<UndoOutlined />} 
-              size="small"
-              onClick={() => handleCancel(record)}
-            >
-              撤销
-            </Button>
+            <Tooltip title="撤销申请">
+              <Button 
+                type="text" 
+                icon={<DeleteOutlined />} 
+                size="small"
+                onClick={() => handleCancel(record)}
+              />
+            </Tooltip>
           )}
         </Space>
       ),
@@ -347,7 +348,21 @@ export default function ApplicationManagement() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Card 
-          title="申请管理" 
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>申请管理</span>
+              <span style={{ 
+                fontSize: '12px', 
+                color: '#666', 
+                fontWeight: 'normal',
+                backgroundColor: '#f0f0f0',
+                padding: '2px 6px',
+                borderRadius: '4px'
+              }}>
+                申请记录过期后最多保留60天
+              </span>
+            </div>
+          }
           extra={
             <Space>
               <Button 
@@ -371,10 +386,10 @@ export default function ApplicationManagement() {
             backgroundColor: 'var(--component-bg)'
           }}>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              {/* 房间搜索 */}
+              {/* 教室搜索 */}
               <div style={{ minWidth: '200px' }}>
                 <Input
-                  placeholder="搜索房间名称"
+                  placeholder="搜索教室名称"
                   allowClear
                   style={{ width: '100%' }}
                   value={roomSearch.searchValue}
@@ -412,7 +427,7 @@ export default function ApplicationManagement() {
                 >
                   <Option value="PENDING">待审批</Option>
                   <Option value="APPROVED">已批准</Option>
-                  <Option value="REJECTED">已拒绝</Option>
+                  <Option value="REJECTED">已驳回</Option>
                   <Option value="CANCELLED">已取消</Option>
                   <Option value="COMPLETED">已完成</Option>
                   <Option value="EXPIRED">已过期</Option>
@@ -507,19 +522,36 @@ export default function ApplicationManagement() {
               left: 0,
               right: 0,
               bottom: '60px',
-              overflow: 'auto'
+              overflow: 'hidden' // 禁止容器的垂直滚动
             }}>
-              <Table
-                columns={columns}
-                dataSource={applications}
-                rowKey="id"
-                loading={applicationsLoading}
-                scroll={{ x: 1200, y: '100%' }}
-                pagination={false}
-                onChange={handleTableChange}
-                size="middle"
-                style={{ height: '100%' }}
-              />
+              <FixedTop>
+                <div style={{
+                  overflowX: 'auto', // 允许水平滚动
+                  overflowY: 'hidden', // 禁止垂直滚动
+                  height: '100%'
+                }}>
+                  <Table
+                    columns={columns}
+                    dataSource={applications}
+                    rowKey="id"
+                    loading={applicationsLoading}
+                    scroll={{ 
+                      x: 1200, 
+                      y: 'calc(100vh - 300px)',
+                      scrollToFirstRowOnChange: false
+                    }}
+                    pagination={false}
+                    onChange={handleTableChange}
+                    size="middle"
+                    style={{ 
+                      height: '100%',
+                      minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
+                    }}
+                    overflowX='hidden'
+                    sticky={{ offsetHeader: 0 }}
+                  />
+                </div>
+              </FixedTop>
             </div>
             
             {/* 分页组件 */}
@@ -581,7 +613,7 @@ export default function ApplicationManagement() {
           {drawerType === 'detail' && currentApplication && (
             <Descriptions column={1} bordered>
               <Descriptions.Item label="申请人">{currentApplication.username}</Descriptions.Item>
-              <Descriptions.Item label="房间名称">{currentApplication.roomName}</Descriptions.Item>
+              <Descriptions.Item label="教室名称">{currentApplication.roomName}</Descriptions.Item>
               <Descriptions.Item label="开始时间">{formatDateTime(currentApplication.startTime)}</Descriptions.Item>
               <Descriptions.Item label="结束时间">{formatDateTime(currentApplication.endTime)}</Descriptions.Item>
               <Descriptions.Item label="状态">
@@ -600,7 +632,7 @@ export default function ApplicationManagement() {
             <div>
               <Descriptions column={1} bordered style={{ marginBottom: 16 }}>
                 <Descriptions.Item label="申请人">{currentApplication.username}</Descriptions.Item>
-                <Descriptions.Item label="房间名称">{currentApplication.roomName}</Descriptions.Item>
+                <Descriptions.Item label="教室名称">{currentApplication.roomName}</Descriptions.Item>
                 <Descriptions.Item label="时间">
                   {formatDateTime(currentApplication.startTime)} - {formatDateTime(currentApplication.endTime)}
                 </Descriptions.Item>

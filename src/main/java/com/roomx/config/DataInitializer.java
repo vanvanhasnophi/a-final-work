@@ -164,7 +164,7 @@ public class DataInitializer implements CommandLineRunner {
         serviceStaff1.setNickname("服务人员1");
         serviceStaff1.setEmail("service1@tsinghua.edu.cn");
         serviceStaff1.setPhone("13277255983");
-        serviceStaff1.setRole(UserRole.SERVICE_STAFF);
+        serviceStaff1.setRole(UserRole.SERVICE);
         serviceStaff1.setServiceArea("前台服务");
         serviceStaff1.setCreateTime(new Date());
         serviceStaff1.setLastLoginTime(new Date());
@@ -176,7 +176,7 @@ public class DataInitializer implements CommandLineRunner {
         serviceStaff2.setNickname("服务人员2");
         serviceStaff2.setEmail("service2@tsinghua.edu.cn");
         serviceStaff2.setPhone("13662255983");
-        serviceStaff2.setRole(UserRole.SERVICE_STAFF);
+        serviceStaff2.setRole(UserRole.SERVICE);
         serviceStaff2.setServiceArea("后勤服务");
         serviceStaff2.setCreateTime(new Date());
         serviceStaff2.setLastLoginTime(new Date());

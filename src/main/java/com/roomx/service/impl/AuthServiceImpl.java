@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
                     user.setServiceArea(null);
                     break;
                 }
-                case SERVICE_STAFF : {  
+                case SERVICE : {  
                     user.setServiceArea(userRegisterDTO.getServiceArea());
                     user.setDepartment(null);
                     user.setPermission(null);

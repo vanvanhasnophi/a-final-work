@@ -88,3 +88,173 @@ code {
   /* 确保内容不会覆盖滚动条 */
   box-sizing: border-box;
 }
+
+/* 禁用按钮样式 */
+.ant-btn[disabled],
+.ant-btn[disabled]:hover,
+.ant-btn[disabled]:focus,
+.ant-btn[disabled]:active {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: rgba(0, 0, 0, 0.25) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 禁用按钮的图标样式 */
+.ant-btn[disabled] .anticon {
+  opacity: 0.5 !important;
+}
+
+/* 危险按钮禁用状态 */
+.ant-btn-dangerous[disabled],
+.ant-btn-dangerous[disabled]:hover,
+.ant-btn-dangerous[disabled]:focus,
+.ant-btn-dangerous[disabled]:active {
+  opacity: 0.5 !important;
+  color: rgba(0, 0, 0, 0.25) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+
+
+/* 文本按钮禁用状态 */
+.ant-btn-text[disabled],
+.ant-btn-text[disabled]:hover,
+.ant-btn-text[disabled]:focus,
+.ant-btn-text[disabled]:active {
+  opacity: 0.5 !important;
+  color: rgba(0, 0, 0, 0.25) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 确保禁用按钮没有hover效果 */
+.ant-btn[disabled]:hover {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 深色模式下禁用按钮无hover效果 */
+[data-theme="dark"] .ant-btn[disabled]:hover,
+[data-theme="dark"] .ant-btn[disabled]:focus,
+[data-theme="dark"] .ant-btn[disabled]:active {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: rgba(255, 255, 255, 0.25) !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 危险按钮hover效果 */
+.ant-btn-dangerous:hover {
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
+}
+
+.ant-btn-dangerous.ant-btn-text:hover {
+  background-color: rgba(255, 77, 79, 0.1) !important;
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
+}
+
+/* 深色模式下危险按钮hover效果 */
+[data-theme="dark"] .ant-btn-dangerous:hover {
+  border-color: #ff7875 !important;
+  color: #ff7875 !important;
+}
+
+[data-theme="dark"] .ant-btn-dangerous.ant-btn-text:hover {
+  background-color: rgba(255, 120, 117, 0.1) !important;
+  border-color: #ff7875 !important;
+  color: #ff7875 !important;
+}
+
+/* Tooltip箭头和内容颜色保持一致 */
+.ant-tooltip .ant-tooltip-arrow::before {
+  background: inherit !important;
+}
+
+.ant-tooltip .ant-tooltip-inner {
+  background: inherit !important;
+}
+
+/* Tooltip样式 - 浅色和深色模式保持一致 */
+.ant-tooltip {
+  z-index: 9999 !important;
+}
+
+.ant-tooltip .ant-tooltip-inner {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+}
+
+.ant-tooltip .ant-tooltip-arrow::before {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Modal弹窗样式 - 确保在最前面 */
+.ant-modal {
+  z-index: 10000 !important;
+}
+
+.ant-modal-mask {
+  z-index: 9999 !important;
+}
+
+.ant-modal-wrap {
+  z-index: 10000 !important;
+}
+
+/* 删除对话框确认按钮强制样式 */
+.ant-modal .ant-btn-dangerous {
+  background-color: #ff0000 !important;
+  border-color: #ff0000 !important;
+  color: #ffffff !important;
+}
+
+.ant-modal .ant-btn-dangerous:hover {
+  background-color: #ff3333 !important;
+  border-color: #ff3333 !important;
+  color: #ffffff !important;
+}
+
+.ant-modal .ant-btn-dangerous:focus {
+  background-color: #ff3333 !important;
+  border-color: #ff3333 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.2) !important;
+}
+
+/* 深色模式下删除对话框确认按钮强制样式 */
+[data-theme="dark"] .ant-modal .ant-btn-dangerous {
+  background-color: #ff0000 !important;
+  border-color: #ff0000 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-modal .ant-btn-dangerous:hover {
+  background-color: #ff3333 !important;
+  border-color: #ff3333 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-modal .ant-btn-dangerous:focus {
+  background-color: #ff3333 !important;
+  border-color: #ff3333 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.2) !important;
+}

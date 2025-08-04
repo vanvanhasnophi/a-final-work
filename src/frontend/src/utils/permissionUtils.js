@@ -6,17 +6,17 @@ export const UserRole = {
   ADMIN: 'ADMIN',
   APPLIER: 'APPLIER',
   APPROVER: 'APPROVER',
-  SERVICE_STAFF: 'SERVICE_STAFF',
+  SERVICE: 'SERVICE',
   MAINTAINER: 'MAINTAINER'
 };
 
 // 权限定义
 export const Permissions = {
-  // 房间管理权限
+  // 教室管理权限
   ROOM_CREATE: [UserRole.ADMIN],
   ROOM_UPDATE: [UserRole.ADMIN],
   ROOM_DELETE: [UserRole.ADMIN],
-  ROOM_VIEW: [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
+  ROOM_VIEW: [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER],
   
   // 申请管理权限
   APPLICATION_CREATE: [UserRole.APPLIER, UserRole.ADMIN],
@@ -32,16 +32,16 @@ export const Permissions = {
   USER_DELETE: [UserRole.ADMIN],
   
   // 通知管理权限
-  NOTIFICATION_VIEW: [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER]
+  NOTIFICATION_VIEW: [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER]
 };
 
 // 页面权限定义
 export const PagePermissions = {
-  'dashboard': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
-  'profile': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
-  'notifications': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
+  'dashboard': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER],
+  'profile': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER],
+  'notifications': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER],
   'user-management': [UserRole.ADMIN],
-  'rooms': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
+  'rooms': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER],
   'application-management': [UserRole.ADMIN, UserRole.APPROVER],
   'my-applications': [UserRole.APPLIER]
 };
@@ -57,28 +57,28 @@ export function hasPermission(userRole, requiredRoles) {
 }
 
 /**
- * 检查用户是否有房间创建权限
+ * 检查用户是否有教室创建权限
  */
 export function canCreateRoom(userRole) {
   return hasPermission(userRole, Permissions.ROOM_CREATE);
 }
 
 /**
- * 检查用户是否有房间更新权限
+ * 检查用户是否有教室更新权限
  */
 export function canUpdateRoom(userRole) {
   return hasPermission(userRole, Permissions.ROOM_UPDATE);
 }
 
 /**
- * 检查用户是否有房间删除权限
+ * 检查用户是否有教室删除权限
  */
 export function canDeleteRoom(userRole) {
   return hasPermission(userRole, Permissions.ROOM_DELETE);
 }
 
 /**
- * 检查用户是否有房间查看权限
+ * 检查用户是否有教室查看权限
  */
 export function canViewRoom(userRole) {
   return hasPermission(userRole, Permissions.ROOM_VIEW);
@@ -190,7 +190,7 @@ export function getRoleColor(role) {
       return '#A5C4A5CC'; // 莫兰迪绿色
     case UserRole.APPROVER:
       return '#A5B8D4CC'; // 莫兰迪蓝色
-    case UserRole.SERVICE_STAFF:
+    case UserRole.SERVICE:
       return '#D4C4A5CC'; // 莫兰迪橙色
     case UserRole.MAINTAINER:
       return '#C4A5D4CC'; // 莫兰迪紫色
@@ -214,26 +214,26 @@ export function getRoleMenuConfig(userRole) {
     case UserRole.ADMIN:
       roleSpecificMenu.push(
         { key: 'user-management', label: '用户管理', icon: 'TeamOutlined' },
-        { key: 'rooms', label: '房间管理', icon: 'HomeOutlined' },
+        { key: 'rooms', label: '教室管理', icon: 'HomeOutlined' },
         { key: 'application-management', label: '申请管理', icon: 'FileTextOutlined' }
       );
       break;
     case UserRole.APPLIER:
       roleSpecificMenu.push(
         { key: 'my-applications', label: '我的申请', icon: 'FormOutlined' },
-        { key: 'rooms', label: '房间列表', icon: 'HomeOutlined' }
+        { key: 'rooms', label: '教室列表', icon: 'HomeOutlined' }
       );
       break;
     case UserRole.APPROVER:
       roleSpecificMenu.push(
         { key: 'application-management', label: '申请管理', icon: 'FileTextOutlined' },
-        { key: 'rooms', label: '房间列表', icon: 'HomeOutlined' }
+        { key: 'rooms', label: '教室列表', icon: 'HomeOutlined' }
       );
       break;
-    case UserRole.SERVICE_STAFF:
+    case UserRole.SERVICE:
     case UserRole.MAINTAINER:
       roleSpecificMenu.push(
-        { key: 'rooms', label: '房间列表', icon: 'HomeOutlined' }
+        { key: 'rooms', label: '教室列表', icon: 'HomeOutlined' }
       );
       break;
   }

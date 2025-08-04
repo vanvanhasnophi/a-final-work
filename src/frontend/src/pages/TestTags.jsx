@@ -19,7 +19,7 @@ export default function TestTags() {
           </div>
 
           <div>
-            <Title level={5}>房间状态标签</Title>
+            <Title level={5}>教室状态标签</Title>
             <Space wrap>
               <Tag color="success">空闲</Tag>
               <Tag color="warning">使用中</Tag>
@@ -44,7 +44,7 @@ export default function TestTags() {
               <Tag color="processing">APPLIER</Tag>
               <Tag color="processing">APPROVER</Tag>
               <Tag color="warning">MAINTAINER</Tag>
-              <Tag color="processing">SERVICE_STAFF</Tag>
+              <Tag color="processing">SERVICE</Tag>
               <Tag color="error">ADMIN</Tag>
             </Space>
           </div>

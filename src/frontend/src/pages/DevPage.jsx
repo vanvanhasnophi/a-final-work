@@ -160,7 +160,7 @@ export default function DevPage() {
             onClick={() => navigate('/rooms')}
             style={{ borderColor: 'var(--ant-color-green-6)', color: 'var(--ant-color-green-6)' }}
           >
-            房间管理
+            教室管理
           </Button>
           <Button 
             type="default" 

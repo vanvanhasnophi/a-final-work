@@ -46,7 +46,7 @@ export default function ActivityManagement() {
 
     const testRoom = {
       id: Date.now(),
-      name: '测试房间'
+      name: '测试教室'
     };
 
     // 生成不同类型的测试活动
@@ -85,7 +85,7 @@ export default function ActivityManagement() {
               <Option value="all">全部活动</Option>
               <Option value="user">用户活动</Option>
               <Option value="application">申请活动</Option>
-              <Option value="room">房间活动</Option>
+              <Option value="room">教室活动</Option>
               <Option value="system">系统活动</Option>
             </Select>
           </Col>
