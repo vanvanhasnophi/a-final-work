@@ -6,6 +6,7 @@
   --background-color: #F2F2F2;
   --component-bg: #FFFFFF;
   --component-bg-elevated: #FFFFFF;
+  --table-header-bg: #F8F9FA;
   --text-color: #000000;
   --text-color-secondary: #666666;
   --text-color-tertiary: #999999;
@@ -28,9 +29,10 @@
   --primary-color: #990CAE;
   --primary-hover: #B30FCC;
   --primary-active: #7A0A8A;
-  --background-color: #1E1F22;
+  --background-color: #161618;
   --component-bg: #2B2D31;
   --component-bg-elevated: #2B2D31;
+  --table-header-bg: #1F2023;
   --text-color: #FFFFFF;
   --text-color-secondary: #CCCCCC;
   --text-color-tertiary: #999999;
@@ -39,7 +41,7 @@
   --border-color-secondary: #3C3F45;
   --fill-color: #3C3F45;
   --fill-color-secondary: #2B2D31;
-  --fill-color-tertiary: #1E1F22;
+  --fill-color-tertiary: #161618;
   --fill-color-quaternary: #3C3F45;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-secondary: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -208,21 +210,207 @@ body {
 .ant-table {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
+  border-radius: 0 !important;
+  overflow: auto !important;
 }
 
-.ant-table-thead > tr > th {
-  background-color: var(--component-bg) !important;
-  color: var(--text-color) !important;
-  border-bottom: 1px solid var(--border-color) !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 2 !important;
-}
+
 
 .ant-table-tbody > tr > td {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
   border-bottom: 1px solid var(--border-color) !important;
+  border-radius: 0 !important;
+}
+
+/* 表格容器样式 */
+.ant-table-container {
+  border-radius: 0 !important;
+  overflow: auto !important;
+}
+
+.ant-table-content {
+  border-radius: 0 !important;
+  overflow: auto !important;
+}
+
+/* 表格包装器样式 */
+.ant-table-wrapper {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table-container {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table-content {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table-header {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table-body {
+  border-radius: 0 !important;
+}
+
+/* 表格容器横向滚动条常驻 */
+.ant-table-wrapper .ant-table-body {
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+}
+
+/* 表格内容区域横向滚动条常驻 */
+.ant-table-content {
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+}
+
+/* 表格表头吸顶样式 - 参考知乎设计 */
+.ant-table-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background-color: var(--table-header-bg) !important;
+  overflow: visible !important;
+  /* 添加阴影效果 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  /* 确保边框 */
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ant-table-thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background-color: var(--table-header-bg) !important;
+}
+
+.ant-table-thead > tr {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+.ant-table-thead > tr > th {
+  background-color: var(--table-header-bg) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  border-radius: 0 !important;
+  /* 确保表头单元格背景 */
+  background-color: var(--table-header-bg) !important;
+  /* 添加字体权重 */
+  font-weight: 600 !important;
+  /* 确保边框 */
+  border-right: 1px solid var(--border-color) !important;
+}
+
+.ant-table-thead > tr > th:last-child {
+  border-right: none !important;
+}
+
+/* 深色模式表头吸顶 */
+[data-theme="dark"] .ant-table-header {
+  background-color: var(--table-header-bg) !important;
+  overflow: visible !important;
+  /* 深色模式阴影 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .ant-table-thead {
+  background-color: var(--table-header-bg) !important;
+}
+
+[data-theme="dark"] .ant-table-thead > tr > th {
+  background-color: var(--table-header-bg) !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  border-radius: 0 !important;
+  font-weight: 600 !important;
+  border-right: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .ant-table-thead > tr > th:last-child {
+  border-right: none !important;
+}
+
+/* 表格滚动容器横向滚动条常驻 */
+.ant-table-scroll {
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+}
+
+/* 表格滚动容器内容横向滚动条常驻 */
+.ant-table-scroll .ant-table-body {
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+}
+
+/* 表格滚动条样式 */
+.ant-table-body {
+  overflow: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(20, 20, 20, 0.3) transparent !important;
+  /* 确保横向滚动条始终显示 */
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+}
+
+.ant-table-body::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: transparent !important;
+}
+
+.ant-table-body::-webkit-scrollbar-track {
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-radius: 6px !important;
+  border: 2px solid transparent !important;
+  background-clip: content-box !important;
+  min-height: 20px !important;
+  min-width: 20px !important;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5) !important;
+  background-clip: content-box !important;
+}
+
+.ant-table-body::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* 深色模式下的表格滚动条 */
+[data-theme="dark"] .ant-table-body {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent !important;
+}
+
+[data-theme="dark"] .ant-table-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3) !important;
+  background-clip: content-box !important;
+}
+
+[data-theme="dark"] .ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5) !important;
+  background-clip: content-box !important;
 }
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
@@ -230,19 +418,61 @@ body {
 /* 深色模式下的表格特殊样式 */
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
-[data-theme="dark"] .ant-table-thead > tr > th {
-  background-color: #2B2D31 !important;
+[data-theme="dark"] .ant-table {
+  background-color: #232428 !important;
   color: #FFFFFF !important;
-  border-bottom: 1px solid #3C3F45 !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 2 !important;
+  border-radius: 0 !important;
+  overflow: auto !important;
 }
 
+
+
 [data-theme="dark"] .ant-table-tbody > tr > td {
-  background-color: #2B2D31 !important;
+  background-color: #232428 !important;
   color: #FFFFFF !important;
-  border-bottom: 1px solid #3C3F45 !important;
+  border-bottom: 1px solid #2F3136 !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .ant-table-container {
+  border-radius: 0 !important;
+  overflow: auto !important;
+}
+
+[data-theme="dark"] .ant-table-content {
+  border-radius: 0 !important;
+  overflow: auto !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper {
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table {
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-container {
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-content {
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-header {
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-body {
+  border-radius: 0 !important;
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+}
+
+[data-theme="dark"] .ant-table-content {
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
 }
 
 /* 空状态样式 */
@@ -272,10 +502,68 @@ body {
   color: var(--text-color) !important;
 }
 
+/* 菜单项激活状态 */
+.ant-menu-item-selected {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.ant-menu-item-selected:hover {
+  background-color: #8A0B9E !important;
+  color: #ffffff !important;
+}
+
+.ant-menu-item-selected:active {
+  background-color: var(--primary-active) !important;
+  color: #ffffff !important;
+}
+
+/* 菜单项悬停状态 */
+.ant-menu-item:hover {
+  background-color: rgba(102, 8, 116, 0.1) !important;
+  color: var(--primary-color) !important;
+}
+
+/* 菜单项激活时的图标 */
+.ant-menu-item-selected .anticon {
+  color: #ffffff !important;
+}
+
+/* 菜单项悬停时的图标 */
+.ant-menu-item:hover .anticon {
+  color: var(--primary-color) !important;
+}
+
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
 /* 深色模式下的菜单特殊样式 */
-/* 移除强制主题色设置，使用 Ant Design 默认主题 */
+[data-theme="dark"] .ant-menu-item-selected {
+  background-color: #990CAE !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-menu-item-selected:hover {
+  background-color: #C02CD8 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-menu-item-selected:active {
+  background-color: #7A0A8A !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-menu-item:hover {
+  background-color: rgba(153, 12, 174, 0.1) !important;
+  color: #990CAE !important;
+}
+
+[data-theme="dark"] .ant-menu-item-selected .anticon {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-menu-item:hover .anticon {
+  color: #990CAE !important;
+}
 
 /* 下拉菜单样式 */
 .ant-dropdown-menu {
@@ -354,6 +642,32 @@ body {
   color: var(--text-color) !important;
 }
 
+.ant-pagination-prev,
+.ant-pagination-next,
+.ant-pagination-jump-prev,
+.ant-pagination-jump-next {
+  border-radius: 4px !important;
+}
+
+/* 分页按钮激活状态 */
+.ant-pagination-item-active {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.ant-pagination-item-active:hover {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #ffffff !important;
+}
+
+.ant-pagination-item-active:active {
+  background-color: var(--primary-active) !important;
+  border-color: var(--primary-active) !important;
+  color: #ffffff !important;
+}
+
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
 /* 深色模式下的分页特殊样式 */
@@ -362,10 +676,38 @@ body {
 }
 
 [data-theme="dark"] .ant-pagination-item {
-  background-color: #2B2D31 !important;
-  border: 1px solid #3C3F45 !important;
+  background-color: #232428 !important;
+  border: 1px solid #2F3136 !important;
   color: #FFFFFF !important;
 }
+
+[data-theme="dark"] .ant-pagination-prev,
+[data-theme="dark"] .ant-pagination-next,
+[data-theme="dark"] .ant-pagination-jump-prev,
+[data-theme="dark"] .ant-pagination-jump-next {
+  border-radius: 4px !important;
+}
+
+/* 深色模式分页按钮激活状态 */
+[data-theme="dark"] .ant-pagination-item-active {
+  background-color: #990CAE !important;
+  border-color: #990CAE !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-pagination-item-active:hover {
+  background-color: #B30FCC !important;
+  border-color: #B30FCC !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-pagination-item-active:active {
+  background-color: #7A0A8A !important;
+  border-color: #7A0A8A !important;
+  color: #ffffff !important;
+}
+
+
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
@@ -453,7 +795,7 @@ body {
 
 /* 深色模式下的分割线特殊样式 */
 [data-theme="dark"] .ant-divider {
-  border-color: #3C3F45 !important;
+  border-color: #2F3136 !important;
 }
 
 [data-theme="dark"] .ant-divider-inner-text {

@@ -45,4 +45,16 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     
     // 按天筛选使用时间范围（带房间ID）
     List<Application> findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndRoomId(Date startDate, Date endDate, Long roomId);
+    
+    // 查询房间在当前时间段内的已批准申请
+    List<Application> findByRoomIdAndStatusAndStartTimeBeforeAndEndTimeAfter(Long roomId, ApplicationStatus status, Date startTime, Date endTime);
+    
+    // 查询房间在指定时间范围内的已批准申请
+    List<Application> findByRoomIdAndStatusAndStartTimeBetween(Long roomId, ApplicationStatus status, Date startTime, Date endTime);
+    
+    // 查询房间在指定时间范围内结束的已批准申请
+    List<Application> findByRoomIdAndStatusAndEndTimeBetween(Long roomId, ApplicationStatus status, Date startTime, Date endTime);
+    
+    // 查询指定状态和时间范围内的申请
+    List<Application> findByStatusAndStartTimeBetween(ApplicationStatus status, Date startTime, Date endTime);
 }

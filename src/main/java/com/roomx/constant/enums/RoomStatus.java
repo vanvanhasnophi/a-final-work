@@ -6,6 +6,8 @@ public enum RoomStatus {
     USING(2), // 已签到使用
     MAINTENANCE(3), // 维修中
     CLEANING(4), // 清洁中
+    PENDING_CLEANING(5), // 待清洁
+    PENDING_MAINTENANCE(6), // 待维修
     UNAVAILABLE(-1); // 不可用
 
     private final int code;

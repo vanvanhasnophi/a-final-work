@@ -1,9 +1,11 @@
 com/roomx/config/DataInitializer.class
 com/roomx/service/impl/UserServiceImpl.class
 com/roomx/repository/UserRepository.class
+com/roomx/controller/RoomStatusController.class
 com/roomx/model/dto/RoomQuery.class
+com/roomx/controller/ApplicationStatusController$ApplicationStatusStats.class
 com/roomx/controller/ApplicationController.class
-com/roomx/service/impl/UserServiceImpl$1.class
+com/roomx/controller/ApplicationStatusController.class
 com/roomx/exception/ApplicationNotFoundException.class
 com/roomx/controller/ConcurrencyTestController.class
 com/roomx/model/dto/UserTokenDTO.class
@@ -27,6 +29,7 @@ com/roomx/model/dto/UserUpdatePasswordDTO.class
 com/roomx/model/entity/Room.class
 com/roomx/repository/NotificationRepository.class
 com/roomx/App.class
+com/roomx/service/RoomStatusSchedulerService.class
 com/roomx/utils/NotificationUtil.class
 com/roomx/constant/enums/UserRole.class
 com/roomx/constant/enums/ApplicationStatus.class
@@ -48,6 +51,7 @@ com/roomx/controller/AuthController.class
 com/roomx/service/impl/NotificationServiceImpl.class
 com/roomx/service/impl/AuthServiceImpl.class
 com/roomx/model/entity/Application.class
+com/roomx/controller/RoomStatusController$RoomStatusStats.class
 com/roomx/service/impl/AuthServiceImpl$1.class
 com/roomx/model/dto/NotificationDTO.class
 com/roomx/utils/ConcurrencyTestUtil.class

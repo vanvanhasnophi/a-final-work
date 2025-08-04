@@ -82,17 +82,14 @@ const RoleBasedLayout = ({ children }) => {
       case 'user-management':
         navigate('/user-management');
         break;
-      case 'room-management':
-        navigate('/room-management');
+      case 'rooms':
+        navigate('/rooms');
         break;
       case 'application-management':
         navigate('/application-management');
         break;
       case 'my-applications':
         navigate('/my-applications');
-        break;
-      case 'room-list':
-        navigate('/room-list');
         break;
       case 'user-list':
         navigate('/user-list');
@@ -144,7 +141,11 @@ const RoleBasedLayout = ({ children }) => {
           borderRight: `1px solid ${token.colorBorder}`,
           display: 'flex',
           flexDirection: 'column',
-          height: '100vh'
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          zIndex: 1000
         }}
       >
         <div 
@@ -164,7 +165,7 @@ const RoleBasedLayout = ({ children }) => {
           </Text>
         </div>
         
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ flex: 1, overflow: 'auto' }} className="custom-scrollbar">
           <Menu
             mode="inline"
             selectedKeys={getSelectedKeys()}
@@ -296,7 +297,10 @@ const RoleBasedLayout = ({ children }) => {
         </div>
       </Sider>
       
-      <Layout>
+      <Layout style={{ 
+        marginLeft: collapsed ? '80px' : '200px',
+        transition: 'margin-left 0.2s'
+      }}>
         <Content style={{ 
           margin: '16px',
           padding: '24px',

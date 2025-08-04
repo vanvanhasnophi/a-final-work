@@ -274,7 +274,7 @@ export default function NotificationCenter({ visible, onClose }) {
         )
       }
     >
-      <div style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }}>
+              <div style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }} className="custom-scrollbar">
         {notifications.length > 0 ? (
           <List
             dataSource={notifications}

@@ -21,7 +21,7 @@ export const Permissions = {
   // 申请管理权限
   APPLICATION_CREATE: [UserRole.APPLIER, UserRole.ADMIN],
   APPLICATION_VIEW_ALL: [UserRole.ADMIN, UserRole.APPROVER],
-  APPLICATION_VIEW_OWN: [UserRole.APPLIER, UserRole.ADMIN, UserRole.APPROVER],
+  APPLICATION_VIEW_OWN: [UserRole.APPLIER],
   APPLICATION_APPROVE: [UserRole.ADMIN, UserRole.APPROVER],
   APPLICATION_CANCEL: [UserRole.APPLIER, UserRole.ADMIN, UserRole.APPROVER],
   
@@ -41,10 +41,9 @@ export const PagePermissions = {
   'profile': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
   'notifications': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
   'user-management': [UserRole.ADMIN],
-  'room-management': [UserRole.ADMIN],
+  'rooms': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER],
   'application-management': [UserRole.ADMIN, UserRole.APPROVER],
-  'my-applications': [UserRole.APPLIER],
-  'room-list': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE_STAFF, UserRole.MAINTAINER]
+  'my-applications': [UserRole.APPLIER]
 };
 
 /**
@@ -181,22 +180,22 @@ export function getAccessiblePages(userRole) {
 
 
 /**
- * 获取用户角色的颜色
+ * 获取用户角色的颜色 - 莫兰迪色调（80%透明度）
  */
 export function getRoleColor(role) {
   switch (role) {
     case UserRole.ADMIN:
-      return 'red';
+      return '#D4A5A5CC'; // 莫兰迪红色
     case UserRole.APPLIER:
-      return 'green';
+      return '#A5C4A5CC'; // 莫兰迪绿色
     case UserRole.APPROVER:
-      return 'blue';
+      return '#A5B8D4CC'; // 莫兰迪蓝色
     case UserRole.SERVICE_STAFF:
-      return 'orange';
+      return '#D4C4A5CC'; // 莫兰迪橙色
     case UserRole.MAINTAINER:
-      return 'purple';
+      return '#C4A5D4CC'; // 莫兰迪紫色
     default:
-      return 'default';
+      return '#B8B8B8CC'; // 莫兰迪灰色
   }
 }
 
@@ -215,26 +214,26 @@ export function getRoleMenuConfig(userRole) {
     case UserRole.ADMIN:
       roleSpecificMenu.push(
         { key: 'user-management', label: '用户管理', icon: 'TeamOutlined' },
-        { key: 'room-management', label: '房间管理', icon: 'HomeOutlined' },
+        { key: 'rooms', label: '房间管理', icon: 'HomeOutlined' },
         { key: 'application-management', label: '申请管理', icon: 'FileTextOutlined' }
       );
       break;
     case UserRole.APPLIER:
       roleSpecificMenu.push(
         { key: 'my-applications', label: '我的申请', icon: 'FormOutlined' },
-        { key: 'room-list', label: '房间列表', icon: 'HomeOutlined' }
+        { key: 'rooms', label: '房间列表', icon: 'HomeOutlined' }
       );
       break;
     case UserRole.APPROVER:
       roleSpecificMenu.push(
         { key: 'application-management', label: '申请管理', icon: 'FileTextOutlined' },
-        { key: 'room-list', label: '房间列表', icon: 'HomeOutlined' }
+        { key: 'rooms', label: '房间列表', icon: 'HomeOutlined' }
       );
       break;
     case UserRole.SERVICE_STAFF:
     case UserRole.MAINTAINER:
       roleSpecificMenu.push(
-        { key: 'room-list', label: '房间列表', icon: 'HomeOutlined' }
+        { key: 'rooms', label: '房间列表', icon: 'HomeOutlined' }
       );
       break;
   }

@@ -5,7 +5,7 @@ import { message } from 'antd';
 const instance = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
     ? process.env.REACT_APP_API_URL || '/api' 
-    : 'http://localhost:8080/api',
+    : 'http://localhost:8080/api', //到时候要改成部署目标后端地址
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -58,6 +58,9 @@ instance.interceptors.response.use(
           break;
         case 500:
           message.error('服务器内部错误');
+          break;
+        case 503:
+          message.error('服务不可用，可能在维护中');
           break;
         default:
           message.error(data || '请求失败');
