@@ -1,11 +1,13 @@
 package com.roomx.model.dto;
 
 import com.roomx.model.entity.User;
-import lombok.*;
+
+import lombok.Data;
 
 @Data
 public class UserTokenDTO {
     private String token;
+    private String sessionId;
     private Long id;
     private String username;
     private String nickname;
@@ -15,6 +17,18 @@ public class UserTokenDTO {
         if(user==null) throw new IllegalArgumentException("user is null");
         UserTokenDTO dto = new UserTokenDTO();
         dto.setToken(token);
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setNickname(user.getNickname());
+        dto.setRole(user.getRole().name());
+        return dto;
+    }
+
+    public static UserTokenDTO fromLogin(User user, String token, String sessionId) {
+        if(user==null) throw new IllegalArgumentException("user is null");
+        UserTokenDTO dto = new UserTokenDTO();
+        dto.setToken(token);
+        dto.setSessionId(sessionId);
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setNickname(user.getNickname());

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Card, Typography, message, Alert } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggleButton from '../components/ThemeToggleButton';
@@ -12,16 +12,53 @@ export default function Login() {
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
+  const [kickoutMessage, setKickoutMessage] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, register, isAuthenticated } = useAuth();
   const { isDarkMode } = useTheme();
 
   const from = '/dashboard';
 
+  // 检查URL参数中是否有错误信息
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const kickout = urlParams.get('kickout');
+    const expired = urlParams.get('expired');
+    const unauthorized = urlParams.get('unauthorized');
+    
+    if (kickout === 'true') {
+      setKickoutMessage('您的账号在其他地方登录，当前会话已失效');
+    } else if (expired === 'true') {
+      setKickoutMessage('登录已过期，请重新登录');
+    } else if (unauthorized === 'true') {
+      setKickoutMessage('登录状态异常，请重新登录');
+    }
+    
+    // 如果有任何错误参数，清除URL参数
+    if (kickout === 'true' || expired === 'true' || unauthorized === 'true') {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location]);
 
+  // 处理输入框变化，清除挤下线提示
+  const handleInputChange = () => {
+    if (kickoutMessage) {
+      setKickoutMessage('');
+      // 同时清除URL参数
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  };
 
   const onLoginFinish = async (values) => {
     setLoading(true);
+    // 清除挤下线提示和URL参数
+    setKickoutMessage('');
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+    
     console.log('开始登录:', values);
     try {
       const result = await login(values.username, values.password);
@@ -70,6 +107,11 @@ export default function Login() {
 
   const onRegisterFinish = async (values) => {
     setLoading(true);
+    // 清除挤下线提示和URL参数
+    setKickoutMessage('');
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+    
     console.log('开始注册:', values);
     try {
       const result = await register(values);
@@ -263,6 +305,15 @@ export default function Login() {
           </Text>
         </div>
 
+        {kickoutMessage && (
+          <Alert
+            message={kickoutMessage}
+            type="error"
+            showIcon
+            style={{ marginBottom: '16px', borderRadius: '8px' }}
+          />
+        )}
+
         {isLoginMode ? (
           <Form
             name="login"
@@ -282,6 +333,7 @@ export default function Login() {
                 placeholder="用户名"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 
@@ -297,6 +349,7 @@ export default function Login() {
                 placeholder="密码"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 
@@ -339,6 +392,7 @@ export default function Login() {
                 placeholder="用户名"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 
@@ -354,6 +408,7 @@ export default function Login() {
                 placeholder="邮箱"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 
@@ -369,6 +424,7 @@ export default function Login() {
                 placeholder="手机号"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 
@@ -384,6 +440,7 @@ export default function Login() {
                 placeholder="密码"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 
@@ -407,6 +464,7 @@ export default function Login() {
                 placeholder="确认密码"
                 size="large"
                 style={inputStyle}
+                onChange={handleInputChange}
               />
             </Form.Item>
 

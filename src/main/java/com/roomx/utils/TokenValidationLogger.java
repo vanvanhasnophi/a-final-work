@@ -132,6 +132,26 @@ public class TokenValidationLogger {
     }
     
     /**
+     * 记录token验证失败
+     */
+    public static void logValidationFailed(String requestURI, String reason) {
+        String message = String.format("[%s] TOKEN_VALIDATION_FAILED | URI: %s | Reason: %s",
+                getCurrentTime(), requestURI, reason);
+        writeToLog(message);
+        logger.warn(message);
+    }
+    
+    /**
+     * 记录token验证成功
+     */
+    public static void logValidationSuccess(String requestURI, String username, long durationMs) {
+        String message = String.format("[%s] TOKEN_VALIDATION_SUCCESS | URI: %s | Username: %s | Duration: %dms",
+                getCurrentTime(), requestURI, username, durationMs);
+        writeToLog(message);
+        logger.debug(message);
+    }
+
+    /**
      * 记录异常情况
      */
     public static void logException(String operation, String error, String details) {

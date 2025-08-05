@@ -20,6 +20,11 @@ export const getCurrentUser = () => {
   return request.get('/user/me');
 };
 
+// 检查会话状态
+export const checkSession = () => {
+  return request.get('/auth/session/check');
+};
+
 // 刷新token
 export const refreshToken = () => {
   return request.post('/auth/refresh');
@@ -41,6 +46,7 @@ const authAPI = {
   register,
   logout,
   getCurrentUser,
+  checkSession,
   refreshToken,
   updatePassword,
   deleteUser

@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.roomx.service.impl.AuthServiceImpl;
 import com.roomx.utils.JwtAuthenticationFilter;
 
 @Configuration
@@ -19,7 +20,7 @@ public class WebSecurityConfig {
     }
     
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthServiceImpl authService) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> {})
@@ -28,7 +29,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtAuthenticationFilter(authService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
