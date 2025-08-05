@@ -9,7 +9,7 @@ import './App.css';
 
 // 配置全局message
 message.config({
-  top: 80,
+  top: 50,
   duration: 2.5,
   maxCount: 3,
   zIndex: 99999,
