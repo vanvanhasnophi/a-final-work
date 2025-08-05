@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 import authAPI from '../api/auth';
+import { showTranslatedMessage } from '../utils/messageTranslator';
 
 const AuthContext = createContext();
 
@@ -197,7 +198,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('AuthContext: 登录失败:', error);
-      const errorMessage = error.response?.data || '登录失败，请检查用户名和密码';
+      const errorMessage = error.response?.data || 'Invalid username or password';
       return { success: false, error: errorMessage };
     }
   };
@@ -212,7 +213,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('注册失败:', error);
-      const errorMessage = error.response?.data || '注册失败，请检查输入信息';
+      const errorMessage = error.response?.data || 'Registration failed';
       return { success: false, error: errorMessage };
     }
   };

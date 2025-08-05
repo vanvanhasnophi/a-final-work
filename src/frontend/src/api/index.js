@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { message } from 'antd';
+import { translateMessage, showTranslatedMessage } from '../utils/messageTranslator';
 
 // 创建axios实例
 const instance = axios.create({
@@ -77,31 +78,31 @@ instance.interceptors.response.use(
           }
           break;
         case 403:
-          message.error('权限不足');
+          showTranslatedMessage(message, 'error', data, '权限不足');
           break;
         case 404:
-          message.error('请求的资源不存在');
+          showTranslatedMessage(message, 'error', data, '请求的资源不存在');
           break;
         case 409:
-          message.error(data || '操作冲突，请稍后重试');
+          showTranslatedMessage(message, 'error', data, '操作冲突，请稍后重试');
           break;
         case 500:
-          message.error('服务器内部错误');
+          showTranslatedMessage(message, 'error', data, '服务器内部错误');
           break;
         case 503:
-          message.error('服务不可用，可能在维护中');
+          showTranslatedMessage(message, 'error', data, '服务不可用，可能在维护中');
           break;
         default:
-          message.error(data || '请求失败');
+          showTranslatedMessage(message, 'error', data, '请求失败');
       }
     } else if (error.request) {
       // 请求已发出但没有收到响应
       console.error('网络错误:', error.request);
-      message.error('网络连接失败，请检查网络设置');
+      showTranslatedMessage(message, 'error', 'Network error', '网络连接失败，请检查网络设置');
     } else {
       // 请求配置出错
       console.error('请求配置错误:', error.message);
-      message.error('请求配置错误');
+      showTranslatedMessage(message, 'error', error.message, '请求配置错误');
     }
     return Promise.reject(error);
   }

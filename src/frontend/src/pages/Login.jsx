@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggleButton from '../components/ThemeToggleButton';
+import { showTranslatedMessage } from '../utils/messageTranslator';
 
 const { Title, Text } = Typography;
 
@@ -87,19 +88,23 @@ export default function Login() {
           navigate(from, { replace: true });
         }, 1500);
       } else {
-        messageApi.open({
-          type: 'error',
-          content: result.error || '用户名或密码错误，请重试',
-          duration: 1.5,
-        });
+        showTranslatedMessage(
+          messageApi, 
+          'error', 
+          result.error, 
+          '用户名或密码错误，请重试',
+          { duration: 1.5 }
+        );
       }
     } catch (error) {
       console.error('登录错误:', error);
-      messageApi.open({
-        type: 'error',
-        content: '网络连接失败，请检查网络后重试',
-        duration: 1.5,
-      });
+      showTranslatedMessage(
+        messageApi, 
+        'error', 
+        error.message || 'Network error', 
+        '网络连接失败，请检查网络后重试',
+        { duration: 1.5 }
+      );
     } finally {
       setLoading(false);
     }
@@ -117,29 +122,35 @@ export default function Login() {
       const result = await register(values);
       console.log('注册结果:', result);
       if (result.success) {
-        messageApi.open({
-          type: 'success',
-          content: '注册成功！请使用新账号登录',
-          duration: 1.5,
-        });
+        showTranslatedMessage(
+          messageApi, 
+          'success', 
+          'Registration successful', 
+          '注册成功！请使用新账号登录',
+          { duration: 1.5 }
+        );
         // 延迟切换到登录模式，让用户看到成功消息
         setTimeout(() => {
           setIsLoginMode(true);
         }, 2000);
       } else {
-        messageApi.open({
-          type: 'error',
-          content: result.error || '注册失败，请检查输入信息',
-          duration: 1.5,
-        });
+        showTranslatedMessage(
+          messageApi, 
+          'error', 
+          result.error, 
+          '注册失败，请检查输入信息',
+          { duration: 1.5 }
+        );
       }
     } catch (error) {
       console.error('注册错误:', error);
-      messageApi.open({
-        type: 'error',
-        content: '网络连接失败，请检查网络后重试',
-        duration: 1.5,
-      });
+      showTranslatedMessage(
+        messageApi, 
+        'error', 
+        error.message || 'Network error', 
+        '网络连接失败，请检查网络后重试',
+        { duration: 1.5 }
+      );
     } finally {
       setLoading(false);
     }

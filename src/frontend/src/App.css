@@ -850,17 +850,28 @@ body {
     max-width: 95vw !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
+    top: 50px !important;
   }
   
   .ant-message-notice {
     max-width: 95vw !important;
     width: auto !important;
-  }
-  
-  .ant-message-notice-content {
     white-space: normal !important;
     word-wrap: break-word !important;
     padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* 移动端移除嵌套样式 */
+  .ant-message-notice-content {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 }
 
@@ -930,15 +941,19 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
-/* 优化的Message/Toast样式 */
+/* 优化的Message/Toast样式 - 单层容器 */
 .ant-message {
   z-index: 999999 !important;
   position: fixed !important;
-  top: 80px !important;
+  top: 50px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   max-width: 120vw !important;
   width: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
 }
 
 .ant-message-notice {
@@ -949,45 +964,54 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   margin-bottom: 8px !important;
   max-width: 600px !important;
   width: auto !important;
-  display: inline-block !important;
-  /* 优化过渡动画 */
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-.ant-message-notice-content {
-  padding: 10px 16px !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important; 
   line-height: 1.5 !important;
-  background: var(--component-bg) !important;
   color: var(--text-color) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   max-width: 100% !important;
   /* 优化过渡动画 */
-  transition: background-color 0.15s ease, color 0.15s ease !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease !important;
 }
 
-.ant-message-success .ant-message-notice-content {
+/* 移除嵌套的notice-content样式 */
+.ant-message-notice-content {
+  /* 继承父容器样式，不添加额外样式 */
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ant-message-success .ant-message-notice {
   background: rgba(82, 196, 26, 0.1) !important;
   border: 1px solid rgba(82, 196, 26, 0.3) !important;
   color: #52c41a !important;
 }
 
-.ant-message-error .ant-message-notice-content {
+.ant-message-error .ant-message-notice {
   background: rgba(255, 77, 79, 0.1) !important;
   border: 1px solid rgba(255, 77, 79, 0.3) !important;
   color: #ff4d4f !important;
 }
 
-.ant-message-info .ant-message-notice-content {
+.ant-message-info .ant-message-notice {
   background: rgba(24, 144, 255, 0.1) !important;
   border: 1px solid rgba(24, 144, 255, 0.3) !important;
   color: #1890ff !important;
 }
 
-.ant-message-warning .ant-message-notice-content {
+.ant-message-warning .ant-message-notice {
   background: rgba(250, 173, 20, 0.1) !important;
   border: 1px solid rgba(250, 173, 20, 0.3) !important;
   color: #faad14 !important;
@@ -1000,16 +1024,10 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
   max-width: 400px !important;
   width: auto !important;
-  display: inline-block !important;
-}
-
-[data-theme="dark"] .ant-message-notice-content {
-  background: #2B2D31 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   color: #FFFFFF !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 100% !important;
 }
 
 /* Message 图标样式 */
@@ -1033,25 +1051,26 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #faad14 !important;
 }
 
-[data-theme="dark"] .ant-message-success .ant-message-notice-content {
+/* 深色模式下的消息类型样式 */
+[data-theme="dark"] .ant-message-success .ant-message-notice {
   background: rgba(82, 196, 26, 0.1) !important;
   border: 1px solid rgba(82, 196, 26, 0.3) !important;
   color: #52c41a !important;
 }
 
-[data-theme="dark"] .ant-message-error .ant-message-notice-content {
+[data-theme="dark"] .ant-message-error .ant-message-notice {
   background: rgba(255, 77, 79, 0.1) !important;
   border: 1px solid rgba(255, 77, 79, 0.3) !important;
   color: #ff4d4f !important;
 }
 
-[data-theme="dark"] .ant-message-info .ant-message-notice-content {
+[data-theme="dark"] .ant-message-info .ant-message-notice {
   background: rgba(24, 144, 255, 0.1) !important;
   border: 1px solid rgba(24, 144, 255, 0.3) !important;
   color: #1890ff !important;
 }
 
-[data-theme="dark"] .ant-message-warning .ant-message-notice-content {
+[data-theme="dark"] .ant-message-warning .ant-message-notice {
   background: rgba(250, 173, 20, 0.1) !important;
   border: 1px solid rgba(250, 173, 20, 0.3) !important;
   color: #faad14 !important;
