@@ -64,7 +64,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background-color) !important;
   color: var(--text-color) !important;
-  transition: all 0.3s ease;
+  /* 优化过渡动画 - 只对背景色和边框色应用过渡，文字颜色立即切换 */
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 #root {
@@ -75,7 +76,8 @@ body {
 .App {
   min-height: 100vh;
   background-color: var(--background-color) !important;
-  transition: all 0.3s ease;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease;
 }
 
 /* 滚动条样式 */
@@ -95,7 +97,8 @@ body {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
   border-color: var(--border-color) !important;
-  transition: all 0.3s ease !important;
+  /* 优化过渡动画 - 只对边框和背景应用过渡 */
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 
 /* 输入框发光效果 - 使用全局主题色 */
@@ -113,7 +116,8 @@ body {
 .ant-input-number-focused {
   border-color: var(--primary-color) !important;
   box-shadow: 0 0 0 2px rgba(153, 12, 174, 0.2) !important;
-  transition: all 0.3s ease !important;
+  /* 优化过渡动画 */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 /* 输入框悬停效果 */
@@ -126,7 +130,8 @@ body {
 .ant-mentions:hover,
 .ant-input-number:hover {
   border-color: var(--primary-color) !important;
-  transition: all 0.3s ease !important;
+  /* 优化过渡动画 */
+  transition: border-color 0.15s ease !important;
 }
 
 
@@ -134,7 +139,8 @@ body {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
   border-color: var(--border-color) !important;
-  transition: all 0.3s ease !important;
+  /* 优化过渡动画 */
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 
 /* 其他输入类组件的发光效果 */
@@ -143,7 +149,8 @@ body {
 .ant-cascader-picker,
 .ant-mentions,
 .ant-input-number {
-  transition: all 0.3s ease !important;
+  /* 优化过渡动画 */
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 
 
@@ -153,7 +160,8 @@ body {
   color: var(--text-color) !important;
   border-color: var(--border-color) !important;
   background-color: var(--component-bg) !important;
-  transition: all 0.3s ease !important;
+  /* 优化过渡动画 - 只对边框和背景应用过渡，文字颜色立即切换 */
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 
 
@@ -191,11 +199,15 @@ body {
   border: 1px solid var(--border-color) !important;
   background-color: var(--component-bg) !important;
   box-shadow: var(--shadow) !important;
+  /* 优化过渡动画 */
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .ant-card-head {
   background-color: var(--component-bg) !important;
   border-bottom: 1px solid var(--border-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
 .ant-card-head-title {
@@ -282,6 +294,8 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
   /* 确保边框 */
   border-bottom: 1px solid var(--border-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .ant-table-thead {
@@ -496,10 +510,14 @@ body {
 .ant-menu {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease !important;
 }
 
 .ant-menu-item {
   color: var(--text-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
 /* 菜单项激活状态 */
@@ -570,10 +588,14 @@ body {
   background-color: var(--component-bg) !important;
   border: 1px solid var(--border-color) !important;
   box-shadow: var(--shadow) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .ant-dropdown-menu-item {
   color: var(--text-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
@@ -597,11 +619,15 @@ body {
 .ant-modal-content {
   background-color: var(--component-bg) !important;
   border: 1px solid var(--border-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
 .ant-modal-header {
   background-color: var(--component-bg) !important;
   border-bottom: 1px solid var(--border-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
 .ant-modal-title {
@@ -640,6 +666,8 @@ body {
   background-color: var(--component-bg) !important;
   border: 1px solid var(--border-color) !important;
   color: var(--text-color) !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
 }
 
 .ant-pagination-prev,
@@ -714,6 +742,8 @@ body {
 /* 标签页样式 */
 .ant-tabs-tab {
   color: var(--text-color) !important;
+  /* 优化过渡动画 */
+  transition: color 0.15s ease !important;
 }
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
@@ -787,6 +817,8 @@ body {
 /* 分割线样式 */
 .ant-divider {
   border-color: var(--border-color) !important;
+  /* 优化过渡动画 */
+  transition: border-color 0.15s ease !important;
 }
 
 .ant-divider-inner-text {
@@ -864,9 +896,9 @@ body {
   }
 }
 
-/* 主题切换动画 */
+/* 主题切换动画优化 - 只对背景色和边框色应用过渡，文字颜色立即切换 */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  /* 移除全局过渡，改为针对性的过渡 */
 }
 
 /* 强制覆盖一些可能被其他样式覆盖的颜色 */
@@ -918,6 +950,8 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   max-width: 600px !important;
   width: auto !important;
   display: inline-block !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .ant-message-notice-content {
@@ -931,6 +965,8 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   max-width: 100% !important;
+  /* 优化过渡动画 */
+  transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
 .ant-message-success .ant-message-notice-content {
@@ -1116,7 +1152,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #CCCCCC !important;
   border-top: 1px solid #3C3F45 !important;
   border-bottom: none !important;
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
 }
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
@@ -1180,9 +1216,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #CCCCCC !important;
 }
 
-/* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
-/* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
 /* 错误提示文本颜色与输入框错误边框一致 */
 .ant-form-item-explain-error,

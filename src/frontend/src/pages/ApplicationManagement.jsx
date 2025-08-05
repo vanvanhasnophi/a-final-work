@@ -353,11 +353,12 @@ export default function ApplicationManagement() {
               <span>申请管理</span>
               <span style={{ 
                 fontSize: '12px', 
-                color: '#666', 
+                color: 'var(--text-color-secondary)', 
                 fontWeight: 'normal',
-                backgroundColor: '#f0f0f0',
+                backgroundColor: 'var(--fill-color-secondary)',
                 padding: '2px 6px',
-                borderRadius: '4px'
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)'
               }}>
                 申请记录过期后最多保留60天
               </span>

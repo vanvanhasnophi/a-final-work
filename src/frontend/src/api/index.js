@@ -42,10 +42,39 @@ instance.interceptors.response.use(
       
       switch (status) {
         case 401:
-          message.error('登录已过期，请重新登录');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+          // 检查是否是挤下线错误
+          if (data && typeof data === 'object' && data.error) {
+            const errorMessage = data.error;
+            if (errorMessage.includes('其他地方登录') || errorMessage.includes('会话已失效')) {
+              // 挤下线错误
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('sessionId');
+              window.location.href = '/login?kickout=true';
+              return Promise.reject(error);
+            } else if (errorMessage.includes('Token已过期') || errorMessage.includes('登录已过期')) {
+              // Token过期错误
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('sessionId');
+              window.location.href = '/login?expired=true';
+              return Promise.reject(error);
+            } else {
+              // 其他401错误
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('sessionId');
+              window.location.href = '/login?unauthorized=true';
+              return Promise.reject(error);
+            }
+          } else {
+            // 默认401错误
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('sessionId');
+            window.location.href = '/login?expired=true';
+            return Promise.reject(error);
+          }
           break;
         case 403:
           message.error('权限不足');

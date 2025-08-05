@@ -10,8 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.roomx.constant.enums.UserRole;
+import com.roomx.service.impl.AuthServiceImpl;
 
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +19,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    
+    private final AuthServiceImpl authService;
+    
+    public JwtAuthenticationFilter(AuthServiceImpl authService) {
+        this.authService = authService;
+    }
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -38,97 +44,90 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
-        String header = request.getHeader("Authorization");
-        logger.debug("JWT Filter - Request URI: {}, Authorization header: {}", requestURI, header);
+        // 跳过静态资源和健康检查
+        if (requestURI.startsWith("/static/") || requestURI.equals("/health") || requestURI.equals("/api/health")) {
+            TokenValidationLogger.logValidationSkipped(requestURI, "Static resource or health check");
+            chain.doFilter(request, response);
+            return;
+        }
         
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            String tokenPrefix = token.substring(0, Math.min(50, token.length())) + "...";
+        try {
+            // 从请求头获取token
+            String token = extractTokenFromRequest(request);
             
-            // 记录token解析开始
-            TokenValidationLogger.logTokenParsingStart(tokenPrefix);
-            
-            try {
-                logger.debug("JWT Filter - Parsing token: {}", tokenPrefix);
-                Claims claims = JwtUtil.parseToken(token);
-                String username = claims.getSubject();
-                Object roleObj = claims.get("role");
-                String expiration = claims.getExpiration() != null ? claims.getExpiration().toString() : "null";
-                
-                logger.debug("JWT Filter - Parsed claims - username: {}, role: {}", username, roleObj);
-                
-                // 记录token解析成功
-                TokenValidationLogger.logTokenParsingSuccess(username, roleObj != null ? roleObj.toString() : "null", expiration);
-                
-                // 处理角色转换
-                UserRole role = null;
-                if (roleObj instanceof String) {
-                    try {
-                        role = UserRole.valueOf((String) roleObj);
-                    } catch (IllegalArgumentException e) {
-                        logger.warn("JWT Filter - Invalid role string: {}", roleObj);
-                        TokenValidationLogger.logException("Role parsing", e.getMessage(), "Invalid role string: " + roleObj);
-                    }
-                } else if (roleObj instanceof UserRole) {
-                    role = (UserRole) roleObj;
-                }
-                
-                if (username != null) {
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                    logger.debug("JWT Filter - Authentication set for user: {}", username);
-                    
-                    // 记录认证设置成功
-                    TokenValidationLogger.logAuthenticationSet(username, role != null ? role.toString() : "null");
-                    
-                    // 记录验证统计
-                    long duration = System.currentTimeMillis() - startTime;
-                    TokenValidationLogger.logValidationStats(username, requestURI, duration);
-                    
-                    // 记录验证完成
-                    TokenValidationLogger.logValidationComplete(requestURI, true, "Authentication successful");
-                } else {
-                    logger.warn("JWT Filter - Username is null from token");
-                    TokenValidationLogger.logAuthenticationFailed("Username is null from token");
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    
-                    // 记录验证完成
-                    TokenValidationLogger.logValidationComplete(requestURI, false, "Username is null");
-                    return;
-                }
-            } catch (Exception e) {
-                logger.error("JWT Filter - Token validation failed: {}", e.getMessage());
-                TokenValidationLogger.logTokenParsingFailure(e.getMessage(), tokenPrefix);
-                TokenValidationLogger.logException("Token validation", e.getMessage(), "Token validation failed");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                
-                // 记录验证完成
-                TokenValidationLogger.logValidationComplete(requestURI, false, "Token validation failed: " + e.getMessage());
+            if (token == null) {
+                logger.debug("No token found in request: {}", requestURI);
+                TokenValidationLogger.logValidationSkipped(requestURI, "No token found");
+                chain.doFilter(request, response);
                 return;
             }
-        } else {
-            logger.debug("JWT Filter - No valid Authorization header found");
-            TokenValidationLogger.logValidationComplete(requestURI, false, "No valid Authorization header");
+            
+            // 使用增强的验证机制
+            AuthServiceImpl.TokenValidationResult validationResult = authService.validateTokenAndSession(token);
+            
+            if (!validationResult.isValid()) {
+                logger.warn("Token validation failed for {}: {}", requestURI, validationResult.getMessage());
+                TokenValidationLogger.logValidationFailed(requestURI, validationResult.getMessage());
+                
+                // 根据不同的错误类型返回不同的错误信息
+                String errorMessage;
+                if (validationResult.getMessage().contains("会话已失效") || 
+                    validationResult.getMessage().contains("其他地方登录")) {
+                    errorMessage = "您的账号在其他地方登录，当前会话已失效";
+                } else if (validationResult.getMessage().contains("Token已过期") || 
+                          validationResult.getMessage().contains("登录已过期")) {
+                    errorMessage = "登录已过期，请重新登录";
+                } else {
+                    errorMessage = "登录状态异常，请重新登录";
+                }
+                
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\":\"" + errorMessage + "\"}");
+                return;
+            }
+            
+            // 验证成功，设置认证信息
+            String username = validationResult.getUsername();
+            UserRole role = validationResult.getRole();
+            
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                username, null, Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.name()))
+            );
+            
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            long endTime = System.currentTimeMillis();
+            TokenValidationLogger.logValidationSuccess(requestURI, username, endTime - startTime);
+            
+            logger.debug("Token validation successful for user: {} on URI: {}", username, requestURI);
+            
+        } catch (Exception e) {
+            logger.error("Error during token validation for {}: {}", requestURI, e.getMessage());
+            TokenValidationLogger.logException("Token validation", e.getMessage(), 
+                "Error during token validation for: " + requestURI);
         }
         
         chain.doFilter(request, response);
     }
     
-    /**
-     * 获取客户端IP地址
-     */
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+    
     private String getClientIP(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
-            return xForwardedFor.split(",")[0].trim();
+            return xForwardedFor.split(",")[0];
         }
-        
         String xRealIP = request.getHeader("X-Real-IP");
         if (xRealIP != null && !xRealIP.isEmpty() && !"unknown".equalsIgnoreCase(xRealIP)) {
             return xRealIP;
         }
-        
         return request.getRemoteAddr();
     }
 } 
