@@ -37,7 +37,11 @@ public class AuthServiceImpl implements AuthService {
             String token = EnhancedJwtUtil.generateToken(user.getUsername(), user.getRole(), sessionId);
             
             // 更新用户最后登录时间
-            user.setLastLoginTime(userLoginDTO.getLoginTime());
+            Date loginTime = userLoginDTO.getLoginTime();
+            if (loginTime == null) {
+                loginTime = new Date(); // 如果前端没有发送时间，使用当前时间
+            }
+            user.setLastLoginTime(loginTime);
             userRepository.save(user);
             
             return UserTokenDTO.fromLogin(user, token, sessionId);
