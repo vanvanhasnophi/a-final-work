@@ -90,7 +90,6 @@ body {
   background: var(--component-bg) !important;
 }
 
-/* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
 /* 输入框样式 */
 .ant-input {
@@ -184,12 +183,12 @@ body {
 }
 
 /* 其他按钮类型的悬停效果 */
-.ant-btn:hover {
-  border-color: var(--primary-color) !important;
-  color: var(--primary-color) !important;
+.ant-btn:not(.ant-btn-primary):hover {
+  border-color: var(--primary-hover) !important;
+  color: var(--primary-hover) !important;
 }
 
-.ant-btn:active {
+.ant-btn:not(.ant-btn-primary):active {
   border-color: var(--primary-active) !important;
   color: var(--primary-active) !important;
 }
@@ -527,7 +526,7 @@ body {
 }
 
 .ant-menu-item-selected:hover {
-  background-color: #8A0B9E !important;
+  background-color: var(--primary-hover) !important;
   color: #ffffff !important;
 }
 
@@ -537,9 +536,14 @@ body {
 }
 
 /* 菜单项悬停状态 */
-.ant-menu-item:hover {
-  background-color: rgba(102, 8, 116, 0.1) !important;
+.ant-menu-item:not(.ant-menu-item-selected):hover {
+  background-color: rgba(128, 16, 145, 0.1) !important;
   color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .ant-menu-item:not(.ant-menu-item-selected):hover {
+  background-color: rgba(206, 54, 230, 0.2) !important;
+  color: #decde1 !important;
 }
 
 /* 菜单项激活时的图标 */
@@ -548,40 +552,21 @@ body {
 }
 
 /* 菜单项悬停时的图标 */
-.ant-menu-item:hover .anticon {
+.ant-menu-item:not(.ant-menu-item-selected):hover .anticon {
   color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .ant-menu-item:not(.ant-menu-item-selected):hover .anticon {
+  color: #decde1 !important;
+}
+
+.ant-menu-item-selected:hover .anticon {
+  color: #ffffff !important;
 }
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
-/* 深色模式下的菜单特殊样式 */
-[data-theme="dark"] .ant-menu-item-selected {
-  background-color: #990CAE !important;
-  color: #ffffff !important;
-}
 
-[data-theme="dark"] .ant-menu-item-selected:hover {
-  background-color: #C02CD8 !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .ant-menu-item-selected:active {
-  background-color: #7A0A8A !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .ant-menu-item:hover {
-  background-color: rgba(153, 12, 174, 0.1) !important;
-  color: #990CAE !important;
-}
-
-[data-theme="dark"] .ant-menu-item-selected .anticon {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .ant-menu-item:hover .anticon {
-  color: #990CAE !important;
-}
 
 /* 下拉菜单样式 */
 .ant-dropdown-menu {
@@ -1136,12 +1121,12 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 }
 
 /* 深色模式下的其他按钮悬停效果 */
-[data-theme="dark"] .ant-btn:hover {
-  border-color: #990CAE !important;
-  color: #990CAE !important;
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary):hover {
+  border-color: var(--primary-hover) !important;
+  color: var(--primary-hover) !important;
 }
 
-[data-theme="dark"] .ant-btn:active {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary):active {
   border-color: #8A0B9E !important;
   color: #8A0B9E !important;
 }

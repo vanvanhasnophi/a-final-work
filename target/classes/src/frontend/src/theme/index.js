@@ -119,7 +119,7 @@ export const cssVariables = {
   },
   dark: {
     '--primary-color': theme.primary.dark,
-    '--primary-hover': '#B30FCC',
+    '--primary-hover': '#ca57db',
     '--primary-active': '#7A0A8A',
     '--background-color': theme.background.dark,
     '--component-bg': theme.componentBg.dark,

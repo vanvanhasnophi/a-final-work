@@ -14,10 +14,17 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_SHOW_SQL=false
     depends_on:
-      - roomx-db
+      roomx-db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - roomx-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   roomx-db:
     image: mysql:8.0
@@ -31,13 +38,21 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql-config:/etc/mysql/conf.d
     restart: unless-stopped
     networks:
       - roomx-network
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mysql_data:
+    driver: local
 
 networks:
   roomx-network:

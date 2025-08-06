@@ -21,6 +21,7 @@ com/roomx/constant/enums/ApproverPermission.class
 com/roomx/repository/ApplicationRepository.class
 com/roomx/security/JwtTokenProvider.class
 target/classes/logback-spring.xml
+com/roomx/controller/HealthController.class
 com/roomx/controller/NotificationController.class
 com/roomx/model/entity/Notification.class
 com/roomx/service/impl/AuthServiceImpl$TokenValidationResult.class
@@ -70,6 +71,7 @@ com/roomx/model/vo/ApplicationVO.class
 com/roomx/controller/AuthController$SessionCheckResult.class
 com/roomx/model/dto/UserUpdatePasswordDTO.class
 com/roomx/repository/NotificationRepository.class
+target/classes/application-prod.yml
 com/roomx/utils/NotificationUtil.class
 com/roomx/constant/enums/UserRole.class
 com/roomx/constant/enums/ApplicationStatus.class

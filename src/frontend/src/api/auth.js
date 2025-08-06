@@ -4,8 +4,8 @@ import request from './index';
 export const login = (username, password) => {
   return request.post('/login', { 
     username, 
-    password,
-    loginTime: new Date() // 添加登录时间
+    password
+    // 移除loginTime，让后端使用服务器时间确保一致性
   });
 };
 
