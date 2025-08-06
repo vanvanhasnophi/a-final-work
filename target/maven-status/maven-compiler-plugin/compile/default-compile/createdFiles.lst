@@ -15,9 +15,11 @@ com/roomx/model/entity/Room.class
 com/roomx/App.class
 com/roomx/service/RoomStatusSchedulerService.class
 com/roomx/model/dto/UserQuery.class
+target/classes/application-dev.yml
 com/roomx/constant/enums/ApproverPermission.class
 com/roomx/repository/ApplicationRepository.class
 com/roomx/security/JwtTokenProvider.class
+target/classes/logback-spring.xml
 com/roomx/controller/NotificationController.class
 com/roomx/model/entity/Notification.class
 com/roomx/service/impl/AuthServiceImpl$TokenValidationResult.class
@@ -91,4 +93,6 @@ com/roomx/model/dto/UserInfoDTO.class
 com/roomx/config/CorsConfig.class
 com/roomx/exception/UserNotFoundException.class
 com/roomx/utils/ConcurrencyTestUtil$ConcurrencyTestResult.class
+target/classes/application.yml
+target/classes/data.sql
 com/roomx/utils/JwtAuthenticationFilter.class
