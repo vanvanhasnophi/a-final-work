@@ -132,7 +132,7 @@ export default function Login() {
         // 延迟切换到登录模式，让用户看到成功消息
         setTimeout(() => {
           setIsLoginMode(true);
-        }, 2000);
+        }, 1500);
       } else {
         showTranslatedMessage(
           messageApi, 
