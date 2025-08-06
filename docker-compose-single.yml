@@ -18,6 +18,8 @@ services:
       - JAVA_OPTS=-Xmx512m -Xms256m
     volumes:
       - mysql_data:/var/lib/mysql
+      - mysql_logs:/var/log/mysql
+      - app_logs:/app/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
@@ -25,6 +27,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    user: "0"  # 临时使用root用户避免权限问题
 
 volumes:
-  mysql_data: 
+  mysql_data:
+    driver: local
+  mysql_logs:
+    driver: local
+  app_logs:
+    driver: local 

@@ -13,6 +13,7 @@ import com.roomx.model.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.AuthService;
 import com.roomx.service.UserSessionService;
+import com.roomx.utils.DateUtil;
 import com.roomx.utils.EnhancedJwtUtil;
 import com.roomx.utils.PasswordEncoderUtil;
 
@@ -36,11 +37,9 @@ public class AuthServiceImpl implements AuthService {
             // 使用增强的JWT工具生成包含会话ID的token
             String token = EnhancedJwtUtil.generateToken(user.getUsername(), user.getRole(), sessionId);
             
-            // 更新用户最后登录时间
-            Date loginTime = userLoginDTO.getLoginTime();
-            if (loginTime == null) {
-                loginTime = new Date(); // 如果前端没有发送时间，使用当前时间
-            }
+            // 更新用户最后登录时间 - 使用DateUtil确保时间一致性
+            Date loginTime = DateUtil.getCurrentUTCTime();
+            System.out.println("用户 " + user.getUsername() + " 登录时间: " + DateUtil.formatUTC(loginTime));
             user.setLastLoginTime(loginTime);
             userRepository.save(user);
             
@@ -66,8 +65,8 @@ public class AuthServiceImpl implements AuthService {
         user.setNickname(userRegisterDTO.getNickname());
         user.setEmail(userRegisterDTO.getEmail());
         user.setPhone(userRegisterDTO.getPhone());
-        user.setCreateTime(new Date());
-        user.setLastLoginTime(new Date());
+        user.setCreateTime(DateUtil.getCurrentUTCTime());
+        user.setLastLoginTime(DateUtil.getCurrentUTCTime());
         
         // 设置角色和相关信息
         UserRole role = userRegisterDTO.getRole();
