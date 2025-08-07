@@ -39,3 +39,6 @@ logs/
 *.txt
 *.sql
 *.class
+
+### Maven
+target/
