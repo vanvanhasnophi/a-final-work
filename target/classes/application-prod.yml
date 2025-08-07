@@ -1,0 +1,86 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  profiles:
+    active: prod
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:roomx-db}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:roomx}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+    username: ${MYSQL_USER:roomx_user}
+    password: ${MYSQL_PASSWORD:roomx_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        connection:
+          characterEncoding: utf8
+          useUnicode: true
+    open-in-view: false
+  
+  security:
+    user:
+      name: admin
+      password: admin
+  
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
+  cache:
+    type: simple
+    cache-names: users,rooms,applications,stats,notifications
+
+# 定时任务配置
+scheduling:
+  pool-size: 10
+  thread-name-prefix: "scheduled-task-"
+  
+# 缓存配置
+cache:
+  refresh-interval: 300000  # 5分钟
+  cleanup-interval: 3600000 # 1小时
+  stats-refresh-interval: 120000 # 2分钟
+
+# 日志配置
+logging:
+  level:
+    com.roomx: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /app/logs/roomx.log
+    max-size: 100MB
+    max-history: 30
+
+# JWT配置
+jwt:
+  secret: yourSecretKeyForRoomXApplication2024
+  expiration: 86400000 # 24小时
+
+# 应用配置
+app:
+  name: RoomX
+  version: 2.1.0801
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+    allow-credentials: true 
