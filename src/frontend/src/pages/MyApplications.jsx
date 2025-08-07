@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Checkbox, Tooltip } from 'antd';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, Alert, Tag, Pagination, Checkbox, Tooltip } from 'antd';
 import { EyeOutlined, CloseOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
@@ -13,12 +13,14 @@ import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
+import { MessageContext } from '../App';
 
 const { Option } = Select;
 
 export default function MyApplications() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const messageApi = useContext(MessageContext);
   const [applications, setApplications] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [pagination, setPagination] = useState({
@@ -32,7 +34,6 @@ export default function MyApplications() {
     userId: user?.id, // 默认只显示自己的申请
   });
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
   const datePickerRef = useRef(null);
   const statusSelectRef = useRef(null);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -248,22 +249,22 @@ export default function MyApplications() {
 
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
-      {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>我的申请</span>
             <span style={{ 
-              fontSize: '12px', 
-              color: '#666', 
-              fontWeight: 'normal',
-              backgroundColor: '#f0f0f0',
-              padding: '2px 6px',
-              borderRadius: '4px'
-            }}>
-              申请记录过期后最多保留60天
-            </span>
+                fontSize: '12px', 
+                color: 'var(--text-color-secondary)', 
+                fontWeight: 'normal',
+                backgroundColor: 'var(--fill-color-secondary)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)'
+              }}>
+                申请记录过期后最多保留60天
+              </span>
           </div>
         }
         extra={
@@ -549,7 +550,7 @@ export default function MyApplications() {
             </div>
             {currentApplication.crowd && (
               <div style={{ marginBottom: 16 }}>
-                <strong>参与人数：</strong>
+                <strong>使用人数：</strong>
                 <span>{currentApplication.crowd}人</span>
               </div>
             )}
@@ -583,7 +584,7 @@ export default function MyApplications() {
                 <p><strong>使用时间：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
                 <p><strong>使用原因：</strong>{currentApplication.reason}</p>
                 {currentApplication.crowd && (
-                  <p><strong>参与人数：</strong>{currentApplication.crowd}人</p>
+                  <p><strong>使用人数：</strong>{currentApplication.crowd}人</p>
                 )}
                 {currentApplication.contact && (
                   <p><strong>联系方式：</strong>{currentApplication.contact}</p>
