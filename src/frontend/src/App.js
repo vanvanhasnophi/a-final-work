@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext } from 'react';
 import { ConfigProvider, message, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import AppRouter from './router';
@@ -17,9 +17,13 @@ message.config({
   prefixCls: 'ant-message',
 });
 
+// 新增：创建全局MessageContext
+export const MessageContext = createContext(null);
+
 // 内部组件，用于应用主题
 function AppContent() {
   const { isDarkMode } = useTheme();
+  const [messageApi, contextHolder] = message.useMessage();
   
   const themeConfig = {
     token: {
@@ -45,9 +49,12 @@ function AppContent() {
       locale={zhCN}
       theme={themeConfig}
     >
-      <div className="App">
-        <AppRouter />
-      </div>
+      <MessageContext.Provider value={messageApi}>
+        {contextHolder}
+        <div className="App">
+          <AppRouter />
+        </div>
+      </MessageContext.Provider>
     </ConfigProvider>
   );
 }

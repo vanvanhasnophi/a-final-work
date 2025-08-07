@@ -318,15 +318,16 @@ export default function ApplicationList() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>申请管理</span>
             <span style={{ 
-              fontSize: '12px', 
-              color: '#666', 
-              fontWeight: 'normal',
-              backgroundColor: '#f0f0f0',
-              padding: '2px 6px',
-              borderRadius: '4px'
-            }}>
-              申请记录过期后最多保留60天
-            </span>
+                fontSize: '12px', 
+                color: 'var(--text-color-secondary)', 
+                fontWeight: 'normal',
+                backgroundColor: 'var(--fill-color-secondary)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)'
+              }}>
+                申请记录过期后最多保留60天
+              </span>
           </div>
         }
         extra={
@@ -718,13 +719,13 @@ export default function ApplicationList() {
 
             <Form.Item
               name="crowd"
-              label="参与人数"
-              rules={[{ required: true, message: '请输入参与人数' }]}
+              label="使用人数"
+              rules={[{ required: true, message: '请输入使用人数' }]}
             >
               <InputNumber
                 min={1}
                 max={1000}
-                placeholder="请输入参与人数"
+                placeholder="请输入使用人数"
                 style={{ width: '100%' }}
               />
             </Form.Item>
@@ -783,7 +784,7 @@ export default function ApplicationList() {
             </div>
             {currentApplication.crowd && (
               <div style={{ marginBottom: 16 }}>
-                <strong>参与人数：</strong>
+                <strong>使用人数：</strong>
                 <span>{currentApplication.crowd}人</span>
               </div>
             )}
@@ -824,7 +825,7 @@ export default function ApplicationList() {
                 <p><strong>使用时间：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
                 <p><strong>使用原因：</strong>{currentApplication.reason}</p>
                 {currentApplication.crowd && (
-                  <p><strong>参与人数：</strong>{currentApplication.crowd}人</p>
+                  <p><strong>使用人数：</strong>{currentApplication.crowd}人</p>
                 )}
                 {currentApplication.contact && (
                   <p><strong>联系方式：</strong>{currentApplication.contact}</p>

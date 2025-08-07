@@ -183,12 +183,12 @@ body {
 }
 
 /* 其他按钮类型的悬停效果 */
-.ant-btn:not(.ant-btn-primary):hover {
+.ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):hover {
   border-color: var(--primary-hover) !important;
   color: var(--primary-hover) !important;
 }
 
-.ant-btn:not(.ant-btn-primary):active {
+.ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):active {
   border-color: var(--primary-active) !important;
   color: var(--primary-active) !important;
 }
@@ -1120,13 +1120,25 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #ffffff !important;
 }
 
+.ant-btn-dangerous:hover {
+  background-color: #fc6062 !important;
+  border-color: #fc6062 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .ant-btn-dangerous:hover {
+  background-color: #fc6062 !important;
+  border-color: #fc6062 !important;
+  color: #ffffff !important;
+}
+
 /* 深色模式下的其他按钮悬停效果 */
-[data-theme="dark"] .ant-btn:not(.ant-btn-primary):hover {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):hover {
   border-color: var(--primary-hover) !important;
   color: var(--primary-hover) !important;
 }
 
-[data-theme="dark"] .ant-btn:not(.ant-btn-primary):active {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):active {
   border-color: #8A0B9E !important;
   color: #8A0B9E !important;
 }
@@ -1172,8 +1184,6 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #FFFFFF !important;
 }
 
-/* 移除强制主题色设置，使用 Ant Design 默认主题 */
-
 [data-theme="dark"] .ant-input-affix-wrapper .ant-input {
   background: transparent !important;
   color: #FFFFFF !important;
@@ -1192,8 +1202,8 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 [data-theme="dark"] .ant-cascader-picker-focused,
 [data-theme="dark"] .ant-mentions-focused,
 [data-theme="dark"] .ant-input-number-focused {
-  border-color: #990CAE !important;
-  box-shadow: 0 0 0 2px rgba(153, 12, 174, 0.3) !important;
+  border-color: var(--primary-hover) !important;
+  box-shadow: 0 0 0 1.5px rgba(191, 14, 219, 0.3) !important;
 }
 
 /* 深色模式下的输入框悬停效果 */
@@ -1205,7 +1215,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 [data-theme="dark"] .ant-cascader-picker:hover,
 [data-theme="dark"] .ant-mentions:hover,
 [data-theme="dark"] .ant-input-number:hover {
-  border-color: #990CAE !important;
+  border-color: var(--primary-hover) !important;
 }
 
 [data-theme="dark"] .ant-input-affix-wrapper .ant-input::placeholder {

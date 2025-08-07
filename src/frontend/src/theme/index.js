@@ -2,7 +2,7 @@
 export const theme = {
   // 强调色 - 紫色
   primary: {
-    light: '#660874', // 浅色模式
+    light: '#7D0A8E', // 浅色模式
     dark: '#990CAE',  // 深色模式
   },
   
@@ -119,7 +119,7 @@ export const cssVariables = {
   },
   dark: {
     '--primary-color': theme.primary.dark,
-    '--primary-hover': '#ca57db',
+    '--primary-hover': '#c23fd6',
     '--primary-active': '#7A0A8A',
     '--background-color': theme.background.dark,
     '--component-bg': theme.componentBg.dark,
