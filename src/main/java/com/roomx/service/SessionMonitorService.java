@@ -33,56 +33,17 @@ public interface SessionMonitorService {
      * @return 清理的会话数量
      */
     int cleanupExpiredSessions();
-    
+
     /**
-     * 会话信息类
-     */
-    class SessionInfo {
-        private final String username;
-        private final String sessionId;
-        private final long createTime;
-        private final long lastAccessTime;
-        private final String clientIP;
-        private final String userAgent;
-        
-        public SessionInfo(String username, String sessionId, long createTime, 
-                         long lastAccessTime, String clientIP, String userAgent) {
-            this.username = username;
-            this.sessionId = sessionId;
-            this.createTime = createTime;
-            this.lastAccessTime = lastAccessTime;
-            this.clientIP = clientIP;
-            this.userAgent = userAgent;
-        }
-        
-        public String getUsername() {
-            return username;
-        }
-        
-        public String getSessionId() {
-            return sessionId;
-        }
-        
-        public long getCreateTime() {
-            return createTime;
-        }
-        
-        public long getLastAccessTime() {
-            return lastAccessTime;
-        }
-        
-        public String getClientIP() {
-            return clientIP;
-        }
-        
-        public String getUserAgent() {
-            return userAgent;
-        }
-        
+         * 会话信息类
+         */
+        record SessionInfo(String username, String sessionId, long createTime, long lastAccessTime, String clientIP,
+                           String userAgent) {
+
         @Override
-        public String toString() {
-            return String.format("SessionInfo{username='%s', sessionId='%s', createTime=%d, lastAccessTime=%d, clientIP='%s', userAgent='%s'}", 
-                username, sessionId, createTime, lastAccessTime, clientIP, userAgent);
+            public String toString() {
+                return String.format("SessionInfo{username='%s', sessionId='%s', createTime=%d, lastAccessTime=%d, clientIP='%s', userAgent='%s'}",
+                        username, sessionId, createTime, lastAccessTime, clientIP, userAgent);
+            }
         }
-    }
 } 

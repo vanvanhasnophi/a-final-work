@@ -96,7 +96,6 @@ public class ApplicationController {
                 parsedQueryDate = sdf.parse(queryDate);
             } catch (Exception e) {
                 // 如果日期解析失败，忽略该参数
-                parsedQueryDate = null;
             }
         }
         
@@ -128,7 +127,7 @@ public class ApplicationController {
         return ResponseEntity.ok(applicationService.get(id));
     }
     
-    @GetMapping("/room/{roomId}/future-approved") // 查询房间未来的已批准预约
+    @GetMapping("/room/{roomId}/future-approved") // 查询教室未来的已批准预约
     public ResponseEntity<List<ApplicationDTO>> getFutureApprovedApplications(@PathVariable Long roomId) {
         return ResponseEntity.ok(applicationService.getFutureApprovedApplications(roomId));
     }

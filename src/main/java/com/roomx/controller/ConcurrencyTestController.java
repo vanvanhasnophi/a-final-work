@@ -46,7 +46,7 @@ public class ConcurrencyTestController {
                 applicationDTO.setStatus(com.roomx.constant.enums.ApplicationStatus.PENDING);
                 
                 // 设置时间（每个申请间隔1分钟）
-                Date startTime = new Date(System.currentTimeMillis() + testCounter.get() * 60 * 1000);
+                Date startTime = new Date(System.currentTimeMillis() + (long) testCounter.get() * 60 * 1000);
                 Date endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1小时后
                 applicationDTO.setStartTime(startTime);
                 applicationDTO.setEndTime(endTime);

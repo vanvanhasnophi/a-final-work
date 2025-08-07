@@ -43,11 +43,10 @@ public class AuthAspect {
         // 获取当前请求
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
-            logger.warn("AuthAspect: 无法获取请求上下文");
-            TokenValidationLogger.logException("AuthAspect", "无法获取请求上下文", "RequestContextHolder is null");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            logger.warn("AuthAspect: 无法获取请求上下文 (RequestContextHolder.getRequestAttributes() 返回 null)");
+            TokenValidationLogger.logValidationComplete("AUTH_ASPECT", false, "No request context");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No request context");
         }
-        
         HttpServletRequest request = attributes.getRequest();
         String authHeader = request.getHeader("Authorization");
         String requestURI = request.getRequestURI();

@@ -1,5 +1,6 @@
 package com.roomx.controller;
 
+import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -117,16 +118,12 @@ public class AuthController {
     public ResponseEntity<?> updatePassword(@RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
         try {
             int result = authService.updatePassword(userUpdatePasswordDTO);
-            switch (result) {
-                case 0:
-                    return ResponseEntity.ok().body("Password updated successfully");
-                case 1:
-                    return ResponseEntity.badRequest().body("User not found");
-                case 2:
-                    return ResponseEntity.badRequest().body("Old password is incorrect");
-                default:
-                    return ResponseEntity.badRequest().body("Update password failed");
-            }
+            return switch (result) {
+                case 0 -> ResponseEntity.ok().body("Password updated successfully");
+                case 1 -> ResponseEntity.badRequest().body("User not found");
+                case 2 -> ResponseEntity.badRequest().body("Old password is incorrect");
+                default -> ResponseEntity.badRequest().body("Update password failed");
+            };
         } catch (Exception e) {
             TokenValidationLogger.logException("Update password", e.getMessage(), 
                 "Update password failed for user: " + userUpdatePasswordDTO.getUsername());
@@ -157,6 +154,7 @@ public class AuthController {
     /**
      * 会话检查结果类
      */
+    @Getter
     public static class SessionCheckResult {
         private final boolean valid;
         private final String message;
@@ -168,16 +166,5 @@ public class AuthController {
             this.kickedOut = kickedOut;
         }
 
-        public boolean isValid() {
-            return valid;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public boolean isKickedOut() {
-            return kickedOut;
-        }
     }
 }

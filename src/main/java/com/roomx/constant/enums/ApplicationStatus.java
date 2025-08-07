@@ -1,5 +1,8 @@
 package com.roomx.constant.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum ApplicationStatus {
     PENDING(0),// 待审批
     APPROVED(1),// 已批准
@@ -9,10 +12,7 @@ public enum ApplicationStatus {
     EXPIRED(-2);// 已过期
 
     private final int code;
-    private ApplicationStatus(int code) {
+    ApplicationStatus(int code) {
         this.code = code;
     }
-    public int getCode() {
-        return code;
-    }
-} 
+}

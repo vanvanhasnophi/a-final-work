@@ -49,45 +49,24 @@ public class ConcurrencyTestUtil {
         
         return new ConcurrencyTestResult(successCount.get(), failureCount.get(), lastException.get());
     }
-    
+
     /**
-     * 并发测试结果
-     */
-    public static class ConcurrencyTestResult {
-        private final int successCount;
-        private final int failureCount;
-        private final Exception lastException;
-        
-        public ConcurrencyTestResult(int successCount, int failureCount, Exception lastException) {
-            this.successCount = successCount;
-            this.failureCount = failureCount;
-            this.lastException = lastException;
-        }
-        
-        public int getSuccessCount() {
-            return successCount;
-        }
-        
-        public int getFailureCount() {
-            return failureCount;
-        }
-        
-        public Exception getLastException() {
-            return lastException;
-        }
-        
+         * 并发测试结果
+         */
+        public record ConcurrencyTestResult(int successCount, int failureCount, Exception lastException) {
+
         public int getTotalCount() {
-            return successCount + failureCount;
-        }
-        
+                return successCount + failureCount;
+            }
+
         public double getSuccessRate() {
-            return getTotalCount() > 0 ? (double) successCount / getTotalCount() : 0.0;
-        }
-        
+                return getTotalCount() > 0 ? (double) successCount / getTotalCount() : 0.0;
+            }
+
         @Override
-        public String toString() {
-            return String.format("ConcurrencyTestResult{total=%d, success=%d, failure=%d, successRate=%.2f%%}", 
-                getTotalCount(), successCount, failureCount, getSuccessRate() * 100);
+            public String toString() {
+                return String.format("ConcurrencyTestResult{total=%d, success=%d, failure=%d, successRate=%.2f%%}",
+                        getTotalCount(), successCount, failureCount, getSuccessRate() * 100);
+            }
         }
-    }
 } 

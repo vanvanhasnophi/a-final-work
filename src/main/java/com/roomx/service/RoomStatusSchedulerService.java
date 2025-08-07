@@ -34,9 +34,9 @@ public class RoomStatusSchedulerService {
     
     @PostConstruct
     public void startScheduler() {
-        log.info("启动房间状态自动更新调度器");
+        log.info("启动教室状态自动更新调度器");
         
-        // 每分钟检查一次房间状态
+        // 每分钟检查一次教室状态
         scheduler.scheduleAtFixedRate(this::updateRoomStatuses, 0, 1, TimeUnit.MINUTES);
         
         // 每5分钟检查一次申请状态
@@ -45,7 +45,7 @@ public class RoomStatusSchedulerService {
     
     @PreDestroy
     public void stopScheduler() {
-        log.info("停止房间状态自动更新调度器");
+        log.info("停止教室状态自动更新调度器");
         scheduler.shutdown();
         try {
             if (!scheduler.awaitTermination(60, TimeUnit.SECONDS)) {
@@ -58,22 +58,22 @@ public class RoomStatusSchedulerService {
     }
     
     /**
-     * 更新房间状态
+     * 更新教室状态
      */
     public void updateRoomStatuses() {
         try {
             Date now = new Date();
             
-            // 获取所有房间
+            // 获取所有教室
             List<Room> rooms = roomRepository.findAll();
             
             for (Room room : rooms) {
                 updateRoomStatus(room, now);
             }
             
-            log.debug("房间状态更新完成，检查了 {} 个房间", rooms.size());
+            log.debug("教室状态更新完成，检查了 {} 个教室", rooms.size());
         } catch (Exception e) {
-            log.error("更新房间状态时发生错误", e);
+            log.error("更新教室状态时发生错误", e);
         }
     }
     
@@ -98,7 +98,7 @@ public class RoomStatusSchedulerService {
     }
     
     /**
-     * 更新单个房间状态
+     * 更新单个教室状态
      */
     private void updateRoomStatus(Room room, Date now) {
         RoomStatus currentStatus = room.getStatus();
@@ -109,7 +109,7 @@ public class RoomStatusSchedulerService {
             room.setUpdateTime(now);
             roomRepository.save(room);
             
-            log.info("房间 {} 状态从 {} 更新为 {}", 
+            log.info("教室 {} 状态从 {} 更新为 {}", 
                 room.getName(), currentStatus, newStatus);
         }
     }
@@ -136,10 +136,10 @@ public class RoomStatusSchedulerService {
     }
     
     /**
-     * 确定房间状态
+     * 确定教室状态
      */
     private RoomStatus determineRoomStatus(Room room, Date now) {
-        // 如果房间正在维修或清洁中，保持当前状态
+        // 如果教室正在维修或清洁中，保持当前状态
         if (room.getStatus() == RoomStatus.MAINTENANCE || 
             room.getStatus() == RoomStatus.CLEANING) {
             return room.getStatus();
@@ -183,13 +183,13 @@ public class RoomStatusSchedulerService {
             );
         
         if (!recentApplications.isEmpty()) {
-            // 根据房间类型和用途决定是否需要清洁
+            // 根据教室类型和用途决定是否需要清洁
             if (shouldRequireCleaning(room)) {
                 return RoomStatus.PENDING_CLEANING;
             }
         }
         
-        // 检查房间是否需要维修
+        // 检查教室是否需要维修
         if (shouldRequireMaintenance(room)) {
             return RoomStatus.PENDING_MAINTENANCE;
         }
@@ -228,21 +228,21 @@ public class RoomStatusSchedulerService {
     }
     
     /**
-     * 判断房间是否需要清洁
+     * 判断教室是否需要清洁
      */
     private boolean shouldRequireCleaning(Room room) {
-        // 根据房间类型和使用频率判断是否需要清洁
+        // 根据教室类型和使用频率判断是否需要清洁
         // 这里可以根据实际需求调整逻辑
-        return true; // 暂时所有房间都需要清洁
+        return true; // 暂时所有教室都需要清洁
     }
     
     /**
-     * 判断房间是否需要维修
+     * 判断教室是否需要维修
      */
     private boolean shouldRequireMaintenance(Room room) {
-        // 根据房间的最后维修时间和使用情况判断是否需要维修
+        // 根据教室的最后维修时间和使用情况判断是否需要维修
         if (room.getLastMaintenanceTime() == null) {
-            return false; // 新房间不需要维修
+            return false; // 新教室不需要维修
         }
         
         // 如果超过30天没有维修，可能需要维修
@@ -251,16 +251,13 @@ public class RoomStatusSchedulerService {
     }
     
     /**
-     * 手动触发房间状态更新
+     * 手动触发教室状态更新
      */
     public void triggerRoomStatusUpdate(Long roomId) {
         try {
-            Room room = roomRepository.findById(roomId).orElse(null);
-            if (room != null) {
-                updateRoomStatus(room, new Date());
-            }
+            roomRepository.findById(roomId).ifPresent(room -> updateRoomStatus(room, new Date()));
         } catch (Exception e) {
-            log.error("手动更新房间状态时发生错误", e);
+            log.error("手动更新教室状态时发生错误", e);
         }
     }
     
@@ -269,10 +266,7 @@ public class RoomStatusSchedulerService {
      */
     public void triggerApplicationStatusUpdate(Long applicationId) {
         try {
-            Application application = applicationRepository.findById(applicationId).orElse(null);
-            if (application != null) {
-                updateApplicationStatus(application, new Date());
-            }
+            applicationRepository.findById(applicationId).ifPresent(application -> updateApplicationStatus(application, new Date()));
         } catch (Exception e) {
             log.error("手动更新申请状态时发生错误", e);
         }

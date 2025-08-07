@@ -19,7 +19,7 @@ public class ApplicationDTO {
     private String contact;
     private String userRole;
     
-    // 房间冗余信息
+    // 教室冗余信息
     private String roomName;
     private String roomLocation;
     private String roomType;
@@ -45,7 +45,7 @@ public class ApplicationDTO {
         applicationDTO.setUserNickname(application.getUserNickname());
         applicationDTO.setUserRole(application.getUserRole());
         
-        // 房间信息
+        // 教室信息
         applicationDTO.setRoomName(application.getRoomName());
         applicationDTO.setRoomLocation(application.getRoomLocation());
         applicationDTO.setRoomType(application.getRoomType());

@@ -1,5 +1,8 @@
 package com.roomx.constant.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum UserRole {
     ADMIN(-1),// 管理员
     APPLIER(0),// 申请人
@@ -8,10 +11,7 @@ public enum UserRole {
     MAINTAINER(3);// 维修人员
 
     private final int code;
-    private UserRole(int code) {
+    UserRole(int code) {
         this.code = code;
     }
-    public int getCode() {
-        return code;
-    }
-} 
+}

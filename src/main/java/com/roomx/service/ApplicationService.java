@@ -19,7 +19,7 @@ public interface ApplicationService {
     // 获取所有申请（不支持筛选）
     List<ApplicationDTO> getAllApplications();
     
-    // 查询房间未来的已批准预约
+    // 查询教室未来的已批准预约
     List<ApplicationDTO> getFutureApprovedApplications(Long roomId);
     
     // 检查时间冲突

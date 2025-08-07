@@ -66,13 +66,13 @@ public class CacheController {
     }
     
     /**
-     * 手动刷新房间缓存
+     * 手动刷新教室缓存
      */
     @PostMapping("/refresh/rooms")
     public ResponseEntity<Map<String, String>> refreshRoomCache() {
         dataRefreshService.refreshRoomCache();
         Map<String, String> response = new HashMap<>();
-        response.put("message", "房间缓存刷新成功");
+        response.put("message", "教室缓存刷新成功");
         response.put("timestamp", new java.util.Date().toString());
         return ResponseEntity.ok(response);
     }

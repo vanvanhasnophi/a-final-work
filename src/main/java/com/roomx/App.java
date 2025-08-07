@@ -3,7 +3,7 @@ package com.roomx;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.roomx.constant.consist.appinfo;
+import com.roomx.constant.consist.appInfo;
 
 @SpringBootApplication
 public class App {
@@ -13,11 +13,11 @@ public class App {
         System.out.println("""
 ██████╗  ██████╗  ██████╗ ███╗   ███╗██╗  ██╗
 ██╔══██╗██╔═══██╗██╔═══██╗████╗ ████║╚██╗██╔╝
-██████╔╝██║   ██║██║   ██║██╔████╔██║ ╚███╔╝ 
-██╔══██╗██║   ██║██║   ██║██║╚██╔╝██║ ██╔██╗ 
+██████╔╝██║   ██║██║   ██║██╔████╔██║ ╚███╔╝
+██╔══██╗██║   ██║██║   ██║██║╚██╔╝██║ ██╔██╗
 ██║  ██║╚██████╔╝╚██████╔╝██║ ╚═╝ ██║██╔╝ ██╗
 ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝
-\033[32mRoomX"""+"  "+appinfo.VERSION+"\033[0m"+"                         By Vince");
+\033[32mRoomX"""+"  "+ appInfo.VERSION+"\033[0m"+"                         By Vince");
         System.out.println("\033[32mRoomX 后端已启动\033[0m");
     }
 }

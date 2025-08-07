@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Data
@@ -27,8 +28,10 @@ public class User {
     private String phone;
     private Date createTime;
     private Date lastLoginTime;
-    
+
+    // 获取用户角色的方法
     // 用户角色
+    @Getter
     @Enumerated(EnumType.STRING)
     @jakarta.persistence.Column(length = 50)
     private UserRole role;
@@ -46,12 +49,7 @@ public class User {
     
     // 维修人员特有字段
     private String skill;
-    
-    // 获取用户角色的方法
-    public UserRole getRole() {
-        return role;
-    }
-    
+
     // 设置用户角色的方法
     public void setRole(UserRole role) {
         this.role = role;

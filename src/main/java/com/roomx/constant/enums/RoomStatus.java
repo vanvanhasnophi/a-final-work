@@ -1,5 +1,8 @@
 package com.roomx.constant.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum RoomStatus {
     AVAILABLE(0), // 可用, 默认
     RESERVED(1), // 已预约，待签到
@@ -11,10 +14,7 @@ public enum RoomStatus {
     UNAVAILABLE(-1); // 不可用
 
     private final int code;
-    private RoomStatus(int code) {
+    RoomStatus(int code) {
         this.code = code;
-    }
-    public int getCode() {
-        return code;
     }
 }

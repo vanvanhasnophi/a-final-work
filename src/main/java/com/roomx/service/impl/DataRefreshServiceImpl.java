@@ -66,18 +66,18 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     @Override
     public void refreshRoomCache() {
         try {
-            logger.info("开始刷新房间数据缓存...");
+            logger.info("开始刷新教室数据缓存...");
             long startTime = System.currentTimeMillis();
             
             List<Room> rooms = roomRepository.findAll();
             cache.put(ROOM_CACHE_KEY, rooms);
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("房间数据缓存刷新完成，共 {} 条记录，耗时 {}ms", rooms.size(), duration);
+            logger.info("教室数据缓存刷新完成，共 {} 条记录，耗时 {}ms", rooms.size(), duration);
             
             lastRefreshTime.set(System.currentTimeMillis());
         } catch (Exception e) {
-            logger.error("刷新房间数据缓存失败", e);
+            logger.error("刷新教室数据缓存失败", e);
         }
     }
     
@@ -140,7 +140,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
                 logger.info("清理了 {} 条已完成的过期申请", expiredApplications.size());
             }
             
-            // 更新房间状态
+            // 更新教室状态
             updateRoomStatus();
             
             long duration = System.currentTimeMillis() - startTime;
@@ -178,7 +178,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     }
     
     /**
-     * 更新房间状态
+     * 更新教室状态
      */
     private void updateRoomStatus() {
         try {
@@ -212,21 +212,20 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             }
             
             if (updatedCount > 0) {
-                logger.info("更新了 {} 个房间的状态", updatedCount);
+                logger.info("更新了 {} 个教室的状态", updatedCount);
             }
             
         } catch (Exception e) {
-            logger.error("更新房间状态失败", e);
+            logger.error("更新教室状态失败", e);
         }
     }
     
     /**
      * 获取缓存数据
      */
-    @SuppressWarnings("unchecked")
     public <T> T getCachedData(String key, Class<T> type) {
         Object data = cache.get(key);
-        if (data != null && type.isInstance(data)) {
+        if (type.isInstance(data)) {
             return type.cast(data);
         }
         return null;
@@ -250,7 +249,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     // 定时任务配置
     
     /**
-     * 每5分钟刷新一次用户和房间缓存
+     * 每5分钟刷新一次用户和教室缓存
      */
     @Scheduled(fixedRate = 300000) // 5分钟
     public void scheduledRefreshBasicData() {
