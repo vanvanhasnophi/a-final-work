@@ -223,7 +223,6 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     /**
      * 获取缓存数据
      */
-    @SuppressWarnings("unchecked")
     public <T> T getCachedData(String key, Class<T> type) {
         Object data = cache.get(key);
         if (data != null && type.isInstance(data)) {
