@@ -1,6 +1,5 @@
 package com.roomx.service.impl;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -78,7 +77,7 @@ public class SessionMonitorServiceImpl implements SessionMonitorService {
             // 移除详细会话信息
             SessionInfo removedSession = sessionDetails.remove(username);
             if (removedSession != null) {
-                logger.info("强制用户 {} 下线成功。会话ID: {}", username, removedSession.getSessionId());
+                logger.info("强制用户 {} 下线成功。会话ID: {}", username, removedSession.sessionId());
             } else {
                 logger.warn("强制用户 {} 下线失败，未找到会话信息", username);
             }
@@ -107,7 +106,7 @@ public class SessionMonitorServiceImpl implements SessionMonitorService {
             boolean expired = isSessionExpired(entry.getValue());
             if (expired) {
                 logger.debug("清理过期会话: 用户 {}, 会话ID: {}", 
-                    entry.getKey(), entry.getValue().getSessionId());
+                    entry.getKey(), entry.getValue().sessionId());
             }
             return expired;
         });
@@ -146,12 +145,12 @@ public class SessionMonitorServiceImpl implements SessionMonitorService {
         if (existingSession != null) {
             long currentTime = System.currentTimeMillis();
             SessionInfo updatedSession = new SessionInfo(
-                existingSession.getUsername(),
-                existingSession.getSessionId(),
-                existingSession.getCreateTime(),
+                existingSession.username(),
+                existingSession.sessionId(),
+                existingSession.createTime(),
                 currentTime,
-                existingSession.getClientIP(),
-                existingSession.getUserAgent()
+                existingSession.clientIP(),
+                existingSession.userAgent()
             );
             sessionDetails.put(username, updatedSession);
         }
@@ -162,7 +161,7 @@ public class SessionMonitorServiceImpl implements SessionMonitorService {
      */
     private boolean isSessionExpired(SessionInfo sessionInfo) {
         long currentTime = System.currentTimeMillis();
-        long expiryTime = sessionInfo.getCreateTime() + (SESSION_EXPIRY_HOURS * 60 * 60 * 1000L);
+        long expiryTime = sessionInfo.createTime() + (SESSION_EXPIRY_HOURS * 60 * 60 * 1000L);
         return currentTime > expiryTime;
     }
 } 

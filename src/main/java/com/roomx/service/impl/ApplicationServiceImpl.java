@@ -35,7 +35,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
     
-    // 房间级别的锁管理器，用于防止同一房间的并发操作
+    // 教室级别的锁管理器，用于防止同一教室的并发操作
     private final java.util.concurrent.ConcurrentHashMap<Long, Lock> roomLocks = new java.util.concurrent.ConcurrentHashMap<>();
 
     public ApplicationServiceImpl(ApplicationRepository applicationRepository, UserRepository userRepository, RoomRepository roomRepository) {
@@ -45,7 +45,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
     
     /**
-     * 获取房间锁
+     * 获取教室锁
      */
     private Lock getRoomLock(Long roomId) {
         return roomLocks.computeIfAbsent(roomId, k -> new ReentrantLock());
@@ -56,7 +56,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public ApplicationDTO apply(ApplicationDTO applicationDTO) {
         // 验证必要字段
         if (applicationDTO.getRoomId() == null) {
-            throw new IllegalArgumentException("房间ID不能为空");
+            throw new IllegalArgumentException("教室ID不能为空");
         }
         if (applicationDTO.getUserId() == null) {
             throw new IllegalArgumentException("用户ID不能为空");
@@ -74,17 +74,17 @@ public class ApplicationServiceImpl implements ApplicationService {
         Long roomId = applicationDTO.getRoomId();
         Lock roomLock = getRoomLock(roomId);
         
-        // 尝试获取房间锁，如果获取失败则抛出并发异常
+        // 尝试获取教室锁，如果获取失败则抛出并发异常
         if (!roomLock.tryLock()) {
-            throw new ConcurrentModificationException("房间正在被其他用户操作，请稍后重试");
+            throw new ConcurrentModificationException("教室正在被其他用户操作，请稍后重试");
         }
         
         try {
-            // 获取用户和房间信息
+            // 获取用户和教室信息
             User user = userRepository.findById(applicationDTO.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
             Room room = roomRepository.findById(applicationDTO.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("房间不存在"));
+                .orElseThrow(() -> new IllegalArgumentException("教室不存在"));
             
             // 在事务中重新检查时间冲突，确保数据一致性
             if (hasTimeConflict(applicationDTO.getRoomId(), applicationDTO.getStartTime(), applicationDTO.getEndTime(), null)) {
@@ -93,7 +93,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             
             Application application = new Application();
             
-            // 同步用户和房间信息到冗余字段
+            // 同步用户和教室信息到冗余字段
             application.syncUserInfo(user);
             application.syncRoomInfo(room);
             
@@ -123,9 +123,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         Long roomId = existingApplication.getRoomId();
         Lock roomLock = getRoomLock(roomId);
         
-        // 尝试获取房间锁
+        // 尝试获取教室锁
         if (!roomLock.tryLock()) {
-            throw new ConcurrentModificationException("房间正在被其他用户操作，请稍后重试");
+            throw new ConcurrentModificationException("教室正在被其他用户操作，请稍后重试");
         }
         
         try {
@@ -220,7 +220,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 predicates.add(cb.like(root.get("contact"), "%" + query.getContact() + "%"));
             }
             
-            // 房间相关字段 - 使用冗余字段
+            // 教室相关字段 - 使用冗余字段
             if (query.getRoomName() != null && !query.getRoomName().isEmpty()) {
                 predicates.add(cb.like(root.get("roomName"), "%" + query.getRoomName() + "%"));
             }
@@ -275,9 +275,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         Long roomId = application.getRoomId();
         Lock roomLock = getRoomLock(roomId);
         
-        // 尝试获取房间锁
+        // 尝试获取教室锁
         if (!roomLock.tryLock()) {
-            throw new ConcurrentModificationException("房间正在被其他用户操作，请稍后重试");
+            throw new ConcurrentModificationException("教室正在被其他用户操作，请稍后重试");
         }
         
         try {
@@ -367,7 +367,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         
         for (Application application : approvedApplications) {
             // 排除指定的申请（用于修改时检查）
-            if (excludeApplicationId != null && application.getId().equals(excludeApplicationId)) {
+            if (application.getId().equals(excludeApplicationId)) {
                 continue;
             }
             

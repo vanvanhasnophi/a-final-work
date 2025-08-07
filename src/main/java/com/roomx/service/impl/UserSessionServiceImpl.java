@@ -180,22 +180,15 @@ public class UserSessionServiceImpl implements UserSessionService {
     private boolean isSessionExpired(SessionInfo sessionInfo) {
         return sessionInfo.createdAt.plusHours(SESSION_EXPIRY_HOURS).isBefore(LocalDateTime.now());
     }
-    
+
     /**
-     * 会话信息内部类
-     */
-    private static class SessionInfo {
-        final String sessionId;
-        final LocalDateTime createdAt;
-        
-        SessionInfo(String sessionId, LocalDateTime createdAt) {
-            this.sessionId = sessionId;
-            this.createdAt = createdAt;
-        }
-        
+         * 会话信息内部类
+         */
+        private record SessionInfo(String sessionId, LocalDateTime createdAt) {
+
         @Override
-        public String toString() {
-            return String.format("SessionInfo{sessionId='%s', createdAt=%s}", sessionId, createdAt);
+            public String toString() {
+                return String.format("SessionInfo{sessionId='%s', createdAt=%s}", sessionId, createdAt);
+            }
         }
-    }
 } 

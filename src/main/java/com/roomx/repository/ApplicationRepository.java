@@ -31,10 +31,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     // 时间范围查询
     List<Application> findByStartTimeBetween(java.util.Date startTime, java.util.Date endTime);
     
-    // 查询房间未来的已批准预约
+    // 查询教室未来的已批准预约
     List<Application> findByRoomIdAndStatusAndEndTimeAfter(Long roomId, ApplicationStatus status, Date endTime);
     
-    // 查询房间的待审批申请
+    // 查询教室的待审批申请
     List<Application> findByRoomIdAndStatus(Long roomId, ApplicationStatus status);
     
     // 按天筛选使用时间范围
@@ -43,16 +43,16 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     // 按天筛选使用时间范围（带状态）
     List<Application> findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndStatus(Date startDate, Date endDate, ApplicationStatus status);
     
-    // 按天筛选使用时间范围（带房间ID）
+    // 按天筛选使用时间范围（带教室ID）
     List<Application> findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndRoomId(Date startDate, Date endDate, Long roomId);
     
-    // 查询房间在当前时间段内的已批准申请
+    // 查询教室在当前时间段内的已批准申请
     List<Application> findByRoomIdAndStatusAndStartTimeBeforeAndEndTimeAfter(Long roomId, ApplicationStatus status, Date startTime, Date endTime);
     
-    // 查询房间在指定时间范围内的已批准申请
+    // 查询教室在指定时间范围内的已批准申请
     List<Application> findByRoomIdAndStatusAndStartTimeBetween(Long roomId, ApplicationStatus status, Date startTime, Date endTime);
     
-    // 查询房间在指定时间范围内结束的已批准申请
+    // 查询教室在指定时间范围内结束的已批准申请
     List<Application> findByRoomIdAndStatusAndEndTimeBetween(Long roomId, ApplicationStatus status, Date startTime, Date endTime);
     
     // 查询指定状态和时间范围内的申请

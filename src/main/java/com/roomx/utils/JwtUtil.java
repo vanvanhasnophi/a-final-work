@@ -135,10 +135,9 @@ public class JwtUtil {
                 roleObj, roleObj != null ? roleObj.getClass().getName() : "null");
             
             // 处理角色转换
-            UserRole role = null;
-            if (roleObj instanceof String) {
-                String roleStr = (String) roleObj;
-                
+            UserRole role;
+            if (roleObj instanceof String roleStr) {
+
                 // 兼容性处理：将SERVICE_STAFF映射为SERVICE
                 if ("SERVICE_STAFF".equals(roleStr)) {
                     roleStr = "SERVICE";

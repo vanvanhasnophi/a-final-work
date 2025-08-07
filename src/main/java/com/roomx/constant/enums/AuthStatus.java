@@ -1,5 +1,8 @@
 package com.roomx.constant.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum AuthStatus {
     SUCCESS(0),
     FAIL(1),
@@ -10,10 +13,7 @@ public enum AuthStatus {
     USER_NOT_AUTHORIZED(6);
 
     private final int code;
-    private AuthStatus(int code) {
+    AuthStatus(int code) {
         this.code = code;
-    }
-    public int getCode() {
-        return code;
     }
 }

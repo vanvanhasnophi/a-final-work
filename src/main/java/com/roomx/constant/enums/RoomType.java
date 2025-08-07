@@ -1,5 +1,8 @@
 package com.roomx.constant.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum RoomType {
     SEMINAR_ROOM(1), // 研讨间
     CASE_ROOM(2), // 案例教室
@@ -8,10 +11,7 @@ public enum RoomType {
     OTHER_ROOM(0); // 其他
 
     private final int code;
-    private RoomType(int code) {
+    RoomType(int code) {
         this.code = code;
     }
-    public int getCode() {
-        return code;
-    }
-} 
+}

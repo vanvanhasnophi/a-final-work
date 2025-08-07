@@ -31,21 +31,21 @@ public class RoomStatusController {
     private RoomStatusSchedulerService roomStatusSchedulerService;
     
     /**
-     * 手动触发房间状态更新
+     * 手动触发教室状态更新
      */
     @PostMapping("/update/{roomId}")
     public ResponseEntity<?> updateRoomStatus(@PathVariable Long roomId) {
         try {
             roomStatusSchedulerService.triggerRoomStatusUpdate(roomId);
-            return ResponseEntity.ok().body("房间状态更新成功");
+            return ResponseEntity.ok().body("教室状态更新成功");
         } catch (Exception e) {
-            log.error("更新房间状态失败", e);
-            return ResponseEntity.badRequest().body("更新房间状态失败: " + e.getMessage());
+            log.error("更新教室状态失败", e);
+            return ResponseEntity.badRequest().body("更新教室状态失败: " + e.getMessage());
         }
     }
     
     /**
-     * 手动设置房间状态
+     * 手动设置教室状态
      */
     @PostMapping("/set/{roomId}")
     public ResponseEntity<?> setRoomStatus(
@@ -61,30 +61,30 @@ public class RoomStatusController {
             room.setUpdateTime(new Date());
             roomRepository.save(room);
             
-            log.info("手动设置房间 {} 状态为 {}", room.getName(), status);
-            return ResponseEntity.ok().body("房间状态设置成功");
+            log.info("手动设置教室 {} 状态为 {}", room.getName(), status);
+            return ResponseEntity.ok().body("教室状态设置成功");
         } catch (Exception e) {
-            log.error("设置房间状态失败", e);
-            return ResponseEntity.badRequest().body("设置房间状态失败: " + e.getMessage());
+            log.error("设置教室状态失败", e);
+            return ResponseEntity.badRequest().body("设置教室状态失败: " + e.getMessage());
         }
     }
     
     /**
-     * 批量更新所有房间状态
+     * 批量更新所有教室状态
      */
     @PostMapping("/update-all")
     public ResponseEntity<?> updateAllRoomStatuses() {
         try {
             roomStatusSchedulerService.updateRoomStatuses();
-            return ResponseEntity.ok().body("所有房间状态更新成功");
+            return ResponseEntity.ok().body("所有教室状态更新成功");
         } catch (Exception e) {
-            log.error("批量更新房间状态失败", e);
-            return ResponseEntity.badRequest().body("批量更新房间状态失败: " + e.getMessage());
+            log.error("批量更新教室状态失败", e);
+            return ResponseEntity.badRequest().body("批量更新教室状态失败: " + e.getMessage());
         }
     }
     
     /**
-     * 获取房间状态统计
+     * 获取教室状态统计
      */
     @GetMapping("/stats")
     public ResponseEntity<?> getRoomStatusStats() {
@@ -105,13 +105,13 @@ public class RoomStatusController {
                 pendingCleaning, pendingMaintenance, unavailable, allRooms.size()
             ));
         } catch (Exception e) {
-            log.error("获取房间状态统计失败", e);
-            return ResponseEntity.badRequest().body("获取房间状态统计失败: " + e.getMessage());
+            log.error("获取教室状态统计失败", e);
+            return ResponseEntity.badRequest().body("获取教室状态统计失败: " + e.getMessage());
         }
     }
     
     /**
-     * 房间状态统计内部类
+     * 教室状态统计内部类
      */
     public static class RoomStatusStats {
         public long available;

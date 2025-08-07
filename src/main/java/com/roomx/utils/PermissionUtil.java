@@ -13,6 +13,7 @@ import com.roomx.constant.enums.UserRole;
  * 权限管理工具类
  * 定义各种操作的权限要求
  */
+@SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class PermissionUtil {
     private static final Logger logger = LoggerFactory.getLogger(PermissionUtil.class);
     
@@ -173,10 +174,7 @@ public class PermissionUtil {
                 pages.add("user-list");
                 pages.add("room-list");
                 break;
-            case SERVICE:
-                pages.add("room-list");
-                break;
-            case MAINTAINER:
+            case SERVICE, MAINTAINER:
                 pages.add("room-list");
                 break;
         }
@@ -188,39 +186,27 @@ public class PermissionUtil {
      * 获取用户角色显示名称
      */
     public static String getRoleDisplayName(UserRole role) {
-        switch (role) {
-            case ADMIN:
-                return "管理员";
-            case APPLIER:
-                return "申请人";
-            case APPROVER:
-                return "审批人";
-            case SERVICE:
-                return "服务人员";
-            case MAINTAINER:
-                return "维修人员";
-            default:
-                return "未知角色";
-        }
+        return switch (role) {
+            case ADMIN -> "管理员";
+            case APPLIER -> "申请人";
+            case APPROVER -> "审批人";
+            case SERVICE -> "服务人员";
+            case MAINTAINER -> "维修人员";
+            default -> "未知角色";
+        };
     }
     
     /**
      * 获取用户角色的颜色
      */
     public static String getRoleColor(UserRole role) {
-        switch (role) {
-            case ADMIN:
-                return "red";
-            case APPLIER:
-                return "green";
-            case APPROVER:
-                return "blue";
-            case SERVICE:
-                return "orange";
-            case MAINTAINER:
-                return "purple";
-            default:
-                return "default";
-        }
+        return switch (role) {
+            case ADMIN -> "red";
+            case APPLIER -> "green";
+            case APPROVER -> "blue";
+            case SERVICE -> "orange";
+            case MAINTAINER -> "purple";
+            default -> "default";
+        };
     }
 } 

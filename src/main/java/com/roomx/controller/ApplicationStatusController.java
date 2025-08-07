@@ -129,6 +129,7 @@ public class ApplicationStatusController {
     /**
      * 申请状态统计内部类
      */
+    @SuppressWarnings("CanBeFinal")
     public static class ApplicationStatusStats {
         public long pending;
         public long approved;

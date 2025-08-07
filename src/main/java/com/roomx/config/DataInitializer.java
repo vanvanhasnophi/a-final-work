@@ -35,7 +35,7 @@ public class DataInitializer implements CommandLineRunner {
     private PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         // 检查是否已有数据
         if (userRepository.count() > 0) {
             System.out.println("\033[33m数据库中已有数据，跳过初始化\033[0m");
@@ -47,7 +47,7 @@ public class DataInitializer implements CommandLineRunner {
         // 创建用户
         createUsers();
         
-        // 创建房间
+        // 创建教室
         createRooms();
         
         // 创建申请
@@ -340,8 +340,9 @@ public class DataInitializer implements CommandLineRunner {
         roomRepository.save(room10);
     }
 
+    @SuppressWarnings("unused")
     private void createApplications() {
-        // 获取用户和房间
+        // 获取用户和教室
         User zhangsan = userRepository.findByUsername("zhangsan");
         User lisi = userRepository.findByUsername("lisi");
         User wangwu = userRepository.findByUsername("wangwu");

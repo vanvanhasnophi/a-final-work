@@ -171,6 +171,7 @@ public class TokenValidationLogger {
     /**
      * 写入日志文件
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private static void writeToLog(String message) {
         logLock.lock();
         try {

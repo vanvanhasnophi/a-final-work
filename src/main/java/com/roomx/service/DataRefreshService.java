@@ -12,7 +12,7 @@ public interface DataRefreshService {
     void refreshUserCache();
     
     /**
-     * 刷新房间数据缓存
+     * 刷新教室数据缓存
      */
     void refreshRoomCache();
     

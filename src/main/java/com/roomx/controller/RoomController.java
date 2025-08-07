@@ -22,11 +22,11 @@ import com.roomx.service.RoomService;
 @RestController
 @RequestMapping("/api/room")
 public class RoomController {
-    // 房间相关接口 
+    // 教室相关接口 
     @Autowired
     private RoomService roomService;
 
-    @GetMapping("/page") // 获取房间列表
+    @GetMapping("/page") // 获取教室列表
     @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER})
     public ResponseEntity<PageResult<RoomDTO>> page(RoomQuery query,
                                                           @RequestParam(defaultValue = "1") int pageNum,
@@ -35,25 +35,25 @@ public class RoomController {
         return ResponseEntity.ok(pageResult);
     }
 
-    @GetMapping("/{id}") // 获取房间详情
+    @GetMapping("/{id}") // 获取教室详情
     @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER})
     public ResponseEntity<RoomDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getRoomById(id));
     }
 
-    @PostMapping("/create") // 创建房间
+    @PostMapping("/create") // 创建教室
     @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<RoomDTO> create(@RequestBody RoomDTO room) {
         return ResponseEntity.ok(roomService.addRoom(room));
     }
 
-    @PutMapping("/{id}") // 更新房间
+    @PutMapping("/{id}") // 更新教室
     @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<RoomDTO> update(@PathVariable Long id, @RequestBody RoomDTO room) {
         return ResponseEntity.ok(roomService.updateRoom(id, room));
     }
 
-    @DeleteMapping("/{id}") // 删除房间
+    @DeleteMapping("/{id}") // 删除教室
     @RequireAuth(roles = {UserRole.ADMIN})
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         roomService.deleteRoom(id);

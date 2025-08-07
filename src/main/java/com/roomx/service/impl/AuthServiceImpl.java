@@ -2,6 +2,7 @@ package com.roomx.service.impl;
 
 import java.util.Date;
 
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import com.roomx.constant.enums.UserRole;
@@ -215,6 +216,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * Token验证结果类
      */
+    @Getter
     public static class TokenValidationResult {
         private final boolean valid;
         private final String message;
@@ -228,20 +230,5 @@ public class AuthServiceImpl implements AuthService {
             this.role = role;
         }
 
-        public boolean isValid() {
-            return valid;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public UserRole getRole() {
-            return role;
-        }
     }
 }

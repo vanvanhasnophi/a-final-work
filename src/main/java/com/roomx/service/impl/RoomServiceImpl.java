@@ -57,24 +57,24 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional
     public void deleteRoom(Long id) {
-        // 检查房间是否存在
+        // 检查教室是否存在
         Room room = roomRepository.findById(id).orElse(null);
         if (room == null) {
-            throw new IllegalArgumentException("房间不存在");
+            throw new IllegalArgumentException("教室不存在");
         }
         
         // 检查是否有相关的申请数据
         List<Application> relatedApplications = applicationRepository.findByRoomId(id);
         if (!relatedApplications.isEmpty()) {
-            throw new IllegalArgumentException("该房间存在相关申请记录，无法删除。请先处理相关申请。");
+            throw new IllegalArgumentException("该教室存在相关申请记录，无法删除。请先处理相关申请。");
         }
         
-        // 检查房间状态，如果房间正在使用中，不允许删除
+        // 检查教室状态，如果教室正在使用中，不允许删除
         if (room.getStatus() == RoomStatus.USING || room.getStatus() == RoomStatus.RESERVED) {
-            throw new IllegalArgumentException("房间正在使用中或已预约，无法删除。请等待房间空闲后再删除。");
+            throw new IllegalArgumentException("教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。");
         }
         
-        // 删除房间
+        // 删除教室
         roomRepository.deleteById(id);
     }
 

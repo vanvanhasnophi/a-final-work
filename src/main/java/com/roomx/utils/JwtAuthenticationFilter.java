@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -27,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
     
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain)
             throws ServletException, IOException {
         long startTime = System.currentTimeMillis();
         String requestURI = request.getRequestURI();
@@ -70,17 +71,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 TokenValidationLogger.logValidationFailed(requestURI, validationResult.getMessage());
                 
                 // 根据不同的错误类型返回不同的错误信息
-                String errorMessage;
-                if (validationResult.getMessage().contains("会话已失效") || 
-                    validationResult.getMessage().contains("其他地方登录")) {
-                    errorMessage = "您的账号在其他地方登录，当前会话已失效";
-                } else if (validationResult.getMessage().contains("Token已过期") || 
-                          validationResult.getMessage().contains("登录已过期")) {
-                    errorMessage = "登录已过期，请重新登录";
-                } else {
-                    errorMessage = "登录状态异常，请重新登录";
-                }
-                
+                String errorMessage = getErrorMessage(validationResult);
+
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"error\":\"" + errorMessage + "\"}");
@@ -110,7 +102,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         chain.doFilter(request, response);
     }
-    
+
+    private static String getErrorMessage(AuthServiceImpl.TokenValidationResult validationResult) {
+        String errorMessage;
+        if (validationResult.getMessage().contains("会话已失效") ||
+            validationResult.getMessage().contains("其他地方登录")) {
+            errorMessage = "您的账号在其他地方登录，当前会话已失效";
+        } else if (validationResult.getMessage().contains("Token已过期") ||
+                  validationResult.getMessage().contains("登录已过期")) {
+            errorMessage = "登录已过期，请重新登录";
+        } else {
+            errorMessage = "登录状态异常，请重新登录";
+        }
+        return errorMessage;
+    }
+
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
