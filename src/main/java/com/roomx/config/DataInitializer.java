@@ -340,6 +340,7 @@ public class DataInitializer implements CommandLineRunner {
         roomRepository.save(room10);
     }
 
+    @SuppressWarnings("unused")
     private void createApplications() {
         // 获取用户和房间
         User zhangsan = userRepository.findByUsername("zhangsan");
