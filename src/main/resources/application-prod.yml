@@ -7,16 +7,19 @@ spring:
   profiles:
     active: prod
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:roomx-db}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:roomx}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://${MYSQL_HOST:roomx-db}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:roomx}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&cachePrepStmts=true&useServerPrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&rewriteBatchedStatements=true
     username: ${MYSQL_USER:roomx_user}
     password: ${MYSQL_PASSWORD:roomx_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 20
+      maximum-pool-size: 25           # 生产环境更大的连接池
       minimum-idle: 10
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+      leak-detection-threshold: 60000  # 连接泄露检测
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
   
   jpa:
     hibernate:
@@ -29,7 +32,32 @@ spring:
         connection:
           characterEncoding: utf8
           useUnicode: true
+        jdbc:
+          batch_size: 30              # 生产环境更大的批次
+          fetch_size: 100             # 更大的查询批次
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
+        generate_statistics: false
+        query:
+          plan_cache_max_size: 2048   # 查询计划缓存
     open-in-view: false
+  
+  # Redis 配置
+  redis:
+    enabled: ${REDIS_ENABLED:true}  # 生产环境默认启用
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DATABASE:0}
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 3000ms
+  fail-fast: ${REDIS_FAIL_FAST:true}   # 生产默认Redis不可用即失败退出
   
   security:
     user:
@@ -49,11 +77,11 @@ scheduling:
   pool-size: 10
   thread-name-prefix: "scheduled-task-"
   
-# 缓存配置
+# 缓存配置 - 生产环境优化
 cache:
-  refresh-interval: 300000  # 5分钟
-  cleanup-interval: 3600000 # 1小时
-  stats-refresh-interval: 120000 # 2分钟
+  refresh-interval: 600000    # 基础数据刷新间隔：10分钟
+  cleanup-interval: 7200000   # 数据清理间隔：2小时  
+  stats-refresh-interval: 300000  # 申请数据刷新间隔：5分钟
 
 # 日志配置
 logging:
@@ -69,6 +97,29 @@ logging:
     name: /app/logs/roomx.log
     max-size: 100MB
     max-history: 30
+
+# 安全配置
+security:
+  csrf:
+    enabled: true   # 生产默认开启 CSRF（前端需发送 X-XSRF-TOKEN）
+  expose-token: false  # 不通过 JSON 返回 token，仅依赖 Cookie
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: roomx-backend
+  health:
+    redis:
+      enabled: true
 
 # JWT配置
 jwt:

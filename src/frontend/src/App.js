@@ -5,6 +5,8 @@ import AppRouter from './router';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import LazyLoadMonitor from './components/LazyLoadMonitor';
+import useRoutePreload from './hooks/useRoutePreload';
 import './App.css';
 
 // 配置全局message
@@ -24,6 +26,9 @@ export const MessageContext = createContext(null);
 function AppContent() {
   const { isDarkMode } = useTheme();
   const [messageApi, contextHolder] = message.useMessage();
+  
+  // 启用路由预加载
+  useRoutePreload();
   
   const themeConfig = {
     token: {
@@ -53,6 +58,8 @@ function AppContent() {
         {contextHolder}
         <div className="App">
           <AppRouter />
+          {/* 懒加载性能监控 - 仅开发环境 */}
+          <LazyLoadMonitor />
         </div>
       </MessageContext.Provider>
     </ConfigProvider>

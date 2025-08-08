@@ -1,12 +1,12 @@
 import request from './index';
+import { probeCsrf } from '../security/csrf';
 
 // 登录
-export const login = (username, password) => {
-  return request.post('/login', { 
-    username, 
-    password
-    // 移除loginTime，让后端使用服务器时间确保一致性
-  });
+export const login = async (username, password) => {
+  const resp = await request.post('/login', { username, password });
+  // 登录成功后主动探测 CSRF（刷新 XSRF-TOKEN Cookie）
+  try { probeCsrf(); } catch (_) {}
+  return resp;
 };
 
 // 注册

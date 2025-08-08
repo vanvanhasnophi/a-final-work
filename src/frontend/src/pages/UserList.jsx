@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { register, deleteUser as authDeleteUser } from '../api/auth';
@@ -40,6 +41,7 @@ export default function UserList() {
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerType, setDrawerType] = useState(''); // 'detail', 'edit', 'create'
+  const [createPassword, setCreatePassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   
   const { loading: usersLoading, error: usersError, executeWithRetry: executeUsers } = useApiWithRetry();
@@ -765,10 +767,28 @@ export default function UserList() {
             <Form.Item
               name="password"
               label="密码"
-              rules={[{ required: true, message: '请输入密码' }]}
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 8, message: '至少 8 个字符' },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const parts = [
+                      value.length >= 8,
+                      /[A-Z]/.test(value),
+                      /[a-z]/.test(value),
+                      /[0-9]/.test(value),
+                      /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
+                    ].filter(Boolean).length;
+                    if (parts >= 2 && value.length >= 8) return Promise.resolve();
+                    return Promise.reject(new Error('需≥8位且至少满足任意2类: 大写/小写/数字/特殊'));
+                  }
+                }
+              ]}
             >
-              <Input.Password placeholder="请输入密码" />
+              <Input.Password placeholder="请输入密码" onChange={(e)=> setCreatePassword(e.target.value)} />
             </Form.Item>
+            <PasswordStrengthMeter password={createPassword} />
 
             <Form.Item
               name="role"

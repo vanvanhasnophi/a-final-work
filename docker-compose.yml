@@ -13,8 +13,14 @@ services:
       - SPRING_DATASOURCE_PASSWORD=roomx_password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_SHOW_SQL=false
+      - REDIS_HOST=roomx-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=roomx_redis_password
+      - REDIS_DATABASE=0
     depends_on:
       roomx-db:
+        condition: service_healthy
+      roomx-redis:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -50,8 +56,28 @@ services:
       retries: 5
       start_period: 30s
 
+  roomx-redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=roomx_redis_password
+    command: redis-server --requirepass roomx_redis_password --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - roomx-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

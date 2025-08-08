@@ -57,4 +57,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     
     // 查询指定状态和时间范围内的申请
     List<Application> findByStatusAndStartTimeBetween(ApplicationStatus status, Date startTime, Date endTime);
+    
+    // 查询创建时间在指定日期之后的申请（用于优化缓存查询）
+    List<Application> findByCreateTimeAfter(Date createTime);
+    
+    // 查询待处理和进行中的申请（用于状态监控优化）
+    List<Application> findByStatusIn(List<ApplicationStatus> statuses);
 }

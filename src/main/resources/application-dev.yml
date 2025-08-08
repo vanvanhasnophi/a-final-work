@@ -3,27 +3,38 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/roomx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://localhost:3306/roomx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&cachePrepStmts=true&useServerPrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048
     username: root
     password: 515155Xxx
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: 15           # 增加连接池大小以支持更多并发
       minimum-idle: 5
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+      leak-detection-threshold: 60000  # 连接泄露检测
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false                   # 关闭SQL日志以提高性能
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
+        format_sql: false             # 关闭SQL格式化
         connection:
           characterEncoding: utf8
           useUnicode: true
+        jdbc:
+          batch_size: 20              # 批量操作优化
+          fetch_size: 50              # 查询批次大小
+        order_inserts: true           # 优化插入顺序
+        order_updates: true           # 优化更新顺序
+        batch_versioned_data: true    # 版本化数据批量处理
+        generate_statistics: false    # 关闭统计信息收集
+    open-in-view: false               # 关闭懒加载在视图层
   cache:
     type: simple
     cache-names: users,rooms,applications,stats,notifications
@@ -33,16 +44,61 @@ scheduling:
   pool-size: 10
   thread-name-prefix: "scheduled-task-"
   
-# 缓存配置
+# 缓存配置 - 优化同步频次
 cache:
-  refresh-interval: 300000  # 5分钟
-  cleanup-interval: 3600000 # 1小时
-  stats-refresh-interval: 120000 # 2分钟
+  type: memory  # 开发环境使用内存缓存
+  refresh-interval: 600000    # 基础数据刷新间隔：10分钟（从5分钟调整）
+  cleanup-interval: 7200000   # 数据清理间隔：2小时（从1小时调整）
+  stats-refresh-interval: 300000  # 申请数据刷新间隔：5分钟（从2分钟调整）
 
-# 日志配置
+# Redis 配置 (可选，默认使用内存缓存)
+# 启用方式1: 在环境变量或IDE配置 redis.enabled=true
+# 启用方式2: 追加 profile: dev,redis (兼容旧方式)
+redis:
+  enabled: ${REDIS_ENABLED:false}   # 默认不开启；设置为 true 启用Redis
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  database: ${REDIS_DATABASE:1}     # 开发环境使用数据库1
+  timeout: 3000ms
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 5
+      min-idle: 2
+      max-wait: 3000ms
+  fail-fast: ${REDIS_FAIL_FAST:false}  # 启动时Redis不可用是否终止应用（默认不中止）
+
+# 日志配置 - 开发环境优化
 logging:
   level:
-    com.roomx: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE 
+    com.roomx: INFO                    # 应用日志调整为INFO级别
+    com.roomx.service: DEBUG           # 服务层保持DEBUG便于调试
+    com.roomx.controller: DEBUG        # 控制层保持DEBUG便于调试
+    org.springframework.security: WARN # Spring Security调整为WARN
+    org.hibernate.SQL: INFO            # SQL日志调整为INFO，减少输出
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN  # 参数绑定调整为WARN
+    org.springframework.web: WARN      # Web相关日志调整为WARN
+    org.springframework.boot: INFO     # Boot相关日志保持INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n"
+
+# 安全配置
+security:
+  csrf:
+    enabled: true   # 开发可切换，前端需从 /api/csrf 获取 token 并携带 X-XSRF-TOKEN 头
+  expose-token: false  # 是否在 /api/csrf JSON 中返回 token（生产建议 false）
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  health:
+    redis:
+      enabled: true   # redis.enabled=false 时不会创建bean，自动显示DOWN或忽略

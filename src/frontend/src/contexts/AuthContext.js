@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         // 验证token是否有效
         const isValid = await validateToken(storedToken);
         if (!isValid) {
-          console.log('Token已过期或无效，清理认证状态');
+          console.debug('Token已过期或无效，清理认证状态');
           clearAuth();
           setLoading(false);
           return;
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
         // 检查是否被挤下线
         const isKickedOut = await checkKickout();
         if (isKickedOut) {
-          console.log('检测到账号在其他地方登录，清理认证状态');
+          console.debug('检测到账号在其他地方登录，清理认证状态');
           clearAuth();
           setLoading(false);
           // 跳转到登录页并传递挤下线参数
@@ -127,10 +127,10 @@ export const AuthProvider = ({ children }) => {
   // 登录
   const login = async (username, password) => {
     try {
-      console.log('AuthContext: 开始登录请求');
+      console.debug('AuthContext: 开始登录请求');
       const response = await authAPI.login(username, password);
-      console.log('AuthContext: 登录响应:', response);
-      console.log('AuthContext: 响应数据:', response.data);
+      console.debug('AuthContext: 登录响应:', response);
+      console.debug('AuthContext: 响应数据:', response.data);
       
       // 检查响应数据结构
       if (!response.data || !response.data.token) {
@@ -140,10 +140,10 @@ export const AuthProvider = ({ children }) => {
       
       // 后端返回的是UserTokenDTO格式，包含token、sessionId和用户信息
       const { token: newToken, sessionId: newSessionId, id, username: userName, nickname, role } = response.data;
-      console.log('AuthContext: 解析的token:', newToken);
-      console.log('AuthContext: 解析的sessionId:', newSessionId);
-      console.log('AuthContext: 解析的用户信息:', { id, userName, nickname, role });
-      
+      console.debug('AuthContext: 解析的token:', newToken);
+      console.debug('AuthContext: 解析的sessionId:', newSessionId);
+      console.debug('AuthContext: 解析的用户信息:', { id, userName, nickname, role });
+
       // 构造用户对象
       const userData = {
         id,
@@ -170,14 +170,14 @@ export const AuthProvider = ({ children }) => {
       // 登录后刷新活动数据
       activityService.setCurrentUser(userData.id, userData.role);
       activityService.refreshMockActivities(userData.id, userData.nickname || userData.username, userData.role);
-      
-      console.log('AuthContext: 登录完成，token和sessionId已设置');
-      console.log('AuthContext: localStorage检查:', {
+
+      console.debug('AuthContext: 登录完成，token和sessionId已设置');
+      console.debug('AuthContext: localStorage检查:', {
         token: localStorage.getItem('token'),
         user: localStorage.getItem('user'),
         sessionId: localStorage.getItem('sessionId')
       });
-      console.log('AuthContext: 状态更新完成:', {
+      console.debug('AuthContext: 状态更新完成:', {
         token: newToken,
         user: userData,
         sessionId: newSessionId
@@ -188,10 +188,10 @@ export const AuthProvider = ({ children }) => {
         const storedToken = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
         const storedSessionId = localStorage.getItem('sessionId');
-        console.log('AuthContext: 延迟验证 - 存储的token:', storedToken);
-        console.log('AuthContext: 延迟验证 - 存储的用户:', storedUser);
-        console.log('AuthContext: 延迟验证 - 存储的sessionId:', storedSessionId);
-        
+        console.debug('AuthContext: 延迟验证 - 存储的token:', storedToken);
+        console.debug('AuthContext: 延迟验证 - 存储的用户:', storedUser);
+        console.debug('AuthContext: 延迟验证 - 存储的sessionId:', storedSessionId);
+
         if (storedToken !== newToken) {
           console.error('AuthContext: Token存储不一致!');
         }
@@ -263,8 +263,8 @@ export const AuthProvider = ({ children }) => {
     const stateHasToken = !!token;
     const stateHasUser = !!user;
     const stateHasSessionId = !!sessionId;
-    
-    console.log('isAuthenticated检查:', { 
+
+    console.debug('isAuthenticated检查:', { 
       hasToken, 
       hasUser, 
       hasSessionId,
@@ -303,7 +303,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('定时检查挤下线状态失败:', error);
       }
-    }, 10000); // 每10秒检查一次
+    }, 60000); // 每分钟检查一次
 
     return () => clearInterval(checkInterval);
   }, [token, sessionId, checkKickout, clearAuth]);

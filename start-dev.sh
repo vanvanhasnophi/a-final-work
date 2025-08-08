@@ -38,8 +38,13 @@ show_help() {
     echo "Usage: $0 [options]"
     echo ""
     echo "Options:"
-    echo "  -h, --help     Show this help message"
-    echo "  --skip-build   Skip Maven build step"
+    echo "  -h, --help        Show this help message"
+    echo "  --skip-build      Skip Maven build step"
+    echo "  --redis           Force enable Redis (override env)"
+    echo "  --no-redis        Force disable Redis for this run"
+    echo ""
+    echo "Environment Variables:"
+    echo "  REDIS_ENABLED=true|false   Default Redis toggle (overridden by CLI flags)"
     echo ""
     echo "Database Setup Instructions:"
     echo "  1. Install MySQL:"
@@ -63,7 +68,10 @@ show_help() {
 # 解析命令行参数
 parse_args() {
     SKIP_BUILD=false
-    
+    # inherit env; default false
+    USE_REDIS=${REDIS_ENABLED:-false}
+    FORCE_REDIS_SET=false
+
     while [[ $# -gt 0 ]]; do
         case $1 in
             -h|--help)
@@ -74,6 +82,16 @@ parse_args() {
                 SKIP_BUILD=true
                 shift
                 ;;
+            --redis)
+                USE_REDIS=true
+                FORCE_REDIS_SET=true
+                shift
+                ;;
+            --no-redis)
+                USE_REDIS=false
+                FORCE_REDIS_SET=true
+                shift
+                ;;
             *)
                 log_error "Unknown option: $1"
                 show_help
@@ -81,6 +99,13 @@ parse_args() {
                 ;;
         esac
     done
+
+    # If env provided and no explicit flag, honor env value
+    if [[ "$FORCE_REDIS_SET" = false && -n "$REDIS_ENABLED" ]]; then
+        USE_REDIS=$REDIS_ENABLED
+    fi
+
+    export USE_REDIS
 }
 
 # 检查Java环境
@@ -199,6 +224,29 @@ check_database_config() {
     return 0
 }
 
+# 检查Redis连接
+check_redis() {
+    if [[ "$USE_REDIS" != true ]]; then
+        log_info "Redis disabled (--no-redis or default). Skipping Redis port check."
+        return 0
+    fi
+    log_info "Checking Redis connection (enabled)..."
+    if command -v nc >/dev/null 2>&1; then
+        if nc -z localhost 6379 >/dev/null 2>&1; then
+            log_success "Redis port 6379 is listening"
+        else
+            log_warn "Redis port 6379 not listening; application will attempt to connect and may log warnings."
+        fi
+    else
+        if command -v lsof >/dev/null 2>&1 && lsof -i :6379 2>/dev/null | grep -q LISTEN; then
+            log_success "Redis port 6379 is listening"
+        else
+            log_warn "Redis port 6379 status unknown (nc not installed)."
+        fi
+    fi
+    return 0
+}
+
 # 编译项目
 build_project() {
     if [ "$SKIP_BUILD" = true ]; then
@@ -278,8 +326,19 @@ start_application() {
     export SPRING_PROFILES_ACTIVE=dev
     export SERVER_PORT=8080
     
+    if [[ "$USE_REDIS" = true ]]; then
+        export REDIS_ENABLED=true
+        log_info "Backend will start WITH Redis (REDIS_ENABLED=true)."
+        JVM_REDIS_ARGS="-Dmanagement.health.redis.enabled=true"
+    else
+        export REDIS_ENABLED=false
+        log_info "Backend will start WITHOUT Redis (REDIS_ENABLED=false)."
+        # 禁用 Redis 自动配置与健康检查，避免连接被拒绝异常
+        JVM_REDIS_ARGS="-Dmanagement.health.redis.enabled=false -Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration"
+    fi
+    
     # 启动应用
-    mvn spring-boot:run -Dspring-boot.run.profiles=dev &
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev -Dspring-boot.run.jvmArguments="$JVM_REDIS_ARGS" &
     APP_PID=$!
     
     # 等待应用启动
@@ -372,6 +431,7 @@ main() {
     check_node
     check_mysql
     check_database_config
+    check_redis
     
     # 编译项目
     build_project
@@ -403,4 +463,4 @@ main() {
 }
 
 # 运行主函数
-main "$@" 
+main "$@"

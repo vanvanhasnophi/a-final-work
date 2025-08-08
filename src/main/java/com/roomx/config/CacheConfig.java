@@ -6,14 +6,20 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
+/**
+ * 内存缓存配置类
+ * 仅在开发环境下使用，生产环境使用Redis
+ */
 @Configuration
 @EnableCaching
+@Profile({"dev", "test", "default"}) // 仅在开发/测试环境下启用
 public class CacheConfig {
     
     /**
-     * 配置缓存管理器
-     * 使用内存缓存，也可以配置Redis缓存
+     * 配置内存缓存管理器
+     * 开发环境使用简单的内存缓存
      */
     @Bean
     public CacheManager cacheManager() {

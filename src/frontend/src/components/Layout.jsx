@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Avatar, Dropdown, Space, Typography, Button } from 'antd';
 import {
   DashboardOutlined,
@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import NotificationCenter from './NotificationCenter';
+import { getCsrfStatus, probeCsrf } from '../security/csrf';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -25,6 +26,18 @@ export default function AppLayout({ children }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const [csrfInfo, setCsrfInfo] = useState({ enabled: true, tokenPresent: false });
+
+  useEffect(() => {
+    // 初次挂载探测一次 CSRF 状态
+    (async () => {
+      try { await probeCsrf(); setCsrfInfo(getCsrfStatus()); } catch (_) {}
+    })();
+    const interval = setInterval(() => {
+      setCsrfInfo(getCsrfStatus());
+    }, 30000); // 30s 刷新一次展示状态
+    return () => clearInterval(interval);
+  }, []);
 
 
 
@@ -171,6 +184,19 @@ export default function AppLayout({ children }) {
           <div style={{ flex: 1 }} />
           
           <Space>
+            {/* CSRF 状态指示 */}
+            <div style={{
+              fontSize: 12,
+              padding: '2px 8px',
+              borderRadius: 12,
+              background: csrfInfo.enabled ? (csrfInfo.tokenPresent ? '#d9f7be' : '#ffe58f') : '#ffd8bf',
+              color: 'var(--text-color)',
+              border: '1px solid var(--border-color)'
+            }}
+              title={csrfInfo.enabled ? (csrfInfo.tokenPresent ? 'CSRF 已启用且令牌存在 (XSRF-TOKEN)' : 'CSRF 已启用但当前未检测到令牌，后续写操作前会自动补取') : 'CSRF 已关闭'}
+            >
+              CSRF: {csrfInfo.enabled ? (csrfInfo.tokenPresent ? 'ON' : 'NO TOKEN') : 'OFF'}
+            </div>
             {/* 通知中心 */}
             <NotificationCenter />
             

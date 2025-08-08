@@ -1,0 +1,70 @@
+/* 懒加载Loading样式 */
+.lazy-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  width: 100%;
+  background: var(--bg-color-container, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.lazy-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.lazy-loading-content .ant-spin-text {
+  color: var(--text-color-secondary, #666666);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* 暗黑模式适配 */
+[data-theme='dark'] .lazy-loading-container {
+  background: var(--bg-color-container-dark, #2B2D31);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .lazy-loading-content .ant-spin-text {
+  color: var(--text-color-secondary-dark, #cccccc);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .lazy-loading-container {
+    min-height: 50vh;
+  }
+}
+
+/* 动画效果 */
+.lazy-loading-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 微调Spin组件样式 */
+.lazy-loading-content .ant-spin {
+  color: var(--primary-color, #660874);
+}
+
+.lazy-loading-content .ant-spin-dot-item {
+  background-color: var(--primary-color, #660874);
+}
+
+[data-theme='dark'] .lazy-loading-content .ant-spin-dot-item {
+  background-color: var(--primary-color-dark, #990CAE);
+}
