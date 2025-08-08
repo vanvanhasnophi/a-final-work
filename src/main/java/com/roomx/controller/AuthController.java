@@ -1,7 +1,11 @@
 package com.roomx.controller;
 
-import lombok.Getter;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +25,7 @@ import com.roomx.utils.EnhancedJwtUtil;
 import com.roomx.utils.TokenValidationLogger;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 
 @RestController
 @RequestMapping("/api")
@@ -113,21 +118,48 @@ public class AuthController {
         }
     }
 
-    // 修改密码接口
+    // 修改密码接口（需登录，使用当前认证主体）
     @PostMapping("/updatePassword")
     public ResponseEntity<?> updatePassword(@RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
         try {
+            // 始终使用当前认证用户，忽略传入的 username，避免前端误传造成拒绝
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getName() == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("success", false, "code", "UNAUTHORIZED", "message", "未认证"));
+            }
+            userUpdatePasswordDTO.setUsername(authentication.getName());
             int result = authService.updatePassword(userUpdatePasswordDTO);
-            return switch (result) {
-                case 0 -> ResponseEntity.ok().body("Password updated successfully");
-                case 1 -> ResponseEntity.badRequest().body("User not found");
-                case 2 -> ResponseEntity.badRequest().body("Old password is incorrect");
-                default -> ResponseEntity.badRequest().body("Update password failed");
-            };
+        return switch (result) {
+        case 0 -> ResponseEntity.ok(Map.of(
+            "success", true,
+            "code", "OK",
+            "message", "密码更新成功"));
+        case 1 -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+            "success", false,
+            "code", "USER_NOT_FOUND",
+            "message", "用户不存在"));
+        case 2 -> ResponseEntity.badRequest().body(Map.of(
+            "success", false,
+            "code", "OLD_PASSWORD_INCORRECT",
+            "message", "旧密码错误"));
+        case 3 -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+            "success", false,
+            "code", "UNAUTHORIZED",
+            "message", "未认证"));
+        default -> ResponseEntity.badRequest().body(Map.of(
+            "success", false,
+            "code", "UPDATE_FAILED",
+            "message", "密码更新失败"));
+        };
         } catch (Exception e) {
             TokenValidationLogger.logException("Update password", e.getMessage(), 
                 "Update password failed for user: " + userUpdatePasswordDTO.getUsername());
-            return ResponseEntity.badRequest().body(e.getMessage());
+        return ResponseEntity.badRequest().body(Map.of(
+            "success", false,
+            "code", "EXCEPTION",
+            "message", e.getMessage()
+        ));
         }
     }
 

@@ -48,14 +48,14 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     @Override
     public void refreshUserCache() {
         try {
-            logger.info("开始刷新用户数据缓存...");
+            logger.debug("开始刷新用户数据缓存...");
             long startTime = System.currentTimeMillis();
             
             List<User> users = userRepository.findAll();
             cache.put(USER_CACHE_KEY, users);
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("用户数据缓存刷新完成，共 {} 条记录，耗时 {}ms", users.size(), duration);
+            logger.debug("用户数据缓存刷新完成，共 {} 条记录，耗时 {}ms", users.size(), duration);
             
             lastRefreshTime.set(System.currentTimeMillis());
         } catch (Exception e) {
@@ -66,14 +66,14 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     @Override
     public void refreshRoomCache() {
         try {
-            logger.info("开始刷新教室数据缓存...");
+            logger.debug("开始刷新教室数据缓存...");
             long startTime = System.currentTimeMillis();
             
             List<Room> rooms = roomRepository.findAll();
             cache.put(ROOM_CACHE_KEY, rooms);
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("教室数据缓存刷新完成，共 {} 条记录，耗时 {}ms", rooms.size(), duration);
+            logger.debug("教室数据缓存刷新完成，共 {} 条记录，耗时 {}ms", rooms.size(), duration);
             
             lastRefreshTime.set(System.currentTimeMillis());
         } catch (Exception e) {
@@ -84,14 +84,16 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     @Override
     public void refreshApplicationCache() {
         try {
-            logger.info("开始刷新申请数据缓存...");
+            logger.debug("开始刷新申请数据缓存...");
             long startTime = System.currentTimeMillis();
             
-            List<Application> applications = applicationRepository.findAll();
+            // 只查询近60天的申请记录，提高查询效率
+            Date sixtyDaysAgo = new Date(System.currentTimeMillis() - 60L * 24 * 60 * 60 * 1000);
+            List<Application> applications = applicationRepository.findByCreateTimeAfter(sixtyDaysAgo);
             cache.put(APPLICATION_CACHE_KEY, applications);
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("申请数据缓存刷新完成，共 {} 条记录，耗时 {}ms", applications.size(), duration);
+            logger.debug("申请数据缓存刷新完成，共 {} 条记录，耗时 {}ms", applications.size(), duration);
             
             lastRefreshTime.set(System.currentTimeMillis());
         } catch (Exception e) {
@@ -112,39 +114,44 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     @Override
     public void cleanupExpiredData() {
         try {
-            logger.info("开始清理过期数据...");
+            logger.debug("开始清理过期数据...");
             long startTime = System.currentTimeMillis();
             
             // 计算60天前的日期
             Date sixtyDaysAgo = new Date(System.currentTimeMillis() - 60L * 24 * 60 * 60 * 1000);
             
-            // 清理60天前的申请记录
+            // 清理60天前的申请记录 - 优化查询，只查询需要清理的记录
             List<Application> oldApplications = applicationRepository.findAll().stream()
                 .filter(app -> app.getCreateTime() != null && app.getCreateTime().before(sixtyDaysAgo))
                 .toList();
             
+            int deletedOldCount = 0;
             if (!oldApplications.isEmpty()) {
                 applicationRepository.deleteAll(oldApplications);
-                logger.info("清理了 {} 条60天前的申请记录", oldApplications.size());
+                deletedOldCount = oldApplications.size();
+                logger.info("清理了 {} 条60天前的申请记录", deletedOldCount);
             }
             
-            // 清理已过期的申请（结束时间已过）
+            // 清理已过期的申请（结束时间已过且状态为已完成）
             Date now = new Date();
             List<Application> expiredApplications = applicationRepository.findAll().stream()
                 .filter(app -> app.getEndTime() != null && app.getEndTime().before(now))
-                .filter(app -> app.getStatus() == com.roomx.constant.enums.ApplicationStatus.COMPLETED)
+                .filter(app -> app.getStatus() == ApplicationStatus.COMPLETED)
                 .toList();
             
+            int deletedExpiredCount = 0;
             if (!expiredApplications.isEmpty()) {
                 applicationRepository.deleteAll(expiredApplications);
-                logger.info("清理了 {} 条已完成的过期申请", expiredApplications.size());
+                deletedExpiredCount = expiredApplications.size();
+                logger.info("清理了 {} 条已完成的过期申请", deletedExpiredCount);
             }
             
             // 更新教室状态
             updateRoomStatus();
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("过期数据清理完成，耗时 {}ms", duration);
+            logger.info("过期数据清理完成，删除旧记录{}条，删除过期记录{}条，耗时 {}ms", 
+                       deletedOldCount, deletedExpiredCount, duration);
             
         } catch (Exception e) {
             logger.error("清理过期数据失败", e);
@@ -159,9 +166,10 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             long userCount = userRepository.count();
             long roomCount = roomRepository.count();
             long applicationCount = applicationRepository.count();
-            long pendingApplicationCount = applicationRepository.findAll().stream()
-                .filter(app -> app.getStatus() == ApplicationStatus.PENDING)
-                .count();
+            
+            // 优化待审批申请数量查询 - 使用数据库查询而不是内存过滤
+            List<ApplicationStatus> pendingStatuses = List.of(ApplicationStatus.PENDING);
+            long pendingApplicationCount = applicationRepository.findByStatusIn(pendingStatuses).size();
             
             ConcurrentHashMap<String, Long> stats = new ConcurrentHashMap<>();
             stats.put("userCount", userCount);
@@ -170,7 +178,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             stats.put("pendingApplicationCount", pendingApplicationCount);
             
             cache.put(STATS_CACHE_KEY, stats);
-            logger.info("统计信息缓存刷新完成");
+            logger.debug("统计信息缓存刷新完成");
             
         } catch (Exception e) {
             logger.error("刷新统计信息缓存失败", e);
@@ -249,9 +257,9 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     // 定时任务配置
     
     /**
-     * 每5分钟刷新一次用户和教室缓存
+     * 每10分钟刷新一次用户和教室缓存
      */
-    @Scheduled(fixedRate = 300000) // 5分钟
+    @Scheduled(fixedRate = 600000) // 10分钟
     public void scheduledRefreshBasicData() {
         logger.debug("执行定时任务：刷新基础数据缓存");
         refreshUserCache();
@@ -259,18 +267,18 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     }
     
     /**
-     * 每2分钟刷新一次申请数据缓存
+     * 每5分钟刷新一次申请数据缓存
      */
-    @Scheduled(fixedRate = 120000) // 2分钟
+    @Scheduled(fixedRate = 300000) // 5分钟
     public void scheduledRefreshApplicationData() {
         logger.debug("执行定时任务：刷新申请数据缓存");
         refreshApplicationCache();
     }
     
     /**
-     * 每小时清理一次过期数据
+     * 每2小时清理一次过期数据（从1小时调整为2小时）
      */
-    @Scheduled(fixedRate = 3600000) // 1小时
+    @Scheduled(fixedRate = 7200000) // 2小时
     public void scheduledCleanupExpiredData() {
         logger.debug("执行定时任务：清理过期数据");
         cleanupExpiredData();

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, message, Alert } from 'antd';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,6 +15,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [kickoutMessage, setKickoutMessage] = useState('');
+  // 密码强度展示用（需在任何条件 return 之前声明，避免 hooks 顺序问题）
+  const [regPassword, setRegPassword] = useState('');
+  // 登录密码弱提示（不阻止登录）
+  const [loginPassword, setLoginPassword] = useState('');
+  const [isLoginPasswordWeak, setIsLoginPasswordWeak] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login, register, isAuthenticated } = useAuth();
@@ -59,6 +65,15 @@ export default function Login() {
     setKickoutMessage('');
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
+    // 评估密码强度（不阻止登录，仅提示）
+    const pwd = values.password || '';
+    const categories = [
+      /[A-Z]/.test(pwd),
+      /[a-z]/.test(pwd),
+      /[0-9]/.test(pwd),
+      /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(pwd)
+    ].filter(Boolean).length;
+    const weak = pwd.length < 8 || categories < 3;
     
     console.log('开始登录:', values);
     try {
@@ -76,6 +91,12 @@ export default function Login() {
           content: '登录成功！正在跳转...',
           duration: 1.5,
         });
+        if (weak) {
+          // 弱密码额外提醒（不阻止）
+            setTimeout(() => {
+              messageApi.warning('当前密码强度较弱，建议尽快前往个人中心修改为更安全的密码');
+            }, 1600);
+        }
         
         // 延迟导航，确保状态更新完成
         setTimeout(() => {
@@ -277,6 +298,7 @@ export default function Login() {
     return null;
   }
 
+
   return (
     <>
       {contextHolder}
@@ -351,8 +373,7 @@ export default function Login() {
             <Form.Item
               name="password"
               rules={[
-                { required: true, message: '请输入密码!' },
-                { min: 6, message: '密码至少6个字符!' }
+                { required: true, message: '请输入密码!' }
               ]}
             >
               <Input.Password
@@ -360,9 +381,28 @@ export default function Login() {
                 placeholder="密码"
                 size="large"
                 style={inputStyle}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setLoginPassword(v);
+                  const categories = [
+                    /[A-Z]/.test(v),
+                    /[a-z]/.test(v),
+                    /[0-9]/.test(v),
+                    /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(v)
+                  ].filter(Boolean).length;
+                  setIsLoginPasswordWeak(v.length > 0 && (v.length < 8 || categories < 3));
+                  handleInputChange();
+                }}
               />
             </Form.Item>
+            {isLoginPasswordWeak && (
+              <Alert
+                type="warning"
+                showIcon
+                message="密码强度较弱：建议包含大小写字母、数字及特殊字符（≥8位且至少3类）"
+                style={{ marginBottom: 16, borderRadius: 8 }}
+              />
+            )}
 
             <Form.Item>
               <Button
@@ -443,7 +483,20 @@ export default function Login() {
               name="password"
               rules={[
                 { required: true, message: '请输入密码!' },
-                { min: 6, message: '密码至少6个字符!' }
+                { min: 8, message: '密码至少8个字符!' },
+                { validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const parts = [
+                      value.length >= 8,
+                      /[A-Z]/.test(value),
+                      /[a-z]/.test(value),
+                      /[0-9]/.test(value),
+                      /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
+                    ].filter(Boolean).length;
+                    if (parts >= 2 && value.length >= 8) return Promise.resolve();
+                    return Promise.reject(new Error('需至少8位且至少满足任意2类: 大写/小写/数字/特殊'));
+                  }
+                }
               ]}
             >
               <Input.Password
@@ -451,9 +504,11 @@ export default function Login() {
                 placeholder="密码"
                 size="large"
                 style={inputStyle}
-                onChange={handleInputChange}
+                onChange={(e) => { setRegPassword(e.target.value); handleInputChange(); }}
               />
             </Form.Item>
+
+            <PasswordStrengthMeter password={regPassword} />
 
             <Form.Item
               name="confirmPassword"

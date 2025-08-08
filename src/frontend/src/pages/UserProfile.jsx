@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Alert, Modal } from 'antd';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { getRoleDisplayName } from '../utils/roleMapping';
@@ -19,6 +20,7 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordForm] = Form.useForm();
+  const [newPwd, setNewPwd] = useState('');
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const { updateUserInfo, refreshUserInfo } = useAuth();
@@ -117,13 +119,10 @@ export default function UserProfile() {
 
   const handlePasswordSubmit = async (values) => {
     try {
-      const updatePasswordData = {
-        username: userInfo.username,
+      await userAPI.updatePassword({
         oldPassword: values.oldPassword,
         newPassword: values.newPassword
-      };
-      
-      await userAPI.updatePassword(updatePasswordData);
+      });
       
       messageApi.open({
         type: 'success',
@@ -135,9 +134,22 @@ export default function UserProfile() {
       passwordForm.resetFields();
     } catch (error) {
       console.error('修改密码失败:', error);
+      let errMsg = '修改密码失败';
+      const data = error.response?.data;
+      if (data) {
+        if (typeof data === 'string') {
+          errMsg = data;
+        } else if (data.message) {
+          errMsg = data.message;
+        } else if (data.code) {
+          errMsg = data.code;
+        }
+      } else if (error.message) {
+        errMsg = error.message;
+      }
       messageApi.open({
         type: 'error',
-        content: '修改密码失败: ' + (error.response?.data || error.message),
+        content: errMsg,
         duration: 2,
       });
     }
@@ -447,8 +459,7 @@ export default function UserProfile() {
             name="oldPassword"
             label="当前密码"
             rules={[
-              { required: true, message: '请输入当前密码' },
-              { min: 6, message: '密码长度至少6位' }
+              { required: true, message: '请输入当前密码' }
             ]}
           >
             <Input.Password 
@@ -463,15 +474,30 @@ export default function UserProfile() {
             label="新密码"
             rules={[
               { required: true, message: '请输入新密码' },
-              { min: 6, message: '密码长度至少6位' }
+              { min: 8, message: '密码长度至少8位' },
+              { validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const parts = [
+                    value.length >= 8,
+                    /[A-Z]/.test(value),
+                    /[a-z]/.test(value),
+                    /[0-9]/.test(value),
+                    /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
+                  ].filter(Boolean).length;
+                  if (parts >= 2 && value.length >= 8) return Promise.resolve();
+                  return Promise.reject(new Error('需至少8位且至少满足任意2类: 大写/小写/数字/特殊'));
+                }
+              }
             ]}
           >
             <Input.Password 
               prefix={<LockOutlined />} 
               placeholder="请输入新密码"
               size="large"
+              onChange={(e)=> setNewPwd(e.target.value)}
             />
           </Form.Item>
+          <PasswordStrengthMeter password={newPwd} compact />
 
           <Form.Item
             name="confirmPassword"

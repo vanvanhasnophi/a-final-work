@@ -2,7 +2,8 @@ package com.roomx.service.impl;
 
 import java.util.Date;
 
-import lombok.Getter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.roomx.constant.enums.UserRole;
@@ -17,6 +18,9 @@ import com.roomx.service.UserSessionService;
 import com.roomx.utils.DateUtil;
 import com.roomx.utils.EnhancedJwtUtil;
 import com.roomx.utils.PasswordEncoderUtil;
+import com.roomx.utils.PasswordStrengthUtil;
+
+import lombok.Getter;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -62,7 +66,9 @@ public class AuthServiceImpl implements AuthService {
         
         // 设置基本信息
         user.setUsername(userRegisterDTO.getUsername());
-        user.setPassword(PasswordEncoderUtil.encode(userRegisterDTO.getPassword()));
+    // 密码强度校验
+    PasswordStrengthUtil.validateOrThrow(userRegisterDTO.getPassword());
+    user.setPassword(PasswordEncoderUtil.encode(userRegisterDTO.getPassword()));
         user.setNickname(userRegisterDTO.getNickname());
         user.setEmail(userRegisterDTO.getEmail());
         user.setPhone(userRegisterDTO.getPhone());
@@ -137,6 +143,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public int updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO) {
+        // 再次服务端用户名一致性校验，防止绕过 Controller
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            return 3; // 未认证
+        }
+        String principal = authentication.getName();
+    // 始终使用当前认证主体（Controller 已覆盖 username），再次兜底
+    userUpdatePasswordDTO.setUsername(principal);
         User user = userRepository.findByUsername(userUpdatePasswordDTO.getUsername());
         if (user == null) {
             return 1; // 用户不存在
@@ -144,13 +158,15 @@ public class AuthServiceImpl implements AuthService {
         if (!PasswordEncoderUtil.matches(userUpdatePasswordDTO.getOldPassword(), user.getPassword())) {
             return 2; // 旧密码错误
         }
-        user.setPassword(PasswordEncoderUtil.encode(userUpdatePasswordDTO.getNewPassword()));
+    // 新密码强度校验
+    PasswordStrengthUtil.validateOrThrow(userUpdatePasswordDTO.getNewPassword());
+    user.setPassword(PasswordEncoderUtil.encode(userUpdatePasswordDTO.getNewPassword()));
         userRepository.save(user);
         
         // 密码更新后，使所有会话失效，强制重新登录
         userSessionService.invalidateSession(user.getUsername());
         
-        return 0; // 成功
+    return 0; // 成功
     }
 
     @Override

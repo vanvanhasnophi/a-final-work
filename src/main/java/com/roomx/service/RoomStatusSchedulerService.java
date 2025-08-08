@@ -36,11 +36,11 @@ public class RoomStatusSchedulerService {
     public void startScheduler() {
         log.info("启动教室状态自动更新调度器");
         
-        // 每分钟检查一次教室状态
-        scheduler.scheduleAtFixedRate(this::updateRoomStatuses, 0, 1, TimeUnit.MINUTES);
+        // 每3分钟检查一次教室状态
+        scheduler.scheduleAtFixedRate(this::updateRoomStatuses, 0, 3, TimeUnit.MINUTES);
         
-        // 每5分钟检查一次申请状态
-        scheduler.scheduleAtFixedRate(this::updateApplicationStatuses, 0, 5, TimeUnit.MINUTES);
+        // 每10分钟检查一次申请状态
+        scheduler.scheduleAtFixedRate(this::updateApplicationStatuses, 0, 10, TimeUnit.MINUTES);
     }
     
     @PreDestroy
@@ -84,14 +84,18 @@ public class RoomStatusSchedulerService {
         try {
             Date now = new Date();
             
-            // 获取所有待审批的申请
-            List<Application> pendingApplications = applicationRepository.findByStatus(ApplicationStatus.PENDING);
+            // 只获取需要检查的申请：待审批和已批准的申请
+            List<ApplicationStatus> activeStatuses = List.of(
+                ApplicationStatus.PENDING, 
+                ApplicationStatus.APPROVED
+            );
+            List<Application> activeApplications = applicationRepository.findByStatusIn(activeStatuses);
             
-            for (Application application : pendingApplications) {
+            for (Application application : activeApplications) {
                 updateApplicationStatus(application, now);
             }
             
-            log.debug("申请状态更新完成，检查了 {} 个申请", pendingApplications.size());
+            log.debug("申请状态更新完成，检查了 {} 个申请", activeApplications.size());
         } catch (Exception e) {
             log.error("更新申请状态时发生错误", e);
         }

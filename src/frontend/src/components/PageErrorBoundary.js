@@ -74,8 +74,6 @@ class PageErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      const { retryCount } = this.state;
-      const { maxRetries = 3 } = this.props;
       
       return (
         <div style={{
@@ -87,8 +85,8 @@ class PageErrorBoundary extends React.Component {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(2px)',
+          backgroundColor: 'rgba(255, 255, 255, 0)',
+          backdropFilter: 'blur(3px)',
           zIndex: 1000,
           borderRadius: 'inherit'
         }}>
@@ -115,21 +113,10 @@ class PageErrorBoundary extends React.Component {
             <Result
               status="error"
               title="加载失败"
-              subTitle={
-                retryCount < maxRetries 
-                  ? `这是第 ${retryCount + 1} 次重试，最多重试 ${maxRetries} 次`
-                  : "已达到最大重试次数"
-              }
               extra={[
-                retryCount < maxRetries ? (
-                  <Button type="primary" key="retry" onClick={this.handleRetry}>
-                    重试
-                  </Button>
-                ) : (
-                  <Button type="primary" key="reset" onClick={this.handleReset}>
-                    重置
-                  </Button>
-                ),
+                <Button type="primary" key="retry" onClick={this.handleRetry}>
+                  重试
+                </Button>,
                 <Button key="refresh" onClick={() => window.location.reload()}>
                   刷新页面
                 </Button>

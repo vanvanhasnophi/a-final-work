@@ -38,9 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 记录token验证开始
         TokenValidationLogger.logValidationStart(requestURI, clientIP, userAgent);
         
-        // 跳过登录和注册请求的JWT验证
-        if (requestURI.equals("/api/login") || requestURI.equals("/api/register")) {
-            TokenValidationLogger.logValidationSkipped(requestURI, "Login/Register endpoint");
+        // 跳过无需认证的端点
+    if (requestURI.equals("/api/login") || requestURI.equals("/api/register") || requestURI.equals("/api/csrf")) {
+            TokenValidationLogger.logValidationSkipped(requestURI, "Public auth endpoint");
             chain.doFilter(request, response);
             return;
         }
@@ -57,9 +57,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = extractTokenFromRequest(request);
             
             if (token == null) {
+                // 对于需要认证的端点，没有 token 直接返回 401
                 logger.debug("No token found in request: {}", requestURI);
-                TokenValidationLogger.logValidationSkipped(requestURI, "No token found");
-                chain.doFilter(request, response);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\":\"未认证，请登录\"}");
                 return;
             }
             

@@ -1,23 +1,28 @@
 package com.roomx.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.HealthComponent;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.health.Status;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.roomx.repository.UserRepository;
-import com.roomx.repository.RoomRepository;
 import com.roomx.repository.ApplicationRepository;
+import com.roomx.repository.RoomRepository;
+import com.roomx.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api")
+@ConditionalOnClass(HealthEndpoint.class)
 public class HealthController {
 
     @PersistenceContext
@@ -32,22 +37,30 @@ public class HealthController {
     @Autowired
     private ApplicationRepository applicationRepository;
 
-    /**
-     * 基础健康检查
-     */
+    private final HealthEndpoint healthEndpoint;
+
+    public HealthController(HealthEndpoint healthEndpoint) {
+        this.healthEndpoint = healthEndpoint;
+    }
+
+    /** 基础健康（汇总 Actuator 结果 + 版本信息） */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
+        HealthComponent hc = healthEndpoint.health();
+        Status st = hc.getStatus();
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "UP");
+        response.put("status", st.getCode());
         response.put("timestamp", System.currentTimeMillis());
         response.put("service", "RoomX");
         response.put("version", "2.1.0801");
-        
-        return ResponseEntity.ok(response);
+        if (hc instanceof org.springframework.boot.actuate.health.Health h && h.getDetails() != null) {
+            response.put("details", h.getDetails());
+        }
+        return ResponseEntity.status(Status.UP.equals(st) ? 200 : 503).body(response);
     }
 
     /**
-     * 数据库健康检查
+     * 数据库健康检查（仍保留原有统计, Actuator 聚合用于总体）
      */
     @GetMapping("/health/db")
     public ResponseEntity<Map<String, Object>> databaseHealth() {
@@ -81,7 +94,7 @@ public class HealthController {
     }
 
     /**
-     * 详细健康检查
+     * 详细健康检查（附加系统资源信息）
      */
     @GetMapping("/health/detailed")
     public ResponseEntity<Map<String, Object>> detailedHealth() {
