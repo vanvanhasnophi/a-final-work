@@ -73,26 +73,34 @@ export const formatRelativeTime = (dateTimeString) => {
 };
 
 // 格式化时间段显示
-export const formatTimeRange = (startTime, endTime) => {
+export const formatTimeRange = (startTime, endTime, options = {}) => {
   if (!startTime || !endTime) return '';
-  
+  const { structured = false } = options;
+
   try {
     const start = dayjs(startTime);
     const end = dayjs(endTime);
-    
+
     if (!start.isValid() || !end.isValid()) {
-      return `${startTime} 至 ${endTime}`;
+      const text = `${startTime} 至 ${endTime}`;
+      return structured ? { text, crossDay: false, startRaw: startTime, endRaw: endTime } : text;
     }
-    
-    // 如果是同一天，只显示时间
-    if (start.isSame(end, 'day')) {
-      return `${start.format('MM-DD')} ${start.format('HH:mm')} - ${end.format('HH:mm')}`;
+
+    const sameDay = start.isSame(end, 'day');
+
+    if (sameDay) {
+      const text = `${start.format('MM-DD')} ${start.format('HH:mm')} - ${end.format('HH:mm')}`;
+      return structured ? { text, crossDay: false, startFormatted: start.format('MM-DD HH:mm'), endFormatted: end.format('HH:mm'), start, end } : text;
     }
-    
-    // 不同天，显示完整日期时间
-    return `${start.format('MM-DD HH:mm')} - ${end.format('MM-DD HH:mm')}`;
+
+    // 跨日：需要在 UI 层换行，仍返回结构化信息
+    const startStr = start.format('MM-DD HH:mm');
+    const endStr = end.format('MM-DD HH:mm');
+    const text = `${startStr} - ${endStr}`;
+    return structured ? { text, crossDay: true, startFormatted: startStr, endFormatted: endStr, start, end } : text;
   } catch (error) {
     console.error('时间段格式化错误:', error);
-    return `${startTime} 至 ${endTime}`;
+    const text = `${startTime} 至 ${endTime}`;
+    return structured ? { text, crossDay: false, startRaw: startTime, endRaw: endTime } : text;
   }
-}; 
+};

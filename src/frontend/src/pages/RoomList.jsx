@@ -433,7 +433,10 @@ export default function RoomList() {
       title: '容量',
       dataIndex: 'capacity',
       key: 'capacity',
-      render: (capacity) => `${capacity}人`,
+      onCell: () => ({ 'data-field': 'capacity' }),
+      render: (capacity) => (
+        <span className="num-mono">{capacity}人</span>
+      ),
     },
     {
       title: '状态',
@@ -916,7 +919,7 @@ export default function RoomList() {
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>容量：</strong>
-                  <span>{currentRoom.capacity}人</span>
+                    <span className="num-mono" data-field="capacity">{currentRoom.capacity}</span>人
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>状态：</strong>
@@ -953,7 +956,7 @@ export default function RoomList() {
                   {futureApplications.map((app, index) => (
                     <div key={app.id} style={{ marginBottom: 8, fontSize: '12px' }}>
                       <span style={{ color: 'var(--text-color-secondary)' }}>
-                        {formatTimeRange(app.startTime, app.endTime)}
+                        {(() => { const r = formatTimeRange(app.startTime, app.endTime, { structured: true }); return r.crossDay ? (<span className="num-mono" data-field="timeRange"><div>{r.startFormatted} -</div><div>{r.endFormatted}</div></span>) : (<span className="num-mono" data-field="timeRange">{r.text}</span>); })()}
                       </span>
                       <span style={{ marginLeft: 8, color: 'var(--text-color-secondary)' }}>
                         - {app.reason}
@@ -1006,7 +1009,7 @@ export default function RoomList() {
                   {futureApplications.map((app, index) => (
                     <div key={app.id} style={{ marginBottom: 8, fontSize: '12px' }}>
                       <span style={{ color: 'var(--text-color-secondary)' }}>
-                        {formatTimeRange(app.startTime, app.endTime)}
+                        {(() => { const r = formatTimeRange(app.startTime, app.endTime, { structured: true }); return r.crossDay ? (<span className="num-mono" data-field="timeRange"><div>{r.startFormatted} -</div><div>{r.endFormatted}</div></span>) : (<span className="num-mono" data-field="timeRange">{r.text}</span>); })()}
                       </span>
                       <span style={{ marginLeft: 8, color: 'var(--text-color-secondary)' }}>
                         - {app.reason}

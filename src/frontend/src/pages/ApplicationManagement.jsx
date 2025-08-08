@@ -287,11 +287,19 @@ export default function ApplicationManagement() {
     {
       title: '使用时间',
       key: 'time',
-      render: (_, record) => (
-        <div>
-          {formatTimeRange(record.startTime, record.endTime)}
-        </div>
-      ),
+      onCell: () => ({ 'data-field': 'timeRange' }),
+      render: (_, record) => {
+        const r = formatTimeRange(record.startTime, record.endTime, { structured: true });
+        if (r.crossDay) {
+          return (
+            <div className="num-mono" data-field="timeRange">
+              <div>{r.startFormatted} -</div>
+              <div>{r.endFormatted}</div>
+            </div>
+          );
+        }
+        return <div className="num-mono" data-field="timeRange">{r.text || r}</div>;
+      },
     },
     {
       title: '使用原因',
@@ -302,7 +310,10 @@ export default function ApplicationManagement() {
       title: '申请时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      render: (createTime) => formatDateTime(createTime),
+      onCell: () => ({ 'data-field': 'createTime' }),
+      render: (createTime) => (
+        <span className="num-mono">{formatDateTime(createTime)}</span>
+      ),
     },
     {
       title: '操作',
@@ -615,14 +626,14 @@ export default function ApplicationManagement() {
             <Descriptions column={1} bordered>
               <Descriptions.Item label="申请人">{currentApplication.username}</Descriptions.Item>
               <Descriptions.Item label="教室名称">{currentApplication.roomName}</Descriptions.Item>
-              <Descriptions.Item label="开始时间">{formatDateTime(currentApplication.startTime)}</Descriptions.Item>
-              <Descriptions.Item label="结束时间">{formatDateTime(currentApplication.endTime)}</Descriptions.Item>
+              <Descriptions.Item label="开始时间"><span className="num-mono" data-field="startTime">{formatDateTime(currentApplication.startTime)}</span></Descriptions.Item>
+              <Descriptions.Item label="结束时间"><span className="num-mono" data-field="endTime">{formatDateTime(currentApplication.endTime)}</span></Descriptions.Item>
               <Descriptions.Item label="状态">
                 <Tag color={getApplicationStatusColor(currentApplication.status)}>
                   {getApplicationStatusDisplayName(currentApplication.status)}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="申请时间">{formatDateTime(currentApplication.createTime)}</Descriptions.Item>
+              <Descriptions.Item label="申请时间"><span className="num-mono" data-field="createTime">{formatDateTime(currentApplication.createTime)}</span></Descriptions.Item>
               {currentApplication.reason && (
                 <Descriptions.Item label="备注">{currentApplication.reason}</Descriptions.Item>
               )}
@@ -635,7 +646,17 @@ export default function ApplicationManagement() {
                 <Descriptions.Item label="申请人">{currentApplication.username}</Descriptions.Item>
                 <Descriptions.Item label="教室名称">{currentApplication.roomName}</Descriptions.Item>
                 <Descriptions.Item label="时间">
-                  {formatDateTime(currentApplication.startTime)} - {formatDateTime(currentApplication.endTime)}
+                  {(() => {
+                    const r = formatTimeRange(currentApplication.startTime, currentApplication.endTime, { structured: true });
+                    return r.crossDay ? (
+                      <span className="num-mono" data-field="timeRange">
+                        <div>{r.startFormatted} -</div>
+                        <div>{r.endFormatted}</div>
+                      </span>
+                    ) : (
+                      <span className="num-mono" data-field="timeRange">{r.text}</span>
+                    );
+                  })()}
                 </Descriptions.Item>
               </Descriptions>
               

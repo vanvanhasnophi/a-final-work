@@ -310,14 +310,18 @@ export default function UserProfile() {
               <List
                 size="small"
                 dataSource={[
-                  { label: 'ID', value: userInfo.id },
+                  { label: 'ID', value: userInfo.id, field: 'id', mono: true },
                   { label: '用户名', value: userInfo.username },
                   { label: '角色', value: getRoleDisplayName(userInfo.role) },
                 ]}
                 renderItem={item => (
                   <List.Item>
                     <span style={{ fontWeight: 'bold', marginRight: '8px' }}>{item.label}:</span>
-                    <span>{item.value || '未设置'}</span>
+                    {item.mono ? (
+                      <span className="num-mono" data-field={item.field}>{item.value || '未设置'}</span>
+                    ) : (
+                      <span>{item.value || '未设置'}</span>
+                    )}
                   </List.Item>
                 )}
               />
@@ -401,7 +405,7 @@ export default function UserProfile() {
                     <strong>邮箱:</strong> {userInfo.email || '未设置'}
                   </div>
                   <div style={{ marginBottom: '12px' }}>
-                    <strong>电话:</strong> {userInfo.phone || '未设置'}
+                    <strong>电话:</strong> <span className="num-mono" data-field="phone">{userInfo.phone || '未设置'}</span>
                   </div>
                   {/* 根据角色显示特有信息 */}
                   {getRoleSpecificInfo()}

@@ -9,6 +9,7 @@ import {
   LazyMyApplications,
   LazyUserList,
   LazyUserProfile,
+  LazySettings,
   LazyNotFound,
   LazyLayoutComponents
 } from './lazyComponents';
@@ -78,6 +79,11 @@ function AppRoutes() {
       <Route path="/profile" element={
         <ProtectedRoute>
           <RoleBasedLayout><LazyUserProfile /></RoleBasedLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <RoleBasedLayout><LazySettings /></RoleBasedLayout>
         </ProtectedRoute>
       } />
       <Route path="/user-management" element={
