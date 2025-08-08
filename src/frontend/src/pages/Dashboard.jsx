@@ -287,7 +287,8 @@ export default function Dashboard() {
           <Row gutter={16}>
             <Col span={12}>
               <Card title="快速操作" extra={<SettingOutlined />}>
-                {!isMaintainer && !isService && (
+                {/* 申请教室按钮：审批员(Approver)不展示 */}
+                {!isMaintainer && !isService && !isApprover && (
                   <Button 
                     type="primary" 
                     style={{ marginRight: '8px', marginBottom: '8px' }}
