@@ -4,10 +4,11 @@ import { Result, Button, Card } from 'antd';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 
-      hasError: false, 
-      error: null, 
-      errorInfo: null
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      lastKey: 0
     };
   }
 
@@ -45,6 +46,14 @@ class ErrorBoundary extends React.Component {
     window.location.reload();
   };
 
+  handleRetry = () => {
+    // 通过改变 key 重新挂载子树
+    this.setState(prev => ({ hasError: false, error: null, errorInfo: null, lastKey: prev.lastKey + 1 }));
+    if (this.props.onRetry) {
+      try { this.props.onRetry(); } catch (e) { console.error('onRetry error', e); }
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -78,20 +87,15 @@ class ErrorBoundary extends React.Component {
             <Result
               status="error"
               title="加载失败"
-              subTitle="组件加载时发生错误，请尝试以下操作"
+              subTitle={this.state.error?.message || '组件加载时发生错误，请尝试以下操作'}
               extra={[
-                <Button 
-                  key="goBack" 
-                  onClick={this.handleGoBack}
-                  style={{ marginRight: '8px' }}
-                >
+                <Button key="retry" type="primary" onClick={this.handleRetry} style={{ marginRight: 8 }}>
+                  重试
+                </Button>,
+                <Button key="goBack" onClick={this.handleGoBack} style={{ marginRight: 8 }}>
                   返回上一级
                 </Button>,
-                <Button 
-                  key="refresh" 
-                  type="primary" 
-                  onClick={this.handleRefresh}
-                >
+                <Button key="refresh" onClick={this.handleRefresh}>
                   刷新页面
                 </Button>
               ]}
@@ -102,11 +106,13 @@ class ErrorBoundary extends React.Component {
     }
 
     return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div style={{ position: 'relative', width: '100%', height: '100%' }} key={this.state.lastKey}>
         {this.props.children}
       </div>
     );
   }
 }
+
+ErrorBoundary.wrap = (children, props) => <ErrorBoundary {...props}>{children}</ErrorBoundary>;
 
 export default ErrorBoundary; 
