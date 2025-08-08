@@ -41,6 +41,11 @@ export const LazyUserProfile = createLazyComponent.page(
   '个人中心'
 );
 
+export const LazySettings = createLazyComponent.page(
+  () => import('../pages/Settings'),
+  '设置'
+);
+
 export const LazyNotFound = createLazyComponent.page(
   () => import('../pages/NotFound'),
   '404页面'
@@ -106,6 +111,7 @@ export default {
   LazyMyApplications,
   LazyUserList,
   LazyUserProfile,
+  LazySettings,
   LazyNotFound,
   LazyActivityManagement,
   LazyApplicationList,

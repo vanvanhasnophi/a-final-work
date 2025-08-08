@@ -380,18 +380,28 @@ export default function UserList() {
       title: '电话',
       dataIndex: 'phone',
       key: 'phone',
+      onCell: () => ({ 'data-field': 'phone' }),
+      render: (phone) => (
+        <span className="num-mono">{phone || '-'}</span>
+      ),
     },
     {
       title: '注册时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      render: (createTime) => formatDateTime(createTime),
+      onCell: () => ({ 'data-field': 'createTime' }),
+      render: (createTime) => (
+        <span className="num-mono">{formatDateTime(createTime)}</span>
+      ),
     },
     {
       title: '最后登录',
       dataIndex: 'lastLoginTime',
       key: 'lastLoginTime',
-      render: (lastLoginTime) => lastLoginTime ? formatDateTime(lastLoginTime) : '-',
+      onCell: () => ({ 'data-field': 'lastLoginTime' }),
+      render: (lastLoginTime) => (
+        lastLoginTime ? <span className="num-mono">{formatDateTime(lastLoginTime)}</span> : '-'
+      ),
     },
     {
       title: '操作',
@@ -711,15 +721,15 @@ export default function UserList() {
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>电话：</strong>
-                  <span>{currentUser.phone || '-'}</span>
+                  <span className="num-mono" data-field="phone">{currentUser.phone || '-'}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>注册时间：</strong>
-                  <span>{formatDateTime(currentUser.createTime)}</span>
+                  <span className="num-mono" data-field="createTime">{formatDateTime(currentUser.createTime)}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>最后登录：</strong>
-                  <span>{currentUser.lastLoginTime ? formatDateTime(currentUser.lastLoginTime) : '-'}</span>
+                  <span className="num-mono" data-field="lastLoginTime">{currentUser.lastLoginTime ? formatDateTime(currentUser.lastLoginTime) : '-'}</span>
                 </div>
                 {currentUser.department && (
                   <div style={{ marginBottom: 12 }}>

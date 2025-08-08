@@ -263,11 +263,19 @@ export default function ApplicationList() {
     {
       title: '使用时间',
       key: 'time',
-      render: (_, record) => (
-        <div>
-          {formatTimeRange(record.startTime, record.endTime)}
-        </div>
-      ),
+      onCell: () => ({ 'data-field': 'timeRange' }),
+      render: (_, record) => {
+        const r = formatTimeRange(record.startTime, record.endTime, { structured: true });
+        if (r && r.crossDay) {
+          return (
+            <div className="num-mono" data-field="timeRange">
+              <div>{r.startFormatted} -</div>
+              <div>{r.endFormatted}</div>
+            </div>
+          );
+        }
+        return <div className="num-mono" data-field="timeRange">{r.text || r}</div>;
+      },
     },
     {
       title: '使用原因',
@@ -278,7 +286,10 @@ export default function ApplicationList() {
       title: '申请时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      render: (createTime) => formatDateTime(createTime),
+      onCell: () => ({ 'data-field': 'createTime' }),
+      render: (createTime) => (
+        <span className="num-mono">{formatDateTime(createTime)}</span>
+      ),
     },
     {
       title: '操作',
@@ -764,9 +775,17 @@ export default function ApplicationList() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>使用时间：</strong>
-              <div>
-                {formatTimeRange(currentApplication.startTime, currentApplication.endTime)}
-              </div>
+              {(() => {
+                const r = formatTimeRange(currentApplication.startTime, currentApplication.endTime, { structured: true });
+                return r.crossDay ? (
+                  <div className="num-mono" data-field="timeRange">
+                    <div>{r.startFormatted} -</div>
+                    <div>{r.endFormatted}</div>
+                  </div>
+                ) : (
+                  <div className="num-mono" data-field="timeRange">{r.text}</div>
+                );
+              })()}
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>使用原因：</strong>
@@ -780,12 +799,12 @@ export default function ApplicationList() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>申请时间：</strong>
-              <span>{formatDateTime(currentApplication.createTime)}</span>
+              <span className="num-mono" data-field="createTime">{formatDateTime(currentApplication.createTime)}</span>
             </div>
             {currentApplication.crowd && (
               <div style={{ marginBottom: 16 }}>
                 <strong>使用人数：</strong>
-                <span>{currentApplication.crowd}人</span>
+                <span className="num-mono" data-field="crowd">{currentApplication.crowd}人</span>
               </div>
             )}
             {currentApplication.contact && (

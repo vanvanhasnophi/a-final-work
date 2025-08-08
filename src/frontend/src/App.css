@@ -57,15 +57,55 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'SF Pro',
-    sans-serif;
+  font-family: var(--app-font-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background-color) !important;
   color: var(--text-color) !important;
-  /* 优化过渡动画 - 只对背景色和边框色应用过渡，文字颜色立即切换 */
   transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* 确保除代码块外的普通文本与所有主要组件在字体偏好切换时同步使用 var(--app-font-stack) */
+html, body, 
+.ant-alert,
+.ant-typography, 
+.ant-btn, 
+.ant-table, 
+.ant-table-cell, 
+.ant-form, 
+.ant-input, 
+.ant-select, 
+.ant-select-item, 
+.ant-modal, 
+.ant-drawer, 
+.ant-message, 
+.ant-notification, 
+.ant-dropdown, 
+.ant-dropdown-menu, 
+.ant-tooltip, 
+.ant-pagination, 
+.ant-tag, 
+.ant-badge, 
+.ant-descriptions, 
+.ant-descriptions-item, 
+.ant-card, 
+.ant-statistic,
+.ant-statistic-title,
+.ant-statistic-content,
+.ant-list, 
+.ant-list-item, 
+.ant-breadcrumb, 
+.ant-menu, 
+.ant-segmented, 
+.ant-segmented-item, 
+.ant-radio-wrapper, 
+.ant-checkbox-wrapper {
+  font-family: var(--app-font-stack) !important;
+}
+
+/* 避免影响代码/等宽内容 */
+code, pre, pre code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace !important;
 }
 
 #root {
@@ -324,6 +364,32 @@ body {
   font-weight: 600 !important;
   /* 确保边框 */
   border-right: 1px solid var(--border-color) !important;
+}
+
+/* 表格内特定纯数字字段使用等宽数字与等宽字体，提升对齐性 */
+/* 约定在列的 render 或 dataIndex 包含以下关键字时可匹配：id, ID, phone, Phone, startTime, endTime, createTime, capacity */
+/* 当单元格内部包裹 .num-mono 时，继承其特性（此处仅补充兼容特性，不更换字体） */
+.ant-table td:has(> .num-mono),
+.ant-table-cell:has(.num-mono) {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: 'ss01','cv02','cv03','cv04','lnum','tnum';
+  /* 不改变 font-family，保持 Inter / system 当前选择 */
+}
+
+/* 针对常见字段的快速选择器（未包裹 .num-mono 也能生效） */
+/* 简单匹配：内容全部为数字、冒号、连字符、空格的单元格 */
+/* （保留注释说明：不在此处全局覆盖 .ant-table-cell 以避免影响非纯数字列） */
+
+/* 用 attribute hooks 方案时可在 render 中添加 data-field attr，这里预留选择器 */
+[data-field="id"],
+[data-field="phone"],
+[data-field="startTime"],
+[data-field="endTime"],
+[data-field="createTime"],
+[data-field="capacity"] {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: 'ss01','cv02','cv03','cv04','lnum','tnum';
+  /* 保持当前字体，不强制切换 */
 }
 
 .ant-table-thead > tr > th:last-child {
@@ -892,10 +958,7 @@ body {
   }
 }
 
-/* 主题切换动画优化 - 只对背景色和边框色应用过渡，文字颜色立即切换 */
-* {
-  /* 移除全局过渡，改为针对性的过渡 */
-}
+/* 主题切换动画优化：移除全局 * 过渡，改为在需要的组件上局部声明（原空规则已删除以通过 lint） */
 
 /* 强制覆盖一些可能被其他样式覆盖的颜色 */
 .ant-typography {
