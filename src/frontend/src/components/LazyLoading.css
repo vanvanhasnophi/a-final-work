@@ -1,13 +1,29 @@
 /* 懒加载Loading样式 */
-.lazy-loading-container {
+ .lazy-loading-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 60vh;
   width: 100%;
   background: var(--bg-color-container, #ffffff);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-height: 60vh;
+}
+
+/* 填满父容器：父元素需具备确定高度 (flex:1 或固定高度) */
+.lazy-loading--fill {
+  height: 100%;
+  min-height: 100%;
+}
+
+/* 全屏覆盖模式 */
+.lazy-loading--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  border-radius: 0;
+  min-height: 100vh;
 }
 
 .lazy-loading-content {
@@ -35,7 +51,7 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .lazy-loading-container {
+  .lazy-loading-container:not(.lazy-loading--fill):not(.lazy-loading--fullscreen) {
     min-height: 50vh;
   }
 }
