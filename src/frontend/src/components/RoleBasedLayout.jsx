@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Avatar, Typography, theme, Button, Dropdown } from 'antd';
 import {
   DashboardOutlined,
@@ -18,6 +18,7 @@ import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import NotificationCenter from './NotificationCenter';
+import { notificationAPI } from '../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../utils/userDisplay';
 
 const { Sider, Content } = Layout;
@@ -31,6 +32,48 @@ const RoleBasedLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const { token } = theme.useToken();
+  const [unreadCount, setUnreadCount] = useState(0);
+  // 周期获取未读数量（包含本地临时通知）
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await notificationAPI.getUnreadCount();
+        let serverUnread = res?.data?.unreadCount || 0;
+        // 加上还未合并进远程的本地缓存
+        try {
+          const localRaw = localStorage.getItem('localNotifications');
+          if (localRaw) {
+            const list = JSON.parse(localRaw).filter(n => !n.isRead);
+            serverUnread += list.length;
+          }
+        } catch(e){}
+        if (!cancelled) setUnreadCount(serverUnread);
+      } catch(e) {
+        // 仅使用本地缓存回退
+        try {
+          const localRaw = localStorage.getItem('localNotifications');
+          if (localRaw && !cancelled) {
+            const list = JSON.parse(localRaw).filter(n => !n.isRead);
+            setUnreadCount(list.length);
+          }
+        } catch(_) {}
+      }
+    };
+    load();
+    const timer = setInterval(load, 60000); // 60s 轮询
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
+
+  // 登录跳转后若存在自动打开通知中心标记，则打开后清除
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('openNotificationCenter') === '1') {
+        setNotificationVisible(true);
+        localStorage.removeItem('openNotificationCenter');
+      }
+    } catch(e) {}
+  }, []);
 
   if (!user) {
     return <div>请先登录</div>;
@@ -58,7 +101,12 @@ const RoleBasedLayout = ({ children }) => {
       icon: <LogoutOutlined />,
       label: '退出登录',
       onClick: () => {
+        try {
+          localStorage.removeItem('localNotifications');
+        } catch(e) {}
         clearAuth();
+        // 额外可清理未读计数
+        setUnreadCount(0);
         navigate('/login');
       }
     }
@@ -203,6 +251,7 @@ const RoleBasedLayout = ({ children }) => {
             type="text"
             icon={<BellOutlined />}
             onClick={() => setNotificationVisible(true)}
+            className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
             style={{
               height: '35px',
               width: collapsed ? 'auto' : 'calc(100% - 40px)',
@@ -212,15 +261,27 @@ const RoleBasedLayout = ({ children }) => {
               justifyContent: collapsed ? 'center' : 'flex-start',
               border: 'none',
               boxShadow: 'none',
-              borderRadius: '6px',
-              transition: 'background-color 0.2s, width 0.2s',
+              transition: 'background-color 0.2s, width 0.2s, box-shadow 0.25s',
               marginLeft: collapsed ? 0 : 20,
-              marginRight: collapsed ? 0 : 20
+              marginRight: collapsed ? 0 : 20,
+              fontWeight: unreadCount > 0 ? 600 : 'normal'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgTextHover}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => {
+              if (unreadCount === 0) {
+                e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (unreadCount === 0) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
           >
-            {!collapsed && <span style={{ marginLeft: 8 }}>通知</span>}
+            {collapsed ? (
+              unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6 }}>{unreadCount}</span> : null
+            ) : (
+              <span style={{ marginLeft: 8 }}>通知{unreadCount > 0 ? `(${unreadCount})` : ''}</span>
+            )}
           </Button>
           {/* 主题切换 */}
           <Button
@@ -324,6 +385,7 @@ const RoleBasedLayout = ({ children }) => {
       <NotificationCenter 
         visible={notificationVisible}
         onClose={() => setNotificationVisible(false)}
+        onUnreadChange={(n) => setUnreadCount(n)}
       />
     </Layout>
   );

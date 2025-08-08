@@ -17,9 +17,6 @@ export default function Login() {
   const [kickoutMessage, setKickoutMessage] = useState('');
   // 密码强度展示用（需在任何条件 return 之前声明，避免 hooks 顺序问题）
   const [regPassword, setRegPassword] = useState('');
-  // 登录密码弱提示（不阻止登录）
-  const [loginPassword, setLoginPassword] = useState('');
-  const [isLoginPasswordWeak, setIsLoginPasswordWeak] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login, register, isAuthenticated } = useAuth();
@@ -65,13 +62,15 @@ export default function Login() {
     setKickoutMessage('');
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
-    // 评估密码强度（不阻止登录，仅提示）
+  // 登录前清空一次本地通知（避免前一账号遗留）
+  try { localStorage.removeItem('localNotifications'); } catch(e) {}
+    // 评估密码强度（不阻止登录；弱则登录后发送到通知中心）
     const pwd = values.password || '';
     const categories = [
       /[A-Z]/.test(pwd),
       /[a-z]/.test(pwd),
       /[0-9]/.test(pwd),
-      /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(pwd)
+      /[!@#$%^&*()_+\-={}\[\]|:;"'<>.,?/]/.test(pwd)
     ].filter(Boolean).length;
     const weak = pwd.length < 8 || categories < 3;
     
@@ -92,10 +91,23 @@ export default function Login() {
           duration: 1.5,
         });
         if (weak) {
-          // 弱密码额外提醒（不阻止）
-            setTimeout(() => {
-              messageApi.warning('当前密码强度较弱，建议尽快前往个人中心修改为更安全的密码');
-            }, 1600);
+          // 将弱密码提醒写入本地通知缓冲，登录后在通知中心显示
+          try {
+            const key = 'localNotifications';
+            const existing = JSON.parse(localStorage.getItem(key) || '[]');
+            const item = {
+              id: 'local-weakpwd-' + Date.now(),
+              title: '密码强度提示',
+              content: '当前密码强度较弱，建议尽快前往个人中心修改为更安全的密码',
+              type: 'user',
+              priority: 'normal',
+              isRead: false,
+              timestamp: Date.now()
+            };
+            existing.unshift(item);
+            localStorage.setItem(key, JSON.stringify(existing.slice(0, 20))); // 最多保留20条本地注入
+            localStorage.setItem('openNotificationCenter', '1');
+          } catch(e) { /* 忽略本地存储错误 */ }
         }
         
         // 延迟导航，确保状态更新完成
@@ -382,27 +394,11 @@ export default function Login() {
                 size="large"
                 style={inputStyle}
                 onChange={(e) => {
-                  const v = e.target.value;
-                  setLoginPassword(v);
-                  const categories = [
-                    /[A-Z]/.test(v),
-                    /[a-z]/.test(v),
-                    /[0-9]/.test(v),
-                    /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(v)
-                  ].filter(Boolean).length;
-                  setIsLoginPasswordWeak(v.length > 0 && (v.length < 8 || categories < 3));
-                  handleInputChange();
+      handleInputChange();
                 }}
               />
             </Form.Item>
-            {isLoginPasswordWeak && (
-              <Alert
-                type="warning"
-                showIcon
-                message="密码强度较弱：建议包含大小写字母、数字及特殊字符（≥8位且至少3类）"
-                style={{ marginBottom: 16, borderRadius: 8 }}
-              />
-            )}
+    {/* 弱密码提示改为登录成功后写入通知中心，不在登录界面直接显示 */}
 
             <Form.Item>
               <Button

@@ -65,32 +65,6 @@ body {
   outline: 2px dashed #ff4d4f;
 }
 
-/* 调试辅助：加载成功时给 html.font-loaded 添加一个可见但不干扰布局的标识（可按需删除） */
-html.font-loaded::after {
-  content: '';
-  position: fixed;
-  bottom: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  background: #52c41a;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 99999;
-}
-html.font-fallback:not(.font-loaded)::after {
-  content: '';
-  position: fixed;
-  bottom: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  background: #faad14;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 99999;
-}
-
 /* 字体加载失败或超时（JS 可在 3s 后加上 .font-fallback 类） */
 .font-fallback body {
   font-family: var(--app-font-stack-system) !important;
@@ -346,4 +320,31 @@ code {
   border-color: #ff3333 !important;
   color: #ffffff !important;
   box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.2) !important;
+}
+
+/* 通知卡片去除头部和正文之间的分割线及多余间距 */
+.notification-card .ant-card-head {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+}
+.notification-card .ant-card-body {
+  padding-top: 2px !important;
+}
+
+/* 通知按钮未读高亮（通过 class 控制，避免内联覆盖冲突） */
+.notification-trigger.unread {
+  background: #ff4d4f !important; /* 主体红 */
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(255,77,79,0.28) !important;
+}
+[data-theme='dark'] .notification-trigger.unread {
+  background: #ffda1f !important; /* 深色保持亮黄，提高在深背景的差异 */
+  color: #3a2d00 !important;
+  box-shadow: 0 0 0 3px rgba(255,214,10,0.35) !important;
+}
+.notification-trigger.unread:hover {
+  background: #ff6b6d !important; /* 浅色 hover 更亮 */
+}
+[data-theme='dark'] .notification-trigger.unread:hover {
+  background: #ffe347 !important; /* 深色 hover 更亮黄 */
 }
