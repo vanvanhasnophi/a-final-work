@@ -42,12 +42,12 @@ public final class PasswordStrengthUtil {
     }
 
     /**
-     * 基线要求：长度>=8 且 至少命中2类（放宽自原先3类）。
+     * 基线要求：长度>=8 且 总得分>=3；即长度为必选项 + 其他四类中至少再满足2类。
      */
     public static void validateOrThrow(String pwd) {
         int s = score(pwd);
         if (pwd == null || pwd.length() < 8 || s < 3) {
-            throw new IllegalArgumentException("Password too weak: need length>=8 and include at least 2 of: upper, lower, digit, special");
+            throw new IllegalArgumentException("Password too weak: need length>=8 plus at least 2 of: upper, lower, digit, special");
         }
     }
 }

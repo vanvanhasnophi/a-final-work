@@ -780,8 +780,8 @@ export default function UserList() {
                       /[0-9]/.test(value),
                       /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
                     ].filter(Boolean).length;
-                    if (parts >= 2 && value.length >= 8) return Promise.resolve();
-                    return Promise.reject(new Error('需≥8位且至少满足任意2类: 大写/小写/数字/特殊'));
+                    if (parts >= 3 && value.length >= 8) return Promise.resolve();
+                    return Promise.reject(new Error('除长度外至少满足任意2类: 大写/小写/数字/特殊'));
                   }
                 }
               ]}

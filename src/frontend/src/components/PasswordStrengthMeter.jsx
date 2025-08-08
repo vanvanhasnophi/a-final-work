@@ -39,11 +39,11 @@ export default function PasswordStrengthMeter({ password, style, compact }) {
       <div>已满足: {parts.length ? parts.join(' / ') : '无'}</div>
       {unmetHints.length > 0 && <div>缺少: {unmetHints.join(' / ')}</div>}
       <div style={{ marginTop: 4, color: passed ? '#52c41a' : '#ff4d4f' }}>
-        {passed ? '已达到基础安全要求' : '需至少满足3类并长度≥8'}
+  {passed ? '已达到基础安全要求' : '需长度≥8且再满足任意2类'}
       </div>
     </div>
   );
-
+  if (!password) return null;
   return (
     <div style={{ 
       marginTop: compact ? 4 : 8,
