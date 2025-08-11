@@ -26,6 +26,7 @@ import com.roomx.repository.ApplicationRepository;
 import com.roomx.repository.RoomRepository;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.ApplicationService;
+import com.roomx.utils.NotificationUtil;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -34,14 +35,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
+    private final NotificationUtil notificationUtil;
     
     // 教室级别的锁管理器，用于防止同一教室的并发操作
     private final java.util.concurrent.ConcurrentHashMap<Long, Lock> roomLocks = new java.util.concurrent.ConcurrentHashMap<>();
 
-    public ApplicationServiceImpl(ApplicationRepository applicationRepository, UserRepository userRepository, RoomRepository roomRepository) {
+    public ApplicationServiceImpl(ApplicationRepository applicationRepository, UserRepository userRepository, RoomRepository roomRepository, NotificationUtil notificationUtil) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.roomRepository = roomRepository;
+        this.notificationUtil = notificationUtil;
     }
     
     /**
@@ -295,6 +298,19 @@ public class ApplicationServiceImpl implements ApplicationService {
             application.setStatus(ApplicationStatus.APPROVED);
             applicationRepository.save(application);
             
+            // 发送审批通过通知
+            User applicant = userRepository.findById(application.getUserId()).orElse(null);
+            Room room = roomRepository.findById(application.getRoomId()).orElse(null);
+            if (applicant != null && room != null) {
+                String applicationTitle = String.format("教室「%s」使用申请", room.getName());
+                notificationUtil.sendApplicationApprovalNotification(
+                    applicant.getId(), 
+                    applicationTitle, 
+                    true, 
+                    reason
+                );
+            }
+            
             // 自动驳回时间冲突的待审批申请
             List<Application> pendingApplications = applicationRepository.findByRoomIdAndStatus(
                 application.getRoomId(), ApplicationStatus.PENDING);
@@ -326,6 +342,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         
         application.setStatus(ApplicationStatus.REJECTED);
         applicationRepository.save(application);
+        
+        // 发送审批拒绝通知
+        User applicant = userRepository.findById(application.getUserId()).orElse(null);
+        Room room = roomRepository.findById(application.getRoomId()).orElse(null);
+        if (applicant != null && room != null) {
+            String applicationTitle = String.format("教室「%s」使用申请", room.getName());
+            notificationUtil.sendApplicationApprovalNotification(
+                applicant.getId(), 
+                applicationTitle, 
+                false, 
+                reason
+            );
+        }
     }
 
 

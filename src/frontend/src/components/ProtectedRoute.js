@@ -1,10 +1,12 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
+import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
 
   console.log('ProtectedRoute检查:', { 
@@ -22,7 +24,7 @@ const ProtectedRoute = ({ children }) => {
         alignItems: 'center', 
         height: '100vh' 
       }}>
-        <Spin size="large" tip="加载中..." />
+  <Spin size="large" tip={t('common.loading', '加载中…')} />
       </div>
     );
   }

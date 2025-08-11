@@ -13,11 +13,14 @@ import {
   LogoutOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { getRoleMenuConfig, getRoleColor } from '../utils/permissionUtils';
+import { getRoleColor } from '../utils/permissionUtils';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useI18n } from '../contexts/I18nContext';
 import NotificationCenter from './NotificationCenter';
+import NotificationBanner from './NotificationBanner';
+import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
 import { notificationAPI } from '../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../utils/userDisplay';
 
@@ -27,43 +30,171 @@ const { Text } = Typography;
 const RoleBasedLayout = ({ children }) => {
   const { user, clearAuth } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const { token } = theme.useToken();
   const [unreadCount, setUnreadCount] = useState(0);
-  // 周期获取未读数量（包含本地临时通知）
+  const [bannerNotification, setBannerNotification] = useState(null);
+  const [lastBannerNotificationId, setLastBannerNotificationId] = useState(null);
+  const [lastBannerTime, setLastBannerTime] = useState(0);
+  // 温柔的事件驱动通知系统
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
+    // 监听新通知事件
+    const unsubscribeNewNotification = notificationEvents.addEventListener(
+      NOTIFICATION_EVENTS.NEW_NOTIFICATION,
+      (notification) => {
+        // 首先检查通知是否应该显示
+        if (!notification || notification.isRead) {
+          return;
+        }
+
+        const now = Date.now();
+        
+        // 防止短时间内重复显示相同通知（30秒间隔）
+        if (lastBannerNotificationId === notification.id && now - lastBannerTime < 30000) {
+          console.log(`通知 ${notification.id} 在30秒内重复触发，跳过显示`);
+          return;
+        }
+
+        // 检查今天横幅是否已经显示过太多次
+        const today = new Date().toDateString();
+        const bannerCountKey = `notification_banner_count_${notification.id}_${today}`;
+        const currentCount = parseInt(localStorage.getItem(bannerCountKey) || '0');
+        
+        console.log(`检查通知 ${notification.id}: 今天横幅显示次数 ${currentCount}`);
+        
+        if (currentCount >= 3) {
+          console.log(`通知 ${notification.id} 今天横幅显示次数已达上限，阻止设置横幅`);
+          return;
+        }
+
+        // 检查是否是相同的通知（避免重复设置）
+        if (bannerNotification && bannerNotification.id === notification.id) {
+          console.log(`通知 ${notification.id} 已在显示中，跳过重复设置`);
+          return;
+        }
+
+        // 所有检查通过，设置横幅通知
+        setBannerNotification(notification);
+        setLastBannerNotificationId(notification.id);
+        setLastBannerTime(now);
+        console.log(`设置横幅通知: ${notification.id}`);
+      }
+    );
+
+    // 监听未读数量变化
+    const unsubscribeUnreadChanged = notificationEvents.addEventListener(
+      NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED,
+      (count) => {
+        console.log(`未读计数更新为: ${count}`);
+        setUnreadCount(count);
+      }
+    );
+
+    // 初始化时获取未读数量（优化版本）
+    const initializeUnreadCount = async () => {
       try {
-        const res = await notificationAPI.getUnreadCount();
-        let serverUnread = res?.data?.unreadCount || 0;
-        // 加上还未合并进远程的本地缓存
+        console.log('初始化未读计数...');
+        
+        // 先获取服务器未读数量
+        let serverUnread = 0;
+        try {
+          const res = await notificationAPI.getUnreadCount();
+          serverUnread = res?.data?.unreadCount || 0;
+          console.log(`服务器未读数量: ${serverUnread}`);
+        } catch (e) {
+          console.warn('获取服务器未读数量失败:', e);
+        }
+
+        // 获取本地通知中的未读数量
+        let localUnread = 0;
         try {
           const localRaw = localStorage.getItem('localNotifications');
           if (localRaw) {
-            const list = JSON.parse(localRaw).filter(n => !n.isRead);
-            serverUnread += list.length;
+            const localList = JSON.parse(localRaw);
+            localUnread = localList.filter(n => !n.isRead).length;
+            console.log(`本地未读数量: ${localUnread}`);
           }
-        } catch(e){}
-        if (!cancelled) setUnreadCount(serverUnread);
-      } catch(e) {
-        // 仅使用本地缓存回退
-        try {
-          const localRaw = localStorage.getItem('localNotifications');
-          if (localRaw && !cancelled) {
-            const list = JSON.parse(localRaw).filter(n => !n.isRead);
-            setUnreadCount(list.length);
-          }
-        } catch(_) {}
+        } catch (e) {
+          console.warn('获取本地未读数量失败:', e);
+        }
+
+        const totalUnread = serverUnread + localUnread;
+        console.log(`总未读数量: ${totalUnread}`);
+        setUnreadCount(totalUnread);
+        
+        // 触发未读数量变化事件
+        notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+      } catch (e) {
+        console.warn('初始化未读计数失败:', e);
       }
     };
-    load();
-    const timer = setInterval(load, 60000); // 60s 轮询
-    return () => { cancelled = true; clearInterval(timer); };
-  }, []);
+
+    initializeUnreadCount();
+
+    // 设置定期检查（5分钟一次，既检查未读数量，也检查新通知）
+    const gentleTimer = setInterval(async () => {
+      try {
+        console.log('定期检查未读数量和新通知...');
+        
+        // 1. 检查未读数量
+        const res = await notificationAPI.getUnreadCount();
+        const serverUnread = res?.data?.unreadCount || 0;
+        
+        const localRaw = localStorage.getItem('localNotifications');
+        let localUnread = 0;
+        if (localRaw) {
+          const list = JSON.parse(localRaw).filter(n => !n.isRead);
+          localUnread = list.length;
+        }
+        
+        const totalUnread = serverUnread + localUnread;
+        console.log(`定期检查 - 服务器: ${serverUnread}, 本地: ${localUnread}, 总计: ${totalUnread}`);
+        
+        // 2. 如果未读数量增加，可能有新通知，触发通知检查
+        if (totalUnread > unreadCount) {
+          console.log(`检测到未读数量增加 (${unreadCount} -> ${totalUnread})，检查新通知`);
+          
+          // 获取最新通知列表来检查是否有新通知
+          try {
+            const notificationsRes = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 5 });
+            const notifications = notificationsRes?.data?.records || notificationsRes?.data?.list || notificationsRes?.data || [];
+            
+            if (notifications.length > 0) {
+              // 查找最新的未读通知
+              const latestUnread = notifications.find(n => !n.isRead);
+              if (latestUnread) {
+                console.log(`发现新通知: ${latestUnread.id}`);
+                
+                // 触发新通知事件
+                setTimeout(() => {
+                  notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, latestUnread);
+                }, 200);
+              }
+            }
+          } catch (notificationError) {
+            console.warn('获取通知列表失败:', notificationError);
+          }
+        }
+        
+        setUnreadCount(totalUnread);
+        
+        // 触发未读数量变化事件
+        notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+      } catch (e) {
+        console.debug('定期检查失败:', e);
+      }
+    }, 300000); // 5分钟
+
+    return () => {
+      unsubscribeNewNotification();
+      unsubscribeUnreadChanged();
+      clearInterval(gentleTimer);
+    };
+  }, [bannerNotification]);
 
   // 登录跳转后若存在自动打开通知中心标记，则打开后清除
   useEffect(() => {
@@ -76,7 +207,7 @@ const RoleBasedLayout = ({ children }) => {
   }, []);
 
   if (!user) {
-    return <div>请先登录</div>;
+    return <div>{t('layout.pleaseLogin')}</div>;
   }
 
   // 用户菜单项
@@ -84,13 +215,13 @@ const RoleBasedLayout = ({ children }) => {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人信息',
+      label: t('layout.userMenu.profile'),
       onClick: () => navigate('/profile')
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '设置',
+      label: t('layout.userMenu.settings'),
       onClick: () => navigate('/settings')
     },
     {
@@ -99,7 +230,7 @@ const RoleBasedLayout = ({ children }) => {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('layout.userMenu.logout'),
       onClick: () => {
         try {
           localStorage.removeItem('localNotifications');
@@ -113,7 +244,51 @@ const RoleBasedLayout = ({ children }) => {
   ];
 
   // 获取用户角色的菜单配置（移除个人资料）
-  const menuItems = getRoleMenuConfig(user.role).filter(item => item.key !== 'profile');
+  const getMenuItems = (userRole) => {
+    const baseMenu = [
+      { key: 'dashboard', label: t('layout.menu.dashboard'), icon: 'DashboardOutlined' },
+    ];
+
+    const roleSpecificMenu = [];
+    
+    switch (userRole) {
+      case 'ADMIN':
+        roleSpecificMenu.push(
+          { key: 'user-management', label: t('layout.menu.users'), icon: 'TeamOutlined' },
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' },
+          { key: 'application-management', label: t('layout.menu.applications'), icon: 'FileTextOutlined' }
+        );
+        break;
+      case 'APPLIER':
+        roleSpecificMenu.push(
+          { key: 'my-applications', label: t('layout.menu.myApplications'), icon: 'FormOutlined' },
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+      case 'APPROVER':
+        roleSpecificMenu.push(
+          { key: 'application-management', label: t('layout.menu.applications'), icon: 'FileTextOutlined' },
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+      case 'SERVICE':
+      case 'MAINTAINER':
+        roleSpecificMenu.push(
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+      default:
+        // 默认情况下只显示房间管理
+        roleSpecificMenu.push(
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+    }
+    
+    return [...baseMenu, ...roleSpecificMenu];
+  };
+
+  const menuItems = getMenuItems(user.role);
   
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
@@ -208,7 +383,7 @@ const RoleBasedLayout = ({ children }) => {
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgTextHover}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          <Text strong style={{ fontSize: collapsed ? '14px' : '18px' }}>
+          <Text strong style={{ fontSize: collapsed ? '18px' : '18px', fontWeight: 600, fontVariationSettings: "'wght' 600" }}>
             {collapsed ? 'RX' : 'RoomX'}
           </Text>
         </div>
@@ -280,7 +455,9 @@ const RoleBasedLayout = ({ children }) => {
             {collapsed ? (
               unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6 }}>{unreadCount}</span> : null
             ) : (
-              <span style={{ marginLeft: 8 }}>通知{unreadCount > 0 ? `(${unreadCount})` : ''}</span>
+              <span style={{ marginLeft: 8 }}>
+                {t('layout.notifications','通知')}{unreadCount > 0 ? `(${unreadCount})` : ''}
+              </span>
             )}
           </Button>
           {/* 主题切换 */}
@@ -305,7 +482,11 @@ const RoleBasedLayout = ({ children }) => {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgTextHover}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            {!collapsed && <span style={{ marginLeft: 8 }}>{isDarkMode ? '浅色' : '深色'}</span>}
+            {!collapsed && (
+              <span style={{ marginLeft: 8 }}>
+                {isDarkMode ? t('layout.themeLight') : t('layout.themeDark')}
+              </span>
+            )}
           </Button>
           {/* 用户信息 */}
           <Dropdown
@@ -386,6 +567,91 @@ const RoleBasedLayout = ({ children }) => {
         visible={notificationVisible}
         onClose={() => setNotificationVisible(false)}
         onUnreadChange={(n) => setUnreadCount(n)}
+      />
+      
+      {/* 温柔的通知横幅 */}
+      <NotificationBanner
+        notification={bannerNotification}
+        onClose={() => setBannerNotification(null)}
+        onViewNotifications={() => {
+          setNotificationVisible(true);
+          setBannerNotification(null);
+        }}
+        onMarkAsRead={async (notificationId) => {
+          // 实际标记已读逻辑
+          try {
+            console.log(`标记通知 ${notificationId} 为已读`);
+            
+            // 获取当前通知信息
+            const notification = bannerNotification;
+            const wasUnread = notification && !notification.isRead;
+            
+            console.log(`通知 ${notificationId} 当前未读状态: ${wasUnread}`);
+            
+            // 更新本地存储的通知状态（如果存在）
+            let localUpdated = false;
+            const localRaw = localStorage.getItem('localNotifications');
+            if (localRaw) {
+              try {
+                const localList = JSON.parse(localRaw);
+                const targetIndex = localList.findIndex(n => n.id === notificationId);
+                if (targetIndex !== -1) {
+                  localList[targetIndex] = { ...localList[targetIndex], isRead: true };
+                  localStorage.setItem('localNotifications', JSON.stringify(localList));
+                  localUpdated = true;
+                  console.log(`本地通知 ${notificationId} 已更新为已读`);
+                }
+              } catch (e) {
+                console.warn('更新本地通知失败:', e);
+              }
+            }
+            
+            // 调用API标记为已读（如果不是纯本地通知）
+            if (notification && !notification.local) {
+              try {
+                await notificationAPI.markAsRead(notificationId);
+                console.log(`服务器通知 ${notificationId} 已通过API标记为已读`);
+              } catch (apiError) {
+                console.error('API标记已读失败:', apiError);
+                // API失败时不影响本地计数更新
+              }
+            }
+            
+            // 只有当通知确实从未读变为已读时才减少计数
+            if (wasUnread) {
+              setUnreadCount(prevCount => {
+                const newCount = Math.max(0, prevCount - 1);
+                console.log(`未读计数更新: ${prevCount} -> ${newCount} (通知${notificationId}已读)`);
+                
+                // 触发未读数量变化事件（使用最新的计数值）
+                setTimeout(() => {
+                  notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newCount);
+                }, 0);
+                
+                return newCount;
+              });
+              
+              // 触发通知已读事件，通知其他组件（如NotificationCenter）
+              setTimeout(() => {
+                notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, { 
+                  id: notificationId, 
+                  notification 
+                });
+              }, 0);
+              
+            } else {
+              console.log(`通知 ${notificationId} 已经是已读状态，无需更新计数`);
+            }
+            
+            console.log('通知标记已读操作完成:', notificationId);
+          } catch (error) {
+            console.error('标记通知已读失败:', error);
+          }
+        }}
+        onCollapseNotificationCenter={() => {
+          setNotificationVisible(false);
+          setBannerNotification(null);
+        }}
       />
     </Layout>
   );

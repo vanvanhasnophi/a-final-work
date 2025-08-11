@@ -205,27 +205,23 @@ public class RoomStatusSchedulerService {
      * 确定申请状态
      */
     private ApplicationStatus determineApplicationStatus(Application application, Date now) {
-        // 如果申请已结束，标记为已完成
-        if (application.getEndTime().before(now)) {
+        // 检查是否超过预约开始时间30分钟且未签到 (从PENDING_CHECKIN转CANCELLED并标记过期)
+        if (application.getStatus() == ApplicationStatus.PENDING_CHECKIN) {
+            Date thirtyMinutesAfterStart = new Date(application.getStartTime().getTime() + 30 * 60 * 1000);
+            if (now.after(thirtyMinutesAfterStart)) {
+                application.setExpired(true);
+                return ApplicationStatus.CANCELLED;
+            }
+        }
+        
+        // 如果申请已结束且处于使用中状态，标记为已完成
+        if (application.getEndTime().before(now) && application.getStatus() == ApplicationStatus.IN_USE) {
             return ApplicationStatus.COMPLETED;
         }
         
-        // 检查是否超过预约开始时间15分钟
-        Date fifteenMinutesAfterStart = new Date(application.getStartTime().getTime() + 15 * 60 * 1000);
-        if (now.after(fifteenMinutesAfterStart) && application.getStatus() == ApplicationStatus.APPROVED) {
-            return ApplicationStatus.EXPIRED;
-        }
-        
-        // 检查是否在预约结束时间前30分钟
-        Date thirtyMinutesBeforeEnd = new Date(application.getEndTime().getTime() - 30 * 60 * 1000);
-        if (now.after(thirtyMinutesBeforeEnd) && application.getStatus() == ApplicationStatus.APPROVED) {
-            return ApplicationStatus.EXPIRED;
-        }
-        
-        // 如果申请已过期（超过结束时间24小时），标记为过期
-        Date oneDayAfterEnd = new Date(application.getEndTime().getTime() + 24 * 60 * 60 * 1000);
-        if (now.after(oneDayAfterEnd)) {
-            return ApplicationStatus.EXPIRED;
+        // 如果申请已过期（超过结束时间），标记expired字段为true
+        if (application.getEndTime().before(now) && (application.getExpired() == null || !application.getExpired())) {
+            application.setExpired(true);
         }
         
         return application.getStatus();

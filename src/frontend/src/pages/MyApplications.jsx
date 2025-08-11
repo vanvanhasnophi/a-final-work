@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
 import { MessageContext } from '../App';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Option } = Select;
 
@@ -21,6 +22,7 @@ export default function MyApplications() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const messageApi = useContext(MessageContext);
+  const { t } = useI18n();
   const [applications, setApplications] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [pagination, setPagination] = useState({
@@ -82,7 +84,7 @@ export default function MyApplications() {
         return response.data;
       },
       {
-        errorMessage: '获取申请列表失败，请检查网络连接',
+  errorMessage: t('applicationManagement.error.fetchListFail'),
         maxRetries: 0,
         retryDelay: 0
       }
@@ -99,7 +101,7 @@ export default function MyApplications() {
         return response.data.records;
       },
       {
-        errorMessage: '获取教室列表失败',
+  errorMessage: t('roomList.error.fetchListFail'),
         maxRetries: 0,
         retryDelay: 0,
         showRetryMessage: false
@@ -165,14 +167,14 @@ export default function MyApplications() {
               applicationId: currentApplication.id,
               reason: values.reason
             });
-            messageApi.success('申请已撤销');
+            messageApi.success(t('applicationManagement.messages.cancelSuccess'));
             handleCloseDrawer();
             fetchApplications(); // 刷新列表
             return response;
           },
           {
-            errorMessage: '撤销申请失败',
-            successMessage: '申请已撤销'
+            errorMessage: t('applicationManagement.messages.cancelFail'),
+            successMessage: t('applicationManagement.messages.cancelSuccess')
           }
         );
       }
@@ -184,22 +186,35 @@ export default function MyApplications() {
 
   const columns = [
     {
-      title: '教室名称',
+  title: t('applicationManagement.columns.roomName'),
       dataIndex: 'roomName',
       key: 'roomName',
     },
     {
-      title: '状态',
+  title: t('applicationManagement.columns.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
+      render: (status, record) => {
         const displayName = getApplicationStatusDisplayName(status);
         const color = getApplicationStatusColor(status);
+        
+        // 如果是过期状态，显示原状态和过期标签
+        if (status === 'EXPIRED' && record.originalStatus) {
+          const originalDisplayName = getApplicationStatusDisplayName(record.originalStatus);
+          const originalColor = getApplicationStatusColor(record.originalStatus);
+          return (
+            <div>
+              <Tag color={originalColor}>{originalDisplayName}</Tag>
+              <Tag color="default" style={{ marginTop: 2 }}>{displayName}</Tag>
+            </div>
+          );
+        }
+        
         return <Tag color={color}>{displayName}</Tag>;
       },
     },
     {
-      title: '使用时间',
+  title: t('applicationManagement.columns.usageTime'),
       key: 'time',
       onCell: () => ({ 'data-field': 'timeRange' }),
       render: (_, record) => {
@@ -216,12 +231,12 @@ export default function MyApplications() {
       },
     },
     {
-      title: '使用原因',
+  title: t('applicationManagement.columns.reason'),
       dataIndex: 'reason',
       key: 'reason',
     },
     {
-      title: '申请时间',
+  title: t('applicationManagement.columns.createTime'),
       dataIndex: 'createTime',
       key: 'createTime',
       onCell: () => ({ 'data-field': 'createTime' }),
@@ -230,11 +245,11 @@ export default function MyApplications() {
       ),
     },
     {
-      title: '操作',
+  title: t('applicationManagement.columns.actions'),
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Tooltip title="查看详情">
+          <Tooltip title={t('applicationManagement.tooltips.viewDetail')}>
             <Button 
               type="text" 
               icon={<EyeOutlined />} 
@@ -243,7 +258,7 @@ export default function MyApplications() {
             />
           </Tooltip>
           {record.status === 'PENDING' && (
-            <Tooltip title="撤销申请">
+            <Tooltip title={t('applicationManagement.tooltips.cancel')}>
               <Button 
                 type="text" 
                 icon={<DeleteOutlined />} 
@@ -264,7 +279,7 @@ export default function MyApplications() {
       <Card 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>我的申请</span>
+            <span>{t('myApplications.title', t('applicationManagement.title'))}</span>
             <span style={{ 
                 fontSize: '12px', 
                 color: 'var(--text-color-secondary)', 
@@ -274,7 +289,7 @@ export default function MyApplications() {
                 borderRadius: '4px',
                 border: '1px solid var(--border-color)'
               }}>
-                申请记录过期后最多保留60天
+                {t('applicationManagement.badgeRetention')}
               </span>
           </div>
         }
@@ -299,10 +314,10 @@ export default function MyApplications() {
               }}
               loading={applicationsLoading}
             >
-              刷新
+              {t('common.refresh')}
             </Button>
             <Button type="primary" onClick={handleAddApplication}>
-              新建申请
+              {t('common.apply')}
             </Button>
           </Space>
         }
@@ -310,9 +325,9 @@ export default function MyApplications() {
         bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
       >
         {/* 错误提示 */}
-        {(applicationsError || roomsError) && (
+    {(applicationsError || roomsError) && (
           <Alert
-            message="数据获取失败"
+      message={t('applicationManagement.error.dataFetchTitle')}
             description={String(applicationsError || roomsError)}
             type="error"
             showIcon
@@ -330,7 +345,7 @@ export default function MyApplications() {
             {/* 教室筛选 */}
             <div style={{ minWidth: '200px' }}>
               <Select
-                placeholder="全部教室"
+                placeholder={t('myApplications.filters.allRooms', '全部教室')}
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedRoom}
@@ -353,7 +368,7 @@ export default function MyApplications() {
             <div style={{ minWidth: '120px' }}>
               <Select
                 ref={statusSelectRef}
-                placeholder="全部状态"
+                placeholder={t('applicationManagement.filters.statusPlaceholder')}
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedStatus}
@@ -363,13 +378,15 @@ export default function MyApplications() {
                   setSearchParams(prev => ({ ...prev, ...newParams }));
                   fetchApplications(newParams);
                 }}
-              >
-                <Option value="PENDING">待审批</Option>
-                <Option value="APPROVED">已批准</Option>
-                <Option value="REJECTED">已驳回</Option>
-                <Option value="CANCELLED">已取消</Option>
-                <Option value="COMPLETED">已完成</Option>
-                <Option value="EXPIRED">已过期</Option>
+                >
+                <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+                <Option value="PENDING_CHECKIN">{t('applicationManagement.statusOptions.PENDING_CHECKIN')}</Option>
+                <Option value="IN_USE">{t('applicationManagement.statusOptions.IN_USE')}</Option>
+                <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+                <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+                <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+                <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+                <Option value="EXPIRED">{t('applicationManagement.statusOptions.EXPIRED')}</Option>
               </Select>
             </div>
             
@@ -378,7 +395,7 @@ export default function MyApplications() {
               <DatePicker
                 ref={datePickerRef}
                 style={{ width: '100%' }}
-                placeholder="选择日期"
+                placeholder={t('applicationManagement.filters.datePlaceholder')}
                 format="YYYY-MM-DD"
                 value={selectedDate}
                 onChange={(date) => {
@@ -420,7 +437,7 @@ export default function MyApplications() {
                   fetchApplications(newParams);
                 }}
               >
-                清空筛选
+                {t('applicationManagement.filters.clearFilters', t('common.clearFilters'))}
               </Button>
             </div>
           </div>
@@ -495,7 +512,10 @@ export default function MyApplications() {
               {...pagination}
               showSizeChanger={true}
               showQuickJumper={true}
-              showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`}
+              showTotal={(total, range) => {
+                const tpl = t('applicationManagement.paginationTotal', t('roomList.paginationTotal'));
+                return tpl.replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total);
+              }}
               pageSizeOptions={['10', '20', '50', '100']}
               size="default"
               onChange={(page, pageSize) => {
@@ -514,8 +534,8 @@ export default function MyApplications() {
       {/* 抽屉组件 */}
       <Drawer
         title={
-          drawerType === 'detail' ? '申请详情' :
-          drawerType === 'cancel' ? '撤销申请' : ''
+          drawerType === 'detail' ? t('applicationManagement.drawer.detail') :
+          drawerType === 'cancel' ? t('applicationManagement.drawer.cancel') : ''
         }
         width={600}
         open={drawerVisible}
@@ -524,10 +544,10 @@ export default function MyApplications() {
           drawerType === 'cancel' ? (
             <div style={{ textAlign: 'right' }}>
               <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                取消
+                {t('common.cancel')}
               </Button>
               <Button type="primary" danger onClick={() => form.submit()}>
-                确认撤销
+                {t('myApplications.actions.confirmCancel', '确认撤销')}
               </Button>
             </div>
           ) : null
@@ -536,11 +556,11 @@ export default function MyApplications() {
         {drawerType === 'detail' && currentApplication && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <strong>申请教室：</strong>
+              <strong>{t('applicationManagement.descriptions.roomName')}：</strong>
               <span>{currentApplication.roomName}</span>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <strong>使用时间：</strong>
+              <strong>{t('applicationManagement.columns.usageTime')}：</strong>
               {(() => {
                 const r = formatTimeRange(currentApplication.startTime, currentApplication.endTime, { structured: true });
                 return r.crossDay ? (
@@ -554,34 +574,45 @@ export default function MyApplications() {
               })()}
             </div>
             <div style={{ marginBottom: 16 }}>
-              <strong>使用原因：</strong>
+              <strong>{t('applicationManagement.columns.reason')}：</strong>
               <p>{currentApplication.reason}</p>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <strong>状态：</strong>
-              <Tag color={getApplicationStatusColor(currentApplication.status)}>
-                {getApplicationStatusDisplayName(currentApplication.status)}
-              </Tag>
+              <strong>{t('applicationManagement.columns.status')}：</strong>
+              {currentApplication.status === 'EXPIRED' && currentApplication.originalStatus ? (
+                <>
+                  <Tag color={getApplicationStatusColor(currentApplication.originalStatus)}>
+                    {getApplicationStatusDisplayName(currentApplication.originalStatus)}
+                  </Tag>
+                  <Tag color="default" style={{ marginLeft: 4 }}>
+                    {getApplicationStatusDisplayName(currentApplication.status)}
+                  </Tag>
+                </>
+              ) : (
+                <Tag color={getApplicationStatusColor(currentApplication.status)}>
+                  {getApplicationStatusDisplayName(currentApplication.status)}
+                </Tag>
+              )}
             </div>
             <div style={{ marginBottom: 16 }}>
-              <strong>申请时间：</strong>
+              <strong>{t('applicationManagement.descriptions.createTime', '申请时间')}：</strong>
               <span className="num-mono" data-field="createTime">{formatDateTime(currentApplication.createTime)}</span>
             </div>
             {currentApplication.crowd && (
               <div style={{ marginBottom: 16 }}>
-                <strong>使用人数：</strong>
-                <span>{currentApplication.crowd}人</span>
+                <strong>{t('myApplications.form.crowd', '使用人数')}：</strong>
+                <span>{currentApplication.crowd}{t('myApplications.form.peopleUnit', '人')}</span>
               </div>
             )}
             {currentApplication.contact && (
               <div style={{ marginBottom: 16 }}>
-                <strong>联系方式：</strong>
+                <strong>{t('myApplications.form.contact', '联系方式')}：</strong>
                 <span>{currentApplication.contact}</span>
               </div>
             )}
             {currentApplication.remark && (
               <div style={{ marginBottom: 16 }}>
-                <strong>备注：</strong>
+                <strong>{t('applicationManagement.descriptions.reason')}：</strong>
                 <p>{currentApplication.remark}</p>
               </div>
             )}
@@ -597,16 +628,16 @@ export default function MyApplications() {
               border: '1px solid var(--border-color)',
               borderRadius: 6 
             }}>
-              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>申请信息</h4>
+              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>{t('applicationManagement.drawer.detail')}</h4>
               <div style={{ color: 'var(--text-color)' }}>
-                <p><strong>申请教室：</strong>{currentApplication.roomName}</p>
-                <p><strong>使用时间：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
-                <p><strong>使用原因：</strong>{currentApplication.reason}</p>
+                <p><strong>{t('applicationManagement.descriptions.roomName')}：</strong>{currentApplication.roomName}</p>
+                <p><strong>{t('applicationManagement.columns.usageTime')}：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
+                <p><strong>{t('applicationManagement.columns.reason')}：</strong>{currentApplication.reason}</p>
                 {currentApplication.crowd && (
-                  <p><strong>使用人数：</strong>{currentApplication.crowd}人</p>
+                  <p><strong>{t('myApplications.form.crowd', '使用人数')}：</strong>{currentApplication.crowd}{t('myApplications.form.peopleUnit', '人')}</p>
                 )}
                 {currentApplication.contact && (
-                  <p><strong>联系方式：</strong>{currentApplication.contact}</p>
+                  <p><strong>{t('myApplications.form.contact', '联系方式')}：</strong>{currentApplication.contact}</p>
                 )}
               </div>
             </div>
@@ -618,10 +649,10 @@ export default function MyApplications() {
             >
               <Form.Item
                 name="reason"
-                label="撤销原因"
-                rules={[{ required: true, message: '请输入撤销原因' }]}
+                label={t('applicationManagement.form.cancelReason')}
+                rules={[{ required: true, message: t('applicationManagement.form.enterCancelReason') }]}
               >
-                <Input.TextArea rows={4} placeholder="请输入撤销原因" />
+                <Input.TextArea rows={4} placeholder={t('applicationManagement.form.enterCancelReason')} />
               </Form.Item>
             </Form>
           </div>

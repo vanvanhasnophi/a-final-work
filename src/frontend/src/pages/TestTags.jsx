@@ -32,9 +32,12 @@ export default function TestTags() {
           <div>
             <Title level={5}>申请状态标签</Title>
             <Space wrap>
-              <Tag color="processing">待审批</Tag>
-              <Tag color="success">已批准</Tag>
-              <Tag color="error">已拒绝</Tag>
+              <Tag color="processing">待审批 (PENDING)</Tag>
+              <Tag color="success">已批准 (APPROVED)</Tag>
+              <Tag color="error">已拒绝 (REJECTED)</Tag>
+              <Tag color="warning">已取消 (CANCELLED)</Tag>
+              <Tag color="default">已完成 (COMPLETED)</Tag>
+              <Tag color="default">已过期 (EXPIRED)</Tag>
             </Space>
           </div>
 

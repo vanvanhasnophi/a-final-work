@@ -16,6 +16,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import NotificationCenter from './NotificationCenter';
 import { getCsrfStatus, probeCsrf } from '../security/csrf';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -27,6 +28,7 @@ export default function AppLayout({ children }) {
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [csrfInfo, setCsrfInfo] = useState({ enabled: true, tokenPresent: false });
+  const { t } = useI18n();
 
   useEffect(() => {
     // 初次挂载探测一次 CSRF 状态
@@ -45,34 +47,34 @@ export default function AppLayout({ children }) {
     {
       key: '/dashboard',
       icon: <DashboardOutlined />,
-      label: '仪表板',
+  label: t('layout.menu.dashboard'),
     },
     {
       key: '/rooms',
       icon: <HomeOutlined />,
-      label: '教室管理',
+  label: t('layout.menu.rooms'),
     },
     // 根据角色显示申请相关菜单
     ...(user?.role === 'ADMIN' || user?.role === 'APPROVER' ? [{
       key: '/applications',
       icon: <FileTextOutlined />,
-      label: '申请管理',
+  label: t('layout.menu.applications'),
     }] : []),
     ...(user?.role === 'APPLIER' ? [{
       key: '/my-applications',
       icon: <FileTextOutlined />,
-      label: '我的申请',
+  label: t('layout.menu.myApplications'),
     }] : []),
     // 仅管理员可见的用户管理菜单
     ...(user?.role === 'ADMIN' ? [{
       key: '/users',
       icon: <UserOutlined />,
-      label: '用户管理',
+  label: t('layout.menu.users'),
     }] : []),
     {
       key: '/profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+  label: t('layout.menu.profile'),
     },
   ];
 
@@ -89,13 +91,13 @@ export default function AppLayout({ children }) {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+  label: t('layout.userMenu.profile'),
       onClick: () => navigate('/profile'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '设置',
+  label: t('layout.userMenu.settings'),
     },
     {
       type: 'divider',
@@ -103,7 +105,7 @@ export default function AppLayout({ children }) {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+  label: t('layout.userMenu.logout'),
       onClick: handleLogout,
     },
   ];
@@ -193,7 +195,7 @@ export default function AppLayout({ children }) {
               color: 'var(--text-color)',
               border: '1px solid var(--border-color)'
             }}
-              title={csrfInfo.enabled ? (csrfInfo.tokenPresent ? 'CSRF 已启用且令牌存在 (XSRF-TOKEN)' : 'CSRF 已启用但当前未检测到令牌，后续写操作前会自动补取') : 'CSRF 已关闭'}
+              title={csrfInfo.enabled ? (csrfInfo.tokenPresent ? t('layout.csrf.enabled') : t('layout.csrf.noToken')) : t('layout.csrf.disabled')}
             >
               CSRF: {csrfInfo.enabled ? (csrfInfo.tokenPresent ? 'ON' : 'NO TOKEN') : 'OFF'}
             </div>
@@ -210,7 +212,7 @@ export default function AppLayout({ children }) {
                 border: '1px solid var(--border-color)',
                 background: 'var(--component-bg)',
               }}
-              title={isDarkMode ? '切换到浅色模式' : '切换到深色模式'}
+              title={isDarkMode ? t('layout.switchToLight') : t('layout.switchToDark')}
             />
             
             {/* 用户信息 */}
@@ -233,7 +235,7 @@ export default function AppLayout({ children }) {
                     lineHeight: '1',
                     color: 'var(--text-color)',
                   }}>
-                    {user?.nickname || user?.username || '用户'}
+                    {user?.nickname || user?.username || t('layout.defaultUser')}
                   </Text>
                   <Text type="secondary" style={{ 
                     fontSize: '12px', 

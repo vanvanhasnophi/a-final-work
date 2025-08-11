@@ -13,14 +13,21 @@ const instance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    console.log('Request拦截器 - 当前请求URL:', config.url);
-    console.log('Request拦截器 - 获取到的token:', token ? token.substring(0, 50) + '...' : 'null');
+    // 只在开发环境打印详细日志
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('Request拦截器 - 当前请求URL:', config.url);
+      console.debug('Request拦截器 - 获取到的token:', token ? token.substring(0, 50) + '...' : 'null');
+    }
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Request拦截器 - 已设置Authorization头');
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Request拦截器 - 已设置Authorization头');
+      }
     } else {
-      console.log('Request拦截器 - 未找到token，跳过Authorization头设置');
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Request拦截器 - 未找到token，跳过Authorization头设置');
+      }
     }
     return config;
   },

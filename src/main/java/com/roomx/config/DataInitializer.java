@@ -61,7 +61,7 @@ public class DataInitializer implements CommandLineRunner {
         User admin = new User();
         admin.setUsername("admin");
         admin.setPassword(passwordEncoder.encode("admin123"));
-        admin.setNickname("系统管理员");
+        admin.setNickname("凯尔希");
         admin.setEmail("admin@roomx.com");
         admin.setPhone("13333333333");
         admin.setRole(UserRole.ADMIN);
@@ -71,10 +71,10 @@ public class DataInitializer implements CommandLineRunner {
 
         // 创建申请人
         User applier1 = new User();
-        applier1.setUsername("zhangsan");
+        applier1.setUsername("exusiai");
         applier1.setPassword(passwordEncoder.encode("123456"));
-        applier1.setNickname("张三");
-        applier1.setEmail("zhangsan@tsinghua.edu.cn");
+        applier1.setNickname("能天使");
+        applier1.setEmail("exusiai@tsinghua.edu.cn");
         applier1.setPhone("13234567890");
         applier1.setRole(UserRole.APPLIER);
         applier1.setDepartment("技术部");
@@ -83,10 +83,10 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(applier1);
 
         User applier2 = new User();
-        applier2.setUsername("lisi");
+        applier2.setUsername("lemuen");
         applier2.setPassword(passwordEncoder.encode("123456"));
-        applier2.setNickname("李四");
-        applier2.setEmail("lisi@tsinghua.edu.cn");
+        applier2.setNickname("蕾缪安");
+        applier2.setEmail("lemuen@tsinghua.edu.cn");
         applier2.setPhone("132345645678");
         applier2.setRole(UserRole.APPLIER);
         applier2.setDepartment("管理科学与工程系");
@@ -95,10 +95,10 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(applier2);
 
         User applier3 = new User();
-        applier3.setUsername("wangwu");
+        applier3.setUsername("hoshiguma");
         applier3.setPassword(passwordEncoder.encode("123456"));
-        applier3.setNickname("王五");
-        applier3.setEmail("wangwu@tsinghua.edu.cn");
+        applier3.setNickname("星熊");
+        applier3.setEmail("hoshiguma@tsinghua.edu.cn");
         applier3.setPhone("13234567890");
         applier3.setRole(UserRole.APPLIER);
         applier3.setDepartment("自动化系");
@@ -107,10 +107,10 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(applier3);
 
         User applier4 = new User();
-        applier4.setUsername("zhaoliu");
+        applier4.setUsername("ines");
         applier4.setPassword(passwordEncoder.encode("123456"));
-        applier4.setNickname("赵六");
-        applier4.setEmail("zhaoliu@tsinghua.edu.cn");
+        applier4.setNickname("伊内丝");
+        applier4.setEmail("ines@tsinghua.edu.cn");
         applier4.setPhone("13233232323");
         applier4.setRole(UserRole.APPLIER);
         applier4.setDepartment("计算机系");
@@ -119,10 +119,10 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(applier4);
 
         User applier5 = new User();
-        applier5.setUsername("qianqi");
+        applier5.setUsername("eyjafjalla");
         applier5.setPassword(passwordEncoder.encode("123456"));
-        applier5.setNickname("钱七");
-        applier5.setEmail("qianqi@tsinghua.edu.cn");
+        applier5.setNickname("艾雅法拉");
+        applier5.setEmail("eyjafjalla@tsinghua.edu.cn");
         applier5.setPhone("1323325523");
         applier5.setRole(UserRole.APPLIER);
         applier5.setDepartment("电子系");
@@ -132,10 +132,10 @@ public class DataInitializer implements CommandLineRunner {
 
         // 创建审批人
         User approver1 = new User();
-        approver1.setUsername("approver1");
+        approver1.setUsername("amiya");
         approver1.setPassword(passwordEncoder.encode("123456"));
-        approver1.setNickname("审批员1");
-        approver1.setEmail("approver1@tsinghua.edu.cn");
+        approver1.setNickname("阿米娅");
+        approver1.setEmail("amiya@tsinghua.edu.cn");
         approver1.setPhone("13233255983");
         approver1.setRole(UserRole.APPROVER);
         approver1.setDepartment("IT中心");
@@ -145,10 +145,10 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(approver1);
 
         User approver2 = new User();
-        approver2.setUsername("approver2");
+        approver2.setUsername("logos");
         approver2.setPassword(passwordEncoder.encode("123456"));
-        approver2.setNickname("审批员2");
-        approver2.setEmail("approver2@tsinghua.edu.cn");
+        approver2.setNickname("LOGOS");
+        approver2.setEmail("logos@tsinghua.edu.cn");
         approver2.setPhone("13232344383");
         approver2.setRole(UserRole.APPROVER);
         approver2.setDepartment("IT中心");
@@ -186,11 +186,11 @@ public class DataInitializer implements CommandLineRunner {
         User maintainer1 = new User();
         maintainer1.setUsername("maintainer1");
         maintainer1.setPassword(passwordEncoder.encode("123456"));
-        maintainer1.setNickname("维修人员1");
-        maintainer1.setEmail("maintainer1@tsinghua.edu.cn");
+        maintainer1.setNickname("电弧");
+        maintainer1.setEmail("radian@tsinghua.edu.cn");
         maintainer1.setPhone("13233255654");
         maintainer1.setRole(UserRole.MAINTAINER);
-        maintainer1.setSkill("电气维修");
+        maintainer1.setSkill("信号维修");
         maintainer1.setCreateTime(new Date());
         maintainer1.setLastLoginTime(new Date());
         userRepository.save(maintainer1);
@@ -198,11 +198,11 @@ public class DataInitializer implements CommandLineRunner {
         User maintainer2 = new User();
         maintainer2.setUsername("maintainer2");
         maintainer2.setPassword(passwordEncoder.encode("123456"));
-        maintainer2.setNickname("维修人员2");
-        maintainer2.setEmail("maintainer2@tsinghua.edu.cn");
+        maintainer2.setNickname("维什戴尔");
+        maintainer2.setEmail("wisadel@tsinghua.edu.cn");
         maintainer2.setPhone("13237655654");
         maintainer2.setRole(UserRole.MAINTAINER);
-        maintainer2.setSkill("设备维护");
+        maintainer2.setSkill("祖宗维护");
         maintainer2.setCreateTime(new Date());
         maintainer2.setLastLoginTime(new Date());
         userRepository.save(maintainer2);
@@ -343,9 +343,9 @@ public class DataInitializer implements CommandLineRunner {
     @SuppressWarnings("unused")
     private void createApplications() {
         // 获取用户和教室
-        User zhangsan = userRepository.findByUsername("zhangsan");
-        User lisi = userRepository.findByUsername("lisi");
-        User wangwu = userRepository.findByUsername("wangwu");
+        User exusiai = userRepository.findByUsername("exusiai");
+        User lemuen = userRepository.findByUsername("lemuen");
+        User hoshiguma = userRepository.findByUsername("hoshiguma");
 
         // 由于RoomRepository没有findByName方法，我们直接使用ID
         Room room1 = roomRepository.findById(1L).orElse(null);
@@ -355,104 +355,110 @@ public class DataInitializer implements CommandLineRunner {
         Room room7 = roomRepository.findById(7L).orElse(null);
         Room room9 = roomRepository.findById(9L).orElse(null);
 
-        if (zhangsan != null && room1 != null) {
-            // 张三的申请 - 已批准
+        if (exusiai != null && room1 != null) {
+            // 能天使的申请 - 已批准（待签到）
             Application app1 = new Application();
             app1.setCrowd(15L);
-            app1.setContact("zhangsan@tsinghua.edu.cn");
+            app1.setContact("exusiai@tsinghua.edu.cn");
             app1.setReason("IT中心周会");
-            app1.setStatus(ApplicationStatus.APPROVED);
+            app1.setStatus(ApplicationStatus.PENDING_CHECKIN);
+            app1.setExpired(false);
             app1.setCreateTime(new Date(System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000));
             app1.setUpdateTime(new Date(System.currentTimeMillis() - 6L * 24 * 60 * 60 * 1000));
-            app1.setStartTime(new Date(System.currentTimeMillis() - 5L * 24 * 60 * 60 * 1000));
-            app1.setEndTime(new Date(System.currentTimeMillis() - 5L * 24 * 60 * 60 * 1000));
+            app1.setStartTime(new Date(System.currentTimeMillis() + 1L * 60 * 60 * 1000)); // 1小时后开始
+            app1.setEndTime(new Date(System.currentTimeMillis() + 3L * 60 * 60 * 1000)); // 3小时后结束
             app1.setRoom(room1);
-            app1.setUser(zhangsan);
-            app1.syncUserInfo(zhangsan);
+            app1.setUser(exusiai);
+            app1.syncUserInfo(exusiai);
             app1.syncRoomInfo(room1);
             applicationRepository.save(app1);
 
-            // 张三的申请 - 待审批
+            // 能天使的申请 - 使用中
             Application app6 = new Application();
             app6.setCrowd(20L);
-            app6.setContact("zhangsan@tsinghua.edu.cn");
+            app6.setContact("exusiai@tsinghua.edu.cn");
             app6.setReason("IT中心上线会议");
-            app6.setStatus(ApplicationStatus.PENDING);
-            app6.setCreateTime(new Date());
-            app6.setUpdateTime(new Date());
-            app6.setStartTime(new Date(System.currentTimeMillis() + 3L * 24 * 60 * 60 * 1000));
-            app6.setEndTime(new Date(System.currentTimeMillis() + 3L * 24 * 60 * 60 * 1000));
+            app6.setStatus(ApplicationStatus.IN_USE);
+            app6.setExpired(false);
+            app6.setCreateTime(new Date(System.currentTimeMillis() - 2L * 60 * 60 * 1000));
+            app6.setUpdateTime(new Date(System.currentTimeMillis() - 1L * 60 * 60 * 1000));
+            app6.setStartTime(new Date(System.currentTimeMillis() - 30L * 60 * 1000)); // 30分钟前开始
+            app6.setEndTime(new Date(System.currentTimeMillis() + 2L * 60 * 60 * 1000)); // 2小时后结束
             app6.setRoom(room1);
-            app6.setUser(zhangsan);
-            app6.syncUserInfo(zhangsan);
+            app6.setUser(exusiai);
+            app6.syncUserInfo(exusiai);
             app6.syncRoomInfo(room1);
             applicationRepository.save(app6);
         }
 
-        if (lisi != null && room2 != null) {
-            // 李四的申请 - 待审批
+        if (lemuen != null && room2 != null) {
+            // 蕾缪安的申请 - 待审批
             Application app2 = new Application();
             app2.setCrowd(8L);
-            app2.setContact("lisi@tsinghua.edu.cn");
+            app2.setContact("lemuen@tsinghua.edu.cn");
             app2.setReason("经31班会");
             app2.setStatus(ApplicationStatus.PENDING);
+            app2.setExpired(false);
             app2.setCreateTime(new Date(System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000));
             app2.setUpdateTime(new Date(System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000));
             app2.setStartTime(new Date(System.currentTimeMillis() + 2L * 24 * 60 * 60 * 1000));
-            app2.setEndTime(new Date(System.currentTimeMillis() + 2L * 24 * 60 * 60 * 1000));
+            app2.setEndTime(new Date(System.currentTimeMillis() + 2L * 24 * 60 * 60 * 1000 + 2L * 60 * 60 * 1000));
             app2.setRoom(room2);
-            app2.setUser(lisi);
-            app2.syncUserInfo(lisi);
+            app2.setUser(lemuen);
+            app2.syncUserInfo(lemuen);
             app2.syncRoomInfo(room2);
             applicationRepository.save(app2);
 
-            // 李四的申请 - 已驳回
+            // 蕾缪安的申请 - 已驳回且过期
             Application app7 = new Application();
             app7.setCrowd(10L);
-            app7.setContact("lisi@tsinghua.edu.cn");
+            app7.setContact("lemuen@tsinghua.edu.cn");
             app7.setReason("管理科学与工程系seminar");
             app7.setStatus(ApplicationStatus.REJECTED);
-            app7.setCreateTime(new Date());
-            app7.setUpdateTime(new Date());
-            app7.setStartTime(new Date(System.currentTimeMillis() + 5L * 24 * 60 * 60 * 1000));
-            app7.setEndTime(new Date(System.currentTimeMillis() + 5L * 24 * 60 * 60 * 1000));
+            app7.setExpired(true);
+            app7.setCreateTime(new Date(System.currentTimeMillis() - 10L * 24 * 60 * 60 * 1000));
+            app7.setUpdateTime(new Date(System.currentTimeMillis() - 9L * 24 * 60 * 60 * 1000));
+            app7.setStartTime(new Date(System.currentTimeMillis() - 8L * 24 * 60 * 60 * 1000));
+            app7.setEndTime(new Date(System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000));
             app7.setRoom(room2);
-            app7.setUser(lisi);
-            app7.syncUserInfo(lisi);
+            app7.setUser(lemuen);
+            app7.syncUserInfo(lemuen);
             app7.syncRoomInfo(room2);
             applicationRepository.save(app7);
         }
 
-        if (wangwu != null && room3 != null) {
-            // 王五的申请 - 已批准
+        if (hoshiguma != null && room3 != null) {
+            // 星熊的申请 - 已取消且过期
             Application app3 = new Application();
             app3.setCrowd(25L);
-            app3.setContact("wangwu@tsinghua.edu.cn");
+            app3.setContact("hoshiguma@tsinghua.edu.cn");
             app3.setReason("自动化系一二九合唱排练");
-            app3.setStatus(ApplicationStatus.APPROVED);
+            app3.setStatus(ApplicationStatus.CANCELLED);
+            app3.setExpired(true);
             app3.setCreateTime(new Date(System.currentTimeMillis() - 10L * 24 * 60 * 60 * 1000));
             app3.setUpdateTime(new Date(System.currentTimeMillis() - 9L * 24 * 60 * 60 * 1000));
             app3.setStartTime(new Date(System.currentTimeMillis() - 8L * 24 * 60 * 60 * 1000));
-            app3.setEndTime(new Date(System.currentTimeMillis() - 8L * 24 * 60 * 60 * 1000));
+            app3.setEndTime(new Date(System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000));
             app3.setRoom(room3);
-            app3.setUser(wangwu);
-            app3.syncUserInfo(wangwu);
+            app3.setUser(hoshiguma);
+            app3.syncUserInfo(hoshiguma);
             app3.syncRoomInfo(room3);
             applicationRepository.save(app3);
 
-            // 王五的申请 - 已完成
+            // 星熊的申请 - 已完成且过期
             Application app8 = new Application();
             app8.setCrowd(30L);
-            app8.setContact("wangwu@tsinghua.edu.cn");
+            app8.setContact("hoshiguma@tsinghua.edu.cn");
             app8.setReason("自动化系年度总结会议");
             app8.setStatus(ApplicationStatus.COMPLETED);
+            app8.setExpired(true);
             app8.setCreateTime(new Date(System.currentTimeMillis() - 15L * 24 * 60 * 60 * 1000));
             app8.setUpdateTime(new Date(System.currentTimeMillis() - 14L * 24 * 60 * 60 * 1000));
             app8.setStartTime(new Date(System.currentTimeMillis() - 13L * 24 * 60 * 60 * 1000));
-            app8.setEndTime(new Date(System.currentTimeMillis() - 13L * 24 * 60 * 60 * 1000));
+            app8.setEndTime(new Date(System.currentTimeMillis() - 12L * 24 * 60 * 60 * 1000));
             app8.setRoom(room3);
-            app8.setUser(wangwu);
-            app8.syncUserInfo(wangwu);
+            app8.setUser(hoshiguma);
+            app8.syncUserInfo(hoshiguma);
             app8.syncRoomInfo(room3);
             applicationRepository.save(app8);
         }

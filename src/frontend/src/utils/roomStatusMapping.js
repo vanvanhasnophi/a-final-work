@@ -1,16 +1,9 @@
-// 教室状态映射工具函数
+import { tGlobal } from '../contexts/I18nContext';
+
+// 教室状态映射工具函数（多语言）
 export const getRoomStatusDisplayName = (status) => {
-  const statusMapping = {
-    'AVAILABLE': '空闲',
-    'RESERVED': '已预约',
-    'USING': '使用中',
-    'MAINTENANCE': '维修中',
-    'CLEANING': '清洁中',
-    'PENDING_CLEANING': '待清洁',
-    'PENDING_MAINTENANCE': '待维修',
-    'UNAVAILABLE': '不可用'
-  };
-  return statusMapping[status] || status || '未知状态';
+  const key = `room.status.${status}`;
+  return tGlobal(key, status || '未知状态');
 };
 
 // 教室状态颜色映射
@@ -35,14 +28,14 @@ export const getRoomStatusIcon = (status) => {
 
 // 教室状态选项（用于表单）
 export const roomStatusOptions = [
-  { value: 'AVAILABLE', label: '空闲', color: 'success' },
-  { value: 'RESERVED', label: '已预约', color: 'processing' },
-  { value: 'USING', label: '使用中', color: 'warning' },
-  { value: 'MAINTENANCE', label: '维修中', color: 'error' },
-  { value: 'CLEANING', label: '清洁中', color: 'default' },
-  { value: 'PENDING_CLEANING', label: '待清洁', color: 'orange' },
-  { value: 'PENDING_MAINTENANCE', label: '待维修', color: 'volcano' },
-  { value: 'UNAVAILABLE', label: '不可用', color: 'default' }
+  { value: 'AVAILABLE', label: tGlobal('room.status.AVAILABLE', '空闲'), color: 'success' },
+  { value: 'RESERVED', label: tGlobal('room.status.RESERVED', '已预约'), color: 'processing' },
+  { value: 'USING', label: tGlobal('room.status.USING', '使用中'), color: 'warning' },
+  { value: 'MAINTENANCE', label: tGlobal('room.status.MAINTENANCE', '维修中'), color: 'error' },
+  { value: 'CLEANING', label: tGlobal('room.status.CLEANING', '清洁中'), color: 'default' },
+  { value: 'PENDING_CLEANING', label: tGlobal('room.status.PENDING_CLEANING', '待清洁'), color: 'orange' },
+  { value: 'PENDING_MAINTENANCE', label: tGlobal('room.status.PENDING_MAINTENANCE', '待维修'), color: 'volcano' },
+  { value: 'UNAVAILABLE', label: tGlobal('room.status.UNAVAILABLE', '不可用'), color: 'default' }
 ];
 
 // 判断教室是否可用

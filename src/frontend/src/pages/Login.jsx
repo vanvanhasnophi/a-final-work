@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Typography, message, Alert } from 'antd';
+import { Form, Input, Button, Card, Typography, message, Alert, Dropdown } from 'antd';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, GlobalOutlined, DownOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggleButton from '../components/ThemeToggleButton';
 import { showTranslatedMessage } from '../utils/messageTranslator';
+import { useI18n } from '../contexts/I18nContext';
+import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
 
 const { Title, Text } = Typography;
 
 export default function Login() {
+  const { t, lang, setLang } = useI18n();
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -32,11 +35,11 @@ export default function Login() {
     const unauthorized = urlParams.get('unauthorized');
     
     if (kickout === 'true') {
-      setKickoutMessage('您的账号在其他地方登录，当前会话已失效');
+      setKickoutMessage(t('login.errors.accountKickout'));
     } else if (expired === 'true') {
-      setKickoutMessage('登录已过期，请重新登录');
+      setKickoutMessage(t('login.errors.loginExpired'));
     } else if (unauthorized === 'true') {
-      setKickoutMessage('登录状态异常，请重新登录');
+      setKickoutMessage(t('login.errors.loginUnauthorized'));
     }
     
     // 如果有任何错误参数，清除URL参数
@@ -44,6 +47,7 @@ export default function Login() {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   // 处理输入框变化，清除挤下线提示
@@ -70,7 +74,7 @@ export default function Login() {
       /[A-Z]/.test(pwd),
       /[a-z]/.test(pwd),
       /[0-9]/.test(pwd),
-      /[!@#$%^&*()_+\-={}\[\]|:;"'<>.,?/]/.test(pwd)
+      /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(pwd)
     ].filter(Boolean).length;
     const weak = pwd.length < 8 || categories < 3;
     
@@ -79,53 +83,58 @@ export default function Login() {
       const result = await login(values.username, values.password);
       console.log('登录结果:', result);
       if (result.success) {
-        // 检查token是否正确设置
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        console.log('存储的token:', storedToken);
-        console.log('存储的user:', storedUser);
+        // 登录成功
+        showTranslatedMessage(
+          messageApi, 
+          'success', 
+          'Login successful', 
+          t('login.messages.loginSuccess'),
+          { duration: 1.5 }
+        );
         
-        messageApi.open({
-          type: 'success',
-          content: '登录成功！正在跳转...',
-          duration: 1.5,
-        });
+        // 如果密码过于简单，添加本地通知
         if (weak) {
-          // 将弱密码提醒写入本地通知缓冲，登录后在通知中心显示
+          const weakPasswordNotification = {
+            id: `weak-password-${Date.now()}`,
+            title: 'passwordSecurity.weakPassword.title',
+            content: 'passwordSecurity.weakPassword.content',
+            type: 'security',
+            priority: 'high',
+            isRead: false,
+            createTime: new Date().toISOString(),
+            local: true
+          };
+          
           try {
-            const key = 'localNotifications';
-            const existing = JSON.parse(localStorage.getItem(key) || '[]');
-            const item = {
-              id: 'local-weakpwd-' + Date.now(),
-              title: '密码强度提示',
-              content: '当前密码强度较弱，建议尽快前往个人中心修改为更安全的密码',
-              type: 'user',
-              priority: 'normal',
-              isRead: false,
-              timestamp: Date.now()
-            };
-            existing.unshift(item);
-            localStorage.setItem(key, JSON.stringify(existing.slice(0, 20))); // 最多保留20条本地注入
-            localStorage.setItem('openNotificationCenter', '1');
-          } catch(e) { /* 忽略本地存储错误 */ }
+            const existing = JSON.parse(localStorage.getItem('localNotifications') || '[]');
+            existing.push(weakPasswordNotification);
+            localStorage.setItem('localNotifications', JSON.stringify(existing));
+            
+            // 温柔地触发新通知事件，让横幅立即显示
+            notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, weakPasswordNotification);
+            
+            console.log('已创建弱密码本地通知并触发事件');
+          } catch (e) {
+            console.warn('保存本地通知失败:', e);
+          }
         }
         
-        // 延迟导航，确保状态更新完成
-        setTimeout(() => {
-          console.log('准备跳转到:', from);
-          console.log('最终localStorage检查:', {
-            token: localStorage.getItem('token'),
-            user: localStorage.getItem('user')
-          });
-          console.log('isAuthenticated检查:', isAuthenticated());
-          navigate(from, { replace: true });
-        }, 1500);
+        // 跳转到目标页面
+        navigate(from, { replace: true });
+      } else if (result.code === 401) {
+        showTranslatedMessage(
+          messageApi, 
+          'error', 
+          result.message, 
+          t('login.errors.loginFailed'),
+          { duration: 1.5 }
+        );
       } else {
         showTranslatedMessage(
           messageApi, 
           'error', 
-          result.error, 
-          '用户名或密码错误，请重试',
+          result.error || result.message, 
+          t('login.errors.loginFailed'),
           { duration: 1.5 }
         );
       }
@@ -135,7 +144,7 @@ export default function Login() {
         messageApi, 
         'error', 
         error.message || 'Network error', 
-        '网络连接失败，请检查网络后重试',
+        t('login.errors.networkError'),
         { duration: 1.5 }
       );
     } finally {
@@ -159,7 +168,7 @@ export default function Login() {
           messageApi, 
           'success', 
           'Registration successful', 
-          '注册成功！请使用新账号登录',
+          t('login.messages.registerSuccess'),
           { duration: 1.5 }
         );
         // 延迟切换到登录模式，让用户看到成功消息
@@ -171,7 +180,7 @@ export default function Login() {
           messageApi, 
           'error', 
           result.error, 
-          '注册失败，请检查输入信息',
+          t('login.errors.registerFailed'),
           { duration: 1.5 }
         );
       }
@@ -181,7 +190,7 @@ export default function Login() {
         messageApi, 
         'error', 
         error.message || 'Network error', 
-        '网络连接失败，请检查网络后重试',
+        t('login.errors.networkError'),
         { duration: 1.5 }
       );
     } finally {
@@ -322,8 +331,26 @@ export default function Login() {
         background: 'var(--background-color)',
         position: 'relative'
       }}>
-      {/* 主题切换按钮（与Dashboard一致） */}
-      <ThemeToggleButton style={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }} />
+      {/* 右上角：语言下拉 + 主题切换 */}
+      <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <Dropdown
+          placement="bottomRight"
+          trigger={["click"]}
+          menu={{
+            selectedKeys: [lang],
+            onClick: ({ key }) => setLang(key),
+            items: [
+              { key: 'zh-CN', label: '中文' },
+              { key: 'en-US', label: 'English' },
+            ]
+          }}
+        >
+          <Button size="small" icon={<GlobalOutlined />}>
+            {lang === 'zh-CN' ? '中文' : 'EN'} <DownOutlined />
+          </Button>
+        </Dropdown>
+        <ThemeToggleButton />
+      </div>
       <Card
         style={{
           width: 400,
@@ -338,15 +365,16 @@ export default function Login() {
             margin: 0, 
             color: 'var(--primary-color)',
             fontSize: '28px',
-            fontWeight: 'bold',
+            fontWeight: 600, /* 数值权重便于变量字体过渡 */
+            fontVariationSettings: "'wght' 600"
           }}>
-            RoomX
+            {t('appName')}
           </Title>
           <Text type="secondary" style={{ 
             color: 'var(--text-color-secondary)',
             fontSize: '14px',
           }}>
-            更现代的教室预约管理
+            {t('login.subtitle')}
           </Text>
         </div>
 
@@ -369,13 +397,14 @@ export default function Login() {
             <Form.Item
               name="username"
               rules={[
-                { required: true, message: '请输入用户名!' },
-                { min: 3, message: '用户名至少3个字符!' }
+                { required: true, message: t('login.errors.usernameRequired') },
+                { min: 3, message: t('login.errors.usernameMinLength') },
+                { pattern: /^[a-zA-Z0-9_]+$/, message: t('login.errors.usernamePattern') }
               ]}
             >
               <Input
                 prefix={<UserOutlined style={iconStyle} />}
-                placeholder="用户名"
+                placeholder={t('login.username')}
                 size="large"
                 style={inputStyle}
                 onChange={handleInputChange}
@@ -385,12 +414,12 @@ export default function Login() {
             <Form.Item
               name="password"
               rules={[
-                { required: true, message: '请输入密码!' }
+                { required: true, message: t('login.errors.passwordRequired') }
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined style={iconStyle} />}
-                placeholder="密码"
+                placeholder={t('login.password')}
                 size="large"
                 style={inputStyle}
                 onChange={(e) => {
@@ -412,10 +441,11 @@ export default function Login() {
                   borderRadius: '8px',
                   background: 'var(--primary-color)',
                   border: 'none',
-                  fontWeight: 'bold',
+                  fontWeight: 600,
+                  fontVariationSettings: "'wght' 600"
                 }}
               >
-                登录
+                {t('login.title')}
               </Button>
             </Form.Item>
           </Form>
@@ -429,14 +459,14 @@ export default function Login() {
             <Form.Item
               name="username"
               rules={[
-                { required: true, message: '请输入用户名!' },
-                { min: 3, message: '用户名至少3个字符!' },
-                { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线!' }
+                { required: true, message: t('login.errors.usernameRequired') },
+                { min: 3, message: t('login.errors.usernameMinLength') },
+                { pattern: /^[a-zA-Z0-9_]+$/, message: t('login.errors.usernamePattern') }
               ]}
             >
               <Input
                 prefix={<UserOutlined style={iconStyle} />}
-                placeholder="用户名"
+                placeholder={t('login.username')}
                 size="large"
                 style={inputStyle}
                 onChange={handleInputChange}
@@ -446,13 +476,13 @@ export default function Login() {
             <Form.Item
               name="email"
               rules={[
-                { required: true, message: '请输入邮箱!' },
-                { type: 'email', message: '请输入有效的邮箱地址!' }
+                { required: true, message: t('login.errors.emailRequired') },
+                { type: 'email', message: t('login.errors.emailInvalid') }
               ]}
             >
               <Input
                 prefix={<MailOutlined style={iconStyle} />}
-                placeholder="邮箱"
+                placeholder={t('login.email')}
                 size="large"
                 style={inputStyle}
                 onChange={handleInputChange}
@@ -462,13 +492,13 @@ export default function Login() {
             <Form.Item
               name="phone"
               rules={[
-                { required: true, message: '请输入手机号!' },
-                { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号!' }
+                { required: true, message: t('login.errors.phoneRequired') },
+                { pattern: /^1[3-9]\d{9}$/, message: t('login.errors.phoneInvalid') }
               ]}
             >
               <Input
                 prefix={<PhoneOutlined style={iconStyle} />}
-                placeholder="手机号"
+                placeholder={t('login.phone')}
                 size="large"
                 style={inputStyle}
                 onChange={handleInputChange}
@@ -478,8 +508,8 @@ export default function Login() {
             <Form.Item
               name="password"
               rules={[
-                { required: true, message: '请输入密码!' },
-                { min: 8, message: '密码至少8个字符!' },
+                { required: true, message: t('login.errors.passwordRequired') },
+                { min: 8, message: t('login.errors.passwordMinLength') },
                 { validator: (_, value) => {
                     if (!value) return Promise.resolve();
                     const parts = [
@@ -490,14 +520,14 @@ export default function Login() {
                       /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
                     ].filter(Boolean).length;
                     if (parts >= 3 && value.length >= 8) return Promise.resolve();
-                    return Promise.reject(new Error('除长度外至少满足任意2类: 大写/小写/数字/特殊'));
+                    return Promise.reject(new Error(t('login.errors.passwordComplexity')));
                   }
                 }
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined style={iconStyle} />}
-                placeholder="密码"
+                placeholder={t('login.password')}
                 size="large"
                 style={inputStyle}
                 onChange={(e) => { setRegPassword(e.target.value); handleInputChange(); }}
@@ -510,20 +540,20 @@ export default function Login() {
               name="confirmPassword"
               dependencies={['password']}
               rules={[
-                { required: true, message: '请确认密码!' },
+                { required: true, message: t('login.errors.passwordConfirmRequired') },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue('password') === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('两次输入的密码不一致!'));
+                    return Promise.reject(new Error(t('login.errors.passwordNotMatch')));
                   },
                 }),
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined style={iconStyle} />}
-                placeholder="确认密码"
+                placeholder={t('login.confirmPassword')}
                 size="large"
                 style={inputStyle}
                 onChange={handleInputChange}
@@ -542,10 +572,11 @@ export default function Login() {
                   borderRadius: '8px',
                   background: 'var(--primary-color)',
                   border: 'none',
-                  fontWeight: 'bold',
+                  fontWeight: 600,
+                  fontVariationSettings: "'wght' 600"
                 }}
               >
-                注册
+                {t('login.register')}
               </Button>
             </Form.Item>
           </Form>
@@ -553,7 +584,7 @@ export default function Login() {
 
         <div style={{ textAlign: 'center', marginTop: '16px' }}>
           <Text type="secondary" style={{ color: 'var(--text-color-secondary)' }}>
-            {isLoginMode ? '还没有账号？' : '已有账号？'}
+            {isLoginMode ? t('login.prompts.noAccount') : t('login.prompts.hasAccount')}
             <Button
               type="link"
               className="login-toggle-link"
@@ -562,7 +593,8 @@ export default function Login() {
                 padding: 0,
                 marginLeft: '4px',
                 color: 'var(--primary-color)',
-                fontWeight: 'bold',
+                fontWeight: 600,
+                fontVariationSettings: "'wght' 600",
                 fontSize: '14px',
                 textDecoration: 'none',
                 border: 'none',
@@ -570,7 +602,7 @@ export default function Login() {
                 cursor: 'pointer',
               }}
             >
-              {isLoginMode ? '立即注册' : '立即登录'}
+              {isLoginMode ? t('login.switchToRegister') : t('login.switchToLogin')}
             </Button>
           </Text>
           

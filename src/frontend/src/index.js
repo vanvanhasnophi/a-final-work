@@ -4,6 +4,7 @@ import 'antd/dist/reset.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { I18nProvider } from './contexts/I18nContext';
 
 // 确保所有页面始终加载 Inter 字体声明（即便当前偏好是 system）
 (() => {
@@ -117,7 +118,9 @@ try {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </React.StrictMode>
 );
 

@@ -11,10 +11,12 @@ import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate } from 'react-router-dom';
 import { canViewOwnApplications } from '../utils/permissionUtils';
 import LatestNews from '../components/LatestNews';
+import { useI18n } from '../contexts/I18nContext';
 import { useActivities } from '../hooks/useActivities';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalRooms: 0,
@@ -98,7 +100,7 @@ export default function Dashboard() {
         return { rooms, allApplications, myApplications };
       },
       {
-        errorMessage: '获取统计数据失败，请检查网络连接',
+        errorMessage: t('dashboard.fetchError'),
         maxRetries: 2,
         retryDelay: 3000
       }
@@ -146,16 +148,16 @@ export default function Dashboard() {
   return (
     <>
       {contextHolder}
-      <LoadingSpinner loading={loading} text="正在加载统计数据...">
+    <LoadingSpinner loading={loading} text={t('dashboard.loadingStats')}>
         <div style={{ padding: '24px' }}>
-          <h1>概览</h1>
+      <h1>{t('dashboard.overviewTitle')}</h1>
           
           <Row gutter={16} style={{ marginBottom: '24px' }}>
             {/* 通用统计卡片 */}
             <Col span={6}>
               <Card>
                 <Statistic
-                  title="总教室数"
+                  title={t('dashboard.stats.totalRooms')}
                   value={stats.totalRooms}
                   prefix={<HomeOutlined />}
                 />
@@ -168,7 +170,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="可用教室"
+                      title={t('dashboard.stats.availableRooms')}
                       value={stats.availableRooms}
                       prefix={<HomeOutlined />}
                       valueStyle={{ color: '#3f8600' }}
@@ -178,7 +180,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="申请中"
+                      title={t('dashboard.stats.myPending')}
                       value={stats.myPendingApplications}
                       prefix={<CalendarOutlined />}
                       valueStyle={{ color: '#cf1322' }}
@@ -189,7 +191,7 @@ export default function Dashboard() {
                   <Col span={6}>
                     <Card>
                       <Statistic
-                        title="待处理申请"
+                        title={t('dashboard.stats.allPending')}
                         value={stats.allPendingApplications}
                         prefix={<ClockCircleOutlined />}
                         valueStyle={{ color: '#fa8c16' }}
@@ -201,7 +203,7 @@ export default function Dashboard() {
                   <Col span={6}>
                     <Card>
                       <Statistic
-                        title="在线用户"
+                        title={t('dashboard.stats.onlineUsers')}
                         value={stats.onlineUsers}
                         prefix={<UserOutlined />}
                       />
@@ -217,7 +219,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="待维修教室"
+                      title={t('dashboard.stats.pendingMaintenanceRooms')}
                       value={stats.pendingMaintenanceRooms}
                       prefix={<SettingOutlined />}
                       valueStyle={{ color: '#fa8c16' }}
@@ -227,7 +229,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="维修中教室"
+                      title={t('dashboard.stats.maintenanceRooms')}
                       value={stats.maintenanceRooms}
                       prefix={<SettingOutlined />}
                       valueStyle={{ color: '#cf1322' }}
@@ -237,7 +239,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="今日报修数"
+                      title={t('dashboard.stats.todayMaintenanceReports')}
                       value={stats.todayMaintenanceReports}
                       prefix={<ClockCircleOutlined />}
                       valueStyle={{ color: '#1890ff' }}
@@ -253,7 +255,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="待清洁教室"
+                      title={t('dashboard.stats.pendingCleaningRooms')}
                       value={stats.pendingCleaningRooms}
                       prefix={<HomeOutlined />}
                       valueStyle={{ color: '#fa8c16' }}
@@ -263,7 +265,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="清洁中教室"
+                      title={t('dashboard.stats.cleaningRooms')}
                       value={stats.cleaningRooms}
                       prefix={<HomeOutlined />}
                       valueStyle={{ color: '#cf1322' }}
@@ -273,7 +275,7 @@ export default function Dashboard() {
                 <Col span={6}>
                   <Card>
                     <Statistic
-                      title="今日报清洁数"
+                      title={t('dashboard.stats.todayCleaningReports')}
                       value={stats.todayCleaningReports}
                       prefix={<ClockCircleOutlined />}
                       valueStyle={{ color: '#1890ff' }}
@@ -286,7 +288,7 @@ export default function Dashboard() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Card title="快速操作" extra={<SettingOutlined />}>
+      <Card title={t('dashboard.quickActionsTitle')} extra={<SettingOutlined />}>
                 {/* 申请教室按钮：审批员(Approver)不展示 */}
                 {!isMaintainer && !isService && !isApprover && (
                   <Button 
@@ -294,7 +296,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('apply')}
                   >
-                    申请教室
+        {t('dashboard.buttons.applyRoom')}
                   </Button>
                 )}
                 {canViewOwnApplications(user?.role) && (
@@ -302,7 +304,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('myApplications')}
                   >
-                    我的申请
+        {t('dashboard.buttons.myApplications')}
                   </Button>
                 )}
                 {canViewAllPending && (
@@ -310,7 +312,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('allApplications')}
                   >
-                    全部申请
+        {t('dashboard.buttons.allApplications')}
                   </Button>
                 )}
                 {isAdmin && (
@@ -318,7 +320,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('userManagement')}
                   >
-                    用户管理
+        {t('dashboard.buttons.userManagement')}
                   </Button>
                 )}
                 {isAdmin && (
@@ -326,7 +328,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('roomManagement')}
                   >
-                    教室管理
+        {t('dashboard.buttons.roomManagement')}
                   </Button>
                 )}
                 {isMaintainer && (
@@ -334,7 +336,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('roomManagement')}
                   >
-                    教室管理
+        {t('dashboard.buttons.roomManagement')}
                   </Button>
                 )}
                 {isService && (
@@ -342,26 +344,26 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('roomManagement')}
                   >
-                    教室管理
+        {t('dashboard.buttons.roomManagement')}
                   </Button>
                 )}
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="最新动态" extra={
+      <Card title={t('dashboard.latestNewsTitle')} extra={
                 <Button 
                   type="link" 
                   size="small" 
                   onClick={refreshRecentActivities}
                 >
-                  刷新
+      {t('common.refresh')}
                 </Button>
               }>
                 <LatestNews
                   activities={recentActivities}
                   loading={false}
                   maxItems={6}
-                  emptyText="暂无最新动态"
+      emptyText={t('dashboard.latestNewsEmpty')}
                   height="calc(100vh - 350px)"
                   minHeight="200px"
                 />

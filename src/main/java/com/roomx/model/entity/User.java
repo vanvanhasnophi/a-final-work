@@ -11,6 +11,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Data;
 import lombok.Getter;
 
@@ -27,6 +29,7 @@ public class User {
     private String email;
     private String phone;
     private Date createTime;
+    private Date updateTime;
     private Date lastLoginTime;
 
     // 获取用户角色的方法
@@ -53,5 +56,17 @@ public class User {
     // 设置用户角色的方法
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        Date now = new Date();
+        this.createTime = now;
+        this.updateTime = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updateTime = new Date();
     }
 }

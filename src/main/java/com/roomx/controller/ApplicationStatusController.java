@@ -96,10 +96,12 @@ public class ApplicationStatusController {
             long rejected = allApplications.stream().filter(a -> a.getStatus() == ApplicationStatus.REJECTED).count();
             long completed = allApplications.stream().filter(a -> a.getStatus() == ApplicationStatus.COMPLETED).count();
             long cancelled = allApplications.stream().filter(a -> a.getStatus() == ApplicationStatus.CANCELLED).count();
-            long expired = allApplications.stream().filter(a -> a.getStatus() == ApplicationStatus.EXPIRED).count();
+            long pendingCheckIn = allApplications.stream().filter(a -> a.getStatus() == ApplicationStatus.PENDING_CHECKIN).count();
+            long inUse = allApplications.stream().filter(a -> a.getStatus() == ApplicationStatus.IN_USE).count();
+            long expired = allApplications.stream().filter(a -> a.getExpired() != null && a.getExpired()).count();
             
             return ResponseEntity.ok().body(new ApplicationStatusStats(
-                pending, approved, rejected, completed, cancelled, expired, allApplications.size()
+                pending, approved, rejected, completed, cancelled, pendingCheckIn, inUse, expired, allApplications.size()
             ));
         } catch (Exception e) {
             log.error("获取申请状态统计失败", e);
@@ -136,16 +138,20 @@ public class ApplicationStatusController {
         public long rejected;
         public long completed;
         public long cancelled;
+        public long pendingCheckIn;
+        public long inUse;
         public long expired;
         public long total;
         
         public ApplicationStatusStats(long pending, long approved, long rejected, 
-                                   long completed, long cancelled, long expired, long total) {
+                                   long completed, long cancelled, long pendingCheckIn, long inUse, long expired, long total) {
             this.pending = pending;
             this.approved = approved;
             this.rejected = rejected;
             this.completed = completed;
             this.cancelled = cancelled;
+            this.pendingCheckIn = pendingCheckIn;
+            this.inUse = inUse;
             this.expired = expired;
             this.total = total;
         }

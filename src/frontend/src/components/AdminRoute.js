@@ -2,10 +2,12 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spin, Result, Button } from 'antd';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import { getRoleDisplayName } from '../utils/roleMapping';
 
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, loading, user } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
 
   console.log('AdminRoute检查:', { 
@@ -24,7 +26,7 @@ const AdminRoute = ({ children }) => {
         alignItems: 'center', 
         height: '100vh' 
       }}>
-        <Spin size="large" tip="加载中..." />
+  <Spin size="large" tip={t('common.loading', '加载中…')} />
       </div>
     );
   }
@@ -41,13 +43,13 @@ const AdminRoute = ({ children }) => {
       <Result
         status="403"
         title="403"
-        subTitle="抱歉，您没有权限访问此页面。"
+        subTitle={t('applicationManagement.auth.result403Subtitle', '抱歉，您没有权限访问此页面。')}
         extra={
           <div>
-            <p>当前用户角色: {getRoleDisplayName(user?.role)}</p>
-            <p>需要管理员权限才能访问用户管理功能。</p>
+            <p>{t('applicationManagement.auth.result403RolePrefix', '当前用户角色: ')}{getRoleDisplayName(user?.role)}</p>
+            <p>{t('applicationManagement.auth.result403NeedRole', '需要管理员或审批人权限才能访问申请管理功能。')}</p>
             <Button type="primary" onClick={() => window.history.back()}>
-              返回上一页
+              {t('applicationManagement.actions.back', '返回上一页')}
             </Button>
           </div>
         }

@@ -1,21 +1,102 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Space, Typography, Tag, Popconfirm, Drawer, Card } from 'antd';
 import { CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../api/notification';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { formatRelativeTime } from '../utils/dateFormat';
+import { useI18n } from '../contexts/I18nContext';
+import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
 
 const { Text } = Typography;
 
 export default function NotificationCenter({ visible, onClose, onUnreadChange }) {
+  const { t } = useI18n();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
 
-  const { executeWithRetry } = useApiWithRetry();
+  // 获取通知标题（支持国际化键）
+  const getNotificationTitle = useCallback((notification) => {
+    if (!notification.title) return '';
+    // 如果title是翻译键格式（含有.），尝试翻译
+    if (typeof notification.title === 'string' && notification.title.includes('.')) {
+      const translated = t(notification.title);
+      return translated !== notification.title ? translated : notification.title;
+    }
+    return notification.title;
+  }, [t]);
+
+  // 简单的模板字符串替换函数
+  const replaceTemplate = useCallback((template, params) => {
+    let result = template;
+    Object.keys(params).forEach(key => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      result = result.replace(regex, params[key] || '');
+    });
+    return result;
+  }, []);
+
+  // 获取通知内容（支持国际化键）
+  const getNotificationContent = useCallback((notification) => {
+    if (!notification.content) return '';
+    
+    // 如果content是翻译键格式（含有.），尝试翻译
+    if (typeof notification.content === 'string' && notification.content.includes('.')) {
+      // 检查是否包含参数（用|分隔）
+      const parts = notification.content.split('|');
+      const key = parts[0];
+      const params = parts.slice(1);
+      
+      const translated = t(key);
+      if (translated !== key) {
+        // 如果翻译成功，处理参数替换
+        if (params.length > 0) {
+          // 根据不同的通知类型处理参数
+          if (key.includes('application.approved.content')) {
+            const [applicationTitle, reason] = params;
+            const template = t('notification.application.approved.message');
+            const reasonText = reason ? (t('common.reason') + ': ' + reason) : '';
+            return replaceTemplate(template, { 
+              title: applicationTitle, 
+              reason: reasonText
+            });
+          } else if (key.includes('application.rejected.content')) {
+            const [applicationTitle, reason] = params;
+            const template = t('notification.application.rejected.message');
+            const reasonText = reason ? (t('common.reason') + ': ' + reason) : '';
+            return replaceTemplate(template, { 
+              title: applicationTitle, 
+              reason: reasonText
+            });
+          } else if (key.includes('room.statusChange.content')) {
+            const [roomName, oldStatus, newStatus] = params;
+            const template = t('notification.room.statusChange.message');
+            return replaceTemplate(template, { 
+              roomName, 
+              oldStatus, 
+              newStatus 
+            });
+          } else if (key.includes('system.maintenance.content')) {
+            const [maintenanceInfo] = params;
+            const template = t('notification.system.maintenance.message');
+            return replaceTemplate(template, { 
+              info: maintenanceInfo
+            });
+          }
+        }
+        return translated;
+      }
+    }
+    return notification.content;
+  }, [t, replaceTemplate]);
 
   // 获取通知列表
   const fetchNotifications = useCallback(async () => {
+    if (loadingRef.current) return; // 防止重复调用
+    
+    loadingRef.current = true;
     setLoading(true);
     const parseRecords = (resp) => {
       if (!resp) return [];
@@ -31,54 +112,49 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
       return [];
     };
     let remoteList = [];
-    let triedAltPage = false;
-    let triedPageParam = false;
-    let triedNoParam = false;
+
     try {
-      const response = await executeWithRetry(
-        async () => notificationAPI.getNotifications({ pageNum: 1, pageSize: 20 }),
-        { errorMessage: '获取通知失败', maxRetries: 0 }
-      );
-      remoteList = parseRecords(response);
-      // 如果第一页为空，尝试 pageNum=0 兼容后端从0开始计数
+      // 主要尝试：pageNum 参数命名
+      try {
+        const primaryResp = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 20 });
+        remoteList = parseRecords(primaryResp);
+        console.debug('[NotificationCenter] 主要通知数量:', remoteList.length);
+      } catch(error) {
+        console.warn('获取通知失败:', error);
+      }
+      
+      // 备用尝试：pageNum=0
       if (remoteList.length === 0) {
         try {
           const altResp = await notificationAPI.getNotifications({ pageNum: 0, pageSize: 20 });
           const alt = parseRecords(altResp);
           if (alt.length > 0) {
             remoteList = alt;
-            triedAltPage = true;
           }
         } catch(_) {}
       }
-      // 尝试使用 page 参数命名
+      // 备用尝试：page 参数命名
       if (remoteList.length === 0) {
         try {
           const pageResp = await notificationAPI.getNotifications({ page: 1, size: 20 });
           const pageList = parseRecords(pageResp);
             if (pageList.length > 0) {
               remoteList = pageList;
-              triedPageParam = true;
             }
         } catch(_) {}
       }
-      // 尝试无分页参数（某些后端返回全量或默认第一页）
+      // 备用尝试：无分页参数
       if (remoteList.length === 0) {
         try {
           const noParamResp = await notificationAPI.getNotifications();
           const noParamList = parseRecords(noParamResp);
           if (noParamList.length > 0) {
             remoteList = noParamList;
-            triedNoParam = true;
           }
         } catch(_) {}
       }
-      console.debug('[NotificationCenter] 远程通知数量:', remoteList.length, 'altPageUsed=', triedAltPage);
-      if (remoteList.length === 0) {
-        console.debug('[NotificationCenter] 备用尝试 flags => altPage:', triedAltPage, 'pageParam:', triedPageParam, 'noParam:', triedNoParam);
-      }
     } catch (error) {
-      console.warn('远程通知获取失败，使用本地缓存: ', error);
+  console.warn('远程通知获取失败，使用本地缓存: ', error);
     }
 
     // 合并本地缓冲（弱密码或其它本地注入）
@@ -88,50 +164,104 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
         const localList = JSON.parse(localRaw).map(item => ({ ...item, local: true }));
         const mergedMap = new Map();
         // 先放远程再放本地，使本地覆盖、保留本地 isRead 状态
-        [...remoteList, ...localList].forEach(n => { if (!mergedMap.has(n.id)) mergedMap.set(n.id, n); });
+        [...remoteList, ...localList].forEach(n => { 
+          if (n && n.id) {
+            if (!mergedMap.has(n.id)) {
+              mergedMap.set(n.id, n);
+            }
+          }
+        });
         remoteList = Array.from(mergedMap.values());
         console.debug('[NotificationCenter] 合并本地临时通知数量:', localList.length);
+        console.debug('[NotificationCenter] 合并后总通知数量:', remoteList.length);
       }
     } catch(e) { console.warn('本地通知解析失败', e); }
 
     setNotifications(remoteList);
-    const computedUnread = remoteList.filter(n => !n.isRead).length;
-    setUnreadCount(computedUnread);
+    
+    // 计算未读数量 - 分别计算服务器和本地的未读数量，避免重复计算
+    let serverUnreadCount = 0;
+    let localUnreadCount = 0;
+    
+    remoteList.forEach(n => {
+      if (!n.isRead) {
+        if (n.local) {
+          localUnreadCount++;
+        } else {
+          serverUnreadCount++;
+        }
+      }
+    });
+    
+    const totalUnread = serverUnreadCount + localUnreadCount;
+    console.log(`[NotificationCenter] 未读计数 - 服务器: ${serverUnreadCount}, 本地: ${localUnreadCount}, 总计: ${totalUnread}`);
+    
+    setUnreadCount(totalUnread);
+    
+    // 检查是否有新的未读通知需要显示横幅
+    if (remoteList.length > 0) {
+      // 获取所有未读通知，按创建时间降序排列
+      const unreadNotifications = remoteList
+        .filter(n => !n.isRead)
+        .sort((a, b) => new Date(b.createTime || b.createdAt || 0) - new Date(a.createTime || a.createdAt || 0));
+      
+      console.log(`[NotificationCenter] 找到 ${unreadNotifications.length} 个未读通知`);
+      
+      // 触发最新的未读通知事件（用于横幅显示）
+      if (unreadNotifications.length > 0) {
+        const latestNotification = unreadNotifications[0];
+        console.log(`[NotificationCenter] 触发最新通知事件: ${latestNotification.id}`);
+        
+        // 延迟触发，避免与状态更新冲突
+        setTimeout(() => {
+          notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, latestNotification);
+        }, 100);
+      }
+    }
+    
+    // 触发未读数量变化事件
+    notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+    
+    loadingRef.current = false;
     setLoading(false);
-  }, [executeWithRetry]);
+  }, []); // 移除loading依赖防止无限循环
 
-  // 获取未读数量
+  // 获取服务器未读数量（仅用于同步，不直接设置状态）
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const response = await executeWithRetry(
-        async () => {
-          const result = await notificationAPI.getUnreadCount();
-          return result;
-        },
-        {
-          errorMessage: '获取未读数量失败',
-          maxRetries: 0,
-          showRetryMessage: false
-        }
-      );
+      const response = await notificationAPI.getUnreadCount();
       
       if (response?.data) {
-        setUnreadCount(response.data.unreadCount || 0);
+        const serverUnread = response.data.unreadCount || 0;
+        console.debug('[NotificationCenter] 服务器未读数量:', serverUnread);
+        return serverUnread;
       }
+      return 0;
     } catch (error) {
-      console.error('获取未读数量失败:', error);
+      console.warn('获取服务器未读数量失败:', error);
+      return 0;
     }
-  }, [executeWithRetry]);
+  }, []); // 移除executeWithRetry依赖
 
   // 标记通知为已读
-  const handleMarkAsRead = async (notificationId) => {
+  const handleMarkAsRead = useCallback(async (notificationId) => {
     setNotifications(prev => {
       const target = prev.find(n => n.id === notificationId);
       const isLocal = target?.local;
       const alreadyRead = target?.isRead;
       // 先本地快速更新，提升响应速度
       const next = prev.map(item => item.id === notificationId ? { ...item, isRead: true } : item);
-      if (!alreadyRead) setUnreadCount(u => Math.max(0, u - 1));
+      if (!alreadyRead) {
+        setUnreadCount(prevUnreadCount => {
+          const newUnreadCount = Math.max(0, prevUnreadCount - 1);
+          // 温柔地通知其他组件未读数量变化
+          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newUnreadCount);
+          return newUnreadCount;
+        });
+        // 触发通知已读事件
+        notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, { id: notificationId, notification: target });
+      }
+      
       // 同步 localStorage
       try {
         const raw = localStorage.getItem('localNotifications');
@@ -141,16 +271,16 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
           localStorage.setItem('localNotifications', JSON.stringify(changed));
         }
       } catch(_) {}
+      
       // 若非本地再调接口（异步，不阻塞 UI）
       if (!isLocal && !alreadyRead) {
-        executeWithRetry(
-          async () => { await notificationAPI.markAsRead(notificationId); return true; },
-          { errorMessage: '标记已读失败', successMessage: '已标记为已读' }
-        ).catch(err => { console.error('标记已读失败:', err); });
+        notificationAPI.markAsRead(notificationId)
+          .then(() => console.debug('标记已读成功'))
+          .catch(err => console.error('标记已读失败:', err));
       }
       return next;
     });
-  };
+  }, []); // 移除unreadCount依赖，通过函数式更新避免依赖问题
 
   // 标记所有为已读
   const handleMarkAllAsRead = async () => {
@@ -158,6 +288,10 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
       const anyServerUnread = prev.some(n => !n.local && !n.isRead);
       const next = prev.map(item => ({ ...item, isRead: true }));
       setUnreadCount(0);
+      
+      // 温柔地通知其他组件未读数量变化
+      notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, 0);
+      
       try {
         const raw = localStorage.getItem('localNotifications');
         if (raw) {
@@ -166,10 +300,9 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
         }
       } catch(_) {}
       if (anyServerUnread) {
-        executeWithRetry(
-          async () => { await notificationAPI.markAllAsRead(); return true; },
-          { errorMessage: '标记全部已读失败', successMessage: '已全部标记为已读' }
-        ).catch(err => console.error('标记全部已读失败:', err));
+        notificationAPI.markAllAsRead()
+          .then(() => console.debug('标记全部已读成功'))
+          .catch(err => console.error('标记全部已读失败:', err));
       }
       return next;
     });
@@ -182,7 +315,19 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
       const isLocal = target?.local;
       const wasUnread = target && !target.isRead;
       const next = prev.filter(item => item.id !== notificationId);
-      if (wasUnread) setUnreadCount(u => Math.max(0, u - 1));
+      
+      if (wasUnread) {
+        setUnreadCount(prevUnreadCount => {
+          const newUnreadCount = Math.max(0, prevUnreadCount - 1);
+          // 温柔地通知其他组件未读数量变化
+          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newUnreadCount);
+          return newUnreadCount;
+        });
+      }
+      
+      // 触发通知删除事件
+      notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_DELETED, { id: notificationId, notification: target });
+      
       try {
         const raw = localStorage.getItem('localNotifications');
         if (raw) {
@@ -191,14 +336,60 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
         }
       } catch(_) {}
       if (!isLocal) {
-        executeWithRetry(
-          async () => { await notificationAPI.deleteNotification(notificationId); return true; },
-          { errorMessage: '删除通知失败', successMessage: '通知已删除' }
-        ).catch(err => console.error('删除通知失败:', err));
+        notificationAPI.deleteNotification(notificationId)
+          .then(() => console.debug('删除通知成功'))
+          .catch(err => console.error('删除通知失败:', err));
       }
       return next;
     });
   };
+
+  // 智能路由导航函数
+  const handleNotificationClick = useCallback((notification) => {
+    // 首先标记为已读
+    handleMarkAsRead(notification.id);
+    
+    // 关闭通知中心
+    if (onClose) {
+      onClose();
+    }
+    
+    // 智能路由分析
+    const title = getNotificationTitle(notification).toLowerCase();
+    const content = getNotificationContent(notification).toLowerCase();
+    const fullText = `${title} ${content}`;
+    
+    // 密码安全相关通知
+    if (fullText.includes('密码') || fullText.includes('password') || fullText.includes('弱密码') || 
+        fullText.includes('安全') || fullText.includes('security') || fullText.includes('强度')) {
+      navigate('/profile/change-password');
+      return;
+    }
+    
+    // 房间相关通知
+    if (fullText.includes('房间') || fullText.includes('room') || fullText.includes('申请') || 
+        fullText.includes('application') || fullText.includes('预订') || fullText.includes('booking')) {
+      navigate('/rooms');
+      return;
+    }
+    
+    // 用户相关通知
+    if (fullText.includes('用户') || fullText.includes('user') || fullText.includes('个人') || 
+        fullText.includes('profile') || fullText.includes('账户') || fullText.includes('account')) {
+      navigate('/profile');
+      return;
+    }
+    
+    // 系统相关通知
+    if (fullText.includes('系统') || fullText.includes('system') || fullText.includes('维护') || 
+        fullText.includes('maintenance') || fullText.includes('升级') || fullText.includes('upgrade')) {
+      navigate('/');
+      return;
+    }
+    
+    // 默认导航到首页
+    navigate('/');
+  }, [navigate, onClose, handleMarkAsRead, getNotificationTitle, getNotificationContent]);
 
   // 获取通知类型颜色
   const getNotificationTypeColor = (type) => {
@@ -207,19 +398,14 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
       case 'application': return 'green';
       case 'room': return 'orange';
       case 'user': return 'purple';
+      case 'security': return 'red';
       default: return 'default';
     }
   };
 
   // 获取通知类型显示名称
   const getNotificationTypeName = (type) => {
-    switch (type) {
-      case 'system': return '系统';
-      case 'application': return '申请';
-      case 'room': return '教室';
-      case 'user': return '用户';
-      default: return '通知';
-    }
+    return t(`notification.type.${type}`) || t('notification.type.default');
   };
 
   // 获取优先级颜色
@@ -235,17 +421,77 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
 
   // 初始化加载
   useEffect(() => {
-    fetchNotifications();
-    fetchUnreadCount();
-  }, [fetchNotifications, fetchUnreadCount]);
+    const initializeData = async () => {
+      console.log('[NotificationCenter] 初始化数据加载');
+      await fetchNotifications();
+    };
+    initializeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 只在组件挂载时执行一次
+
+  // 监听外部通知已读事件（如横幅通知被标记为已读）
+  useEffect(() => {
+    const handleExternalNotificationRead = ({ id, notification }) => {
+      console.log(`[NotificationCenter] 接收到外部通知已读事件: ${id}`);
+      
+      // 更新本地通知状态
+      setNotifications(prev => {
+        const targetIndex = prev.findIndex(n => n.id === id);
+        if (targetIndex === -1) {
+          console.log(`[NotificationCenter] 通知 ${id} 不在当前列表中，跳过更新`);
+          return prev;
+        }
+        
+        const target = prev[targetIndex];
+        if (target.isRead) {
+          console.log(`[NotificationCenter] 通知 ${id} 已经是已读状态`);
+          return prev;
+        }
+        
+        const updated = [...prev];
+        updated[targetIndex] = { ...target, isRead: true };
+        
+        // 重新计算未读数量
+        const newUnreadCount = updated.filter(n => !n.isRead).length;
+        
+        console.log(`[NotificationCenter] 外部已读事件处理完成，新未读数量: ${newUnreadCount}`);
+        
+        // 更新未读计数状态
+        setUnreadCount(newUnreadCount);
+        
+        // 触发未读数量变化事件（延迟执行避免冲突）
+        setTimeout(() => {
+          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newUnreadCount);
+        }, 100);
+        
+        return updated;
+      });
+    };
+
+    // 监听外部通知已读事件
+    const unsubscribe = notificationEvents.addEventListener(
+      NOTIFICATION_EVENTS.NOTIFICATION_READ,
+      handleExternalNotificationRead
+    );
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   // 每次抽屉开启时刷新一次（避免仅首挂载请求）
   useEffect(() => {
     if (visible) {
-      fetchNotifications();
-      fetchUnreadCount();
+      const refreshData = async () => {
+        console.log('[NotificationCenter] 打开通知中心，刷新数据');
+        await fetchNotifications();
+      };
+      refreshData();
     }
-  }, [visible, fetchNotifications, fetchUnreadCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]); // 只依赖visible状态
 
   useEffect(() => {
     if (typeof onUnreadChange === 'function') {
@@ -259,26 +505,28 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
       <Card
         key={item.id}
         size="small"
-  className="notification-card"
+        className="notification-card"
         style={{
           borderRadius: 8,
           borderColor: item.isRead ? 'var(--border-color)' : '#1677ff55',
           background: item.isRead ? 'var(--bg-color)' : 'var(--component-bg)',
           boxShadow: item.isRead ? 'none' : '0 2px 6px -2px rgba(0,0,0,0.08)',
-          opacity: item.isRead ? 0.75 : 1
+          opacity: item.isRead ? 0.4 : 1,
+          cursor: 'pointer'
         }}
+        onClick={() => handleNotificationClick(item)}
         title={
           <Space size={6} wrap>
-            <Text strong={!item.isRead}>{item.title}</Text>
+            <Text strong={!item.isRead}>{getNotificationTitle(item)}</Text>
             <Tag color={getNotificationTypeColor(item.type)}>{getNotificationTypeName(item.type)}</Tag>
             {item.priority !== 'normal' && (
               <Tag color={getPriorityColor(item.priority)}>
-                {item.priority === 'urgent' ? '紧急' :
-                  item.priority === 'high' ? '重要' :
-                  item.priority === 'low' ? '普通' : '正常'}
+                {item.priority === 'urgent' ? t('notification.priority.urgent') :
+                  item.priority === 'high' ? t('notification.priority.high') :
+                  item.priority === 'low' ? t('notification.priority.low') : t('notification.priority.normal')}
               </Tag>
             )}
-            {item.local && <Tag color="gold">本地</Tag>}
+            {item.local && <Tag color="gold">{t('notification.localTag')}</Tag>}
           </Space>
         }
         extra={
@@ -289,15 +537,15 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
                 size="small"
                 icon={<CheckOutlined />}
                 onClick={(e) => { e.stopPropagation(); handleMarkAsRead(item.id); }}
-                title="标记为已读"
+                title={t('notification.actions.markRead')}
                 style={{ border: 'none', boxShadow: 'none', background: 'transparent' }}
               />
             )}
             <Popconfirm
-              title="确定要删除这条通知吗？"
+              title={t('notification.confirmDelete.title')}
               onConfirm={(e) => { e?.stopPropagation?.(); handleDeleteNotification(item.id); }}
-              okText="确定"
-              cancelText="取消"
+              okText={t('notification.confirmDelete.ok')}
+              cancelText={t('notification.confirmDelete.cancel')}
               onPopupClick={e => e.stopPropagation()}
             >
               <Button
@@ -305,7 +553,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
                 size="small"
                 icon={<DeleteOutlined />}
                 danger
-                title="删除通知"
+                title={t('notification.actions.delete')}
                 onClick={e => e.stopPropagation()}
                 style={{ border: 'none', boxShadow: 'none', background: 'transparent' }}
               />
@@ -321,7 +569,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
   bodyStyle={{ padding: '2px 12px 10px 12px' }}
         hoverable
       >
-        <div style={{ fontSize: 12, color: 'var(--text-color-secondary)', whiteSpace: 'pre-wrap' }}>{item.content}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-color-secondary)', whiteSpace: 'pre-wrap' }}>{getNotificationContent(item)}</div>
         <div style={{ marginTop: 6, textAlign: 'right' }}>
           <Text type="secondary" style={{ fontSize: 11 }}>{formatRelativeTime(item.timestamp)}</Text>
         </div>
@@ -332,8 +580,8 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
 
 
   return (
-    <Drawer
-      title="通知中心"
+  <Drawer
+    title={t('notification.title')}
       placement="right"
       width={400}
       open={visible}
@@ -345,7 +593,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
             size="small"
             onClick={() => { fetchNotifications(); fetchUnreadCount(); }}
             loading={loading}
-          >刷新</Button>
+                  >{t('notification.refresh')}</Button>
           {unreadCount > 0 && (
             <Button
               type="text"
@@ -353,7 +601,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
               icon={<CheckOutlined />}
               onClick={handleMarkAllAsRead}
             >
-              全部已读
+                      {t('notification.markAllRead')}
             </Button>
           )}
         </Space>
@@ -370,7 +618,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
             textAlign: 'center',
             color: 'var(--text-color-secondary)'
           }}>
-            {loading ? '加载中…' : '暂无通知'}
+            {loading ? t('notification.loading') : t('notification.empty')}
           </div>
         )}
       </div>
@@ -383,8 +631,8 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
           marginTop: '16px'
         }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            共 {notifications.length} 条通知
-            {unreadCount > 0 && `，${unreadCount} 条未读`}
+            {t('notification.footer.totalPrefix','共')} {notifications.length} {t('notification.footer.totalSuffix','条通知')}
+            {unreadCount > 0 && `，${unreadCount} ${t('notification.footer.unreadSuffix','条未读')}`}
           </Text>
         </div>
       )}

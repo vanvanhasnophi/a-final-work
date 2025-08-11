@@ -81,32 +81,45 @@ public class NotificationUtil {
      * 发送申请审批结果通知
      */
     public void sendApplicationApprovalNotification(Long userId, String applicationTitle, boolean approved, String reason) {
-        String title = approved ? "申请已批准" : "申请已拒绝";
-        String content = String.format("您的申请「%s」%s。%s", 
-            applicationTitle, 
-            approved ? "已获得批准" : "被拒绝", 
-            reason != null ? "原因：" + reason : "");
+        String titleKey = approved ? "notification.application.approved.title" : "notification.application.rejected.title";
+        String contentKey = approved ? "notification.application.approved.content" : "notification.application.rejected.content";
         
-        sendApplicationNotification(userId, title, content, approved ? "normal" : "high");
+        // 创建包含参数的通知
+        NotificationDTO notification = new NotificationDTO();
+        notification.setUserId(userId);
+        notification.setTitle(titleKey);
+        notification.setContent(contentKey + "|" + applicationTitle + (reason != null ? "|" + reason : ""));
+        notification.setType("application");
+        notification.setPriority(approved ? "normal" : "high");
+        
+        notificationService.createNotification(notification);
     }
     
     /**
      * 发送房间状态变更通知
      */
     public void sendRoomStatusChangeNotification(Long userId, String roomName, String oldStatus, String newStatus) {
-        String title = "房间状态变更";
-        String content = String.format("房间「%s」状态从「%s」变更为「%s」", roomName, oldStatus, newStatus);
+        NotificationDTO notification = new NotificationDTO();
+        notification.setUserId(userId);
+        notification.setTitle("notification.room.statusChange.title");
+        notification.setContent("notification.room.statusChange.content|" + roomName + "|" + oldStatus + "|" + newStatus);
+        notification.setType("room");
+        notification.setPriority("normal");
         
-        sendRoomNotification(userId, title, content, "normal");
+        notificationService.createNotification(notification);
     }
     
     /**
      * 发送系统维护通知
      */
     public void sendSystemMaintenanceNotification(Long userId, String maintenanceInfo) {
-        String title = "系统维护通知";
-        String content = "系统将进行维护：" + maintenanceInfo;
+        NotificationDTO notification = new NotificationDTO();
+        notification.setUserId(userId);
+        notification.setTitle("notification.system.maintenance.title");
+        notification.setContent("notification.system.maintenance.content|" + maintenanceInfo);
+        notification.setType("system");
+        notification.setPriority("high");
         
-        sendSystemNotification(userId, title, content, "high");
+        notificationService.createNotification(notification);
     }
 } 

@@ -20,12 +20,14 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
 import RoleBasedRoute from '../components/RoleBasedRoute';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 
 // 解构懒加载的布局组件
 const { RoleBasedLayout } = LazyLayoutComponents;
 
 function AppRoutes() {
   const { loading } = useAuth();
+  const { t } = useI18n();
 
   if (loading) {
     return (
@@ -37,7 +39,7 @@ function AppRoutes() {
         background: 'var(--background-color)',
         color: 'var(--text-color)',
       }}>
-        <div>加载中...</div>
+  <div>{t('common.loading')}</div>
       </div>
     );
   }
@@ -76,6 +78,11 @@ function AppRoutes() {
           <RoleBasedLayout><LazyMyApplications /></RoleBasedLayout>
         </ProtectedRoute>
       } />
+      <Route path="/profile/*" element={
+        <ProtectedRoute>
+          <RoleBasedLayout><LazyUserProfile /></RoleBasedLayout>
+        </ProtectedRoute>
+      } />
       <Route path="/profile" element={
         <ProtectedRoute>
           <RoleBasedLayout><LazyUserProfile /></RoleBasedLayout>
@@ -107,8 +114,8 @@ function AppRoutes() {
       
       {/* 默认重定向 */}
       <Route path="*" element={<Navigate to="/404" replace />} />
-      {/* well-known change-password 路由重定向到个人中心 */}
-      <Route path="/.well-known/change-password" element={<Navigate to="/profile" replace />} />
+      {/* well-known change-password 路由重定向到个人中心的密码修改页面 */}
+      <Route path="/.well-known/change-password" element={<Navigate to="/profile/change-password" replace />} />
     </Routes>
   );
 }

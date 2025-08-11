@@ -62,6 +62,9 @@ public class Application {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
     
+    @Column(name = "expired", nullable = false)
+    private Boolean expired = false;
+    
     private Date createTime;
     private Date updateTime;
     private Date startTime;
