@@ -1,6 +1,6 @@
 import React from 'react';
 import { List, Tag, Space, Typography, Empty } from 'antd';
-import { formatDateTime, formatRelativeTime } from '../utils/dateFormat';
+import { formatRelativeTime } from '../utils/dateFormat';
 import { 
   getActivityTypeDisplayName, 
   getActivityTypeColor, 

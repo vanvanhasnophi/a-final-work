@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { message } from 'antd';
 import authAPI from '../api/auth';
-import { showTranslatedMessage } from '../utils/messageTranslator';
 import activityService from '../services/activityService';
 
 const AuthContext = createContext();

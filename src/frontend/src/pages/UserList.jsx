@@ -15,10 +15,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../utils/permissionUtils';
 import { getUserDisplayName } from '../utils/userDisplay';
 import FixedTop from '../components/FixedTop';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Option } = Select;
 
 export default function UserList() {
+  const { t } = useI18n();
   const { user, clearAuth } = useAuth();
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
@@ -94,22 +96,22 @@ export default function UserList() {
         return response.data;
       },
       {
-        errorMessage: '获取用户列表失败，请检查网络连接',
+  errorMessage: t('userList.errors.dataFetchTitle', '获取用户列表失败，请检查网络连接'),
         maxRetries: 0, // 不重试，避免反复请求
         retryDelay: 0,
         onError: (error) => {
           // 处理认证错误
           if (error.response?.status === 401) {
-            setAuthError('Token已过期，请重新登录');
-            messageApi.error('Token已过期，请重新登录');
+            setAuthError(t('userList.auth.tokenExpired', 'Token已过期，请重新登录'));
+            messageApi.error(t('userList.auth.tokenExpired', 'Token已过期，请重新登录'));
             // 延迟清理认证状态，给用户时间看到错误信息
             setTimeout(() => {
               clearAuth();
               window.location.href = '/login';
             }, 2000);
           } else if (error.response?.status === 403) {
-            setAuthError('权限不足，需要管理员权限');
-            messageApi.error('权限不足，需要管理员权限');
+            setAuthError(t('userList.auth.forbidden', '权限不足，需要管理员权限'));
+            messageApi.error(t('userList.auth.forbidden', '权限不足，需要管理员权限'));
           }
         }
       }
@@ -169,20 +171,23 @@ export default function UserList() {
   // 删除用户
   const handleDeleteUser = (record) => {
     modal.confirm({
-      title: '确认删除',
+      title: t('userList.confirmDelete.title', '确认删除'),
       icon: <ExclamationCircleOutlined />,
-      content: `确定要删除用户 "${record.username}" 吗？此操作不可恢复。`,
-      okText: '确认',
-      cancelText: '取消',
+      content: t('userList.confirmDelete.content', '确定要删除用户 "{username}" 吗？此操作不可恢复。').replace('{username}', record.username),
+      okText: t('common.confirm', '确认'),
+      cancelText: t('common.cancel', '取消'),
       okType: 'danger',
               onOk: async () => {
           try {
             await authDeleteUser(record.id);
-            messageApi.success('用户删除成功');
+            messageApi.success(t('userList.messages.deleteSuccess', '用户删除成功'));
             fetchUsers(); // 刷新列表
           } catch (error) {
             console.error('删除用户失败:', error);
-            messageApi.error('删除用户失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+            messageApi.error(
+              t('userList.messages.deleteFailPrefix', '删除用户失败: ') +
+              (error.response?.data?.message || error.message || t('user.common.notSet', '未知错误'))
+            );
           }
         }
     });
@@ -206,10 +211,10 @@ export default function UserList() {
         return (
           <Form.Item
             name="department"
-            label="部门"
-            rules={[{ required: true, message: '请输入部门' }]}
+            label={t('userList.form.department', '部门')}
+            rules={[{ required: true, message: t('userList.form.enterDepartment', '请输入部门') }]}
           >
-            <Input placeholder="请输入部门" />
+            <Input placeholder={t('userList.form.enterDepartment', '请输入部门')} />
           </Form.Item>
         );
       
@@ -217,13 +222,13 @@ export default function UserList() {
         return (
           <Form.Item
             name="permission"
-            label="审批权限"
+            label={t('userList.form.permission', '审批权限')}
           >
-            <Select placeholder="请选择审批权限">
-              <Option value="READ_ONLY">只读</Option>
-              <Option value="RESTRICTED">受限</Option>
-              <Option value="NORMAL">正常</Option>
-              <Option value="EXTENDED">扩展</Option>
+            <Select placeholder={t('userList.form.selectPermission', '请选择审批权限')}>
+              <Option value="READ_ONLY">{t('user.permission.READ_ONLY', '只读')}</Option>
+              <Option value="RESTRICTED">{t('user.permission.RESTRICTED', '受限')}</Option>
+              <Option value="NORMAL">{t('user.permission.NORMAL', '正常')}</Option>
+              <Option value="EXTENDED">{t('user.permission.EXTENDED', '扩展')}</Option>
             </Select>
           </Form.Item>
         );
@@ -232,10 +237,10 @@ export default function UserList() {
         return (
           <Form.Item
             name="serviceArea"
-            label="负责区域"
-            rules={[{ required: true, message: '请输入负责区域' }]}
+            label={t('userList.form.serviceArea', '负责区域')}
+            rules={[{ required: true, message: t('userList.form.enterServiceArea', '请输入负责区域') }]}
           >
-            <Input placeholder="请输入负责区域" />
+            <Input placeholder={t('userList.form.enterServiceArea', '请输入负责区域')} />
           </Form.Item>
         );
       
@@ -243,10 +248,10 @@ export default function UserList() {
         return (
           <Form.Item
             name="skill"
-            label="维修范围"
-            rules={[{ required: true, message: '请输入维修范围' }]}
+            label={t('userList.form.skill', '维修范围')}
+            rules={[{ required: true, message: t('userList.form.enterSkill', '请输入维修范围') }]}
           >
-            <Input placeholder="请输入维修范围" />
+            <Input placeholder={t('userList.form.enterSkill', '请输入维修范围')} />
           </Form.Item>
         );
       
@@ -259,7 +264,7 @@ export default function UserList() {
   const handleSubmit = async (values) => {
     try {
       if (drawerType === 'create') {
-        await executeUsers(
+    await executeUsers(
           async () => {
             // 使用auth的register接口创建用户，需要包含密码
             const userData = {
@@ -271,14 +276,14 @@ export default function UserList() {
               role: values.role
             };
             const response = await register(userData);
-            messageApi.success('用户创建成功');
+      messageApi.success(t('userList.messages.createSuccess', '用户创建成功'));
             handleCloseDrawer();
             fetchUsers(); // 刷新列表
             return response;
           },
           {
-            errorMessage: '用户创建失败',
-            successMessage: '用户创建成功'
+      errorMessage: t('userList.messages.createFail', '用户创建失败'),
+      successMessage: t('userList.messages.createSuccess', '用户创建成功')
           }
         );
       } else if (drawerType === 'edit') {
@@ -289,14 +294,14 @@ export default function UserList() {
               ...values
             };
             const response = await userAPI.updateUser(currentUser.id, userData);
-            messageApi.success('用户信息更新成功');
+      messageApi.success(t('userList.messages.updateSuccess', '用户信息更新成功'));
             handleCloseDrawer();
             fetchUsers(); // 刷新列表
             return response;
           },
           {
-            errorMessage: '用户信息更新失败',
-            successMessage: '用户信息更新成功'
+      errorMessage: t('userList.messages.updateFail', '用户信息更新失败'),
+      successMessage: t('userList.messages.updateSuccess', '用户信息更新成功')
           }
         );
       }
@@ -312,13 +317,13 @@ export default function UserList() {
         <Result
           status="403"
           title="403"
-          subTitle="抱歉，您没有权限访问此页面。"
+          subTitle={t('userList.auth.result403Subtitle', '抱歉，您没有权限访问此页面。')}
           extra={
             <div>
-              <p>当前用户角色: {getRoleDisplayName(user?.role)}</p>
-              <p>需要用户查看权限才能访问用户管理功能。</p>
+              <p>{t('userList.auth.result403RolePrefix', '当前用户角色: ')}{getRoleDisplayName(user?.role)}</p>
+              <p>{t('userList.auth.result403NeedRole', '需要用户查看权限才能访问用户管理功能。')}</p>
               <Button type="primary" onClick={() => window.history.back()}>
-                返回上一页
+                {t('applicationManagement.actions.back', '返回上一页')}
               </Button>
             </div>
           }
@@ -333,14 +338,14 @@ export default function UserList() {
       <div style={{ padding: '24px' }}>
         <Result
           status="error"
-          title="访问失败"
+          title={t('userList.auth.resultErrorTitle', '访问失败')}
           subTitle={authError}
           extra={[
             <Button key="back" onClick={() => window.history.back()}>
-              返回上一页
+              {t('applicationManagement.actions.back', '返回上一页')}
             </Button>,
             <Button key="login" type="primary" onClick={() => window.location.href = '/login'}>
-              重新登录
+              {t('applicationManagement.actions.login', '重新登录')}
             </Button>
           ]}
         />
@@ -350,17 +355,17 @@ export default function UserList() {
 
   const columns = [
     {
-      title: '用户名',
+      title: t('userList.columns.username', '用户名'),
       dataIndex: 'username',
       key: 'username',
     },
     {
-      title: '昵称',
+      title: t('userList.columns.nickname', '昵称'),
       dataIndex: 'nickname',
       key: 'nickname',
     },
     {
-      title: '角色',
+      title: t('userList.columns.role', '角色'),
       dataIndex: 'role',
       key: 'role',
       render: (role) => {
@@ -372,12 +377,12 @@ export default function UserList() {
       },
     },
     {
-      title: '邮箱',
+      title: t('userList.columns.email', '邮箱'),
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: '电话',
+      title: t('userList.columns.phone', '电话'),
       dataIndex: 'phone',
       key: 'phone',
       onCell: () => ({ 'data-field': 'phone' }),
@@ -386,7 +391,7 @@ export default function UserList() {
       ),
     },
     {
-      title: '注册时间',
+      title: t('userList.columns.createTime', '注册时间'),
       dataIndex: 'createTime',
       key: 'createTime',
       onCell: () => ({ 'data-field': 'createTime' }),
@@ -395,7 +400,7 @@ export default function UserList() {
       ),
     },
     {
-      title: '最后登录',
+      title: t('userList.columns.lastLoginTime', '最后登录'),
       dataIndex: 'lastLoginTime',
       key: 'lastLoginTime',
       onCell: () => ({ 'data-field': 'lastLoginTime' }),
@@ -404,12 +409,12 @@ export default function UserList() {
       ),
     },
     {
-      title: '操作',
+      title: t('userList.columns.actions', '操作'),
       key: 'action',
       render: (_, record) => {
         return (
           <Space size="middle">
-            <Tooltip title="查看详情">
+            <Tooltip title={t('userList.tooltips.viewDetail', '查看详情')}>
               <Button 
                 type="text" 
                 icon={<EyeOutlined />} 
@@ -417,7 +422,7 @@ export default function UserList() {
                 onClick={() => handleViewDetail(record)}
               />
             </Tooltip>
-            <Tooltip title="编辑用户">
+            <Tooltip title={t('userList.tooltips.editUser', '编辑用户')}>
               <Button 
                 type="text" 
                 icon={<EditOutlined />} 
@@ -426,7 +431,7 @@ export default function UserList() {
               />
             </Tooltip>
             {canDeleteUser(user?.role) ? (
-              <Tooltip title="删除用户">
+              <Tooltip title={t('userList.tooltips.deleteUser', '删除用户')}>
                 <Button 
                   type="text" 
                   icon={<DeleteOutlined />} 
@@ -437,7 +442,7 @@ export default function UserList() {
               </Tooltip>
             ) : (
               <span style={{ color: '#999', fontSize: '12px' }}>
-                无删除权限
+                {t('userList.noDeletePermission', '无删除权限')}
               </span>
             )}
           </Space>
@@ -452,7 +457,7 @@ export default function UserList() {
       {contextHolderModal}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title="用户管理" 
+        title={t('userList.title', '用户管理')} 
         extra={
           <Space>
             <Button 
@@ -475,7 +480,7 @@ export default function UserList() {
               }}
               loading={usersLoading}
             >
-              刷新
+              {t('common.refresh', '刷新')}
             </Button>
             {canCreateUser(user?.role) && (
               <Button 
@@ -483,7 +488,7 @@ export default function UserList() {
                 icon={<PlusOutlined />} 
                 onClick={handleCreateUser}
               >
-                创建用户
+                {t('userList.createUser', '创建用户')}
               </Button>
             )}
           </Space>
@@ -492,9 +497,9 @@ export default function UserList() {
         bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
       >
         {/* 错误提示 */}
-        {usersError && (
+    {usersError && (
           <Alert
-            message="数据获取失败"
+      message={t('userList.errors.dataFetchTitle', '数据获取失败')}
             description={String(usersError)}
             type="error"
             showIcon
@@ -512,7 +517,7 @@ export default function UserList() {
             {/* 用户名搜索 */}
             <div style={{ minWidth: '200px' }}>
               <Input
-                placeholder="搜索用户名"
+                placeholder={t('userList.filters.searchUsername', '搜索用户名')}
                 allowClear
                 style={{ width: '100%' }}
                 value={usernameSearch.searchValue}
@@ -524,7 +529,7 @@ export default function UserList() {
             {/* 昵称搜索 */}
             <div style={{ minWidth: '150px' }}>
               <Input
-                placeholder="搜索昵称"
+                placeholder={t('userList.filters.searchNickname', '搜索昵称')}
                 allowClear
                 style={{ width: '100%' }}
                 value={nicknameSearch.searchValue}
@@ -537,7 +542,7 @@ export default function UserList() {
             <div style={{ minWidth: '120px' }}>
               <Select
                 ref={roleSelectRef}
-                placeholder="全部角色"
+                placeholder={t('userList.allRoles', '全部角色')}
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedRole}
@@ -548,11 +553,11 @@ export default function UserList() {
                   fetchUsers(newParams);
                 }}
               >
-                <Option value="ADMIN">管理员</Option>
-                <Option value="APPLIER">申请人</Option>
-                <Option value="APPROVER">审批人</Option>
-                <Option value="SERVICE">服务人员</Option>
-                <Option value="MAINTAINER">维修人员</Option>
+                <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+                <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
               </Select>
             </div>
             
@@ -567,7 +572,7 @@ export default function UserList() {
                   setSelectedRole(undefined);
                 }}
               >
-                清空筛选
+                {t('common.clearFilters', '清空筛选')}
               </Button>
             </div>
           </div>
@@ -643,7 +648,7 @@ export default function UserList() {
               {...pagination}
               showSizeChanger={true}
               showQuickJumper={true}
-              showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`}
+              showTotal={(total, range) => t('userList.paginationTotal', '第 {from}-{to} 条/共 {total} 条').replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)}
               pageSizeOptions={['10', '20', '50', '100']}
               size="default"
               onChange={(page, pageSize) => {
@@ -662,9 +667,9 @@ export default function UserList() {
       {/* 抽屉组件 */}
       <Drawer
         title={
-          drawerType === 'detail' ? '用户详情' :
-          drawerType === 'edit' ? '编辑用户' :
-          drawerType === 'create' ? '创建用户' : ''
+          drawerType === 'detail' ? t('userList.drawer.detail', '用户详情') :
+          drawerType === 'edit' ? t('userList.drawer.edit', '编辑用户') :
+          drawerType === 'create' ? t('userList.drawer.create', '创建用户') : ''
         }
         width={600}
         open={drawerVisible}
@@ -673,10 +678,10 @@ export default function UserList() {
           drawerType === 'edit' || drawerType === 'create' ? (
             <div style={{ textAlign: 'right' }}>
               <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                取消
+                {t('common.cancel', '取消')}
               </Button>
               <Button type="primary" onClick={() => form.submit()}>
-                {drawerType === 'create' ? '创建' : '保存'}
+                {drawerType === 'create' ? t('common.create', '创建') : t('common.save', '保存')}
               </Button>
             </div>
           ) : null
@@ -693,19 +698,19 @@ export default function UserList() {
             }}>
               <div style={{ color: 'var(--text-color)' }}>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>显示名称：</strong>
+                  <strong>{t('userList.labels.displayName', '显示名称')}：</strong>
                   <span>{getUserDisplayName(currentUser)}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>用户名：</strong>
+                  <strong>{t('userList.labels.username', '用户名')}：</strong>
                   <span>{currentUser.username}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>昵称：</strong>
+                  <strong>{t('userList.labels.nickname', '昵称')}：</strong>
                   <span>{currentUser.nickname || '-'}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>角色：</strong>
+                  <strong>{t('userList.labels.role', '角色')}：</strong>
                   <Tag color={
                     currentUser.role === 'ADMIN' ? 'red' : 
                     currentUser.role === 'APPROVER' ? 'blue' : 
@@ -716,42 +721,42 @@ export default function UserList() {
                   </Tag>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>邮箱：</strong>
+                  <strong>{t('userList.labels.email', '邮箱')}：</strong>
                   <span>{currentUser.email || '-'}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>电话：</strong>
+                  <strong>{t('userList.labels.phone', '电话')}：</strong>
                   <span className="num-mono" data-field="phone">{currentUser.phone || '-'}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>注册时间：</strong>
+                  <strong>{t('userList.labels.createTime', '注册时间')}：</strong>
                   <span className="num-mono" data-field="createTime">{formatDateTime(currentUser.createTime)}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>最后登录：</strong>
+                  <strong>{t('userList.labels.lastLoginTime', '最后登录')}：</strong>
                   <span className="num-mono" data-field="lastLoginTime">{currentUser.lastLoginTime ? formatDateTime(currentUser.lastLoginTime) : '-'}</span>
                 </div>
                 {currentUser.department && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>部门：</strong>
+                    <strong>{t('userList.labels.department', '部门')}：</strong>
                     <span>{currentUser.department}</span>
                   </div>
                 )}
                 {currentUser.serviceArea && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>负责区域：</strong>
+                    <strong>{t('userList.labels.serviceArea', '负责区域')}：</strong>
                     <span>{currentUser.serviceArea}</span>
                   </div>
                 )}
                 {currentUser.permission && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>审批权限：</strong>
+                    <strong>{t('userList.labels.permission', '审批权限')}：</strong>
                     <span>{getPermissionDisplayName(currentUser.permission)}</span>
                   </div>
                 )}
                 {currentUser.skill && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>维修范围：</strong>
+                    <strong>{t('userList.labels.skill', '维修范围')}：</strong>
                     <span>{currentUser.skill}</span>
                   </div>
                 )}
@@ -768,18 +773,18 @@ export default function UserList() {
           >
             <Form.Item
               name="username"
-              label="用户名"
-              rules={[{ required: true, message: '请输入用户名' }]}
+              label={t('userList.form.username', '用户名')}
+              rules={[{ required: true, message: t('userList.form.enterUsername', '请输入用户名') }]}
             >
-              <Input placeholder="请输入用户名" />
+              <Input placeholder={t('userList.form.enterUsername', '请输入用户名')} />
             </Form.Item>
 
             <Form.Item
               name="password"
-              label="密码"
+              label={t('userList.form.password', '密码')}
               rules={[
-                { required: true, message: '请输入密码' },
-                { min: 8, message: '至少 8 个字符' },
+                { required: true, message: t('userList.form.enterPassword', '请输入密码') },
+                { min: 8, message: t('user.common.passwordMin8', '至少 8 个字符') },
                 {
                   validator: (_, value) => {
                     if (!value) return Promise.resolve();
@@ -791,22 +796,22 @@ export default function UserList() {
                       /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
                     ].filter(Boolean).length;
                     if (parts >= 3 && value.length >= 8) return Promise.resolve();
-                    return Promise.reject(new Error('除长度外至少满足任意2类: 大写/小写/数字/特殊'));
+                    return Promise.reject(new Error(t('user.common.passwordRule', '除长度外至少满足任意2类: 大写/小写/数字/特殊')));
                   }
                 }
               ]}
             >
-              <Input.Password placeholder="请输入密码" onChange={(e)=> setCreatePassword(e.target.value)} />
+              <Input.Password placeholder={t('userList.form.enterPassword', '请输入密码')} onChange={(e)=> setCreatePassword(e.target.value)} />
             </Form.Item>
             <PasswordStrengthMeter password={createPassword} />
 
             <Form.Item
               name="role"
-              label="角色"
-              rules={[{ required: true, message: '请选择角色' }]}
+              label={t('userList.form.role', '角色')}
+              rules={[{ required: true, message: t('userList.form.selectRole', '请选择角色') }]}
             >
               <Select 
-                placeholder="请选择角色"
+                placeholder={t('userList.form.selectRole', '请选择角色')}
                 onChange={(value) => {
                   setCreateFormRole(value);
                   // 清空角色特有字段的值
@@ -818,37 +823,37 @@ export default function UserList() {
                   });
                 }}
               >
-                <Option value="APPLIER">申请者</Option>
-                <Option value="APPROVER">审批者</Option>
-                <Option value="SERVICE">服务人员</Option>
-                <Option value="MAINTAINER">维护人员</Option>
-                <Option value="ADMIN">管理员</Option>
+                <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维护人员')}</Option>
+                <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
               </Select>
             </Form.Item>
 
             <Form.Item
               name="nickname"
-              label="昵称"
-              rules={[{ required: true, message: '请输入昵称' }]}
+              label={t('userList.form.nickname', '昵称')}
+              rules={[{ required: true, message: t('userList.form.enterNickname', '请输入昵称') }]}
             >
-              <Input placeholder="请输入昵称" />
+              <Input placeholder={t('userList.form.enterNickname', '请输入昵称')} />
             </Form.Item>
 
             <Form.Item
               name="email"
-              label="邮箱"
+              label={t('userList.form.email', '邮箱')}
               rules={[
-                { type: 'email', message: '请输入有效的邮箱地址' }
+                { type: 'email', message: t('user.common.enterValidEmail', '请输入有效的邮箱地址') }
               ]}
             >
-              <Input placeholder="请输入邮箱" />
+              <Input placeholder={t('userList.form.enterEmail', '请输入邮箱')} />
             </Form.Item>
 
             <Form.Item
               name="phone"
-              label="电话"
+              label={t('userList.form.phone', '电话')}
             >
-              <Input placeholder="请输入电话" />
+              <Input placeholder={t('userList.form.enterPhone', '请输入电话')} />
             </Form.Item>
 
             {/* 根据选择的角色显示特有字段 */}
@@ -865,9 +870,9 @@ export default function UserList() {
               border: '1px solid var(--border-color)',
               borderRadius: 6 
             }}>
-              <p style={{ color: 'var(--text-color)' }}><strong>显示名称：</strong>{getUserDisplayName(currentUser)}</p>
-              <p style={{ color: 'var(--text-color)' }}><strong>用户名：</strong>{currentUser.username}</p>
-              <p style={{ color: 'var(--text-color)' }}><strong>角色：</strong>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.displayName', '显示名称')}：</strong>{getUserDisplayName(currentUser)}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.username', '用户名')}：</strong>{currentUser.username}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.role', '角色')}：</strong>
                 <Tag color={
                   currentUser.role === 'ADMIN' ? 'red' : 
                   currentUser.role === 'APPROVER' ? 'blue' : 
@@ -886,49 +891,49 @@ export default function UserList() {
             >
               <Form.Item
                 name="nickname"
-                label="昵称"
-                rules={[{ required: true, message: '请输入昵称' }]}
+                label={t('userList.form.nickname', '昵称')}
+                rules={[{ required: true, message: t('userList.form.enterNickname', '请输入昵称') }]}
               >
-                <Input placeholder="请输入昵称" />
+                <Input placeholder={t('userList.form.enterNickname', '请输入昵称')} />
               </Form.Item>
 
               <Form.Item
                 name="email"
-                label="邮箱"
+                label={t('userList.form.email', '邮箱')}
                 rules={[
-                  { type: 'email', message: '请输入有效的邮箱地址' }
+                  { type: 'email', message: t('user.common.enterValidEmail', '请输入有效的邮箱地址') }
                 ]}
               >
-                <Input placeholder="请输入邮箱" />
+                <Input placeholder={t('userList.form.enterEmail', '请输入邮箱')} />
               </Form.Item>
 
               <Form.Item
                 name="phone"
-                label="电话"
+                label={t('userList.form.phone', '电话')}
               >
-                <Input placeholder="请输入电话" />
+                <Input placeholder={t('userList.form.enterPhone', '请输入电话')} />
               </Form.Item>
 
               {/* 根据用户角色显示特有字段 */}
               {currentUser.role === 'APPLIER' && (
                 <Form.Item
                   name="department"
-                  label="部门"
+                  label={t('userList.form.department', '部门')}
                 >
-                  <Input placeholder="请输入部门" />
+                  <Input placeholder={t('userList.form.enterDepartment', '请输入部门')} />
                 </Form.Item>
               )}
 
               {currentUser.role === 'APPROVER' && (
                 <Form.Item
                   name="permission"
-                  label="审批权限"
+                  label={t('userList.form.permission', '审批权限')}
                 >
-                  <Select placeholder="请选择审批权限">
-                    <Option value="READ_ONLY">只读</Option>
-                    <Option value="RESTRICTED">受限</Option>
-                    <Option value="NORMAL">正常</Option>
-                    <Option value="EXTENDED">扩展</Option>
+                  <Select placeholder={t('userList.form.selectPermission', '请选择审批权限')}>
+                    <Option value="READ_ONLY">{t('user.permission.READ_ONLY', '只读')}</Option>
+                    <Option value="RESTRICTED">{t('user.permission.RESTRICTED', '受限')}</Option>
+                    <Option value="NORMAL">{t('user.permission.NORMAL', '正常')}</Option>
+                    <Option value="EXTENDED">{t('user.permission.EXTENDED', '扩展')}</Option>
                   </Select>
                 </Form.Item>
               )}
@@ -936,18 +941,18 @@ export default function UserList() {
               {currentUser.role === 'SERVICE' && (
                 <Form.Item
                   name="serviceArea"
-                  label="负责区域"
+                  label={t('userList.form.serviceArea', '负责区域')}
                 >
-                  <Input placeholder="请输入负责区域" />
+                  <Input placeholder={t('userList.form.enterServiceArea', '请输入负责区域')} />
                 </Form.Item>
               )}
 
               {currentUser.role === 'MAINTAINER' && (
                 <Form.Item
                   name="skill"
-                  label="维修范围"
+                  label={t('userList.form.skill', '维修范围')}
                 >
-                  <Input placeholder="请输入维修范围" />
+                  <Input placeholder={t('userList.form.enterSkill', '请输入维修范围')} />
                 </Form.Item>
               )}
             </Form>

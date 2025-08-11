@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { message } from 'antd';
-import { translateMessage, showTranslatedMessage } from '../utils/messageTranslator';
+import { showTranslatedMessage } from '../utils/messageTranslator';
 
 // 创建axios实例
 const instance = axios.create({
@@ -32,7 +32,7 @@ export async function probeCsrfEnabled() {
 }
 
 export function readCookie(name) {
-  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\+^])/g, '\\$1') + '=([^;]*)'));
   return match ? decodeURIComponent(match[1]) : null;
 }
 

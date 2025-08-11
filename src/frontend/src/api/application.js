@@ -2,6 +2,10 @@ import api from './index';
 
 // 申请相关API
 export const applicationAPI = {
+  // 申请签到
+  checkinApplication: (id) => {
+    return api.post('/application/checkin', { id });
+  },
   // 获取申请列表（分页）
   getApplicationList: (params) => {
     return api.get('/application/page', { params });

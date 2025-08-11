@@ -34,6 +34,7 @@ public class UserInfoDTO {
         this.phone = user.getPhone();
         this.role = user.getRole();
         this.createTime = user.getCreateTime();
+        this.updateTime = user.getUpdateTime();
         this.lastLoginTime = user.getLastLoginTime();
         this.department = user.getDepartment();
         this.permission = user.getPermission();

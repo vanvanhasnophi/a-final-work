@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Alert, Modal } from 'antd';
+import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Modal } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { getPermissionDisplayName } from '../utils/permissionMapping';
-import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
-import { formatDateTime, formatRelativeTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 import RecentActivities from '../components/RecentActivities';
 import { useActivities } from '../hooks/useActivities';
 import ActivityGenerator from '../utils/activityGenerator';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Option } = Select;
 
 export default function UserProfile() {
+  const { t } = useI18n();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,6 +27,9 @@ export default function UserProfile() {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const { updateUserInfo, refreshUserInfo } = useAuth();
+
+  // 检查是否是密码修改子路由
+  const isPasswordChangeRoute = location.pathname.includes('/change-password');
   
   // 使用活动Hook
   const { 
@@ -49,17 +55,27 @@ export default function UserProfile() {
       console.error('获取用户信息失败:', error);
       messageApi.open({
         type: 'error',
-        content: '获取用户信息失败',
+        content: t('userList.errors.dataFetchTitle', '获取用户信息失败'),
         duration: 2,
       });
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageApi, refreshUserInfo]);
 
   useEffect(() => {
     fetchUserInfo();
   }, [fetchUserInfo]);
+
+  // 检测密码修改子路由，自动打开密码修改模态框
+  useEffect(() => {
+    if (isPasswordChangeRoute) {
+      setPasswordModalVisible(true);
+      // 清理URL，但不影响模态框状态
+      navigate('/profile', { replace: true });
+    }
+  }, [isPasswordChangeRoute, navigate]);
 
   // 移除重复的活动获取逻辑，使用Hook
 
@@ -91,7 +107,7 @@ export default function UserProfile() {
       
       messageApi.open({
         type: 'success',
-        content: '用户信息更新成功',
+        content: t('userProfile.messages.updateSuccess', '用户信息更新成功'),
         duration: 2,
       });
       setIsEditing(false);
@@ -100,7 +116,7 @@ export default function UserProfile() {
       console.error('更新用户信息失败:', error);
       messageApi.open({
         type: 'error',
-        content: '更新用户信息失败',
+        content: t('userProfile.messages.updateFail', '更新用户信息失败'),
         duration: 2,
       });
     }
@@ -113,7 +129,7 @@ export default function UserProfile() {
 
   // 修改密码相关函数
   const handleChangePassword = () => {
-    setPasswordModalVisible(true);
+  setPasswordModalVisible(true);
     passwordForm.resetFields();
   };
 
@@ -126,7 +142,7 @@ export default function UserProfile() {
       
       messageApi.open({
         type: 'success',
-        content: '密码修改成功',
+        content: t('userProfile.messages.passwordChangeSuccess', '密码修改成功'),
         duration: 2,
       });
       
@@ -149,7 +165,7 @@ export default function UserProfile() {
       }
       messageApi.open({
         type: 'error',
-        content: errMsg,
+        content: errMsg || t('userProfile.messages.passwordChangeFail', '修改密码失败'),
         duration: 2,
       });
     }
@@ -173,10 +189,10 @@ export default function UserProfile() {
             <Col span={12}>
               <Form.Item
                 name="department"
-                label="部门"
-                rules={[{ required: true, message: '请输入部门' }]}
+                label={t('userProfile.form.department', '部门')}
+                rules={[{ required: true, message: t('userProfile.form.enterDepartment', '请输入部门') }]}
               >
-                <Input prefix={<BankOutlined />} placeholder="请输入部门" />
+                <Input prefix={<BankOutlined />} placeholder={t('userProfile.form.enterDepartment', '请输入部门')} />
               </Form.Item>
             </Col>
           </Row>
@@ -188,13 +204,13 @@ export default function UserProfile() {
             <Col span={12}>
               <Form.Item
                 name="permission"
-                label="审批权限"
+                label={t('userProfile.form.permission', '审批权限')}
               >
-                <Select placeholder="请选择审批权限">
-                  <Option value="READ_ONLY">只读</Option>
-                  <Option value="RESTRICTED">受限</Option>
-                  <Option value="NORMAL">正常</Option>
-                  <Option value="EXTENDED">扩展</Option>
+                <Select placeholder={t('userProfile.form.selectPermission', '请选择审批权限')}>
+                  <Option value="READ_ONLY">{t('user.permission.READ_ONLY', '只读')}</Option>
+                  <Option value="RESTRICTED">{t('user.permission.RESTRICTED', '受限')}</Option>
+                  <Option value="NORMAL">{t('user.permission.NORMAL', '正常')}</Option>
+                  <Option value="EXTENDED">{t('user.permission.EXTENDED', '扩展')}</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -207,10 +223,10 @@ export default function UserProfile() {
             <Col span={12}>
               <Form.Item
                 name="serviceArea"
-                label="负责区域"
-                rules={[{ required: true, message: '请输入负责区域' }]}
+                label={t('userProfile.form.serviceArea', '负责区域')}
+                rules={[{ required: true, message: t('userProfile.form.enterServiceArea', '请输入负责区域') }]}
               >
-                <Input prefix={<SettingOutlined />} placeholder="请输入负责区域" />
+                <Input prefix={<SettingOutlined />} placeholder={t('userProfile.form.enterServiceArea', '请输入负责区域')} />
               </Form.Item>
             </Col>
           </Row>
@@ -222,10 +238,10 @@ export default function UserProfile() {
             <Col span={12}>
               <Form.Item
                 name="skill"
-                label="维修范围"
-                rules={[{ required: true, message: '请输入维修范围' }]}
+                label={t('userProfile.form.skill', '维修范围')}
+                rules={[{ required: true, message: t('userProfile.form.enterSkill', '请输入维修范围') }]}
               >
-                <Input prefix={<ToolOutlined />} placeholder="请输入维修范围" />
+                <Input prefix={<ToolOutlined />} placeholder={t('userProfile.form.enterSkill', '请输入维修范围')} />
               </Form.Item>
             </Col>
           </Row>
@@ -244,28 +260,28 @@ export default function UserProfile() {
       case 'APPLIER':
         return (
           <div style={{ marginBottom: '12px' }}>
-            <strong>部门:</strong> {userInfo.department || '未设置'}
+            <strong>{t('userProfile.roleInfo.department', '部门')}:</strong> {userInfo.department || t('user.common.notSet', '未设置')}
           </div>
         );
       
       case 'APPROVER':
         return (
           <div style={{ marginBottom: '12px' }}>
-            <strong>审批权限:</strong> {getPermissionDisplayName(userInfo.permission)}
+            <strong>{t('userProfile.roleInfo.permission', '审批权限')}:</strong> {getPermissionDisplayName(userInfo.permission)}
           </div>
         );
       
       case 'SERVICE':
         return (
           <div style={{ marginBottom: '12px' }}>
-            <strong>负责区域:</strong> {userInfo.serviceArea || '未设置'}
+            <strong>{t('userProfile.roleInfo.serviceArea', '负责区域')}:</strong> {userInfo.serviceArea || t('user.common.notSet', '未设置')}
           </div>
         );
       
       case 'MAINTAINER':
         return (
           <div style={{ marginBottom: '12px' }}>
-            <strong>维修范围:</strong> {userInfo.skill || '未设置'}
+            <strong>{t('userProfile.roleInfo.skill', '维修范围')}:</strong> {userInfo.skill || t('user.common.notSet', '未设置')}
           </div>
         );
       
@@ -287,11 +303,11 @@ export default function UserProfile() {
   };
 
   if (loading) {
-    return <div style={{ padding: '24px', textAlign: 'center' }}>加载中...</div>;
+    return <div style={{ padding: '24px', textAlign: 'center' }}>{t('userProfile.loading', '加载中...')}</div>;
   }
 
   if (!userInfo) {
-    return <div style={{ padding: '24px', textAlign: 'center' }}>用户信息不存在</div>;
+    return <div style={{ padding: '24px', textAlign: 'center' }}>{t('userProfile.userNotFound', '用户信息不存在')}</div>;
   }
 
   return (
@@ -310,17 +326,17 @@ export default function UserProfile() {
               <List
                 size="small"
                 dataSource={[
-                  { label: 'ID', value: userInfo.id, field: 'id', mono: true },
-                  { label: '用户名', value: userInfo.username },
-                  { label: '角色', value: getRoleDisplayName(userInfo.role) },
+                  { label: t('userProfile.cards.basic.id', 'ID'), value: userInfo.id, field: 'id', mono: true },
+                  { label: t('userProfile.cards.basic.username', '用户名'), value: userInfo.username },
+                  { label: t('userProfile.cards.basic.role', '角色'), value: getRoleDisplayName(userInfo.role) },
                 ]}
                 renderItem={item => (
                   <List.Item>
                     <span style={{ fontWeight: 'bold', marginRight: '8px' }}>{item.label}:</span>
                     {item.mono ? (
-                      <span className="num-mono" data-field={item.field}>{item.value || '未设置'}</span>
+                      <span className="num-mono" data-field={item.field}>{item.value || t('user.common.notSet', '未设置')}</span>
                     ) : (
-                      <span>{item.value || '未设置'}</span>
+                      <span>{item.value || t('user.common.notSet', '未设置')}</span>
                     )}
                   </List.Item>
                 )}
@@ -330,22 +346,22 @@ export default function UserProfile() {
 
           <Col span={16}>
             <Card 
-              title="个人信息" 
+              title={t('userProfile.cards.profile.title', '个人信息')} 
               extra={
                 isEditing ? (
                   <Space>
                     <Button type="primary" icon={<SaveOutlined />} onClick={() => form.submit()}>
-                      保存
+                      {t('userProfile.cards.profile.save', '保存')}
                     </Button>
-                    <Button onClick={handleCancel}>取消</Button>
+                    <Button onClick={handleCancel}>{t('userProfile.cards.profile.cancel', '取消')}</Button>
                   </Space>
                 ) : (
                   <Space>
                     <Button icon={<EditOutlined />} onClick={handleEdit}>
-                      编辑
+                      {t('userProfile.cards.profile.edit', '编辑')}
                     </Button>
                     <Button icon={<LockOutlined />} onClick={handleChangePassword}>
-                      修改密码
+                      {t('userProfile.cards.profile.changePassword', '修改密码')}
                     </Button>
                   </Space>
                 )
@@ -361,22 +377,22 @@ export default function UserProfile() {
                     <Col span={12}>
                       <Form.Item
                         name="nickname"
-                        label="昵称"
-                        rules={[{ required: true, message: '请输入昵称' }]}
+                        label={t('userProfile.form.nickname', '昵称')}
+                        rules={[{ required: true, message: t('userProfile.form.enterNickname', '请输入昵称') }]}
                       >
-                        <Input prefix={<UserOutlined />} placeholder="请输入昵称" />
+                        <Input prefix={<UserOutlined />} placeholder={t('userProfile.form.enterNickname', '请输入昵称')} />
                       </Form.Item>
                     </Col>
                     <Col span={12}>
                       <Form.Item
                         name="email"
-                        label="邮箱"
+                        label={t('userProfile.form.email', '邮箱')}
                         rules={[
-                          { required: true, message: '请输入邮箱' },
-                          { type: 'email', message: '请输入有效的邮箱地址' }
+                          { required: true, message: t('userProfile.form.enterEmail', '请输入邮箱') },
+                          { type: 'email', message: t('user.common.enterValidEmail', '请输入有效的邮箱地址') }
                         ]}
                       >
-                        <Input prefix={<MailOutlined />} placeholder="请输入邮箱" />
+                        <Input prefix={<MailOutlined />} placeholder={t('userProfile.form.enterEmail', '请输入邮箱')} />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -385,10 +401,10 @@ export default function UserProfile() {
                     <Col span={12}>
                       <Form.Item
                         name="phone"
-                        label="电话"
-                        rules={[{ required: true, message: '请输入电话' }]}
+                        label={t('userProfile.form.phone', '电话')}
+                        rules={[{ required: true, message: t('userProfile.form.enterPhone', '请输入电话') }]}
                       >
-                        <Input prefix={<PhoneOutlined />} placeholder="请输入电话" />
+                        <Input prefix={<PhoneOutlined />} placeholder={t('userProfile.form.enterPhone', '请输入电话')} />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -399,13 +415,13 @@ export default function UserProfile() {
               ) : (
                 <div>
                   <div style={{ marginBottom: '12px' }}>
-                    <strong>昵称:</strong> {userInfo.nickname || '未设置'}
+                    <strong>{t('userProfile.cards.profile.labels.nickname', '昵称')}:</strong> {userInfo.nickname || t('user.common.notSet', '未设置')}
                   </div>
                   <div style={{ marginBottom: '12px' }}>
-                    <strong>邮箱:</strong> {userInfo.email || '未设置'}
+                    <strong>{t('userProfile.cards.profile.labels.email', '邮箱')}:</strong> {userInfo.email || t('user.common.notSet', '未设置')}
                   </div>
                   <div style={{ marginBottom: '12px' }}>
-                    <strong>电话:</strong> <span className="num-mono" data-field="phone">{userInfo.phone || '未设置'}</span>
+                    <strong>{t('userProfile.cards.profile.labels.phone', '电话')}:</strong> <span className="num-mono" data-field="phone">{userInfo.phone || t('user.common.notSet', '未设置')}</span>
                   </div>
                   {/* 根据角色显示特有信息 */}
                   {getRoleSpecificInfo()}
@@ -415,14 +431,14 @@ export default function UserProfile() {
 
             <Divider />
 
-            <Card title="最近活动" extra={
+            <Card title={t('userProfile.cards.activities.title', '最近活动')} extra={
               <Button 
                 type="link" 
                 size="small" 
                 onClick={fetchUserActivities}
                 loading={activitiesLoading}
               >
-                刷新
+                {t('userProfile.cards.activities.refresh', '刷新')}
               </Button>
             }>
               <RecentActivities
@@ -433,7 +449,7 @@ export default function UserProfile() {
                 showTime={true}
                 showType={true}
                 compact={false}
-                emptyText="暂无最近活动"
+                emptyText={t('userProfile.cards.activities.empty', '暂无最近活动')}
                 height="calc(100vh - 450px)"
                 minHeight="200px"
               />
@@ -444,12 +460,12 @@ export default function UserProfile() {
 
       {/* 修改密码模态框 */}
       <Modal
-        title="修改密码"
+        title={t('userProfile.passwordModal.title', '修改密码')}
         open={passwordModalVisible}
         onOk={() => passwordForm.submit()}
         onCancel={handlePasswordCancel}
-        okText="确认修改"
-        cancelText="取消"
+        okText={t('userProfile.passwordModal.okText', '确认修改')}
+        cancelText={t('userProfile.passwordModal.cancelText', '取消')}
         maskClosable={false}
         keyboard={false}
         closable={false}
@@ -461,24 +477,24 @@ export default function UserProfile() {
         >
           <Form.Item
             name="oldPassword"
-            label="当前密码"
+            label={t('userProfile.passwordModal.fields.oldPassword', '当前密码')}
             rules={[
-              { required: true, message: '请输入当前密码' }
+              { required: true, message: t('userProfile.passwordModal.fields.enterOldPassword', '请输入当前密码') }
             ]}
           >
             <Input.Password 
               prefix={<LockOutlined />} 
-              placeholder="请输入当前密码"
+              placeholder={t('userProfile.passwordModal.fields.enterOldPassword', '请输入当前密码')}
               size="large"
             />
           </Form.Item>
 
           <Form.Item
             name="newPassword"
-            label="新密码"
+            label={t('userProfile.passwordModal.fields.newPassword', '新密码')}
             rules={[
-              { required: true, message: '请输入新密码' },
-              { min: 8, message: '密码长度至少8位' },
+              { required: true, message: t('userProfile.passwordModal.fields.enterNewPassword', '请输入新密码') },
+              { min: 8, message: t('user.common.passwordMin8', '密码长度至少8位') },
               { validator: (_, value) => {
                   if (!value) return Promise.resolve();
                   const parts = [
@@ -489,14 +505,14 @@ export default function UserProfile() {
                     /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
                   ].filter(Boolean).length;
                   if (parts >= 3 && value.length >= 8) return Promise.resolve();
-                  return Promise.reject(new Error('除长度外至少满足任意2类: 大写/小写/数字/特殊'));
+                  return Promise.reject(new Error(t('user.common.passwordRule', '除长度外至少满足任意2类: 大写/小写/数字/特殊')));
                 }
               }
             ]}
           >
             <Input.Password 
               prefix={<LockOutlined />} 
-              placeholder="请输入新密码"
+              placeholder={t('userProfile.passwordModal.fields.enterNewPassword', '请输入新密码')}
               size="large"
               onChange={(e)=> setNewPwd(e.target.value)}
             />
@@ -505,23 +521,23 @@ export default function UserProfile() {
 
           <Form.Item
             name="confirmPassword"
-            label="确认新密码"
+            label={t('userProfile.passwordModal.fields.confirmPassword', '确认新密码')}
             dependencies={['newPassword']}
             rules={[
-              { required: true, message: '请确认新密码' },
+              { required: true, message: t('userProfile.passwordModal.fields.enterConfirmPassword', '请确认新密码') },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('newPassword') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error('两次输入的密码不一致'));
+                  return Promise.reject(new Error(t('userProfile.passwordModal.fields.notMatch', '两次输入的密码不一致')));
                 },
               }),
             ]}
           >
             <Input.Password 
               prefix={<LockOutlined />} 
-              placeholder="请确认新密码"
+              placeholder={t('userProfile.passwordModal.fields.enterConfirmPassword', '请确认新密码')}
               size="large"
             />
           </Form.Item>

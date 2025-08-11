@@ -1,6 +1,7 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import ErrorBoundary from './ErrorBoundary';
 import { Result, Button, Spin } from 'antd';
+import { useI18n } from '../contexts/I18nContext';
 
 /**
  * 懒加载包装器
@@ -14,7 +15,7 @@ function buildLazy(importFunc, options) {
     retries = 2,
     retryDelay = 1000,
     timeout = 15000,
-    fallbackTip = '页面加载中...',
+  fallbackTip,
     fullScreen = false,
     minSpinnerTime = 400, // 防抖，避免闪烁
   } = options || {};
@@ -40,6 +41,7 @@ function buildLazy(importFunc, options) {
   const LazyComponent = React.lazy(lazyFactory);
 
   return (props) => {
+    const { t } = useI18n();
     const [timedOut, setTimedOut] = useState(false);
     const [startTs] = useState(() => Date.now());
     const [retryKey, setRetryKey] = useState(0);
@@ -62,10 +64,10 @@ function buildLazy(importFunc, options) {
       width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'
     };
 
-    const spinner = (
+  const spinner = (
       <div style={containerStyle}>
         <div style={{ textAlign: 'center' }}>
-          <Spin size="large" tip={fallbackTip} />
+      <Spin size="large" tip={fallbackTip || t('common.loading')} />
         </div>
       </div>
     );
@@ -74,11 +76,11 @@ function buildLazy(importFunc, options) {
       <div style={containerStyle}>
         <Result
           status="warning"
-          title="加载超时"
-          subTitle="资源加载耗时较长，可重试或稍后再试"
+          title={t('lazy.timeoutTitle', t('applicationManagement.error.dataFetchTitle'))}
+          subTitle={t('lazy.timeoutSubTitle', '加载耗时较长，可重试或稍后再试')}
           extra={[
-            <Button key="retry" type="primary" onClick={doRetry}>重试</Button>,
-            <Button key="refresh" onClick={() => window.location.reload()}>刷新页面</Button>
+            <Button key="retry" type="primary" onClick={doRetry}>{t('lazy.retry', t('common.refresh'))}</Button>,
+            <Button key="refresh" onClick={() => window.location.reload()}>{t('lazy.refreshPage', '刷新页面')}</Button>
           ]}
         />
       </div>
@@ -109,16 +111,16 @@ function buildLazy(importFunc, options) {
   };
 }
 
-const withLazyLoading = (importFunc, fallbackTip = '页面加载中...', opts) =>
+const withLazyLoading = (importFunc, fallbackTip, opts) =>
   buildLazy(importFunc, { ...(opts || {}), fallbackTip });
 
 /**
  * 预定义的懒加载组件工厂
  */
 export const createLazyComponent = {
-  page: (importFunc, pageName) => withLazyLoading(importFunc, `${pageName}加载中...`, { retries: 2, retryDelay: 1200, timeout: 20000 }),
-  component: (importFunc, componentName = '组件') => withLazyLoading(importFunc, `${componentName}加载中...`, { retries: 1, retryDelay: 1000, timeout: 12000 }),
-  module: (importFunc, moduleName) => withLazyLoading(importFunc, `${moduleName}模块加载中...`, { retries: 3, retryDelay: 1500, timeout: 25000 }),
+  page: (importFunc, pageName) => withLazyLoading(importFunc, undefined, { retries: 2, retryDelay: 1200, timeout: 20000 }),
+  component: (importFunc) => withLazyLoading(importFunc, undefined, { retries: 1, retryDelay: 1000, timeout: 12000 }),
+  module: (importFunc) => withLazyLoading(importFunc, undefined, { retries: 3, retryDelay: 1500, timeout: 25000 }),
 };
 
 export default withLazyLoading;

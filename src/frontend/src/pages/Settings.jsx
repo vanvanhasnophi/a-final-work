@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Radio, Space, Typography, Divider, Alert } from 'antd';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Title, Paragraph, Text } = Typography;
 const FONT_PREF_KEY = 'fontPreference';
 
 export default function Settings() {
+  const { t, lang, setLang } = useI18n();
   const [fontPref, setFontPref] = useState('inter');
   const [isApple, setIsApple] = useState(false);
 
@@ -52,52 +54,54 @@ export default function Settings() {
     const value = e.target.value;
     setFontPref(value);
     localStorage.setItem(FONT_PREF_KEY, value);
-  applyPref(value);
+    applyPref(value);
   };
 
   useEffect(() => {
-  applyPref(fontPref);
+    applyPref(fontPref);
   }, [fontPref]);
 
   return (
     <div style={{ padding: 24 }}>
-      <Title level={3}>设置</Title>
-      <Card title="字体渲染" bordered style={{ maxWidth: 600 }}>
+      <Title level={3}>{t('settings.title')}</Title>
+      {/* 语言设置置于最上方 */}
+      <Card title={t('settings.language')} bordered style={{ maxWidth: 600, marginBottom: 16 }}>
+        <Radio.Group onChange={(e)=>setLang(e.target.value)} value={lang}>
+          <Space direction="vertical">
+            <Radio value="zh-CN">{t('settings.zhCN')}</Radio>
+            <Radio value="en-US">{t('settings.enUS')}</Radio>
+          </Space>
+        </Radio.Group>
+      </Card>
+      {/* 字体渲染设置 */}
+      <Card title={t('settings.font')} bordered style={{ maxWidth: 600, marginBottom: 16 }}>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           {isApple && (
             <Alert
               type="info"
               showIcon
-              message="Apple 平台默认使用系统字体"
-              description={
-                <span>
-                  为提升渲染效果和一致性，Apple 设备默认选择系统字体。你仍可手动切换到 Inter（可能在部分 Safari 版本上存在渲染差异）。
-                </span>
-              }
+              message={t('settings.appleTitle')}
+              description={<span>{t('settings.appleDesc')}</span>}
             />
           )}
-          <Paragraph>
-            选择界面使用的主要字体渲染方式：
-          </Paragraph>
+          <Paragraph>{t('settings.fontIntro')}</Paragraph>
           <Radio.Group onChange={onChange} value={fontPref}>
             <Space direction="vertical">
-              <Radio value="inter">默认</Radio>
-              <Radio value="system">系统</Radio>
-              <Radio value="browser">浏览器设置</Radio>
+              <Radio value="inter">{t('common.default')}</Radio>
+              <Radio value="system">{t('common.system')}</Radio>
+              <Radio value="browser">{t('common.browser')}</Radio>
             </Space>
           </Radio.Group>
           <Divider style={{ margin: '12px 0' }} />
-          <Paragraph type="secondary" style={{ fontSize: 12 }}>
-            当前选择将保存在本地浏览器（localStorage），不会同步到服务器。切换后页面无需刷新即刻生效。
-          </Paragraph>
+          <Paragraph type="secondary" style={{ fontSize: 12 }}>{t('settings.tipLocal')}</Paragraph>
           <Paragraph style={{ marginBottom: 4 }}>
-            <Text strong>当前字体预览：</Text>{' '}
+            <Text strong>{t('settings.previewCurrent')}</Text>{' '}
             <span style={{ fontFamily: 'var(--app-font-stack)', transition: 'font 0.2s' }}>
               The quick brown fox jumps over the lazy dog 观自在菩萨 行深般若波罗蜜多时 1234567890
             </span>
           </Paragraph>
           <Paragraph style={{ marginBottom: 0, fontSize: 13 }}>
-            <Text strong>数字 (lining + tabular)：</Text>{' '}
+            <Text strong>{t('settings.previewNumber')}</Text>{' '}
             <span className="num-mono" style={{ fontFamily: 'var(--app-font-stack)', transition: 'font 0.2s' }}>0 1 2 3 4 5 6 7 8 9  00 11 22 33 44 55 66 77 88 99  2025-08-08  12:34:56</span>
           </Paragraph>
         </Space>

@@ -1,11 +1,12 @@
 import React from 'react';
 import { Spin, Typography, Card, Button } from 'antd';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Text } = Typography;
 
 const LoadingSpinner = ({ 
   loading = true, 
-  text = '加载中...', 
+  text,
   size = 'large',
   tip = null,
   children,
@@ -14,6 +15,8 @@ const LoadingSpinner = ({
   onCancel = null,
   showCancelButton = false
 }) => {
+  const { t } = useI18n();
+  const resolvedText = text || t('common.loading', '加载中…');
   if (!loading) {
     return children;
   }
@@ -30,10 +33,10 @@ const LoadingSpinner = ({
         backgroundColor: 'var(--background-color)',
         ...style
       }}>
-        <Spin size={size} tip={tip || text} />
+    <Spin size={size} tip={tip || resolvedText} />
         {!tip && (
           <Text type="secondary" style={{ marginTop: '16px' }}>
-            {text}
+      {resolvedText}
           </Text>
         )}
         {showCancelButton && onCancel && (
@@ -42,7 +45,7 @@ const LoadingSpinner = ({
             onClick={onCancel}
             style={{ marginTop: '16px', color: 'var(--text-color-secondary)' }}
           >
-            取消
+      {t('common.cancel', '取消')}
           </Button>
         )}
       </div>
@@ -97,10 +100,10 @@ const LoadingSpinner = ({
             ) : null
           }
         >
-          <Spin size={size} tip={tip || text} />
+      <Spin size={size} tip={tip || resolvedText} />
           {!tip && (
             <Text type="secondary" style={{ marginTop: '12px', display: 'block' }}>
-              {text}
+        {resolvedText}
             </Text>
           )}
         </Card>

@@ -14,6 +14,7 @@ import { getRoomStatusDisplayName, getRoomStatusColor, roomStatusOptions } from 
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useTimeConflictCheck } from '../hooks/useTimeConflictCheck';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import { canCreateRoom, canDeleteRoom, canUpdateRoom, canCreateApplication } from '../utils/permissionUtils';
 import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
@@ -24,6 +25,7 @@ const { RangePicker } = DatePicker;
 export default function RoomList() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [rooms, setRooms] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -92,7 +94,7 @@ export default function RoomList() {
         return response.data;
       },
       {
-        errorMessage: '获取教室列表失败，请检查网络连接',
+        errorMessage: t('roomList.error.fetchListFail'),
         maxRetries: 0, // 不重试，避免反复请求
         retryDelay: 0
       }
@@ -115,7 +117,7 @@ export default function RoomList() {
     
     // 检查教室状态
     if (record.status === 'USING' || record.status === 'RESERVED') {
-      messageApi.warning('教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。');
+  messageApi.warning(t('roomList.deleteInUseWarning', '教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。'));
       return;
     }
     
@@ -180,7 +182,8 @@ export default function RoomList() {
       'maintenance': 'MAINTENANCE',
       'cleaning': 'CLEANING',
       'pending_cleaning': 'PENDING_CLEANING',
-      'pending_maintenance': 'PENDING_MAINTENANCE'
+  'pending_maintenance': 'PENDING_MAINTENANCE',
+  'unavailable': 'UNAVAILABLE'
     };
     
     const newParams = {
@@ -267,8 +270,8 @@ export default function RoomList() {
         setCurrentRoom(roomDetails);
         setDrawerVisible(true);
       } catch (error) {
-        console.error('获取教室详情失败:', error);
-        messageApi.error('获取教室详情失败');
+  console.error('获取教室详情失败:', error);
+  messageApi.error(t('roomList.errors.fetchRoomDetailFail', '获取教室详情失败'));
       }
     };
     
@@ -352,14 +355,14 @@ export default function RoomList() {
               type: getRoomTypeEnumValue(values.type)
             };
             const response = await roomAPI.createRoom(roomData);
-            messageApi.success('教室创建成功');
+            messageApi.success(t('roomList.messages.addSuccess', '教室创建成功'));
             handleCloseDrawer();
             fetchRooms(); // 刷新列表
             return response;
           },
           {
-            errorMessage: '创建教室失败',
-            successMessage: '教室创建成功'
+            errorMessage: t('roomList.messages.addFail', '创建教室失败'),
+            successMessage: t('roomList.messages.addSuccess', '教室创建成功')
           }
         );
        } else if (drawerType === 'apply') {
@@ -374,7 +377,7 @@ export default function RoomList() {
         
         // 检查时间冲突
         if (hasConflict) {
-          messageApi.error('所选时间段与已有预约冲突，请选择其他时间');
+      messageApi.error(t('roomList.timeConflict', '所选时间段与已有预约冲突，请选择其他时间'));
           return;
         }
         
@@ -393,7 +396,7 @@ export default function RoomList() {
             console.log('提交申请数据:', applicationData);
             const response = await applicationAPI.createApplication(applicationData);
             
-            messageApi.success('申请提交成功，正在跳转到申请列表...', 0.5).then(() => {
+            messageApi.success(t('roomList.messages.applySuccess', '申请提交成功，正在跳转到申请列表...'), 0.5).then(() => {
               handleCloseDrawer();
               if (user?.role === 'APPLIER') {
                 navigate('/my-applications');
@@ -406,40 +409,40 @@ export default function RoomList() {
             return response;
           },
           {
-            errorMessage: '申请提交失败',
-            successMessage: '申请提交成功'
+            errorMessage: t('roomList.messages.applyFail', '申请提交失败'),
+            successMessage: t('roomList.messages.applySuccessBrief', '申请提交成功')
           }
         );
       }
     } catch (error) {
       console.error('提交失败:', error);
-      messageApi.error('操作失败，请重试');
+  messageApi.error(t('roomList.messages.operationFailed', '操作失败，请重试'));
     }
   };
 
   const columns = [
     {
-      title: '教室名称',
+      title: t('roomList.columns.name', '教室名称'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: '类型',
+      title: t('roomList.columns.type', '类型'),
       dataIndex: 'type',
       key: 'type',
       render: (type) => getRoomTypeDisplayName(type),
     },
     {
-      title: '容量',
+      title: t('roomList.columns.capacity', '容量'),
       dataIndex: 'capacity',
       key: 'capacity',
       onCell: () => ({ 'data-field': 'capacity' }),
       render: (capacity) => (
-        <span className="num-mono">{capacity}人</span>
+        <span className="num-mono">{capacity}{t('roomList.labels.people', '人')}</span>
       ),
     },
     {
-      title: '状态',
+      title: t('roomList.columns.status', '状态'),
       dataIndex: 'status',
       key: 'status',
       render: (status) => (
@@ -449,16 +452,16 @@ export default function RoomList() {
       ),
     },
     {
-      title: '位置',
+      title: t('roomList.columns.location', '位置'),
       dataIndex: 'location',
       key: 'location',
     },
     {
-      title: '操作',
+      title: t('roomList.columns.actions', '操作'),
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Tooltip title="查看详情">
+          <Tooltip title={t('roomList.tooltips.viewDetail', '查看详情')}>
             <Button 
               type="text" 
               size="small" 
@@ -467,7 +470,7 @@ export default function RoomList() {
             />
           </Tooltip>
           {canUpdateRoom(user?.role) && (
-            <Tooltip title="编辑教室">
+            <Tooltip title={t('roomList.tooltips.editRoom', '编辑教室')}>
               <Button 
                 type="text" 
                 size="small" 
@@ -477,7 +480,7 @@ export default function RoomList() {
             </Tooltip>
           )}
           {canCreateApplication(user?.role) && (
-            <Tooltip title="申请教室">
+            <Tooltip title={t('roomList.tooltips.applyRoom', '申请教室')}>
               <Button 
                 type="text" 
                 size="small" 
@@ -490,8 +493,8 @@ export default function RoomList() {
             <Tooltip 
               title={
                 record.status === 'USING' || record.status === 'RESERVED' 
-                  ? '教室正在使用中，无法删除' 
-                  : '删除教室'
+                  ? t('roomList.tooltips.deleteRoomDisabled', '教室正在使用中，无法删除') 
+                  : t('roomList.tooltips.deleteRoom', '删除教室')
               }
             >
               <Button 
@@ -521,7 +524,7 @@ export default function RoomList() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        title="教室列表"
+        title={t('roomList.title')}
         extra={
           <Space>
             <Button 
@@ -542,11 +545,11 @@ export default function RoomList() {
               }}
               loading={loading}
             >
-              刷新
+              {t('common.refresh')}
             </Button>
             {canCreateRoom(user?.role) && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
-                添加教室
+                {t('roomList.addRoom')}
               </Button>
             )}
           </Space>
@@ -555,9 +558,9 @@ export default function RoomList() {
         bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
       >
         {/* 错误提示 */}
-        {error && (
+    {error && (
           <Alert
-            message="数据获取失败"
+      message={t('roomList.error.dataFetchTitle')}
             description={error}
             type="error"
             showIcon
@@ -575,7 +578,7 @@ export default function RoomList() {
             {/* 教室搜索 */}
             <div style={{ minWidth: '200px' }}>
               <Input
-                placeholder="搜索教室名称"
+                placeholder={t('roomList.searchPlaceholder')}
                 allowClear
                 style={{ width: '100%' }}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -586,7 +589,7 @@ export default function RoomList() {
             <div style={{ minWidth: '120px' }}>
               <Select
                 ref={typeSelectRef}
-                placeholder="全部类型"
+                placeholder={t('roomList.allTypes')}
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedType}
@@ -595,11 +598,11 @@ export default function RoomList() {
                   handleTypeFilter(value);
                 }}
               >
-                <Option value="all">全部类型</Option>
-                <Option value="caseroom">案例教室</Option>
-                <Option value="seminar">研讨间</Option>
-                <Option value="lab">实验室</Option>
-                <Option value="lecture">平面教室</Option>
+                <Option value="all">{t('roomList.allTypes')}</Option>
+                <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
+                <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
+                <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
+                <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
               </Select>
             </div>
             
@@ -607,7 +610,7 @@ export default function RoomList() {
             <div style={{ minWidth: '120px' }}>
               <Select
                 ref={statusSelectRef}
-                placeholder="全部状态"
+                placeholder={t('roomList.allStatuses')}
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedStatus}
@@ -616,15 +619,15 @@ export default function RoomList() {
                   handleStatusFilter(value);
                 }}
               >
-                <Option value="all">全部状态</Option>
-                <Option value="available">空闲</Option>
-                <Option value="reserved">已预约</Option>
-                <Option value="using">使用中</Option>
-                <Option value="maintenance">维修中</Option>
-                <Option value="cleaning">清洁中</Option>
-                <Option value="pending_cleaning">待清洁</Option>
-                <Option value="pending_maintenance">待维修</Option>
-                <Option value="unavailable">不可用</Option>
+                <Option value="all">{t('roomList.allStatuses')}</Option>
+                <Option value="available">{t('roomList.options.statuses.available', '空闲')}</Option>
+                <Option value="reserved">{t('roomList.options.statuses.reserved', '已预约')}</Option>
+                <Option value="using">{t('roomList.options.statuses.using', '使用中')}</Option>
+                <Option value="maintenance">{t('roomList.options.statuses.maintenance', '维修中')}</Option>
+                <Option value="cleaning">{t('roomList.options.statuses.cleaning', '清洁中')}</Option>
+                <Option value="pending_cleaning">{t('roomList.options.statuses.pending_cleaning', '待清洁')}</Option>
+                <Option value="pending_maintenance">{t('roomList.options.statuses.pending_maintenance', '待维修')}</Option>
+                <Option value="unavailable">{t('roomList.options.statuses.unavailable', '不可用')}</Option>
               </Select>
             </div>
             
@@ -646,7 +649,7 @@ export default function RoomList() {
                   fetchRooms(newParams);
                 }}
               >
-                清空筛选
+                {t('roomList.clearFilters')}
               </Button>
             </div>
           </div>
@@ -722,7 +725,7 @@ export default function RoomList() {
               {...pagination}
               showSizeChanger={true}
               showQuickJumper={true}
-              showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`}
+              showTotal={(total, range) => t('roomList.paginationTotal', `第 ${range[0]}-${range[1]} 条/共 ${total} 条`).replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)}
               pageSizeOptions={['10', '20', '50', '100']}
               size="default"
               onChange={(page, pageSize) => {
@@ -741,10 +744,10 @@ export default function RoomList() {
       {/* 抽屉组件 */}
       <Drawer
         title={
-          drawerType === 'add' ? '新增教室' :
-          drawerType === 'edit' ? '编辑教室' :
-          drawerType === 'detail' ? '教室详情' :
-          drawerType === 'apply' ? '申请教室' : ''
+          drawerType === 'add' ? t('roomList.drawer.add') :
+          drawerType === 'edit' ? t('roomList.drawer.edit') :
+          drawerType === 'detail' ? t('roomList.drawer.detail') :
+          drawerType === 'apply' ? t('roomList.drawer.apply') : ''
         }
         width={600}
         open={drawerVisible}
@@ -753,15 +756,15 @@ export default function RoomList() {
           drawerType !== 'detail' ? (
             <div style={{ textAlign: 'right' }}>
               <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                取消
+                {t('common.cancel')}
               </Button>
               {drawerType === 'edit' ? (
                 <Button type="primary" onClick={() => form.submit()}>
-                  确认
+                  {t('common.confirm')}
                 </Button>
               ) : (
                 <Button type="primary" onClick={() => form.submit()}>
-                  {drawerType === 'add' ? '创建' : '提交申请'}
+                  {drawerType === 'add' ? t('common.create') : t('common.submit')}
                 </Button>
               )}
             </div>
@@ -776,18 +779,18 @@ export default function RoomList() {
           >
             <Form.Item
               name="name"
-              label="教室名称"
-              rules={[{ required: true, message: '请输入教室名称' }]}
+              label={t('roomList.form.name', '教室名称')}
+              rules={[{ required: true, message: t('roomList.form.enterName', '请输入教室名称') }]}
             >
-              <Input placeholder="请输入教室名称" />
+              <Input placeholder={t('roomList.form.enterName', '请输入教室名称')} />
             </Form.Item>
             
             <Form.Item
               name="type"
-              label="教室类型"
-              rules={[{ required: true, message: '请选择教室类型' }]}
+              label={t('roomList.form.type', '教室类型')}
+              rules={[{ required: true, message: t('roomList.form.selectType', '请选择教室类型') }]}
             >
-              <Select placeholder="请选择教室类型">
+              <Select placeholder={t('roomList.form.selectType', '请选择教室类型')}>
                 {roomTypeOptions.map(option => (
                   <Option key={option.value} value={option.value}>
                     {option.label}
@@ -798,30 +801,30 @@ export default function RoomList() {
             
             <Form.Item
               name="capacity"
-              label="容量"
-              rules={[{ required: true, message: '请输入容量' }]}
+              label={t('roomList.form.capacity', '容量')}
+              rules={[{ required: true, message: t('roomList.form.enterCapacity', '请输入容量') }]}
             >
               <InputNumber
                 min={1}
                 max={1000}
-                placeholder="请输入容量"
+                placeholder={t('roomList.form.enterCapacity', '请输入容量')}
                 style={{ width: '100%' }}
               />
             </Form.Item>
             
             <Form.Item
               name="location"
-              label="位置"
-              rules={[{ required: true, message: '请输入位置' }]}
+              label={t('roomList.form.location', '位置')}
+              rules={[{ required: true, message: t('roomList.form.enterLocation', '请输入位置') }]}
             >
-              <Input placeholder="请输入位置" />
+              <Input placeholder={t('roomList.form.enterLocation', '请输入位置')} />
             </Form.Item>
             
             <Form.Item
               name="description"
-              label="描述"
+              label={t('roomList.form.description', '描述')}
             >
-              <Input.TextArea rows={4} placeholder="请输入教室描述" />
+              <Input.TextArea rows={4} placeholder={t('roomList.form.enterDescription', '请输入教室描述')} />
             </Form.Item>
           </Form>
         )}
@@ -835,18 +838,18 @@ export default function RoomList() {
           >
             <Form.Item
               name="name"
-              label="教室名称"
-              rules={[{ required: true, message: '请输入教室名称' }]}
+              label={t('roomList.form.name', '教室名称')}
+              rules={[{ required: true, message: t('roomList.form.enterName', '请输入教室名称') }]}
             >
-              <Input placeholder="请输入教室名称" />
+              <Input placeholder={t('roomList.form.enterName', '请输入教室名称')} />
             </Form.Item>
             
             <Form.Item
               name="type"
-              label="教室类型"
-              rules={[{ required: true, message: '请选择教室类型' }]}
+              label={t('roomList.form.type', '教室类型')}
+              rules={[{ required: true, message: t('roomList.form.selectType', '请选择教室类型') }]}
             >
-              <Select placeholder="请选择教室类型">
+              <Select placeholder={t('roomList.form.selectType', '请选择教室类型')}>
                 {roomTypeOptions.map(option => (
                   <Option key={option.value} value={option.value}>
                     {option.label}
@@ -857,31 +860,31 @@ export default function RoomList() {
             
             <Form.Item
               name="capacity"
-              label="容量"
-              rules={[{ required: true, message: '请输入容量' }]}
+              label={t('roomList.form.capacity', '容量')}
+              rules={[{ required: true, message: t('roomList.form.enterCapacity', '请输入容量') }]}
             >
               <InputNumber
                 min={1}
                 max={1000}
-                placeholder="请输入容量"
+                placeholder={t('roomList.form.enterCapacity', '请输入容量')}
                 style={{ width: '100%' }}
               />
             </Form.Item>
             
             <Form.Item
               name="location"
-              label="位置"
-              rules={[{ required: true, message: '请输入位置' }]}
+              label={t('roomList.form.location', '位置')}
+              rules={[{ required: true, message: t('roomList.form.enterLocation', '请输入位置') }]}
             >
-              <Input placeholder="请输入位置" />
+              <Input placeholder={t('roomList.form.enterLocation', '请输入位置')} />
             </Form.Item>
             
             <Form.Item
               name="status"
-              label="教室状态"
-              rules={[{ required: true, message: '请选择教室状态' }]}
+              label={t('roomList.form.status', '教室状态')}
+              rules={[{ required: true, message: t('roomList.form.selectStatus', '请选择教室状态') }]}
             >
-              <Select placeholder="请选择教室状态">
+              <Select placeholder={t('roomList.form.selectStatus', '请选择教室状态')}>
                 {roomStatusOptions.map(option => (
                   <Option key={option.value} value={option.value}>
                     <Tag color={getRoomStatusColor(option.value)}>{option.label}</Tag>
@@ -892,9 +895,9 @@ export default function RoomList() {
             
             <Form.Item
               name="description"
-              label="描述"
+              label={t('roomList.form.description', '描述')}
             >
-              <Input.TextArea rows={4} placeholder="请输入教室描述" />
+              <Input.TextArea rows={4} placeholder={t('roomList.form.enterDescription', '请输入教室描述')} />
             </Form.Item>
           </Form>
         )}
@@ -910,30 +913,30 @@ export default function RoomList() {
             }}>
               <div style={{ color: 'var(--text-color)' }}>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>教室名称：</strong>
+                  <strong>{t('roomList.form.name', '教室名称')}：</strong>
                   <span>{currentRoom.name}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>教室类型：</strong>
+                  <strong>{t('roomList.form.type', '教室类型')}：</strong>
                   <span>{getRoomTypeDisplayName(currentRoom.type)}</span>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>容量：</strong>
-                    <span className="num-mono" data-field="capacity">{currentRoom.capacity}</span>人
+                  <strong>{t('roomList.form.capacity', '容量')}：</strong>
+                    <span className="num-mono" data-field="capacity">{currentRoom.capacity}</span>{t('roomList.labels.people', '人')}
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>状态：</strong>
+                  <strong>{t('roomList.columns.status', '状态')}：</strong>
                   <Tag color={getRoomStatusColor(currentRoom.status)}>
                     {getRoomStatusDisplayName(currentRoom.status)}
                   </Tag>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <strong>位置：</strong>
+                  <strong>{t('roomList.form.location', '位置')}：</strong>
                   <span>{currentRoom.location}</span>
                 </div>
                 {currentRoom.description && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong>描述：</strong>
+                    <strong>{t('roomList.form.description', '描述')}：</strong>
                     <p style={{ marginTop: 4, marginBottom: 0 }}>{currentRoom.description}</p>
                   </div>
                 )}
@@ -949,7 +952,7 @@ export default function RoomList() {
               borderRadius: 6 
             }}>
               <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
-                未来已批准预约 ({futureApplications.length}个)
+                {t('roomList.detail.futureApprovedTitle', '未来已批准预约')} ({futureApplications.length})
               </h4>
               {futureApplications.length > 0 ? (
                 <div style={{ color: 'var(--text-color)' }}>
@@ -971,7 +974,7 @@ export default function RoomList() {
                   padding: '20px',
                   fontSize: '14px'
                 }}>
-                  暂无未来预约
+                  {t('roomList.detail.noneFuture', '暂无未来预约')}
                 </div>
               )}
             </div>
@@ -987,10 +990,10 @@ export default function RoomList() {
               border: '1px solid var(--border-color)',
               borderRadius: 6 
             }}>
-              <p style={{ color: 'var(--text-color)' }}><strong>教室名称：</strong>{currentRoom.name}</p>
-              <p style={{ color: 'var(--text-color)' }}><strong>教室类型：</strong>{getRoomTypeDisplayName(currentRoom.type)}</p>
-              <p style={{ color: 'var(--text-color)' }}><strong>容量：</strong>{currentRoom.capacity}人</p>
-              <p style={{ color: 'var(--text-color)' }}><strong>位置：</strong>{currentRoom.location}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.name', '教室名称')}：</strong>{currentRoom.name}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.type', '教室类型')}：</strong>{getRoomTypeDisplayName(currentRoom.type)}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.capacity', '容量')}：</strong>{currentRoom.capacity}{t('roomList.labels.people', '人')}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.location', '位置')}：</strong>{currentRoom.location}</p>
             </div>
             
             {/* 未来预约信息 */}
@@ -1002,7 +1005,7 @@ export default function RoomList() {
               borderRadius: 6 
             }}>
               <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
-                未来已批准预约 ({futureApplications.length}个)
+                {t('roomList.detail.futureApprovedTitle', '未来已批准预约')} ({futureApplications.length})
               </h4>
               {futureApplications.length > 0 ? (
                 <div style={{ color: 'var(--text-color)' }}>
@@ -1024,7 +1027,7 @@ export default function RoomList() {
                   padding: '20px',
                   fontSize: '14px'
                 }}>
-                  暂无未来预约
+                  {t('roomList.detail.noneFuture', '暂无未来预约')}
                 </div>
               )}
             </div>
@@ -1036,8 +1039,8 @@ export default function RoomList() {
             >
               <Form.Item
                 name="timeRange"
-                label="使用时间"
-                rules={[{ required: true, message: '请选择使用时间' }]}
+                label={t('roomList.form.timeRange', '使用时间')}
+                rules={[{ required: true, message: t('roomList.form.selectTimeRange', '请选择使用时间') }]}
                 validateStatus={hasConflict ? 'error' : ''}
                 help={hasConflict ? conflictMessage : ''}
               >
@@ -1045,6 +1048,10 @@ export default function RoomList() {
                   showTime={{ format: 'HH:mm' }}
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
+                  placeholder={[
+                    t('roomList.form.timeRangePlaceholder.0', '开始时间'),
+                    t('roomList.form.timeRangePlaceholder.1', '结束时间')
+                  ]}
                   disabledDate={(current) => {
                     return current && current < dayjs().startOf('day');
                   }}
@@ -1061,38 +1068,38 @@ export default function RoomList() {
 
               <Form.Item
                 name="reason"
-                label="使用原因"
-                rules={[{ required: true, message: '请输入使用原因' }]}
+                label={t('roomList.form.reason', '使用原因')}
+                rules={[{ required: true, message: t('roomList.form.enterReason', '请输入使用原因') }]}
               >
-                <Input.TextArea rows={3} placeholder="请详细描述使用原因" />
+                <Input.TextArea rows={3} placeholder={t('roomList.form.enterReason', '请详细描述使用原因')} />
               </Form.Item>
 
               <Form.Item
                 name="crowd"
-                label="使用人数"
-                rules={[{ required: true, message: '请输入使用人数' }]}
+                label={t('roomList.form.crowd', '使用人数')}
+                rules={[{ required: true, message: t('roomList.form.enterCrowd', '请输入使用人数') }]}
               >
                 <InputNumber
                   min={1}
                   max={currentRoom.capacity}
-                  placeholder="请输入使用人数"
+                  placeholder={t('roomList.form.enterCrowd', '请输入使用人数')}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
 
               <Form.Item
                 name="contact"
-                label="联系方式"
-                rules={[{ required: true, message: '请输入联系方式' }]}
+                label={t('roomList.form.contact', '联系方式')}
+                rules={[{ required: true, message: t('roomList.form.enterContact', '请输入联系方式') }]}
               >
-                <Input placeholder="请输入联系方式" />
+                <Input placeholder={t('roomList.form.enterContact', '请输入联系方式')} />
               </Form.Item>
 
               <Form.Item
                 name="remark"
-                label="备注"
+                label={t('roomList.form.remark', '备注')}
               >
-                <Input.TextArea rows={3} placeholder="请输入备注信息" />
+                <Input.TextArea rows={3} placeholder={t('roomList.form.enterRemark', '请输入备注信息')} />
               </Form.Item>
             </Form>
           </div>
@@ -1101,7 +1108,7 @@ export default function RoomList() {
       
       {/* 确认弹窗 */}
       <Modal
-        title="确认更新教室信息"
+        title={t('roomList.modals.confirmUpdateTitle', '确认更新教室信息')}
         open={confirmModalVisible}
         onOk={async () => {
           try {
@@ -1110,33 +1117,33 @@ export default function RoomList() {
             
             // 比较各个字段的变化
             if (currentRoom.name !== editFormValues.name) {
-              changes.push(`名称：${currentRoom.name} → ${editFormValues.name}`);
+        changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name} → ${editFormValues.name}`);
             } else {
-              changes.push(`名称：${currentRoom.name}`);
+        changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name}`);
             }
             
             if (currentRoom.type !== getRoomTypeEnumValue(editFormValues.type)) {
-              changes.push(`类型：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
+        changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
             } else {
-              changes.push(`类型：${getRoomTypeDisplayName(currentRoom.type)}`);
+        changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)}`);
             }
             
             if (currentRoom.capacity !== editFormValues.capacity) {
-              changes.push(`容量：${currentRoom.capacity}人 → ${editFormValues.capacity}人`);
+        changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')} → ${editFormValues.capacity}${t('roomList.labels.people', '人')}`);
             } else {
-              changes.push(`容量：${currentRoom.capacity}人`);
+        changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')}`);
             }
             
             if (currentRoom.location !== editFormValues.location) {
-              changes.push(`位置：${currentRoom.location} → ${editFormValues.location}`);
+        changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location} → ${editFormValues.location}`);
             } else {
-              changes.push(`位置：${currentRoom.location}`);
+        changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location}`);
             }
             
             if (currentRoom.status !== editFormValues.status) {
               changes.push(
                 <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
-                  状态：
+          {t('roomList.labels.status', '状态')}：
                   <Tag color={getRoomStatusColor(currentRoom.status)} style={{ margin: '0 4px' }}>
                     {getRoomStatusDisplayName(currentRoom.status)}
                   </Tag>
@@ -1149,7 +1156,7 @@ export default function RoomList() {
             } else {
               changes.push(
                 <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
-                  状态：
+          {t('roomList.labels.status', '状态')}：
                   <Tag color={getRoomStatusColor(currentRoom.status)} style={{ margin: '0 4px' }}>
                     {getRoomStatusDisplayName(currentRoom.status)}
                   </Tag>
@@ -1158,11 +1165,11 @@ export default function RoomList() {
             }
             
             if (currentRoom.description !== editFormValues.description) {
-              const oldDesc = currentRoom.description || '无';
-              const newDesc = editFormValues.description || '无';
-              changes.push(`描述：${oldDesc} → ${newDesc}`);
+        const oldDesc = currentRoom.description || t('roomList.labels.none', '无');
+        const newDesc = editFormValues.description || t('roomList.labels.none', '无');
+        changes.push(`${t('roomList.labels.description', '描述')}：${oldDesc} → ${newDesc}`);
             } else {
-              changes.push(`描述：${currentRoom.description || '无'}`);
+        changes.push(`${t('roomList.labels.description', '描述')}：${currentRoom.description || t('roomList.labels.none', '无')}`);
             }
             
             // 执行更新操作
@@ -1180,14 +1187,14 @@ export default function RoomList() {
                   updateTime: formatDateTimeForBackend(new Date())
                 };
                 const response = await roomAPI.updateRoom(currentRoom.id, roomData);
-                messageApi.success('教室更新成功');
+                messageApi.success(t('roomList.messages.editSuccess', '教室更新成功'));
                 handleCloseDrawer();
                 fetchRooms();
                 return response;
               },
               {
-                errorMessage: '更新教室失败',
-                successMessage: '教室更新成功'
+                errorMessage: t('roomList.messages.editFail', '更新教室失败'),
+                successMessage: t('roomList.messages.editSuccess', '教室更新成功')
               }
             );
           } catch (error) {
@@ -1201,8 +1208,8 @@ export default function RoomList() {
           setConfirmModalVisible(false);
           setEditFormValues({});
         }}
-        okText="确定更新"
-        cancelText="取消"
+        okText={t('roomList.modals.confirmUpdateOk', '确定更新')}
+        cancelText={t('roomList.modals.cancel', '取消')}
         confirmLoading={loading}
         maskClosable={false}
         keyboard={false}
@@ -1210,44 +1217,44 @@ export default function RoomList() {
         okButtonProps={{ danger: true }}
       >
         <div>
-          <p>确定要更新教室信息吗？更新后可能导致一些业务无法正常进行，请谨慎操作</p>
+          <p>{t('roomList.modals.confirmUpdateTip', '确定要更新教室信息吗？更新后可能导致一些业务无法正常进行，请谨慎操作')}</p>
           <div style={{ marginTop: 8 }}>
             {editFormValues.name && (
               <div>
-                <p><strong>变更详情：</strong></p>
+                <p><strong>{t('roomList.modals.changesTitle', '变更详情：')}</strong></p>
                 <div style={{ marginTop: 8 }}>
                   {(() => {
                     const changes = [];
                     
                     // 比较各个字段的变化
                     if (currentRoom.name !== editFormValues.name) {
-                      changes.push(`名称：${currentRoom.name} → ${editFormValues.name}`);
+                      changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name} → ${editFormValues.name}`);
                     } else {
-                      changes.push(`名称：${currentRoom.name}`);
+                      changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name}`);
                     }
                     
                     if (currentRoom.type !== getRoomTypeEnumValue(editFormValues.type)) {
-                      changes.push(`类型：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
+                      changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
                     } else {
-                      changes.push(`类型：${getRoomTypeDisplayName(currentRoom.type)}`);
+                      changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)}`);
                     }
                     
                     if (currentRoom.capacity !== editFormValues.capacity) {
-                      changes.push(`容量：${currentRoom.capacity}人 → ${editFormValues.capacity}人`);
+                      changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')} → ${editFormValues.capacity}${t('roomList.labels.people', '人')}`);
                     } else {
-                      changes.push(`容量：${currentRoom.capacity}人`);
+                      changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')}`);
                     }
                     
                     if (currentRoom.location !== editFormValues.location) {
-                      changes.push(`位置：${currentRoom.location} → ${editFormValues.location}`);
+                      changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location} → ${editFormValues.location}`);
                     } else {
-                      changes.push(`位置：${currentRoom.location}`);
+                      changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location}`);
                     }
                     
                     if (currentRoom.status !== editFormValues.status) {
                       changes.push(
                         <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
-                          状态：
+                          {t('roomList.labels.status', '状态')}：
                           <Tag color={getRoomStatusColor(currentRoom.status)} style={{ margin: '0 4px' }}>
                             {getRoomStatusDisplayName(currentRoom.status)}
                           </Tag>
@@ -1260,7 +1267,7 @@ export default function RoomList() {
                     } else {
                       changes.push(
                         <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
-                          状态：
+                          {t('roomList.labels.status', '状态')}：
                           <Tag color={getRoomStatusColor(currentRoom.status)} style={{ margin: '0 4px' }}>
                             {getRoomStatusDisplayName(currentRoom.status)}
                           </Tag>
@@ -1269,11 +1276,11 @@ export default function RoomList() {
                     }
                     
                     if (currentRoom.description !== editFormValues.description) {
-                      const oldDesc = currentRoom.description || '无';
-                      const newDesc = editFormValues.description || '无';
-                      changes.push(`描述：${oldDesc} → ${newDesc}`);
+                      const oldDesc = currentRoom.description || t('roomList.labels.none', '无');
+                      const newDesc = editFormValues.description || t('roomList.labels.none', '无');
+                      changes.push(`${t('roomList.labels.description', '描述')}：${oldDesc} → ${newDesc}`);
                     } else {
-                      changes.push(`描述：${currentRoom.description || '无'}`);
+                      changes.push(`${t('roomList.labels.description', '描述')}：${currentRoom.description || t('roomList.labels.none', '无')}`);
                     }
                     
                     return changes.map((change, index) => (
@@ -1291,7 +1298,7 @@ export default function RoomList() {
       
       {/* 删除确认弹窗 */}
       <Modal
-        title="确认删除教室"
+        title={t('roomList.modals.confirmDeleteTitle', '确认删除教室')}
         open={deleteModalVisible}
         onOk={async () => {
           try {
@@ -1299,13 +1306,13 @@ export default function RoomList() {
             await executeWithRetry(
               async () => {
                 const response = await roomAPI.deleteRoom(deleteRoomRecord.id);
-                messageApi.success('教室删除成功');
+                messageApi.success(t('roomList.messages.deleteSuccess', '教室删除成功'));
                 fetchRooms(); // 刷新列表
                 return response;
               },
               {
-                errorMessage: '删除教室失败',
-                successMessage: '教室删除成功'
+                errorMessage: t('roomList.messages.deleteFail', '删除教室失败'),
+                successMessage: t('roomList.messages.deleteSuccess', '教室删除成功')
               }
             );
           } catch (error) {
@@ -1314,13 +1321,13 @@ export default function RoomList() {
             
             // 根据错误类型显示不同的提示
             if (errorMessage.includes('相关申请记录')) {
-              messageApi.error('删除失败：该教室存在相关申请记录，请先处理相关申请后再删除。');
+              messageApi.error(t('roomList.errors.delete.relatedApplications', '删除失败：该教室存在相关申请记录，请先处理相关申请后再删除。'));
             } else if (errorMessage.includes('正在使用中')) {
-              messageApi.error('删除失败：教室正在使用中，无法删除。');
+              messageApi.error(t('roomList.errors.delete.inUse', '删除失败：教室正在使用中，无法删除。'));
             } else if (errorMessage.includes('教室不存在')) {
-              messageApi.error('删除失败：教室不存在或已被删除。');
+              messageApi.error(t('roomList.errors.delete.notExists', '删除失败：教室不存在或已被删除。'));
             } else {
-              messageApi.error('删除教室失败: ' + errorMessage);
+              messageApi.error(t('roomList.errors.delete.unknownPrefix', '删除教室失败: ') + errorMessage);
             }
           } finally {
             setDeleteModalVisible(false);
@@ -1331,8 +1338,8 @@ export default function RoomList() {
           setDeleteModalVisible(false);
           setDeleteRoomRecord(null);
         }}
-        okText="确认删除"
-        cancelText="取消"
+        okText={t('roomList.modals.confirmDeleteOk', '确认删除')}
+        cancelText={t('roomList.modals.cancel', '取消')}
         confirmLoading={loading}
         maskClosable={false}
         keyboard={false}
@@ -1344,7 +1351,7 @@ export default function RoomList() {
           <div>
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '14px', marginBottom: '8px' }}>
-                确定删除以下教室？
+                {t('roomList.modals.confirmDeleteQuestion', '确定删除以下教室？')}
               </p>
               <div style={{ 
                 background: '#f5f5f5', 
@@ -1353,19 +1360,19 @@ export default function RoomList() {
                 border: '1px solid #d9d9d9'
               }}>
                 <p style={{ margin: '4px 0', fontWeight: 'bold' }}>
-                  教室名称：{deleteRoomRecord.name}
+                  {t('roomList.form.name', '教室名称')}：{deleteRoomRecord.name}
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  教室类型：{getRoomTypeDisplayName(deleteRoomRecord.type)}
+                  {t('roomList.form.type', '教室类型')}：{getRoomTypeDisplayName(deleteRoomRecord.type)}
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  教室位置：{deleteRoomRecord.location}
+                  {t('roomList.labels.roomLocation', '教室位置')}：{deleteRoomRecord.location}
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  教室容量：{deleteRoomRecord.capacity}人
+                  {t('roomList.labels.roomCapacity', '教室容量')}：{deleteRoomRecord.capacity}{t('roomList.labels.people', '人')}
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  当前状态：
+                  {t('roomList.labels.currentStatus', '当前状态')}：
                   <Tag color={getRoomStatusColor(deleteRoomRecord.status)} style={{ marginLeft: '4px' }}>
                     {getRoomStatusDisplayName(deleteRoomRecord.status)}
                   </Tag>
@@ -1379,7 +1386,7 @@ export default function RoomList() {
               border: '1px solid #ffd591'
             }}>
               <p style={{ color: '#d46b08', fontSize: '12px', margin: 0 }}>
-                ⚠️ 警告：此操作不可恢复，删除教室将同时删除所有相关的申请记录。
+                {t('roomList.modals.warnIrreversible', '⚠️ 警告：此操作不可恢复，删除教室将同时删除所有相关的申请记录。')}
               </p>
             </div>
           </div>

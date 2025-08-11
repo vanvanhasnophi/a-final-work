@@ -16,6 +16,7 @@ import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { useAuth } from '../contexts/AuthContext';
 import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
+import { useI18n } from '../contexts/I18nContext';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -23,6 +24,7 @@ const { RangePicker } = DatePicker;
 export default function ApplicationList() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [applications, setApplications] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [showOnlyMyApplications, setShowOnlyMyApplications] = useState(false);
@@ -109,7 +111,7 @@ export default function ApplicationList() {
         return response.data;
       },
       {
-        errorMessage: '获取申请列表失败，请检查网络连接',
+  errorMessage: t('applicationManagement.error.fetchListFail'),
         maxRetries: 0, // 不重试，避免反复请求
         retryDelay: 0
       }
@@ -126,7 +128,7 @@ export default function ApplicationList() {
         return response.data.records;
       },
       {
-        errorMessage: '获取教室列表失败',
+  errorMessage: t('roomList.error.fetchListFail'),
         maxRetries: 0, // 不重试，避免反复请求
         retryDelay: 0,
         showRetryMessage: false
@@ -205,14 +207,14 @@ export default function ApplicationList() {
         await executeApplications(
           async () => {
             const response = await applicationAPI.createApplication(applicationData);
-            messageApi.success('申请提交成功');
+            messageApi.success(t('applicationManagement.messages.approveSuccess', t('common.submit')));
             handleCloseDrawer();
             fetchApplications(); // 刷新列表
             return response;
           },
           {
-            errorMessage: '申请提交失败',
-            successMessage: '申请提交成功'
+            errorMessage: t('applicationManagement.messages.approveFail'),
+            successMessage: t('applicationManagement.messages.approveSuccess')
           }
         );
       } else if (drawerType === 'approve') {
@@ -223,14 +225,14 @@ export default function ApplicationList() {
               approved: values.approved,
               reason: values.reason
             });
-            messageApi.success(values.approved ? '申请已批准' : '申请已驳回');
+            messageApi.success(values.approved ? t('applicationManagement.messages.approveApproved') : t('applicationManagement.messages.approveRejected'));
             handleCloseDrawer();
             fetchApplications(); // 刷新列表
             return response;
           },
           {
-            errorMessage: '操作失败',
-            successMessage: '操作成功'
+            errorMessage: t('applicationManagement.messages.approveFail'),
+            successMessage: t('applicationManagement.messages.approveSuccess')
           }
         );
       }
@@ -241,27 +243,40 @@ export default function ApplicationList() {
 
   const columns = [
     {
-      title: '教室名称',
+  title: t('applicationManagement.columns.roomName'),
       dataIndex: 'roomName',
       key: 'roomName',
     },
     {
-      title: '申请人',
+  title: t('applicationManagement.columns.applicant'),
       dataIndex: 'userNickname',
       key: 'userNickname',
     },
     {
-      title: '状态',
+  title: t('applicationManagement.columns.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
+      render: (status, record) => {
         const displayName = getApplicationStatusDisplayName(status);
         const color = getApplicationStatusColor(status);
+        
+        // 如果是过期状态，显示原状态和过期标签
+        if (status === 'EXPIRED' && record.originalStatus) {
+          const originalDisplayName = getApplicationStatusDisplayName(record.originalStatus);
+          const originalColor = getApplicationStatusColor(record.originalStatus);
+          return (
+            <div>
+              <Tag color={originalColor}>{originalDisplayName}</Tag>
+              <Tag color="default" style={{ marginTop: 2 }}>{displayName}</Tag>
+            </div>
+          );
+        }
+        
         return <Tag color={color}>{displayName}</Tag>;
       },
     },
     {
-      title: '使用时间',
+  title: t('applicationManagement.columns.usageTime'),
       key: 'time',
       onCell: () => ({ 'data-field': 'timeRange' }),
       render: (_, record) => {
@@ -278,12 +293,12 @@ export default function ApplicationList() {
       },
     },
     {
-      title: '使用原因',
+  title: t('applicationManagement.columns.reason'),
       dataIndex: 'reason',
       key: 'reason',
     },
     {
-      title: '申请时间',
+  title: t('applicationManagement.columns.createTime'),
       dataIndex: 'createTime',
       key: 'createTime',
       onCell: () => ({ 'data-field': 'createTime' }),
@@ -292,11 +307,11 @@ export default function ApplicationList() {
       ),
     },
     {
-      title: '操作',
+  title: t('applicationManagement.columns.actions'),
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Tooltip title="查看详情">
+          <Tooltip title={t('applicationManagement.tooltips.viewDetail')}>
             <Button 
               type="text" 
               icon={<EyeOutlined />} 
@@ -305,7 +320,7 @@ export default function ApplicationList() {
             />
           </Tooltip>
           {record.status === 'PENDING' && (
-            <Tooltip title="审批申请">
+            <Tooltip title={t('applicationManagement.tooltips.approve')}>
               <Button 
                 type="text" 
                 icon={<CheckOutlined />} 
@@ -327,7 +342,7 @@ export default function ApplicationList() {
       <Card 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>申请管理</span>
+            <span>{t('applicationManagement.title')}</span>
             <span style={{ 
                 fontSize: '12px', 
                 color: 'var(--text-color-secondary)', 
@@ -337,7 +352,7 @@ export default function ApplicationList() {
                 borderRadius: '4px',
                 border: '1px solid var(--border-color)'
               }}>
-                申请记录过期后最多保留60天
+                {t('applicationManagement.badgeRetention')}
               </span>
           </div>
         }
@@ -366,10 +381,10 @@ export default function ApplicationList() {
               }}
               loading={applicationsLoading}
             >
-              刷新
+              {t('common.refresh')}
             </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAddApplication}>
-              新建申请
+              {t('common.create')}
             </Button>
           </Space>
         }
@@ -377,9 +392,9 @@ export default function ApplicationList() {
         bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
       >
         {/* 错误提示 */}
-        {(applicationsError || roomsError) && (
+    {(applicationsError || roomsError) && (
           <Alert
-            message="数据获取失败"
+      message={t('applicationManagement.error.dataFetchTitle')}
             description={String(applicationsError || roomsError)}
             type="error"
             showIcon
@@ -397,7 +412,7 @@ export default function ApplicationList() {
             {/* 教室搜索 */}
             <div style={{ minWidth: '200px' }}>
               <Input
-                placeholder="搜索教室名称"
+                placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
                 allowClear
                 style={{ width: '100%' }}
                 value={roomSearch.searchValue}
@@ -409,7 +424,7 @@ export default function ApplicationList() {
             {/* 申请人搜索 */}
             <div style={{ minWidth: '150px' }}>
               <Input
-                placeholder="搜索申请人"
+                placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
                 allowClear
                 style={{ 
                   width: '100%',
@@ -470,7 +485,7 @@ export default function ApplicationList() {
                 color: 'var(--text-color)',
                 lineHeight: '32px'
               }}>
-                仅查看自己的申请
+                {t('myApplications.filters.onlyMine', '仅查看自己的申请')}
               </span>
             </div>
             
@@ -478,7 +493,7 @@ export default function ApplicationList() {
             <div style={{ minWidth: '120px' }}>
               <Select
                 ref={statusSelectRef}
-                placeholder="全部状态"
+                placeholder={t('applicationManagement.filters.statusPlaceholder')}
                 allowClear
                 style={{ width: '100%' }}
                 value={selectedStatus}
@@ -489,12 +504,12 @@ export default function ApplicationList() {
                   fetchApplications(newParams);
                 }}
               >
-                <Option value="PENDING">待审批</Option>
-                <Option value="APPROVED">已批准</Option>
-                <Option value="REJECTED">已驳回</Option>
-                <Option value="CANCELLED">已取消</Option>
-                <Option value="COMPLETED">已完成</Option>
-                <Option value="EXPIRED">已过期</Option>
+                <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+                <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+                <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+                <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+                <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+                <Option value="EXPIRED">{t('applicationManagement.statusOptions.EXPIRED')}</Option>
               </Select>
             </div>
             
@@ -503,7 +518,7 @@ export default function ApplicationList() {
               <DatePicker
                 ref={datePickerRef}
                 style={{ width: '100%' }}
-                placeholder="选择日期"
+                placeholder={t('applicationManagement.filters.datePlaceholder')}
                 format="YYYY-MM-DD"
                 value={selectedDate}
                 onChange={(date) => {
@@ -554,8 +569,8 @@ export default function ApplicationList() {
                 setSearchParams(newParams);
                 fetchApplications(newParams);
               }}
-            >
-              清空筛选
+              >
+              {t('applicationManagement.filters.clearFilters', t('common.clearFilters'))}
             </Button>
             </div>
           </div>
@@ -631,7 +646,10 @@ export default function ApplicationList() {
               {...pagination}
               showSizeChanger={true}
               showQuickJumper={true}
-              showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`}
+              showTotal={(total, range) => {
+                const tpl = t('applicationManagement.paginationTotal', t('roomList.paginationTotal'));
+                return tpl.replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total);
+              }}
               pageSizeOptions={['10', '20', '50', '100']}
               size="default"
               onChange={(page, pageSize) => {
@@ -650,9 +668,9 @@ export default function ApplicationList() {
       {/* 抽屉组件 */}
       <Drawer
         title={
-          drawerType === 'add' ? '新建申请' :
-          drawerType === 'detail' ? '申请详情' :
-          drawerType === 'approve' ? '审批申请' : ''
+          drawerType === 'add' ? t('applicationManagement.drawer.add', t('applicationManagement.drawer.detail')) :
+          drawerType === 'detail' ? t('applicationManagement.drawer.detail') :
+          drawerType === 'approve' ? t('applicationManagement.drawer.approve') : ''
         }
         width={600}
         open={drawerVisible}
@@ -661,10 +679,10 @@ export default function ApplicationList() {
           drawerType !== 'detail' ? (
             <div style={{ textAlign: 'right' }}>
               <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                取消
+                {t('common.cancel')}
               </Button>
               <Button type="primary" onClick={() => form.submit()}>
-                {drawerType === 'add' ? '提交申请' : '确认审批'}
+                {drawerType === 'add' ? t('applicationManagement.actions.submit', t('common.submit')) : t('applicationManagement.actions.confirm', t('common.confirm'))}
               </Button>
             </div>
           ) : null
@@ -678,10 +696,10 @@ export default function ApplicationList() {
           >
             <Form.Item
               name="room"
-              label="选择教室"
-              rules={[{ required: true, message: '请选择教室' }]}
+              label={t('applicationManagement.descriptions.roomName')}
+              rules={[{ required: true, message: t('applicationManagement.form.enterApproveOpinion', '请选择教室') }]}
             >
-              <Select placeholder="请选择教室">
+              <Select placeholder={t('applicationManagement.form.selectRoom', '请选择教室')}>
                 {rooms.map(room => (
                   <Option key={room.id} value={room.id}>
                     {room.name} ({room.location}) - {getRoomTypeDisplayName(room.type)}
@@ -692,13 +710,17 @@ export default function ApplicationList() {
 
             <Form.Item
               name="timeRange"
-              label="使用时间"
-              rules={[{ required: true, message: '请选择使用时间' }]}
+              label={t('applicationManagement.columns.usageTime')}
+              rules={[{ required: true, message: t('applicationManagement.form.selectTime', '请选择使用时间') }]}
             >
               <RangePicker
                 showTime
                 format="YYYY-MM-DD HH:mm"
                 style={{ width: '100%' }}
+                placeholder={[
+                  t('applicationManagement.form.timeRangePlaceholder.0', '开始时间'),
+                  t('applicationManagement.form.timeRangePlaceholder.1', '结束时间')
+                ]}
                 disabledDate={(current) => {
                   return current && current < dayjs().startOf('day');
                 }}
@@ -722,38 +744,38 @@ export default function ApplicationList() {
 
             <Form.Item
               name="reason"
-              label="使用原因"
-              rules={[{ required: true, message: '请输入使用原因' }]}
+              label={t('applicationManagement.columns.reason')}
+              rules={[{ required: true, message: t('applicationManagement.form.enterCancelReason', '请输入使用原因') }]}
             >
-              <Input.TextArea rows={3} placeholder="请详细描述使用原因" />
+              <Input.TextArea rows={3} placeholder={t('applicationManagement.form.enterCancelReason', '请详细描述使用原因')} />
             </Form.Item>
 
             <Form.Item
               name="crowd"
-              label="使用人数"
-              rules={[{ required: true, message: '请输入使用人数' }]}
+              label={t('myApplications.form.crowd', '使用人数')}
+              rules={[{ required: true, message: t('myApplications.form.enterCrowd', '请输入使用人数') }]}
             >
               <InputNumber
                 min={1}
                 max={1000}
-                placeholder="请输入使用人数"
+                placeholder={t('myApplications.form.enterCrowd', '请输入使用人数')}
                 style={{ width: '100%' }}
               />
             </Form.Item>
 
             <Form.Item
               name="contact"
-              label="联系方式"
-              rules={[{ required: true, message: '请输入联系方式' }]}
+              label={t('myApplications.form.contact', '联系方式')}
+              rules={[{ required: true, message: t('myApplications.form.enterContact', '请输入联系方式') }]}
             >
-              <Input placeholder="请输入联系方式" />
+              <Input placeholder={t('myApplications.form.enterContact', '请输入联系方式')} />
             </Form.Item>
 
             <Form.Item
               name="remark"
-              label="备注"
+              label={t('applicationManagement.descriptions.reason')}
             >
-              <Input.TextArea rows={3} placeholder="请输入备注信息" />
+              <Input.TextArea rows={3} placeholder={t('applicationManagement.form.enterApproveOpinion', '请输入备注信息')} />
             </Form.Item>
           </Form>
         )}
@@ -831,23 +853,23 @@ export default function ApplicationList() {
               border: '1px solid var(--border-color)',
               borderRadius: 6 
             }}>
-              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>申请信息</h4>
+              <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>{t('applicationManagement.drawer.detail')}</h4>
               <div style={{ color: 'var(--text-color)' }}>
-                <p><strong>申请教室：</strong>{currentApplication.roomName}</p>
-                <p><strong>申请人：</strong>{currentApplication.userNickname || currentApplication.username}
+                <p><strong>{t('applicationManagement.descriptions.roomName')}：</strong>{currentApplication.roomName}</p>
+                <p><strong>{t('applicationManagement.descriptions.applicant')}：</strong>{currentApplication.userNickname || currentApplication.username}
                   {currentApplication.userRole && (
                     <Tag color="processing" style={{ marginLeft: '8px' }}>
                       {getRoleDisplayName(currentApplication.userRole)}
                     </Tag>
                   )}
                 </p>
-                <p><strong>使用时间：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
-                <p><strong>使用原因：</strong>{currentApplication.reason}</p>
+                <p><strong>{t('applicationManagement.columns.usageTime')}：</strong>{formatTimeRange(currentApplication.startTime, currentApplication.endTime)}</p>
+                <p><strong>{t('applicationManagement.columns.reason')}：</strong>{currentApplication.reason}</p>
                 {currentApplication.crowd && (
-                  <p><strong>使用人数：</strong>{currentApplication.crowd}人</p>
+                  <p><strong>{t('myApplications.form.crowd', '使用人数')}：</strong>{currentApplication.crowd}{t('myApplications.form.peopleUnit', '人')}</p>
                 )}
                 {currentApplication.contact && (
-                  <p><strong>联系方式：</strong>{currentApplication.contact}</p>
+                  <p><strong>{t('myApplications.form.contact', '联系方式')}：</strong>{currentApplication.contact}</p>
                 )}
               </div>
             </div>
@@ -859,21 +881,21 @@ export default function ApplicationList() {
             >
               <Form.Item
                 name="approved"
-                label="审批结果"
-                rules={[{ required: true, message: '请选择审批结果' }]}
+                label={t('applicationManagement.form.approveResult')}
+                rules={[{ required: true, message: t('applicationManagement.form.pleaseSelectApproveResult') }]}
               >
-                <Select placeholder="请选择审批结果">
-                  <Option value={true}>批准</Option>
-                  <Option value={false}>拒绝</Option>
+                <Select placeholder={t('applicationManagement.form.pleaseSelectApproveResult')}>
+                  <Option value={true}>{t('applicationManagement.form.approveOptionApprove')}</Option>
+                  <Option value={false}>{t('applicationManagement.form.approveOptionReject')}</Option>
                 </Select>
               </Form.Item>
               
               <Form.Item
                 name="reason"
-                label="审批意见"
-                rules={[{ required: true, message: '请输入审批意见' }]}
+                label={t('applicationManagement.form.approveOpinion')}
+                rules={[{ required: true, message: t('applicationManagement.form.enterApproveOpinion') }]}
               >
-                <Input.TextArea rows={4} placeholder="请输入审批意见" />
+                <Input.TextArea rows={4} placeholder={t('applicationManagement.form.enterApproveOpinion')} />
               </Form.Item>
             </Form>
           </div>

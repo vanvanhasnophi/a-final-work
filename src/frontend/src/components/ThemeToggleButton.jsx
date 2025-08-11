@@ -2,11 +2,13 @@ import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Tooltip, Button } from 'antd';
 import { BulbOutlined, BulbFilled } from '@ant-design/icons';
+import { useI18n } from '../contexts/I18nContext';
 
 export default function ThemeToggleButton({ style }) {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { t } = useI18n();
   return (
-    <Tooltip title={isDarkMode ? '切换为浅色模式' : '切换为深色模式'}>
+    <Tooltip title={isDarkMode ? t('layout.switchToLight') : t('layout.switchToDark')}>
       <Button
         shape="circle"
         size="large"

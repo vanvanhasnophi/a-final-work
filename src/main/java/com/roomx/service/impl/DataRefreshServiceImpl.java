@@ -132,18 +132,19 @@ public class DataRefreshServiceImpl implements DataRefreshService {
                 logger.info("清理了 {} 条60天前的申请记录", deletedOldCount);
             }
             
-            // 清理已过期的申请（结束时间已过且状态为已完成）
+            // 清理已过期的申请（结束时间已过且状态为已完成或已取消，并且marked为过期）
             Date now = new Date();
             List<Application> expiredApplications = applicationRepository.findAll().stream()
                 .filter(app -> app.getEndTime() != null && app.getEndTime().before(now))
-                .filter(app -> app.getStatus() == ApplicationStatus.COMPLETED)
+                .filter(app -> (app.getStatus() == ApplicationStatus.COMPLETED || app.getStatus() == ApplicationStatus.CANCELLED) 
+                           && app.getExpired() != null && app.getExpired())
                 .toList();
             
             int deletedExpiredCount = 0;
             if (!expiredApplications.isEmpty()) {
                 applicationRepository.deleteAll(expiredApplications);
                 deletedExpiredCount = expiredApplications.size();
-                logger.info("清理了 {} 条已完成的过期申请", deletedExpiredCount);
+                logger.info("清理了 {} 条已完成/已过期的申请", deletedExpiredCount);
             }
             
             // 更新教室状态
