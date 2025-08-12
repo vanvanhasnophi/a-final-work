@@ -780,7 +780,7 @@ function ApplicationManagementContent() {
           
           <div style={{ 
             flex: 1,
-            minHeight: '280px',
+            // minHeight: '280px',
             display: 'flex',
             flexDirection: 'column',
             border: '0px solid var(--border-color)',
@@ -801,6 +801,70 @@ function ApplicationManagementContent() {
                   overflowY: 'hidden',
                   height: '100%'
                 }}>
+                  <style jsx>{`
+                    div::-webkit-scrollbar {
+                      height: 8px;
+                      background: transparent;
+                    }
+                    div::-webkit-scrollbar-track {
+                      background: transparent;
+                    }
+                    
+                    /* 浅色模式 - 默认样式 */
+                    div::-webkit-scrollbar-thumb {
+                      background: rgba(0, 0, 0, 0.15);
+                      border-radius: 4px;
+                      transition: background 0.2s ease;
+                    }
+                    div::-webkit-scrollbar-thumb:hover {
+                      background: rgba(0, 0, 0, 0.25);
+                    }
+                    div {
+                      scrollbar-width: thin;
+                      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+                    }
+                    
+                    /* 深色模式适配 - 半透明白色 */
+                    [data-theme="dark"] div::-webkit-scrollbar-thumb,
+                    .dark div::-webkit-scrollbar-thumb {
+                      background: rgba(255, 255, 255, 0.2);
+                    }
+                    [data-theme="dark"] div::-webkit-scrollbar-thumb:hover,
+                    .dark div::-webkit-scrollbar-thumb:hover {
+                      background: rgba(255, 255, 255, 0.35);
+                    }
+                    [data-theme="dark"] div,
+                    .dark div {
+                      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                    }
+                    
+                    /* 系统深色模式 */
+                    @media (prefers-color-scheme: dark) {
+                      div::-webkit-scrollbar-thumb {
+                        background: rgba(255, 255, 255, 0.2);
+                      }
+                      div::-webkit-scrollbar-thumb:hover {
+                        background: rgba(255, 255, 255, 0.35);
+                      }
+                      div {
+                        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                      }
+                    }
+                    
+                    /* 明确的浅色模式覆盖（当明确指定浅色主题时） */
+                    [data-theme="light"] div::-webkit-scrollbar-thumb,
+                    .light div::-webkit-scrollbar-thumb {
+                      background: rgba(0, 0, 0, 0.15);
+                    }
+                    [data-theme="light"] div::-webkit-scrollbar-thumb:hover,
+                    .light div::-webkit-scrollbar-thumb:hover {
+                      background: rgba(0, 0, 0, 0.25);
+                    }
+                    [data-theme="light"] div,
+                    .light div {
+                      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+                    }
+                  `}</style>
                     <Table
                       columns={columns}
                       dataSource={applications}
@@ -808,7 +872,7 @@ function ApplicationManagementContent() {
                       loading={applicationsLoading}
                       scroll={{ 
                         x: 1200, 
-                        y: isFilterCollapsed ? 'calc(100vh - 265px)' : 'calc(100vh - 315px)',
+                        y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
                         scrollToFirstRowOnChange: false
                       }}
                     pagination={false}
@@ -817,7 +881,6 @@ function ApplicationManagementContent() {
                     style={{ 
                       height: '100%',
                       minWidth: '1200px',
-                      minHeight: '400px'  // 为表格体添加最小高度
                     }}
                     overflowX='hidden'
                     sticky={{ offsetHeader: 0 }}
