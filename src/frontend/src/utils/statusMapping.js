@@ -19,4 +19,13 @@ export const getApplicationStatusColor = (status) => {
     'IN_USE': 'processing'         // 蓝色 - 使用中
   };
   return colorMapping[status] || 'default';
+};
+
+// 判断申请是否过期（使用后端返回的expired字段）
+export const isApplicationExpired = (record) => {
+  if (!record) return false;
+  
+  // 处理expired字段的多种值类型：true, 1, "1"
+  const expired = record.expired;
+  return expired === true || expired === 1 || expired === "1";
 }; 

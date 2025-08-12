@@ -13,6 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import { formatDateTime, formatTimeRange, formatRelativeTime } from '../utils/dateFormat';
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
+import ResponsiveButton from '../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../components/FilterDropdownButton';
 import { useAuth } from '../contexts/AuthContext';
 import FixedTop from '../components/FixedTop';
 import dayjs from 'dayjs';
@@ -22,6 +25,13 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 export default function ApplicationList() {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useI18n();
@@ -43,6 +53,7 @@ export default function ApplicationList() {
   const statusSelectRef = useRef(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(undefined);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
 
   
@@ -343,7 +354,9 @@ export default function ApplicationList() {
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{t('applicationManagement.title')}</span>
-            <span style={{ 
+            {/* 只受宽度影响，600px 及以上显示提示，与按钮逻辑一致 */}
+            {windowWidth >= 600 && (
+              <span style={{ 
                 fontSize: '12px', 
                 color: 'var(--text-color-secondary)', 
                 fontWeight: 'normal',
@@ -354,11 +367,180 @@ export default function ApplicationList() {
               }}>
                 {t('applicationManagement.badgeRetention')}
               </span>
+            )}
           </div>
         }
         extra={
           <Space>
-            <Button 
+            {isFilterCollapsed && (
+              <FilterDropdownButton>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  {/* 教室搜索 */}
+                  <div style={{ minWidth: '200px' }}>
+                    <Input
+                      placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={roomSearch.searchValue}
+                      onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
+                      onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
+                    />
+                  </div>
+                  
+                  {/* 申请人搜索 */}
+                  <div style={{ minWidth: '150px' }}>
+                    <Input
+                      placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
+                      allowClear
+                      style={{ 
+                        width: '100%',
+                        ...(showOnlyMyApplications && {
+                          backgroundColor: 'var(--disabled-bg)',
+                          color: 'var(--text-color-disabled)',
+                          cursor: 'not-allowed',
+                          opacity: 0.6
+                        })
+                      }}
+                      value={applicantSearch.searchValue}
+                      onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
+                      onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+                      disabled={showOnlyMyApplications}
+                    />
+                  </div>
+                  
+                  {/* 仅查看自己的申请 */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '150px',
+                    gap: '8px',
+                    height: '32px'
+                  }}>
+                    <Switch
+                      checked={showOnlyMyApplications}
+                      onChange={(checked) => {
+                        // 如果勾选了"仅查看自己的申请"，清空申请人搜索
+                        if (checked) {
+                          // 直接设置搜索值，避免触发防抖搜索
+                          applicantSearch.updateSearchValue('');
+                        }
+                        
+                        // 构建新的搜索参数
+                        const newParams = {
+                          pageNum: 1,
+                          roomName: roomSearch.searchValue || undefined,
+                          nickname: checked ? undefined : (applicantSearch.searchValue || undefined),
+                          status: selectedStatus,
+                          queryDate: selectedDate ? selectedDate.format('YYYY-MM-DD') : undefined,
+                          userId: checked ? user?.id : undefined
+                        };
+                        
+                        // 先更新搜索参数
+                        setSearchParams(newParams);
+                        
+                        // 更新状态
+                        setShowOnlyMyApplications(checked);
+                        
+                        
+                      }}
+                      size="small"
+                    />
+                    <span style={{ 
+                      fontSize: '14px', 
+                      color: 'var(--text-color)',
+                      lineHeight: '32px'
+                    }}>
+                      {t('myApplications.filters.onlyMine', '仅查看自己的申请')}
+                    </span>
+                  </div>
+                  
+                  {/* 状态筛选 */}
+                  <div style={{ minWidth: '120px' }}>
+                    <Select
+                      ref={statusSelectRef}
+                      placeholder={t('applicationManagement.filters.statusPlaceholder')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={selectedStatus}
+                      onChange={(value) => {
+                        setSelectedStatus(value);
+                        const newParams = { status: value || undefined, pageNum: 1 };
+                        setSearchParams(prev => ({ ...prev, ...newParams }));
+                        fetchApplications(newParams);
+                      }}
+                    >
+                      <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+                      <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+                      <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+                      <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+                      <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+                      <Option value="EXPIRED">{t('applicationManagement.statusOptions.EXPIRED')}</Option>
+                    </Select>
+                  </div>
+                  
+                  {/* 使用时间筛选 */}
+                  <div style={{ minWidth: '150px' }}>
+                    <DatePicker
+                      ref={datePickerRef}
+                      style={{ width: '100%' }}
+                      placeholder={t('applicationManagement.filters.datePlaceholder')}
+                      format="YYYY-MM-DD"
+                      value={selectedDate}
+                      onChange={(date) => {
+                        setSelectedDate(date);
+                        let newParams = { pageNum: 1 };
+                        if (date) {
+                          // 将dayjs对象转换为YYYY-MM-DD格式的字符串
+                          newParams = {
+                            ...newParams,
+                            queryDate: date.format('YYYY-MM-DD'),
+                          };
+                        } else {
+                          newParams = {
+                            ...newParams,
+                            queryDate: undefined,
+                          };
+                        }
+                        setSearchParams(prev => ({ ...prev, ...newParams }));
+                        fetchApplications(newParams);
+                      }}
+                    />
+                  </div>
+                  
+                  {/* 操作按钮 */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button
+                      onClick={() => {
+                        // 清空筛选控件内容
+                        roomSearch.updateSearchValue('');
+                        applicantSearch.updateSearchValue('');
+                        // 清除日期选择器
+                        setSelectedDate(null);
+                        // 清空状态选择器
+                        setSelectedStatus(undefined);
+                        // 清空"仅查看自己的申请"复选框
+                        setShowOnlyMyApplications(false);
+                        // 清空搜索参数并刷新数据
+                        const newParams = {
+                          pageNum: 1,
+                          roomName: undefined,
+                          nickname: undefined,
+                          status: undefined,
+                          queryDate: undefined,
+                          userId: undefined
+                        };
+                        setSearchParams(newParams);
+                        fetchApplications(newParams);
+                      }}
+                    >
+                      {t('applicationManagement.filters.clearFilters', t('common.clearFilters'))}
+                    </Button>
+                  </div>
+                </div>
+              </FilterDropdownButton>
+            )}
+            <ResponsiveButton 
               icon={<ReloadOutlined />} 
               onClick={() => {
                 // 清空筛选控件内容
@@ -382,10 +564,10 @@ export default function ApplicationList() {
               loading={applicationsLoading}
             >
               {t('common.refresh')}
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddApplication}>
+            </ResponsiveButton>
+            <ResponsiveButton type="primary" icon={<PlusOutlined />} onClick={handleAddApplication}>
               {t('common.create')}
-            </Button>
+            </ResponsiveButton>
           </Space>
         }
         style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -404,205 +586,205 @@ export default function ApplicationList() {
         
         {/* 筛选区域 */}
         <div style={{
-          padding: '16px',
+          padding: isFilterCollapsed ? '4px' : '16px',
           borderBottom: '1px solid var(--border-color)',
-          backgroundColor: 'var(--component-bg)'
+          backgroundColor: 'var(--component-bg)',
+          transition: 'padding 0.3s ease'
         }}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* 教室搜索 */}
-            <div style={{ minWidth: '200px' }}>
-              <Input
-                placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
-                allowClear
-                style={{ width: '100%' }}
-                value={roomSearch.searchValue}
-                onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
-                onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
-              />
-            </div>
-            
-            {/* 申请人搜索 */}
-            <div style={{ minWidth: '150px' }}>
-              <Input
-                placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
-                allowClear
-                style={{ 
-                  width: '100%',
-                  ...(showOnlyMyApplications && {
-                    backgroundColor: 'var(--disabled-bg)',
-                    color: 'var(--text-color-disabled)',
-                    cursor: 'not-allowed',
-                    opacity: 0.6
-                  })
-                }}
-                value={applicantSearch.searchValue}
-                onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
-                onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
-                disabled={showOnlyMyApplications}
-              />
-            </div>
-            
-                        {/* 仅查看自己的申请 */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: '150px',
-              gap: '8px',
-              height: '32px'
-            }}>
-              <Switch
-                checked={showOnlyMyApplications}
-                onChange={(checked) => {
-                  // 如果勾选了"仅查看自己的申请"，清空申请人搜索
-                  if (checked) {
-                    // 直接设置搜索值，避免触发防抖搜索
-                    applicantSearch.updateSearchValue('');
-                  }
-                  
-                  // 构建新的搜索参数
+          <ResponsiveFilterContainer 
+            threshold={900}
+            onCollapseStateChange={setIsFilterCollapsed}
+          >
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              {/* 教室搜索 */}
+              <div style={{ minWidth: '200px' }}>
+                <Input
+                  placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={roomSearch.searchValue}
+                  onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
+                  onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
+                />
+              </div>
+              
+              {/* 申请人搜索 */}
+              <div style={{ minWidth: '150px' }}>
+                <Input
+                  placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
+                  allowClear
+                  style={{ 
+                    width: '100%',
+                    ...(showOnlyMyApplications && {
+                      backgroundColor: 'var(--disabled-bg)',
+                      color: 'var(--text-color-disabled)',
+                      cursor: 'not-allowed',
+                      opacity: 0.6
+                    })
+                  }}
+                  value={applicantSearch.searchValue}
+                  onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
+                  onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+                  disabled={showOnlyMyApplications}
+                />
+              </div>
+              
+                          {/* 仅查看自己的申请 */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '150px',
+                gap: '8px',
+                height: '32px'
+              }}>
+                <Switch
+                  checked={showOnlyMyApplications}
+                  onChange={(checked) => {
+                    // 如果勾选了"仅查看自己的申请"，清空申请人搜索
+                    if (checked) {
+                      // 直接设置搜索值，避免触发防抖搜索
+                      applicantSearch.updateSearchValue('');
+                    }
+                    
+                    // 构建新的搜索参数
+                    const newParams = {
+                      pageNum: 1,
+                      roomName: roomSearch.searchValue || undefined,
+                      nickname: checked ? undefined : (applicantSearch.searchValue || undefined),
+                      status: selectedStatus,
+                      queryDate: selectedDate ? selectedDate.format('YYYY-MM-DD') : undefined,
+                      userId: checked ? user?.id : undefined
+                    };
+                    
+                    // 先更新搜索参数
+                    setSearchParams(newParams);
+                    
+                    // 更新状态
+                    setShowOnlyMyApplications(checked);
+                    
+                    
+                  }}
+                  size="small"
+                />
+                <span style={{ 
+                  fontSize: '14px', 
+                  color: 'var(--text-color)',
+                  lineHeight: '32px'
+                }}>
+                  {t('myApplications.filters.onlyMine', '仅查看自己的申请')}
+                </span>
+              </div>
+              
+              {/* 状态筛选 */}
+              <div style={{ minWidth: '120px' }}>
+                <Select
+                  ref={statusSelectRef}
+                  placeholder={t('applicationManagement.filters.statusPlaceholder')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={selectedStatus}
+                  onChange={(value) => {
+                    setSelectedStatus(value);
+                    const newParams = { status: value || undefined, pageNum: 1 };
+                    setSearchParams(prev => ({ ...prev, ...newParams }));
+                    fetchApplications(newParams);
+                  }}
+                >
+                  <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+                  <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+                  <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+                  <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+                  <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+                  <Option value="EXPIRED">{t('applicationManagement.statusOptions.EXPIRED')}</Option>
+                </Select>
+              </div>
+              
+              {/* 使用时间筛选 */}
+              <div style={{ minWidth: '150px' }}>
+                <DatePicker
+                  ref={datePickerRef}
+                  style={{ width: '100%' }}
+                  placeholder={t('applicationManagement.filters.datePlaceholder')}
+                  format="YYYY-MM-DD"
+                  value={selectedDate}
+                  onChange={(date) => {
+                    setSelectedDate(date);
+                    let newParams = { pageNum: 1 };
+                    if (date) {
+                      // 将dayjs对象转换为YYYY-MM-DD格式的字符串
+                      newParams = {
+                        ...newParams,
+                        queryDate: date.format('YYYY-MM-DD'),
+                      };
+                    } else {
+                      newParams = {
+                        ...newParams,
+                        queryDate: undefined,
+                      };
+                    }
+                    setSearchParams(prev => ({ ...prev, ...newParams }));
+                    fetchApplications(newParams);
+                  }}
+                />
+              </div>
+              
+
+              
+              {/* 操作按钮 */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                            <Button
+                onClick={() => {
+                  // 清空筛选控件内容
+                  roomSearch.updateSearchValue('');
+                  applicantSearch.updateSearchValue('');
+                  // 清除日期选择器
+                  setSelectedDate(null);
+                  // 清空状态选择器
+                  setSelectedStatus(undefined);
+                  // 清空"仅查看自己的申请"复选框
+                  setShowOnlyMyApplications(false);
+                  // 清空搜索参数并刷新数据
                   const newParams = {
                     pageNum: 1,
-                    roomName: roomSearch.searchValue || undefined,
-                    nickname: checked ? undefined : (applicantSearch.searchValue || undefined),
-                    status: selectedStatus,
-                    queryDate: selectedDate ? selectedDate.format('YYYY-MM-DD') : undefined,
-                    userId: checked ? user?.id : undefined
+                    roomName: undefined,
+                    nickname: undefined,
+                    status: undefined,
+                    queryDate: undefined,
+                    userId: undefined
                   };
-                  
-                  // 先更新搜索参数
                   setSearchParams(newParams);
-                  
-                  // 更新状态
-                  setShowOnlyMyApplications(checked);
-                  
-                  
-                }}
-                size="small"
-              />
-              <span style={{ 
-                fontSize: '14px', 
-                color: 'var(--text-color)',
-                lineHeight: '32px'
-              }}>
-                {t('myApplications.filters.onlyMine', '仅查看自己的申请')}
-              </span>
-            </div>
-            
-            {/* 状态筛选 */}
-            <div style={{ minWidth: '120px' }}>
-              <Select
-                ref={statusSelectRef}
-                placeholder={t('applicationManagement.filters.statusPlaceholder')}
-                allowClear
-                style={{ width: '100%' }}
-                value={selectedStatus}
-                onChange={(value) => {
-                  setSelectedStatus(value);
-                  const newParams = { status: value || undefined, pageNum: 1 };
-                  setSearchParams(prev => ({ ...prev, ...newParams }));
                   fetchApplications(newParams);
                 }}
-              >
-                <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
-                <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
-                <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
-                <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
-                <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
-                <Option value="EXPIRED">{t('applicationManagement.statusOptions.EXPIRED')}</Option>
-              </Select>
+                >
+                {t('applicationManagement.filters.clearFilters', t('common.clearFilters'))}
+              </Button>
+              </div>
             </div>
-            
-            {/* 使用时间筛选 */}
-            <div style={{ minWidth: '150px' }}>
-              <DatePicker
-                ref={datePickerRef}
-                style={{ width: '100%' }}
-                placeholder={t('applicationManagement.filters.datePlaceholder')}
-                format="YYYY-MM-DD"
-                value={selectedDate}
-                onChange={(date) => {
-                  setSelectedDate(date);
-                  let newParams = { pageNum: 1 };
-                  if (date) {
-                    // 将dayjs对象转换为YYYY-MM-DD格式的字符串
-                    newParams = {
-                      ...newParams,
-                      queryDate: date.format('YYYY-MM-DD'),
-                    };
-                  } else {
-                    newParams = {
-                      ...newParams,
-                      queryDate: undefined,
-                    };
-                  }
-                  setSearchParams(prev => ({ ...prev, ...newParams }));
-                  fetchApplications(newParams);
-                }}
-              />
-            </div>
-            
-
-            
-            {/* 操作按钮 */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-                          <Button
-              onClick={() => {
-                // 清空筛选控件内容
-                roomSearch.updateSearchValue('');
-                applicantSearch.updateSearchValue('');
-                // 清除日期选择器
-                setSelectedDate(null);
-                // 清空状态选择器
-                setSelectedStatus(undefined);
-                // 清空"仅查看自己的申请"复选框
-                setShowOnlyMyApplications(false);
-                // 清空搜索参数并刷新数据
-                const newParams = {
-                  pageNum: 1,
-                  roomName: undefined,
-                  nickname: undefined,
-                  status: undefined,
-                  queryDate: undefined,
-                  userId: undefined
-                };
-                setSearchParams(newParams);
-                fetchApplications(newParams);
-              }}
-              >
-              {t('applicationManagement.filters.clearFilters', t('common.clearFilters'))}
-            </Button>
-            </div>
-          </div>
+          </ResponsiveFilterContainer>
         </div>
         
         <div style={{ 
           flex: 1,
-          minHeight: '280px',
           display: 'flex',
           flexDirection: 'column',
           border: '0px solid var(--border-color)',
           borderRadius: '0px',
           overflow: 'hidden',
           height: '100%',
-          maxHeight: '100%',
           position: 'relative'
         }}>
 
           
           {/* 表格内容区域 - 可滚动 */}
           <div style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: '60px', // 为分页组件留出空间
-            overflow: 'hidden' // 禁止容器的垂直滚动
+            flex: 1,
+            overflow: 'hidden'
           }}>
             <FixedTop>
               <div style={{
-                overflowX: 'auto', // 允许水平滚动
-                overflowY: 'hidden', // 禁止垂直滚动
+                overflowX: 'auto',
+                overflowY: 'hidden',
                 height: '100%'
               }}>
                 <Table
@@ -610,19 +792,11 @@ export default function ApplicationList() {
                   dataSource={applications}
                   rowKey="id"
                   loading={applicationsLoading}
-                  scroll={{ 
-                    x: 1200, 
-                    y: 'calc(100vh - 300px)',
-                    scrollToFirstRowOnChange: false
-                  }}
+                  scroll={{ x: 1200, y: undefined, scrollToFirstRowOnChange: false }}
                   pagination={false}
                   onChange={handleTableChange}
                   size="middle"
-                  style={{ 
-                    height: '100%',
-                    minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
-                  }}
-                  overflowX='hidden'
+                  style={{ height: '100%', minWidth: '1200px', overflowX: 'hidden' }}
                   sticky={{ offsetHeader: 0 }}
                 />
               </div>
@@ -631,11 +805,6 @@ export default function ApplicationList() {
           
           {/* 分页组件 - 常驻 */}
           <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '60px',
             padding: '12px 16px',
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',

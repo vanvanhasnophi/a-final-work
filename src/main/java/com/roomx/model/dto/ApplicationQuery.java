@@ -25,5 +25,6 @@ public class ApplicationQuery {
     private Date updateTime;
     private Date startTime;
     private Date endTime;
+    private Boolean showExpired; // 是否显示过期申请
     // queryDate字段已移除，现在在控制器中手动处理
 } 

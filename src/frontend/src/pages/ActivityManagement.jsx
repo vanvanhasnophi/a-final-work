@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, Row, Col, Select, Button, Space, Tag, Typography } from 'antd';
 import { ReloadOutlined, ClearOutlined } from '@ant-design/icons';
 import RecentActivities from '../components/RecentActivities';
+import ResponsiveButton from '../components/ResponsiveButton';
 import { useActivities } from '../hooks/useActivities';
 import ActivityGenerator from '../utils/activityGenerator';
 import { useAuth } from '../contexts/AuthContext';
@@ -104,26 +105,26 @@ export default function ActivityManagement() {
           </Col>
           <Col span={12}>
             <Space>
-              <Button 
+              <ResponsiveButton 
                 icon={<ReloadOutlined />} 
                 onClick={refreshActivities}
                 loading={loading}
               >
                 刷新
-              </Button>
-              <Button 
+              </ResponsiveButton>
+              <ResponsiveButton 
                 icon={<ClearOutlined />} 
                 onClick={clearActivities}
                 danger
               >
                 清空活动
-              </Button>
-              <Button 
+              </ResponsiveButton>
+              <ResponsiveButton 
                 type="primary"
                 onClick={generateTestActivities}
               >
                 生成测试活动
-              </Button>
+              </ResponsiveButton>
             </Space>
           </Col>
         </Row>

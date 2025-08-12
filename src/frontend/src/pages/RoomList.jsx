@@ -17,6 +17,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { canCreateRoom, canDeleteRoom, canUpdateRoom, canCreateApplication } from '../utils/permissionUtils';
 import FixedTop from '../components/FixedTop';
+import ResponsiveButton from '../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../components/FilterDropdownButton';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -56,6 +59,7 @@ export default function RoomList() {
   // 筛选控件状态管理
   const [selectedType, setSelectedType] = useState(undefined);
   const [selectedStatus, setSelectedStatus] = useState(undefined);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false); // 筛选器折叠状态
   const typeSelectRef = useRef(null);
   const statusSelectRef = useRef(null);
   
@@ -527,7 +531,81 @@ export default function RoomList() {
         title={t('roomList.title')}
         extra={
           <Space>
-            <Button 
+            {/* 筛选器下拉按钮（仅在折叠时显示） */}
+            <FilterDropdownButton visible={isFilterCollapsed}>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                {/* 教室搜索 */}
+                <div style={{ minWidth: '200px' }}>
+                  <Input
+                    placeholder={t('roomList.searchPlaceholder')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
+                
+                {/* 教室类型筛选 */}
+                <div style={{ minWidth: '120px' }}>
+                  <Select
+                    placeholder={t('roomList.allTypes')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={selectedType}
+                    onChange={(value) => {
+                      setSelectedType(value);
+                      handleTypeFilter(value);
+                    }}
+                  >
+                    <Option value="all">{t('roomList.allTypes')}</Option>
+                    <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
+                    <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
+                    <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
+                    <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
+                  </Select>
+                </div>
+                
+                {/* 教室状态筛选 */}
+                <div style={{ minWidth: '120px' }}>
+                  <Select
+                    placeholder={t('roomList.allStatuses')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={selectedStatus}
+                    onChange={(value) => {
+                      setSelectedStatus(value);
+                      handleStatusFilter(value);
+                    }}
+                  >
+                    <Option value="AVAILABLE">{t('roomList.options.statuses.AVAILABLE', '可用')}</Option>
+                    <Option value="OCCUPIED">{t('roomList.options.statuses.OCCUPIED', '占用中')}</Option>
+                    <Option value="MAINTENANCE">{t('roomList.options.statuses.MAINTENANCE', '维护中')}</Option>
+                    <Option value="DISABLED">{t('roomList.options.statuses.DISABLED', '已禁用')}</Option>
+                  </Select>
+                </div>
+                
+                {/* 清空筛选按钮 */}
+                <Button
+                  onClick={() => {
+                    // 清空筛选控件内容
+                    setSelectedType(undefined);
+                    setSelectedStatus(undefined);
+                    // 清空搜索参数并刷新数据
+                    const newParams = {
+                      pageNum: 1,
+                      name: undefined,
+                      type: undefined,
+                      status: undefined
+                    };
+                    setSearchParams(newParams);
+                    fetchRooms(newParams);
+                  }}
+                >
+                  {t('common.clearFilters', '清空筛选')}
+                </Button>
+              </div>
+            </FilterDropdownButton>
+            
+            <ResponsiveButton 
               icon={<ReloadOutlined />} 
               onClick={() => {
                 // 清空筛选控件内容
@@ -546,11 +624,11 @@ export default function RoomList() {
               loading={loading}
             >
               {t('common.refresh')}
-            </Button>
+            </ResponsiveButton>
             {canCreateRoom(user?.role) && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
+              <ResponsiveButton type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
                 {t('roomList.addRoom')}
-              </Button>
+              </ResponsiveButton>
             )}
           </Space>
         }
@@ -570,94 +648,101 @@ export default function RoomList() {
         
         {/* 筛选区域 */}
         <div style={{
-          padding: '16px',
+          padding: isFilterCollapsed ? '4px' : '16px',
           borderBottom: '1px solid var(--border-color)',
-          backgroundColor: 'var(--component-bg)'
+          backgroundColor: 'var(--component-bg)',
+          transition: 'padding 0.3s ease'
         }}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* 教室搜索 */}
-            <div style={{ minWidth: '200px' }}>
-              <Input
-                placeholder={t('roomList.searchPlaceholder')}
-                allowClear
-                style={{ width: '100%' }}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
+          <ResponsiveFilterContainer 
+            threshold={900}
+            heightThreshold={600}
+            onCollapseStateChange={setIsFilterCollapsed}
+          >
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              {/* 教室搜索 */}
+              <div style={{ minWidth: '200px' }}>
+                <Input
+                  placeholder={t('roomList.searchPlaceholder')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
+              
+              {/* 教室类型筛选 */}
+              <div style={{ minWidth: '120px' }}>
+                <Select
+                  ref={typeSelectRef}
+                  placeholder={t('roomList.allTypes')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={selectedType}
+                  onChange={(value) => {
+                    setSelectedType(value);
+                    handleTypeFilter(value);
+                  }}
+                >
+                  <Option value="all">{t('roomList.allTypes')}</Option>
+                  <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
+                  <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
+                  <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
+                  <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
+                </Select>
+              </div>
+              
+              {/* 教室状态筛选 */}
+              <div style={{ minWidth: '120px' }}>
+                <Select
+                  ref={statusSelectRef}
+                  placeholder={t('roomList.allStatuses')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={selectedStatus}
+                  onChange={(value) => {
+                    setSelectedStatus(value);
+                    handleStatusFilter(value);
+                  }}
+                >
+                  <Option value="all">{t('roomList.allStatuses')}</Option>
+                  <Option value="available">{t('roomList.options.statuses.available', '空闲')}</Option>
+                  <Option value="reserved">{t('roomList.options.statuses.reserved', '已预约')}</Option>
+                  <Option value="using">{t('roomList.options.statuses.using', '使用中')}</Option>
+                  <Option value="maintenance">{t('roomList.options.statuses.maintenance', '维修中')}</Option>
+                  <Option value="cleaning">{t('roomList.options.statuses.cleaning', '清洁中')}</Option>
+                  <Option value="pending_cleaning">{t('roomList.options.statuses.pending_cleaning', '待清洁')}</Option>
+                  <Option value="pending_maintenance">{t('roomList.options.statuses.pending_maintenance', '待维修')}</Option>
+                  <Option value="unavailable">{t('roomList.options.statuses.unavailable', '不可用')}</Option>
+                </Select>
+              </div>
+              
+              {/* 操作按钮 */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button
+                  onClick={() => {
+                    // 清空筛选控件内容
+                    setSelectedType(undefined);
+                    setSelectedStatus(undefined);
+                    // 清空搜索参数并刷新数据
+                    const newParams = {
+                      pageNum: 1,
+                      name: undefined,
+                      type: undefined,
+                      status: undefined
+                    };
+                    setSearchParams(newParams);
+                    fetchRooms(newParams);
+                  }}
+                >
+                  {t('roomList.clearFilters')}
+                </Button>
+              </div>
             </div>
-            
-            {/* 教室类型筛选 */}
-            <div style={{ minWidth: '120px' }}>
-              <Select
-                ref={typeSelectRef}
-                placeholder={t('roomList.allTypes')}
-                allowClear
-                style={{ width: '100%' }}
-                value={selectedType}
-                onChange={(value) => {
-                  setSelectedType(value);
-                  handleTypeFilter(value);
-                }}
-              >
-                <Option value="all">{t('roomList.allTypes')}</Option>
-                <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
-                <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
-                <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
-                <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
-              </Select>
-            </div>
-            
-            {/* 教室状态筛选 */}
-            <div style={{ minWidth: '120px' }}>
-              <Select
-                ref={statusSelectRef}
-                placeholder={t('roomList.allStatuses')}
-                allowClear
-                style={{ width: '100%' }}
-                value={selectedStatus}
-                onChange={(value) => {
-                  setSelectedStatus(value);
-                  handleStatusFilter(value);
-                }}
-              >
-                <Option value="all">{t('roomList.allStatuses')}</Option>
-                <Option value="available">{t('roomList.options.statuses.available', '空闲')}</Option>
-                <Option value="reserved">{t('roomList.options.statuses.reserved', '已预约')}</Option>
-                <Option value="using">{t('roomList.options.statuses.using', '使用中')}</Option>
-                <Option value="maintenance">{t('roomList.options.statuses.maintenance', '维修中')}</Option>
-                <Option value="cleaning">{t('roomList.options.statuses.cleaning', '清洁中')}</Option>
-                <Option value="pending_cleaning">{t('roomList.options.statuses.pending_cleaning', '待清洁')}</Option>
-                <Option value="pending_maintenance">{t('roomList.options.statuses.pending_maintenance', '待维修')}</Option>
-                <Option value="unavailable">{t('roomList.options.statuses.unavailable', '不可用')}</Option>
-              </Select>
-            </div>
-            
-            {/* 操作按钮 */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                onClick={() => {
-                  // 清空筛选控件内容
-                  setSelectedType(undefined);
-                  setSelectedStatus(undefined);
-                  // 清空搜索参数并刷新数据
-                  const newParams = {
-                    pageNum: 1,
-                    name: undefined,
-                    type: undefined,
-                    status: undefined
-                  };
-                  setSearchParams(newParams);
-                  fetchRooms(newParams);
-                }}
-              >
-                {t('roomList.clearFilters')}
-              </Button>
-            </div>
-          </div>
+          </ResponsiveFilterContainer>
         </div>
         
         <div style={{ 
           flex: 1,
-          minHeight: '280px',
+          // minHeight: '280px',
           display: 'flex',
           flexDirection: 'column',
           border: '0px solid var(--border-color)',
@@ -671,17 +756,13 @@ export default function RoomList() {
           
           {/* 表格内容区域 - 可滚动 */}
           <div style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: '60px', // 为分页组件留出空间
-            overflow: 'hidden' // 禁止容器的垂直滚动
+            flex: 1,
+            overflow: 'hidden'
           }}>
             <FixedTop>
               <div style={{
-                overflowX: 'auto', // 允许水平滚动
-                overflowY: 'hidden', // 禁止垂直滚动
+                overflowX: 'auto',
+                overflowY: 'hidden',
                 height: '100%'
               }}>
                 <Table
@@ -691,7 +772,7 @@ export default function RoomList() {
                   loading={loading}
                   scroll={{ 
                     x: 1200, 
-                    y: 'calc(100vh - 300px)',
+                    y: isFilterCollapsed ? 'calc(100vh - 265px)' : 'calc(100vh - 315px)',
                     scrollToFirstRowOnChange: false
                   }}
                   pagination={false}
@@ -699,7 +780,8 @@ export default function RoomList() {
                   size="middle"
                   style={{ 
                     height: '100%',
-                    minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
+                    minWidth: '1200px', // 确保表格有最小宽度以触发水平滚动
+                    // minHeight: '400px'  // 为表格体添加最小高度
                   }}
                   overflowX='hidden'
                   sticky={{ offsetHeader: 0 }}
@@ -710,11 +792,6 @@ export default function RoomList() {
           
           {/* 分页组件 - 常驻 */}
           <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '60px',
             padding: '12px 16px',
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',

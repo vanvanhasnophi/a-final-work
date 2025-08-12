@@ -11,10 +11,17 @@ import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate } from 'react-router-dom';
 import { canViewOwnApplications } from '../utils/permissionUtils';
 import LatestNews from '../components/LatestNews';
+import ResponsiveCardContainer from '../components/ResponsiveCardContainer';
 import { useI18n } from '../contexts/I18nContext';
 import { useActivities } from '../hooks/useActivities';
 
 export default function Dashboard() {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const { user } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -154,7 +161,7 @@ export default function Dashboard() {
           
           <Row gutter={16} style={{ marginBottom: '24px' }}>
             {/* 通用统计卡片 */}
-            <Col span={6}>
+            <Col span={windowWidth < 600 ? 24 : 6}>
               <Card>
                 <Statistic
                   title={t('dashboard.stats.totalRooms')}
@@ -167,7 +174,7 @@ export default function Dashboard() {
             {/* 根据角色显示不同的统计卡片 */}
             {!isMaintainer && !isService && (
               <>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.availableRooms')}
@@ -177,7 +184,7 @@ export default function Dashboard() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.myPending')}
@@ -188,7 +195,7 @@ export default function Dashboard() {
                   </Card>
                 </Col>
                 {canViewAllPending && (
-                  <Col span={6}>
+                  <Col span={windowWidth < 600 ? 24 : 6}>
                     <Card>
                       <Statistic
                         title={t('dashboard.stats.allPending')}
@@ -200,7 +207,7 @@ export default function Dashboard() {
                   </Col>
                 )}
                 {!canViewAllPending && (
-                  <Col span={6}>
+                  <Col span={windowWidth < 600 ? 24 : 6}>
                     <Card>
                       <Statistic
                         title={t('dashboard.stats.onlineUsers')}
@@ -216,7 +223,7 @@ export default function Dashboard() {
             {/* Maintainer专用统计卡片 */}
             {isMaintainer && (
               <>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.pendingMaintenanceRooms')}
@@ -226,7 +233,7 @@ export default function Dashboard() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.maintenanceRooms')}
@@ -236,7 +243,7 @@ export default function Dashboard() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.todayMaintenanceReports')}
@@ -252,7 +259,7 @@ export default function Dashboard() {
             {/* Service专用统计卡片 */}
             {isService && (
               <>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.pendingCleaningRooms')}
@@ -262,7 +269,7 @@ export default function Dashboard() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.cleaningRooms')}
@@ -272,7 +279,7 @@ export default function Dashboard() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col span={windowWidth < 600 ? 24 : 6}>
                   <Card>
                     <Statistic
                       title={t('dashboard.stats.todayCleaningReports')}
@@ -287,7 +294,7 @@ export default function Dashboard() {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={windowWidth < 600 ? 24 : 12}>
       <Card title={t('dashboard.quickActionsTitle')} extra={<SettingOutlined />}>
                 {/* 申请教室按钮：审批员(Approver)不展示 */}
                 {!isMaintainer && !isService && !isApprover && (
@@ -349,7 +356,7 @@ export default function Dashboard() {
                 )}
               </Card>
             </Col>
-            <Col span={12}>
+            <Col span={windowWidth < 600 ? 24 : 12}>
       <Card title={t('dashboard.latestNewsTitle')} extra={
                 <Button 
                   type="link" 

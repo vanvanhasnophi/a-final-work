@@ -69,6 +69,7 @@ public class Application {
     private Date updateTime;
     private Date startTime;
     private Date endTime;
+    private Date checkinTime; // 签到时间
 
     // JPA关联，用于数据完整性检查，但不用于查询
     @ManyToOne(fetch = FetchType.LAZY)

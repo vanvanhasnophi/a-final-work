@@ -33,6 +33,7 @@ public class ApplicationDTO {
     private Date updateTime;
     private Date startTime;
     private Date endTime;
+    private Boolean expired; // 是否过期（由后端计算）
 
     public static ApplicationDTO fromEntity(Application application) {
         ApplicationDTO applicationDTO = new ApplicationDTO();
@@ -60,6 +61,10 @@ public class ApplicationDTO {
         applicationDTO.setUpdateTime(application.getUpdateTime());
         applicationDTO.setStartTime(application.getStartTime());
         applicationDTO.setEndTime(application.getEndTime());
+        
+        // 直接使用数据库中的expired字段值
+        applicationDTO.setExpired(application.getExpired());
+        
         return applicationDTO;
     }
 }

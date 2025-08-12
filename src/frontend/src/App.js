@@ -17,6 +17,7 @@ message.config({
   zIndex: 99999,
   rtl: false,
   prefixCls: 'ant-message',
+  getContainer: () => document.body,
 });
 
 // 新增：创建全局MessageContext

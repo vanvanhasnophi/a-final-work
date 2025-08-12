@@ -13,6 +13,9 @@ import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { formatDateTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../utils/permissionUtils';
+import ResponsiveButton from '../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../components/FilterDropdownButton';
 import { getUserDisplayName } from '../utils/userDisplay';
 import FixedTop from '../components/FixedTop';
 import { useI18n } from '../contexts/I18nContext';
@@ -39,6 +42,7 @@ export default function UserList() {
   const [selectedRole, setSelectedRole] = useState(undefined);
   const [authError, setAuthError] = useState(null);
   const [createFormRole, setCreateFormRole] = useState(undefined);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -460,7 +464,74 @@ export default function UserList() {
         title={t('userList.title', '用户管理')} 
         extra={
           <Space>
-            <Button 
+            {isFilterCollapsed && (
+              <FilterDropdownButton>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  {/* 用户名搜索 */}
+                  <div style={{ minWidth: '200px' }}>
+                    <Input
+                      placeholder={t('userList.filters.searchUsername', '搜索用户名')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={usernameSearch.searchValue}
+                      onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
+                      onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
+                    />
+                  </div>
+                  
+                  {/* 昵称搜索 */}
+                  <div style={{ minWidth: '150px' }}>
+                    <Input
+                      placeholder={t('userList.filters.searchNickname', '搜索昵称')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={nicknameSearch.searchValue}
+                      onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
+                      onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+                    />
+                  </div>
+                  
+                  {/* 角色筛选 */}
+                  <div style={{ minWidth: '120px' }}>
+                    <Select
+                      ref={roleSelectRef}
+                      placeholder={t('userList.allRoles', '全部角色')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={selectedRole}
+                      onChange={(value) => {
+                        setSelectedRole(value);
+                        const newParams = { role: value || undefined, pageNum: 1 };
+                        setSearchParams(prev => ({ ...prev, ...newParams }));
+                        fetchUsers(newParams);
+                      }}
+                    >
+                      <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+                      <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                      <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                      <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                      <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
+                    </Select>
+                  </div>
+                  
+                  {/* 操作按钮 */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button
+                      onClick={() => {
+                        // 清空筛选控件内容
+                        usernameSearch.updateSearchValue('');
+                        nicknameSearch.updateSearchValue('');
+                        // 清空角色选择器
+                        setSelectedRole(undefined);
+                      }}
+                    >
+                      {t('common.clearFilters', '清空筛选')}
+                    </Button>
+                  </div>
+                </div>
+              </FilterDropdownButton>
+            )}
+            <ResponsiveButton 
               icon={<ReloadOutlined />} 
               onClick={() => {
                 // 清空筛选控件内容
@@ -481,15 +552,15 @@ export default function UserList() {
               loading={usersLoading}
             >
               {t('common.refresh', '刷新')}
-            </Button>
+            </ResponsiveButton>
             {canCreateUser(user?.role) && (
-              <Button 
+              <ResponsiveButton 
                 type="primary" 
                 icon={<PlusOutlined />} 
                 onClick={handleCreateUser}
               >
                 {t('userList.createUser', '创建用户')}
-              </Button>
+              </ResponsiveButton>
             )}
           </Space>
         }
@@ -509,102 +580,102 @@ export default function UserList() {
         
         {/* 筛选区域 */}
         <div style={{
-          padding: '16px',
+          padding: isFilterCollapsed ? '4px' : '16px',
           borderBottom: '1px solid var(--border-color)',
-          backgroundColor: 'var(--component-bg)'
+          backgroundColor: 'var(--component-bg)',
+          transition: 'padding 0.3s ease'
         }}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* 用户名搜索 */}
-            <div style={{ minWidth: '200px' }}>
-              <Input
-                placeholder={t('userList.filters.searchUsername', '搜索用户名')}
-                allowClear
-                style={{ width: '100%' }}
-                value={usernameSearch.searchValue}
-                onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
-                onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
-              />
+          <ResponsiveFilterContainer 
+            threshold={900}
+            onCollapseStateChange={setIsFilterCollapsed}
+          >
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              {/* 用户名搜索 */}
+              <div style={{ minWidth: '200px' }}>
+                <Input
+                  placeholder={t('userList.filters.searchUsername', '搜索用户名')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={usernameSearch.searchValue}
+                  onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
+                  onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
+                />
+              </div>
+              
+              {/* 昵称搜索 */}
+              <div style={{ minWidth: '150px' }}>
+                <Input
+                  placeholder={t('userList.filters.searchNickname', '搜索昵称')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={nicknameSearch.searchValue}
+                  onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
+                  onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+                />
+              </div>
+              
+              {/* 角色筛选 */}
+              <div style={{ minWidth: '120px' }}>
+                <Select
+                  ref={roleSelectRef}
+                  placeholder={t('userList.allRoles', '全部角色')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={selectedRole}
+                  onChange={(value) => {
+                    setSelectedRole(value);
+                    const newParams = { role: value || undefined, pageNum: 1 };
+                    setSearchParams(prev => ({ ...prev, ...newParams }));
+                    fetchUsers(newParams);
+                  }}
+                >
+                  <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+                  <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                  <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                  <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                  <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
+                </Select>
+              </div>
+              
+              {/* 操作按钮 */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button
+                  onClick={() => {
+                    // 清空筛选控件内容
+                    usernameSearch.updateSearchValue('');
+                    nicknameSearch.updateSearchValue('');
+                    // 清空角色选择器
+                    setSelectedRole(undefined);
+                  }}
+                >
+                  {t('common.clearFilters', '清空筛选')}
+                </Button>
+              </div>
             </div>
-            
-            {/* 昵称搜索 */}
-            <div style={{ minWidth: '150px' }}>
-              <Input
-                placeholder={t('userList.filters.searchNickname', '搜索昵称')}
-                allowClear
-                style={{ width: '100%' }}
-                value={nicknameSearch.searchValue}
-                onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-                onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
-              />
-            </div>
-            
-            {/* 角色筛选 */}
-            <div style={{ minWidth: '120px' }}>
-              <Select
-                ref={roleSelectRef}
-                placeholder={t('userList.allRoles', '全部角色')}
-                allowClear
-                style={{ width: '100%' }}
-                value={selectedRole}
-                onChange={(value) => {
-                  setSelectedRole(value);
-                  const newParams = { role: value || undefined, pageNum: 1 };
-                  setSearchParams(prev => ({ ...prev, ...newParams }));
-                  fetchUsers(newParams);
-                }}
-              >
-                <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
-                <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
-                <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
-                <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
-                <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
-              </Select>
-            </div>
-            
-            {/* 操作按钮 */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                onClick={() => {
-                  // 清空筛选控件内容
-                  usernameSearch.updateSearchValue('');
-                  nicknameSearch.updateSearchValue('');
-                  // 清空角色选择器
-                  setSelectedRole(undefined);
-                }}
-              >
-                {t('common.clearFilters', '清空筛选')}
-              </Button>
-            </div>
-          </div>
+          </ResponsiveFilterContainer>
         </div>
         
         <div style={{ 
           flex: 1,
-          minHeight: '280px',
           display: 'flex',
           flexDirection: 'column',
           border: '0px solid var(--border-color)',
           borderRadius: '0px',
           overflow: 'hidden',
           height: '100%',
-          maxHeight: '100%',
           position: 'relative'
         }}>
 
           
           {/* 表格内容区域 - 可滚动 */}
           <div style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: '60px', // 为分页组件留出空间
-            overflow: 'hidden' // 禁止容器的垂直滚动
+            flex: 1,
+            overflow: 'hidden'
           }}>
             <FixedTop>
               <div style={{
-                overflowX: 'auto', // 允许水平滚动
-                overflowY: 'hidden', // 禁止垂直滚动
+                overflowX: 'auto',
+                overflowY: 'hidden',
                 height: '100%'
               }}>
                 <Table
@@ -612,19 +683,11 @@ export default function UserList() {
                   dataSource={users}
                   rowKey="id"
                   loading={usersLoading}
-                  scroll={{ 
-                    x: 1200, 
-                    y: 'calc(100vh - 300px)',
-                    scrollToFirstRowOnChange: false
-                  }}
+                  scroll={{ x: 1200, y: undefined, scrollToFirstRowOnChange: false }}
                   pagination={false}
                   onChange={handleTableChange}
                   size="middle"
-                  style={{ 
-                    height: '100%',
-                    minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
-                  }}
-                  overflowX='hidden'
+                  style={{ height: '100%', minWidth: '1200px', overflowX: 'hidden' }}
                   sticky={{ offsetHeader: 0 }}
                 />
               </div>
@@ -633,11 +696,6 @@ export default function UserList() {
           
           {/* 分页组件 - 常驻 */}
           <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '60px',
             padding: '12px 16px',
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',

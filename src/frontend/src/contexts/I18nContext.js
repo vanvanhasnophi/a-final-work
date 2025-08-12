@@ -23,6 +23,33 @@ const dictionaries = {
       empty: '暂无数据',
       reason: '原因'
     },
+    modal: {
+      confirm: {
+        title: '确认操作',
+        content: '您确定要执行此操作吗？',
+        okText: '确定',
+        cancelText: '取消'
+      },
+      delete: {
+        title: '确认删除',
+        content: '删除后不可恢复，您确定要删除吗？',
+        okText: '确定删除',
+        cancelText: '取消'
+      },
+      warning: {
+        title: '警告',
+        okText: '我知道了',
+        cancelText: '取消'
+      },
+      error: {
+        title: '错误',
+        okText: '确定'
+      },
+      info: {
+        title: '提示',
+        okText: '确定'
+      }
+    },
     lazy: {
       timeoutTitle: '加载超时',
       timeoutSubTitle: '组件加载超时，请重试或刷新页面',
@@ -43,6 +70,7 @@ const dictionaries = {
         disabled: 'CSRF 已关闭'
       },
       menu: {
+        navigation: '导航菜单',
         dashboard: '仪表板',
         rooms: '教室管理',
         applications: '申请管理',
@@ -70,7 +98,14 @@ const dictionaries = {
         peopleUnit: '人'
       },
       actions: {
-        confirmCancel: '确认撤销该申请？'
+        confirmCancel: '确认撤销该申请？',
+        checkin: '签到',
+        checkinSuccess: '签到成功',
+        checkinFail: '签到失败',
+        checkinConfirmTitle: '确认签到',
+        checkinConfirmContent: '确认对该申请进行签到吗？签到后将无法撤销。',
+        checkinConfirmOk: '确认签到',
+        checkinConfirmCancel: '取消'
       }
     },
     applicationStatus: {
@@ -293,6 +328,7 @@ const dictionaries = {
         APPLIER: '申请人',
         SERVICE: '服务人员',
         MAINTAINER: '维护人员',
+        USER: '用户',
         DEFAULT: '普通用户'
       },
       permission: {
@@ -486,6 +522,50 @@ const dictionaries = {
         }
       }
     },
+    myApplications: {
+      title: '我的申请',
+      filters: {
+        all: '全部',
+        pending: '待审批',
+        approved: '已通过',
+        rejected: '已拒绝',
+        cancelled: '已取消'
+      },
+      actions: {
+        cancel: '取消申请',
+        checkin: '签到',
+        details: '查看详情',
+        edit: '编辑',
+        checkinConfirmTitle: '确认签到',
+        checkinConfirmContent: '确认对该申请进行签到吗？签到后将无法撤销。',
+        checkinConfirmOk: '确认签到',
+        checkinSuccess: '签到成功',
+        checkinFail: '签到失败',
+        cancelConfirmTitle: '确认取消申请',
+        cancelConfirmContent: '确认要取消该申请吗？取消后将无法恢复。',
+        cancelConfirmContentApproved: '该申请已批准，取消后将释放教室预约。确认要取消吗？',
+        cancelConfirmContentPendingCheckin: '该申请正在等待签到，取消后将释放教室预约。确认要取消吗？',
+        cancelConfirmContentInUse: '该申请正在使用中，取消后将标记为完成使用。确认要取消吗？',
+        cancelConfirmOk: '确认取消',
+        cancelSuccess: '申请已取消',
+        cancelFail: '取消申请失败'
+      },
+      columns: {
+        roomName: '教室名称',
+        usageTime: '使用时间',
+        status: '状态',
+        submitTime: '申请时间',
+        reason: '申请理由',
+        actions: '操作'
+      },
+      status: {
+        pending: '待审批',
+        approved: '已通过',
+        rejected: '已拒绝',
+        cancelled: '已取消',
+        checkedIn: '已签到'
+      }
+    },
     applicationManagement: {
       title: '申请管理',
       badgeRetention: '申请记录过期后最多保留60天',
@@ -494,6 +574,7 @@ const dictionaries = {
         applicantSearchPlaceholder: '搜索申请人',
         statusPlaceholder: '全部状态',
         datePlaceholder: '选择日期',
+        showExpired: '显示过期申请',
         clearFilters: '清空筛选'
       },
       statusOptions: {
@@ -520,7 +601,14 @@ const dictionaries = {
       },
       actions: {
         back: '返回上一页',
-        login: '重新登录'
+        login: '重新登录',
+        checkin: '签到',
+        checkinSuccess: '签到成功',
+        checkinFail: '签到失败',
+        checkinConfirmTitle: '确认签到',
+        checkinConfirmContent: '确认对该申请进行签到吗？签到后将无法撤销。',
+        checkinConfirmOk: '确认签到',
+        checkinConfirmCancel: '取消'
       },
       columns: {
         roomName: '教室名称',
@@ -732,6 +820,7 @@ const dictionaries = {
         disabled: 'CSRF disabled'
       },
       menu: {
+        navigation: 'Navigation Menu',
         dashboard: 'Dashboard',
         rooms: 'Rooms',
         applications: 'Applications',
@@ -761,6 +850,33 @@ const dictionaries = {
       loading: 'Loading…',
       empty: 'No data',
       reason: 'Reason'
+    },
+    modal: {
+      confirm: {
+        title: 'Confirm Operation',
+        content: 'Are you sure you want to perform this operation?',
+        okText: 'Confirm',
+        cancelText: 'Cancel'
+      },
+      delete: {
+        title: 'Confirm Deletion',
+        content: 'This action cannot be undone. Are you sure you want to delete?',
+        okText: 'Confirm Delete',
+        cancelText: 'Cancel'
+      },
+      warning: {
+        title: 'Warning',
+        okText: 'I understand',
+        cancelText: 'Cancel'
+      },
+      error: {
+        title: 'Error',
+        okText: 'OK'
+      },
+      info: {
+        title: 'Information',
+        okText: 'OK'
+      }
     },
     lazy: {
       timeoutTitle: 'Load timed out',
@@ -1064,6 +1180,7 @@ const dictionaries = {
         APPLIER: 'Applicant',
         SERVICE: 'Service',
         MAINTAINER: 'Maintainer',
+        USER: 'User',
         DEFAULT: 'User'
       },
       permission: {
@@ -1257,6 +1374,50 @@ const dictionaries = {
         }
       }
     },
+    myApplications: {
+      title: 'My Applications',
+      filters: {
+        all: 'All',
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        cancelled: 'Cancelled'
+      },
+      actions: {
+        cancel: 'Cancel Application',
+        checkin: 'Check In',
+        details: 'View Details',
+        edit: 'Edit',
+        checkinConfirmTitle: 'Confirm Check In',
+        checkinConfirmContent: 'Confirm check in for this application? This action cannot be undone.',
+        checkinConfirmOk: 'Confirm Check In',
+        checkinSuccess: 'Check in successful',
+        checkinFail: 'Check in failed',
+        cancelConfirmTitle: 'Confirm Cancel Application',
+        cancelConfirmContent: 'Are you sure you want to cancel this application? This action cannot be undone.',
+        cancelConfirmContentApproved: 'This application has been approved. Canceling will release the room reservation. Are you sure?',
+        cancelConfirmContentPendingCheckin: 'This application is waiting for check-in. Canceling will release the room reservation. Are you sure?',
+        cancelConfirmContentInUse: 'This application is currently in use. Canceling will mark it as completed. Are you sure?',
+        cancelConfirmOk: 'Confirm Cancel',
+        cancelSuccess: 'Application cancelled',
+        cancelFail: 'Failed to cancel application'
+      },
+      columns: {
+        roomName: 'Room Name',
+        usageTime: 'Usage Time',
+        status: 'Status',
+        submitTime: 'Submit Time',
+        reason: 'Reason',
+        actions: 'Actions'
+      },
+      status: {
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        cancelled: 'Cancelled',
+        checkedIn: 'Checked In'
+      }
+    },
     applicationManagement: {
       title: 'Applications',
       badgeRetention: 'Records kept up to 60 days after expiry',
@@ -1265,6 +1426,7 @@ const dictionaries = {
         applicantSearchPlaceholder: 'Search applicant',
         statusPlaceholder: 'All statuses',
         datePlaceholder: 'Select date',
+        showExpired: 'Show expired applications',
         clearFilters: 'Clear filters'
       },
       statusOptions: {
@@ -1291,7 +1453,14 @@ const dictionaries = {
       },
       actions: {
         back: 'Back',
-        login: 'Sign in'
+        login: 'Sign in',
+        checkin: 'Check In',
+        checkinSuccess: 'Check in successful',
+        checkinFail: 'Check in failed',
+        checkinConfirmTitle: 'Confirm Check In',
+        checkinConfirmContent: 'Are you sure you want to check in for this application? This action cannot be undone.',
+        checkinConfirmOk: 'Confirm Check In',
+        checkinConfirmCancel: 'Cancel'
       },
       columns: {
         roomName: 'Room',
@@ -1362,7 +1531,14 @@ const dictionaries = {
         peopleUnit: ''
       },
       actions: {
-        confirmCancel: 'Cancel this application?'
+        confirmCancel: 'Cancel this application?',
+        checkin: 'Check In',
+        checkinSuccess: 'Check in successful',
+        checkinFail: 'Check in failed',
+        checkinConfirmTitle: 'Confirm Check In',
+        checkinConfirmContent: 'Are you sure you want to check in for this application? This action cannot be undone.',
+        checkinConfirmOk: 'Confirm Check In',
+        checkinConfirmCancel: 'Cancel'
       }
     },
     applicationStatus: {

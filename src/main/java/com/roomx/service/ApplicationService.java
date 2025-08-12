@@ -13,6 +13,7 @@ public interface ApplicationService {
     void approve(Long applicationId, String reason);
     void reject(Long applicationId, String reason);
     void cancel(Long applicationId, String reason);
+    void checkin(Long applicationId);
     
     PageResult<ApplicationDTO> page(ApplicationQuery query, int pageNum, int pageSize, java.util.Date queryDate);
     

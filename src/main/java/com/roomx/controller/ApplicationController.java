@@ -22,6 +22,7 @@ import com.roomx.model.dto.ApplicationQuery;
 import com.roomx.model.dto.ApprovalDTO;
 import com.roomx.model.dto.PageResult;
 import com.roomx.service.ApplicationService;
+import com.roomx.service.RoomStatusSchedulerService;
 import com.roomx.service.UserService;
 import com.roomx.utils.DateUtil;
 
@@ -33,6 +34,9 @@ public class ApplicationController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private RoomStatusSchedulerService roomStatusSchedulerService;
 
     @PostMapping("/post") // 申请预约
     @RequireAuth(roles = {UserRole.APPLIER, UserRole.ADMIN})
@@ -65,6 +69,7 @@ public class ApplicationController {
                                                           @RequestParam(required = false) Date startTime,
                                                           @RequestParam(required = false) Date endTime,
                                                           @RequestParam(required = false) String queryDate,
+                                                          @RequestParam(required = false, defaultValue = "false") Boolean showExpired,
                                                           @RequestParam(defaultValue = "1") int pageNum,
                                                           @RequestParam(defaultValue = "10") int pageSize) {
         // 构建查询对象
@@ -87,6 +92,7 @@ public class ApplicationController {
         query.setUpdateTime(updateTime);
         query.setStartTime(startTime);
         query.setEndTime(endTime);
+        query.setShowExpired(showExpired);
         
         // 手动处理日期转换
         Date parsedQueryDate = null;
@@ -171,9 +177,13 @@ public class ApplicationController {
             
             if (approvalDTO.getApproved()) {
                 applicationService.approve(approvalDTO.getApplicationId(), approvalDTO.getReason());
+                // 立即触发状态更新
+                roomStatusSchedulerService.updateApplicationStatuses();
                 return ResponseEntity.ok("申请已批准");
             } else {
                 applicationService.reject(approvalDTO.getApplicationId(), approvalDTO.getReason());
+                // 立即触发状态更新
+                roomStatusSchedulerService.updateApplicationStatuses();
                 return ResponseEntity.ok("申请已拒绝");
             }
         } catch (Exception e) {
@@ -194,10 +204,30 @@ public class ApplicationController {
             }
             
             applicationService.cancel(approvalDTO.getApplicationId(), approvalDTO.getReason());
+            // 立即触发状态更新
+            roomStatusSchedulerService.updateApplicationStatuses();
             return ResponseEntity.ok("申请已撤销");
         } catch (Exception e) {
             System.err.println("撤销操作失败: " + e.getMessage());
             return ResponseEntity.badRequest().body("撤销操作失败: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/checkin") // 签到申请
+    @RequireAuth(roles = {UserRole.APPLIER, UserRole.ADMIN})
+    public ResponseEntity<String> checkinApplication(@RequestBody ApplicationDTO applicationDTO) {
+        try {
+            if (applicationDTO.getId() == null) {
+                return ResponseEntity.badRequest().body("申请ID不能为空");
+            }
+            
+            applicationService.checkin(applicationDTO.getId());
+            // 立即触发状态更新
+            roomStatusSchedulerService.updateApplicationStatuses();
+            return ResponseEntity.ok("签到成功");
+        } catch (Exception e) {
+            System.err.println("签到操作失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body("签到操作失败: " + e.getMessage());
         }
     }
 }

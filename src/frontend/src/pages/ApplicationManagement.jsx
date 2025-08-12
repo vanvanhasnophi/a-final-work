@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Table, Card, Button, Space, Form, Input, DatePicker, Select, 
   message, Alert, Tag, Pagination, Result, Drawer, Descriptions, 
-  Divider, Tooltip 
+  Divider, Tooltip, Modal, App, Checkbox 
 } from 'antd';
 import { 
   EyeOutlined, ReloadOutlined, 
@@ -13,6 +13,9 @@ import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import FixedTop from '../components/FixedTop';
+import ResponsiveButton from '../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../components/FilterDropdownButton';
 
 import { 
   canViewAllApplications, canViewOwnApplications, canApproveApplication, 
@@ -21,16 +24,18 @@ import {
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { applicationAPI } from '../api/application';
 import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
-import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
+import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicationExpired } from '../utils/statusMapping';
 import { useI18n } from '../contexts/I18nContext';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { getUserDisplayName } from '../utils/userDisplay';
 
 const { Option } = Select;
 
-export default function ApplicationManagement() {
+// 主要组件内容
+function ApplicationManagementContent() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const { modal } = App.useApp();
   const [applications, setApplications] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -48,8 +53,10 @@ export default function ApplicationManagement() {
   // 筛选控件状态
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(undefined);
+  const [showExpired, setShowExpired] = useState(false);
   const datePickerRef = useRef(null);
   const statusSelectRef = useRef(null);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -264,6 +271,70 @@ export default function ApplicationManagement() {
     );
   }
 
+  // 处理签到操作
+  const handleCheckinApplication = (record) => {
+    const roomName = record.roomName || t('applicationManagement.columns.roomName', '教室');
+    const timeRange = formatTimeRange(record.startTime, record.endTime);
+    
+    modal.confirm({
+      title: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckOutlined style={{ color: '#52c41a' }} />
+          <span>{t('applicationManagement.actions.checkinConfirmTitle', '确认签到')}</span>
+        </div>
+      ),
+      content: (
+        <div>
+          <p>{t('applicationManagement.actions.checkinConfirmContent', '确认对该申请进行签到吗？签到后将无法撤销。')}</p>
+          <div style={{ 
+            marginTop: '16px', 
+            padding: '12px', 
+            backgroundColor: 'var(--background-color)', 
+            borderRadius: '6px',
+            border: '1px solid var(--border-color)'
+          }}>
+            <div style={{ marginBottom: '8px' }}>
+              <strong>{t('applicationManagement.columns.roomName', '教室')}：</strong>{roomName}
+            </div>
+            <div>
+              <strong>{t('applicationManagement.columns.usageTime', '使用时间')}：</strong>
+              <span className="num-mono">{timeRange}</span>
+            </div>
+          </div>
+        </div>
+      ),
+      okText: t('applicationManagement.actions.checkinConfirmOk', '确认签到'),
+      cancelText: t('common.cancel', '取消'),
+      okType: 'primary',
+      autoFocusButton: 'ok',
+      maskClosable: false,
+      keyboard: false,
+      width: 420,
+      centered: true,
+      zIndex: 10001,
+      getContainer: () => document.body,
+      destroyOnClose: true,
+      okButtonProps: {
+        style: { fontWeight: 600 },
+        icon: <CheckOutlined />
+      },
+      cancelButtonProps: {
+        style: { fontWeight: 400 }
+      },
+      onOk: async () => {
+        try {
+          await applicationAPI.checkinApplication(record.id);
+          messageApi.success(t('applicationManagement.actions.checkinSuccess', '签到成功'));
+          fetchApplications();
+        } catch (e) {
+          console.error('签到失败:', e);
+          const errorMessage = e.response?.data || e.message || t('common.unknownError', '未知错误');
+          messageApi.error(t('applicationManagement.actions.checkinFail', '签到失败') + '：' + errorMessage);
+        }
+      }
+    });
+  };
+
   const columns = [
     {
   title: t('applicationManagement.columns.roomName'),
@@ -286,20 +357,39 @@ export default function ApplicationManagement() {
       render: (status, record) => {
         const displayName = getApplicationStatusDisplayName(status);
         const color = getApplicationStatusColor(status);
-        
-        // 如果是过期状态，显示原状态和过期标签
-        if (status === 'EXPIRED' && record.originalStatus) {
-          const originalDisplayName = getApplicationStatusDisplayName(record.originalStatus);
-          const originalColor = getApplicationStatusColor(record.originalStatus);
-          return (
-            <div>
-              <Tag color={originalColor}>{originalDisplayName}</Tag>
-              <Tag color="default" style={{ marginTop: 2 }}>{displayName}</Tag>
-            </div>
-          );
+        const isExpired = isApplicationExpired(record);
+
+        if (record.id) {
+          console.debug(`Record ${record.id}:`, {
+            expired: record.expired,
+            isExpired: record.isExpired,
+            expiredType: typeof record.expired,
+            isExpiredType: typeof record.isExpired,
+            calculatedExpired: isExpired
+          });
         }
-        
-        return <Tag color={color}>{displayName}</Tag>;
+
+        return (
+          <div>
+            <Tag color={color}>{displayName}</Tag>
+            {isExpired && (
+              <Tag color="default" style={{ marginLeft: 4 }}>
+                {t('applicationManagement.statusOptions.EXPIRED', '已过期')}
+              </Tag>
+            )}
+            {status === 'PENDING_CHECKIN' && (
+              // 管理员可以为任何申请签到，普通用户只能为自己的申请签到
+              (user?.role === 'ADMIN' || record.userId === user?.id) && (
+              <Button 
+                type="primary"
+                size="small"
+                style={{ marginLeft: 8 }}
+                onClick={() => handleCheckinApplication(record)}
+              >{t('applicationManagement.actions.checkin', '签到')}</Button>
+              )
+            )}
+          </div>
+        );
       },
     },
     {
@@ -357,7 +447,7 @@ export default function ApplicationManagement() {
               />
             </Tooltip>
           )}
-          {canCancel && record.status === 'PENDING' && (
+          {canCancel && (record.status === 'PENDING' || record.status === 'APPROVED' || record.status === 'PENDING_CHECKIN' || record.status === 'IN_USE') && (
             <Tooltip title={t('applicationManagement.tooltips.cancel')}>
               <Button 
                 type="text" 
@@ -395,7 +485,136 @@ export default function ApplicationManagement() {
           }
           extra={
             <Space>
-              <Button 
+              {isFilterCollapsed && (
+                <FilterDropdownButton>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    {/* 教室搜索 */}
+                    <div style={{ minWidth: '200px' }}>
+                      <Input
+                        placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
+                        allowClear
+                        style={{ width: '100%' }}
+                        value={roomSearch.searchValue}
+                        onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
+                        onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
+                      />
+                    </div>
+                    
+                    {/* 申请人搜索 */}
+                    <div style={{ minWidth: '150px' }}>
+                      <Input
+                        placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
+                        allowClear
+                        style={{ width: '100%' }}
+                        value={applicantSearch.searchValue}
+                        onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
+                        onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+                      />
+                    </div>
+                    
+                    {/* 状态筛选 */}
+                    <div style={{ minWidth: '120px' }}>
+                      <Select
+                        ref={statusSelectRef}
+                        placeholder={t('applicationManagement.filters.statusPlaceholder')}
+                        allowClear
+                        style={{ width: '100%' }}
+                        value={selectedStatus}
+                        onChange={(value) => {
+                          setSelectedStatus(value);
+                          const newParams = { status: value || undefined, pageNum: 1 };
+                          setSearchParams(prev => ({ ...prev, ...newParams }));
+                          fetchApplications(newParams);
+                        }}
+                      >
+                        <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+                        <Option value="PENDING_CHECKIN">{t('applicationManagement.statusOptions.PENDING_CHECKIN')}</Option>
+                        <Option value="IN_USE">{t('applicationManagement.statusOptions.IN_USE')}</Option>
+                        <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+                        <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+                        <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+                        <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+                      </Select>
+                    </div>
+                    
+                    {/* 使用时间筛选 */}
+                    <div style={{ minWidth: '150px' }}>
+                      <DatePicker
+                        ref={datePickerRef}
+                        style={{ width: '100%' }}
+                        placeholder={t('applicationManagement.filters.datePlaceholder')}
+                        format="YYYY-MM-DD"
+                        value={selectedDate}
+                        onChange={(date) => {
+                          setSelectedDate(date);
+                          let newParams = { pageNum: 1 };
+                          if (date) {
+                            // 将dayjs对象转换为YYYY-MM-DD格式的字符串
+                            newParams = {
+                              ...newParams,
+                              queryDate: date.format('YYYY-MM-DD'),
+                            };
+                          } else {
+                            newParams = {
+                              ...newParams,
+                              queryDate: undefined,
+                            };
+                          }
+                          setSearchParams(prev => ({ ...prev, ...newParams }));
+                          fetchApplications(newParams);
+                        }}
+                      />
+                    </div>
+                    
+                    {/* 过期申请筛选 */}
+                    <div className="filter-checkbox" style={{ minWidth: '120px', display: 'flex', alignItems: 'center' }}>
+                      <Checkbox
+                        checked={showExpired}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setShowExpired(checked);
+                          const newParams = { showExpired: checked, pageNum: 1 };
+                          setSearchParams(prev => ({ ...prev, ...newParams }));
+                          fetchApplications(newParams);
+                        }}
+                      >
+                        {t('applicationManagement.filters.showExpired', '显示过期申请')}
+                      </Checkbox>
+                    </div>
+                    
+                    {/* 操作按钮 */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button
+                        onClick={() => {
+                          // 清空筛选控件内容
+                          roomSearch.updateSearchValue('');
+                          applicantSearch.updateSearchValue('');
+                          // 清除日期选择器
+                          setSelectedDate(null);
+                          // 清空状态选择器
+                          setSelectedStatus(undefined);
+                          // 清空过期申请复选框
+                          setShowExpired(false);
+                          // 清空搜索参数并刷新数据
+                          const newParams = {
+                            pageNum: 1,
+                            roomName: undefined,
+                            username: undefined,
+                            status: undefined,
+                            queryDate: undefined,
+                            showExpired: undefined
+                          };
+                          setSearchParams(newParams);
+                          fetchApplications(newParams);
+                        }}
+                      >
+                        {t('applicationManagement.filters.clearFilters')}
+                      </Button>
+                    </div>
+                  </div>
+                </FilterDropdownButton>
+              )}
+              <ResponsiveButton 
                 icon={<ReloadOutlined />} 
                 onClick={() => {
                   fetchApplications();
@@ -403,7 +622,7 @@ export default function ApplicationManagement() {
                 loading={applicationsLoading}
               >
                 {t('common.refresh')}
-              </Button>
+              </ResponsiveButton>
             </Space>
           }
           style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -411,115 +630,141 @@ export default function ApplicationManagement() {
         >
           {/* 筛选区域 */}
           <div style={{
-            padding: '16px',
+            padding: isFilterCollapsed ? '4px' : '16px',
             borderBottom: '1px solid var(--border-color)',
-            backgroundColor: 'var(--component-bg)'
+            backgroundColor: 'var(--component-bg)',
+            transition: 'padding 0.3s ease'
           }}>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              {/* 教室搜索 */}
-              <div style={{ minWidth: '200px' }}>
-                <Input
-                  placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={roomSearch.searchValue}
-                  onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
-                  onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
-                />
-              </div>
-              
-              {/* 申请人搜索 */}
-              <div style={{ minWidth: '150px' }}>
-                <Input
-                  placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={applicantSearch.searchValue}
-                  onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
-                  onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
-                />
-              </div>
-              
-              {/* 状态筛选 */}
-              <div style={{ minWidth: '120px' }}>
-                <Select
-                  ref={statusSelectRef}
-                  placeholder={t('applicationManagement.filters.statusPlaceholder')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={selectedStatus}
-                  onChange={(value) => {
-                    setSelectedStatus(value);
-                    const newParams = { status: value || undefined, pageNum: 1 };
-                    setSearchParams(prev => ({ ...prev, ...newParams }));
-                    fetchApplications(newParams);
-                  }}
-                >
-                  <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
-                  <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
-                  <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
-                  <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
-                  <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
-                  <Option value="EXPIRED">{t('applicationManagement.statusOptions.EXPIRED')}</Option>
-                </Select>
-              </div>
-              
-              {/* 使用时间筛选 */}
-              <div style={{ minWidth: '150px' }}>
-                <DatePicker
-                  ref={datePickerRef}
-                  style={{ width: '100%' }}
-                  placeholder={t('applicationManagement.filters.datePlaceholder')}
-                  format="YYYY-MM-DD"
-                  value={selectedDate}
-                  onChange={(date) => {
-                    setSelectedDate(date);
-                    let newParams = { pageNum: 1 };
-                    if (date) {
-                      // 将dayjs对象转换为YYYY-MM-DD格式的字符串
-                      newParams = {
-                        ...newParams,
-                        queryDate: date.format('YYYY-MM-DD'),
-                      };
-                    } else {
-                      newParams = {
-                        ...newParams,
+            <ResponsiveFilterContainer 
+              threshold={900}
+              onCollapseStateChange={setIsFilterCollapsed}
+            >
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                {/* 教室搜索 */}
+                <div style={{ minWidth: '200px' }}>
+                  <Input
+                    placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={roomSearch.searchValue}
+                    onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
+                    onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
+                  />
+                </div>
+                
+                {/* 申请人搜索 */}
+                <div style={{ minWidth: '150px' }}>
+                  <Input
+                    placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={applicantSearch.searchValue}
+                    onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
+                    onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+                  />
+                </div>
+                
+                {/* 状态筛选 */}
+                <div style={{ minWidth: '120px' }}>
+                  <Select
+                    ref={statusSelectRef}
+                    placeholder={t('applicationManagement.filters.statusPlaceholder')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={selectedStatus}
+                    onChange={(value) => {
+                      setSelectedStatus(value);
+                      const newParams = { status: value || undefined, pageNum: 1 };
+                      setSearchParams(prev => ({ ...prev, ...newParams }));
+                      fetchApplications(newParams);
+                    }}
+                  >
+                    <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+                    <Option value="PENDING_CHECKIN">{t('applicationManagement.statusOptions.PENDING_CHECKIN')}</Option>
+                    <Option value="IN_USE">{t('applicationManagement.statusOptions.IN_USE')}</Option>
+                    <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+                    <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+                    <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+                    <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+                  </Select>
+                </div>
+                
+                {/* 使用时间筛选 */}
+                <div style={{ minWidth: '150px' }}>
+                  <DatePicker
+                    ref={datePickerRef}
+                    style={{ width: '100%' }}
+                    placeholder={t('applicationManagement.filters.datePlaceholder')}
+                    format="YYYY-MM-DD"
+                    value={selectedDate}
+                    onChange={(date) => {
+                      setSelectedDate(date);
+                      let newParams = { pageNum: 1 };
+                      if (date) {
+                        // 将dayjs对象转换为YYYY-MM-DD格式的字符串
+                        newParams = {
+                          ...newParams,
+                          queryDate: date.format('YYYY-MM-DD'),
+                        };
+                      } else {
+                        newParams = {
+                          ...newParams,
+                          queryDate: undefined,
+                        };
+                      }
+                      setSearchParams(prev => ({ ...prev, ...newParams }));
+                      fetchApplications(newParams);
+                    }}
+                  />
+                </div>
+                
+                {/* 过期申请筛选 */}
+                <div className="filter-checkbox" style={{ minWidth: '120px', display: 'flex', alignItems: 'center' }}>
+                  <Checkbox
+                    checked={showExpired}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setShowExpired(checked);
+                      const newParams = { showExpired: checked, pageNum: 1 };
+                      setSearchParams(prev => ({ ...prev, ...newParams }));
+                      fetchApplications(newParams);
+                    }}
+                  >
+                    {t('applicationManagement.filters.showExpired', '显示过期申请')}
+                  </Checkbox>
+                </div>
+                
+                {/* 操作按钮 */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      // 清空筛选控件内容
+                      roomSearch.updateSearchValue('');
+                      applicantSearch.updateSearchValue('');
+                      // 清除日期选择器
+                      setSelectedDate(null);
+                      // 清空状态选择器
+                      setSelectedStatus(undefined);
+                      // 清空过期申请复选框
+                      setShowExpired(false);
+                      // 清空搜索参数并刷新数据
+                      const newParams = {
+                        pageNum: 1,
+                        roomName: undefined,
+                        username: undefined,
+                        status: undefined,
                         queryDate: undefined,
+                        showExpired: undefined
                       };
-                    }
-                    setSearchParams(prev => ({ ...prev, ...newParams }));
-                    fetchApplications(newParams);
-                  }}
-                />
+                      setSearchParams(newParams);
+                      fetchApplications(newParams);
+                    }}
+                  >
+                    {t('applicationManagement.filters.clearFilters')}
+                  </Button>
+                </div>
               </div>
-              
-              {/* 操作按钮 */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button
-                  onClick={() => {
-                    // 清空筛选控件内容
-                    roomSearch.updateSearchValue('');
-                    applicantSearch.updateSearchValue('');
-                    // 清除日期选择器
-                    setSelectedDate(null);
-                    // 清空状态选择器
-                    setSelectedStatus(undefined);
-                    // 清空搜索参数并刷新数据
-                    const newParams = {
-                      pageNum: 1,
-                      roomName: undefined,
-                      username: undefined,
-                      status: undefined,
-                      queryDate: undefined
-                    };
-                    setSearchParams(newParams);
-                    fetchApplications(newParams);
-                  }}
-                >
-                  {t('applicationManagement.filters.clearFilters')}
-                </Button>
-              </div>
-            </div>
+            </ResponsiveFilterContainer>
           </div>
 
           {/* 错误提示 */}
@@ -547,38 +792,36 @@ export default function ApplicationManagement() {
           }}>
             {/* 表格内容区域 */}
             <div style={{ 
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: '60px',
-              overflow: 'hidden' // 禁止容器的垂直滚动
+              flex: 1,
+              overflow: 'hidden'
             }}>
               <FixedTop>
                 <div style={{
-                  overflowX: 'auto', // 允许水平滚动
-                  overflowY: 'hidden', // 禁止垂直滚动
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
                   height: '100%'
                 }}>
-                  <Table
-                    columns={columns}
-                    dataSource={applications}
-                    rowKey="id"
-                    loading={applicationsLoading}
-                    scroll={{ 
-                      x: 1200, 
-                      y: 'calc(100vh - 300px)',
-                      scrollToFirstRowOnChange: false
-                    }}
+                    <Table
+                      columns={columns}
+                      dataSource={applications}
+                      rowKey="id"
+                      loading={applicationsLoading}
+                      scroll={{ 
+                        x: 1200, 
+                        y: isFilterCollapsed ? 'calc(100vh - 265px)' : 'calc(100vh - 315px)',
+                        scrollToFirstRowOnChange: false
+                      }}
                     pagination={false}
                     onChange={handleTableChange}
                     size="middle"
                     style={{ 
                       height: '100%',
-                      minWidth: '1200px' // 确保表格有最小宽度以触发水平滚动
+                      minWidth: '1200px',
+                      minHeight: '400px'  // 为表格体添加最小高度
                     }}
                     overflowX='hidden'
                     sticky={{ offsetHeader: 0 }}
+                    rowClassName={(record) => isApplicationExpired(record) ? 'expired-row' : ''}
                   />
                 </div>
               </FixedTop>
@@ -586,11 +829,6 @@ export default function ApplicationManagement() {
             
             {/* 分页组件 */}
             <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '60px',
               padding: '12px 16px',
               borderTop: '1px solid var(--border-color)',
               backgroundColor: 'var(--component-bg)',
@@ -715,6 +953,23 @@ export default function ApplicationManagement() {
                   </Form.Item>
                 )}
 
+              {drawerType === 'cancel' && currentApplication && (
+                <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'var(--fill-color)', borderRadius: 6 }}>
+                  {currentApplication.status === 'APPROVED' && (
+                    <span>{t('applicationManagement.messages.cancelConfirmContentApproved')}</span>
+                  )}
+                  {currentApplication.status === 'PENDING_CHECKIN' && (
+                    <span>{t('applicationManagement.messages.cancelConfirmContentPendingCheckin')}</span>
+                  )}
+                  {currentApplication.status === 'IN_USE' && (
+                    <span>{t('applicationManagement.messages.cancelConfirmContentInUse')}</span>
+                  )}
+                  {currentApplication.status === 'PENDING' && (
+                    <span>{t('applicationManagement.messages.cancelConfirmContent')}</span>
+                  )}
+                </div>
+              )}
+
                 <Form.Item
                   name="reason"
                   label={drawerType === 'approve' ? t('applicationManagement.form.approveOpinion') : t('applicationManagement.form.cancelReason')}
@@ -732,4 +987,13 @@ export default function ApplicationManagement() {
       </div>
     </PageErrorBoundary>
   );
-} 
+}
+
+// 导出的主组件，用 App 包装以提供 modal 上下文
+export default function ApplicationManagement() {
+  return (
+    <App>
+      <ApplicationManagementContent />
+    </App>
+  );
+}
