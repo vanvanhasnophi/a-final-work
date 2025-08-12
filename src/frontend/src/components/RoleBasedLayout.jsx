@@ -769,8 +769,7 @@ const RoleBasedLayout = ({ children }) => {
           margin: '16px',
           padding: '24px',
           background: token.colorBgContainer,
-          borderRadius: token.borderRadius,
-          minHeight: '280px'
+          borderRadius: token.borderRadius
         }}>
           <SidebarProvider collapsed={collapsed}>
             {children}
