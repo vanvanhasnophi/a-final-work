@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Modal } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
-import { UserOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, CloseOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import { getPermissionDisplayName } from '../utils/permissionMapping';
@@ -11,10 +11,17 @@ import RecentActivities from '../components/RecentActivities';
 import { useActivities } from '../hooks/useActivities';
 import ActivityGenerator from '../utils/activityGenerator';
 import { useI18n } from '../contexts/I18nContext';
+import ResponsiveButton  from '../components/ResponsiveButton';
 
 const { Option } = Select;
 
 export default function UserProfile() {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
@@ -314,8 +321,8 @@ export default function UserProfile() {
     <>
       {contextHolder}
       <div style={{ padding: '24px' }}>
-        <Row gutter={24}>
-          <Col span={8}>
+  <Row gutter={24}>
+          <Col span={windowWidth < 600 ? 24 : 8}>
             <Card>
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                 <Avatar size={80} icon={<UserOutlined />} />
@@ -344,25 +351,27 @@ export default function UserProfile() {
             </Card>
           </Col>
 
-          <Col span={16}>
+          <Col span={windowWidth < 600 ? 24 : 16}>
             <Card 
               title={t('userProfile.cards.profile.title', '个人信息')} 
               extra={
                 isEditing ? (
                   <Space>
-                    <Button type="primary" icon={<SaveOutlined />} onClick={() => form.submit()}>
+                    <ResponsiveButton type="primary" icon={<SaveOutlined />} onClick={() => form.submit()}>
                       {t('userProfile.cards.profile.save', '保存')}
-                    </Button>
-                    <Button onClick={handleCancel}>{t('userProfile.cards.profile.cancel', '取消')}</Button>
+                    </ResponsiveButton>
+                    <ResponsiveButton onClick={handleCancel} icon={<CloseOutlined />}>
+                      {t('userProfile.cards.profile.cancel', '取消')}
+                    </ResponsiveButton>
                   </Space>
                 ) : (
                   <Space>
-                    <Button icon={<EditOutlined />} onClick={handleEdit}>
+                    <ResponsiveButton icon={<EditOutlined />} onClick={handleEdit}>
                       {t('userProfile.cards.profile.edit', '编辑')}
-                    </Button>
-                    <Button icon={<LockOutlined />} onClick={handleChangePassword}>
+                    </ResponsiveButton>
+                    <ResponsiveButton icon={<LockOutlined />} onClick={handleChangePassword}>
                       {t('userProfile.cards.profile.changePassword', '修改密码')}
-                    </Button>
+                    </ResponsiveButton>
                   </Space>
                 )
               }

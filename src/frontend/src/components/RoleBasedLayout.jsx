@@ -10,7 +10,8 @@ import {
   FormOutlined,
   BulbOutlined,
   SettingOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  MenuOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { getRoleColor } from '../utils/permissionUtils';
@@ -23,8 +24,9 @@ import NotificationBanner from './NotificationBanner';
 import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
 import { notificationAPI } from '../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../utils/userDisplay';
+import { SidebarProvider } from './ResponsiveButton';
 
-const { Sider, Content } = Layout;
+const { Sider, Content, Header } = Layout;
 const { Text } = Typography;
 
 const RoleBasedLayout = ({ children }) => {
@@ -40,6 +42,122 @@ const RoleBasedLayout = ({ children }) => {
   const [bannerNotification, setBannerNotification] = useState(null);
   const [lastBannerNotificationId, setLastBannerNotificationId] = useState(null);
   const [lastBannerTime, setLastBannerTime] = useState(0);
+  
+  // 响应式侧栏状态
+  const [isAutoCollapsed, setIsAutoCollapsed] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  const [sidebarMenuCollapsed, setSidebarMenuCollapsed] = useState(false);
+  
+  // 响应式阈值
+  const COLLAPSE_THRESHOLD = 800; // 小于此宽度自动折叠 (从1200降低到800)
+  const EXPAND_THRESHOLD = 1000;   // 大于此宽度自动展开 (从1280降低到1000)
+  const HEIGHT_COLLAPSE_THRESHOLD = 370; // 小于此高度启用汉堡菜单
+  const HEIGHT_EXPAND_THRESHOLD = 400;   // 大于此高度恢复正常菜单
+
+  // 响应式侧栏处理
+  useEffect(() => {
+    let resizeTimer;
+    let lastResizeTime = 0;
+    const THROTTLE_DELAY = 50;  // 节流延迟：50ms (从100ms降低)
+    const DEBOUNCE_DELAY = 100; // 防抖延迟：100ms (从200ms降低)
+
+    const handleResize = () => {
+      const now = Date.now();
+      
+      // 节流：如果距离上次执行时间小于延迟，跳过
+      if (now - lastResizeTime < THROTTLE_DELAY) {
+        return;
+      }
+      
+      lastResizeTime = now;
+      
+      // 清除之前的防抖计时器
+      if (resizeTimer) {
+        clearTimeout(resizeTimer);
+      }
+      
+      // 防抖：延迟执行真正的处理逻辑
+      resizeTimer = setTimeout(() => {
+        // 使用 requestAnimationFrame 确保在下一个重绘周期执行
+        const animationFrameId = requestAnimationFrame(() => {
+          const newWidth = window.innerWidth;
+          const newHeight = window.innerHeight;
+          
+          // 只有当宽度或高度真正发生变化时才更新状态
+          if (newWidth !== windowWidth || newHeight !== windowHeight) {
+            setWindowWidth(newWidth);
+            setWindowHeight(newHeight);
+            
+            // 宽度响应式：自动折叠逻辑
+            if (newWidth < COLLAPSE_THRESHOLD && !collapsed) {
+              setCollapsed(true);
+              setIsAutoCollapsed(true);
+            } 
+            // 宽度响应式：自动展开逻辑 (只有在自动折叠时才自动展开)
+            else if (newWidth > EXPAND_THRESHOLD && collapsed && isAutoCollapsed) {
+              setCollapsed(false);
+              setIsAutoCollapsed(false);
+            }
+            
+            // 高度响应式：菜单折叠逻辑
+            if (newHeight < HEIGHT_COLLAPSE_THRESHOLD) {
+              setSidebarMenuCollapsed(true);
+            } else if (newHeight > HEIGHT_EXPAND_THRESHOLD) {
+              setSidebarMenuCollapsed(false);
+            }
+          }
+        });
+      }, DEBOUNCE_DELAY);
+    };
+    
+    // 初始化检查（不使用防抖，立即执行）
+    const initResize = () => {
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+      setWindowWidth(newWidth);
+      setWindowHeight(newHeight);
+      
+      // 宽度响应式：自动折叠逻辑
+      if (newWidth < COLLAPSE_THRESHOLD && !collapsed) {
+        setCollapsed(true);
+        setIsAutoCollapsed(true);
+      } 
+      // 宽度响应式：自动展开逻辑 (只有在自动折叠时才自动展开)
+      else if (newWidth > EXPAND_THRESHOLD && collapsed && isAutoCollapsed) {
+        setCollapsed(false);
+        setIsAutoCollapsed(false);
+      }
+      
+      // 高度响应式：菜单折叠逻辑
+      if (newHeight < HEIGHT_COLLAPSE_THRESHOLD) {
+        setSidebarMenuCollapsed(true);
+      } else if (newHeight > HEIGHT_EXPAND_THRESHOLD) {
+        setSidebarMenuCollapsed(false);
+      }
+    };
+    
+    initResize();
+    
+    // 添加监听器
+    window.addEventListener('resize', handleResize);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeTimer) {
+        clearTimeout(resizeTimer);
+      }
+    };
+  }, [collapsed, isAutoCollapsed, windowWidth, windowHeight, COLLAPSE_THRESHOLD, EXPAND_THRESHOLD, HEIGHT_COLLAPSE_THRESHOLD, HEIGHT_EXPAND_THRESHOLD]);
+  
+  // 手动控制折叠状态
+  const handleToggleCollapse = () => {
+    setCollapsed(!collapsed);
+    // 手动操作时重置自动折叠状态
+    setIsAutoCollapsed(false);
+  };
+  
   // 温柔的事件驱动通知系统
   useEffect(() => {
     // 监听新通知事件
@@ -368,7 +486,9 @@ const RoleBasedLayout = ({ children }) => {
           position: 'fixed',
           left: 0,
           top: 0,
-          zIndex: 1000
+          zIndex: 1000,
+          transform: 'translateZ(0)', // 硬件加速
+          willChange: 'width'          // 优化宽度变化性能
         }}
       >
         <div 
@@ -377,11 +497,19 @@ const RoleBasedLayout = ({ children }) => {
             textAlign: 'center',
             borderBottom: `1px solid ${token.colorBorder}`,
             cursor: 'pointer',
-            transition: 'background-color 0.2s'
+            transition: 'background-color 0.15s ease', // 更快的过渡
+            transform: 'translateZ(0)', // 硬件加速
+            backfaceVisibility: 'hidden' // 减少重绘
           }}
-          onClick={() => setCollapsed(!collapsed)}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgTextHover}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          onClick={handleToggleCollapse}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+            e.currentTarget.style.transform = 'translateZ(0)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.transform = 'translateZ(0)';
+          }}
         >
           <Text strong style={{ fontSize: collapsed ? '18px' : '18px', fontWeight: 600, fontVariationSettings: "'wght' 600" }}>
             {collapsed ? 'RX' : 'RoomX'}
@@ -389,20 +517,82 @@ const RoleBasedLayout = ({ children }) => {
         </div>
         
         <div style={{ flex: 1, overflow: 'auto' }} className="custom-scrollbar">
-          <Menu
-            mode="inline"
-            selectedKeys={getSelectedKeys()}
-            items={menuItems.map(item => ({
-              key: item.key,
-              icon: getMenuIcon(item.icon),
-              label: item.label
-            }))}
-            onClick={handleMenuClick}
-            style={{
-              borderRight: 0,
-              background: 'transparent'
-            }}
-          />
+          {sidebarMenuCollapsed ? (
+            // 高度压缩模式：显示折叠的菜单（样式与原菜单项保持一致）
+            <div style={{ padding: '8px' }}>
+              <Dropdown
+                menu={{
+                  items: menuItems.map(item => ({
+                    key: item.key,
+                    icon: getMenuIcon(item.icon),
+                    label: item.label,
+                    onClick: () => handleMenuClick({ key: item.key })
+                  }))
+                }}
+                trigger={['hover']}
+                placement="rightTop"
+              >
+                <div style={{
+                  height: '40px',
+                  lineHeight: '40px',
+                  padding: '0 23px',
+                  margin: '0 0 0 0',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  position: 'relative',
+                  color: token.colorText,
+                  fontSize: '14px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                >
+                  <MenuOutlined 
+                    style={{ 
+                      fontSize: '16px',
+                      color: token.colorText,
+                      marginRight: collapsed ? 0 : 12,
+                      marginLeft: collapsed ? 0 : 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }} 
+                  />
+                  {!collapsed && (
+                    <span style={{ 
+                      opacity: collapsed ? 0 : 1,
+                      transition: 'opacity 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {t('layout.menu.navigation')}
+                    </span>
+                  )}
+                </div>
+              </Dropdown>
+            </div>
+          ) : (
+            // 正常模式：显示完整菜单
+            <Menu
+              mode="inline"
+              selectedKeys={getSelectedKeys()}
+              items={menuItems.map(item => ({
+                key: item.key,
+                icon: getMenuIcon(item.icon),
+                label: item.label
+              }))}
+              onClick={handleMenuClick}
+              style={{
+                borderRight: 0,
+                background: 'transparent'
+              }}
+            />
+          )}
         </div>
         
         {/* 底部功能区 */}
@@ -417,8 +607,10 @@ const RoleBasedLayout = ({ children }) => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '7px',
-            padding:  '16px 0',
-            zIndex: 10
+            padding: '16px 0',
+            zIndex: 10,
+            transform: 'translateZ(0)', // 启用硬件加速
+            willChange: 'transform'      // 优化动画性能
           }}
         >
           {/* 通知中心 */}
@@ -436,19 +628,23 @@ const RoleBasedLayout = ({ children }) => {
               justifyContent: collapsed ? 'center' : 'flex-start',
               border: 'none',
               boxShadow: 'none',
-              transition: 'background-color 0.2s, width 0.2s, box-shadow 0.25s',
+              transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
               marginLeft: collapsed ? 0 : 20,
               marginRight: collapsed ? 0 : 20,
-              fontWeight: unreadCount > 0 ? 600 : 'normal'
+              fontWeight: unreadCount > 0 ? 600 : 'normal',
+              transform: 'translateZ(0)', // 硬件加速
+              backfaceVisibility: 'hidden' // 减少重绘
             }}
             onMouseEnter={(e) => {
               if (unreadCount === 0) {
                 e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                e.currentTarget.style.transform = 'translateZ(0)';
               }
             }}
             onMouseLeave={(e) => {
               if (unreadCount === 0) {
                 e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.transform = 'translateZ(0)';
               }
             }}
           >
@@ -475,12 +671,20 @@ const RoleBasedLayout = ({ children }) => {
               border: 'none',
               boxShadow: 'none',
               borderRadius: '6px',
-              transition: 'background-color 0.2s, width 0.2s',
+              transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
               marginLeft: collapsed ? 0 : 20,
-              marginRight: collapsed ? 0 : 20
+              marginRight: collapsed ? 0 : 20,
+              transform: 'translateZ(0)', // 硬件加速
+              backfaceVisibility: 'hidden' // 减少重绘
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgTextHover}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+              e.currentTarget.style.transform = 'translateZ(0)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.transform = 'translateZ(0)';
+            }}
           >
             {!collapsed && (
               <span style={{ marginLeft: 8 }}>
@@ -501,13 +705,21 @@ const RoleBasedLayout = ({ children }) => {
               padding: '8px',
               cursor: 'pointer',
               borderRadius: '6px',
-              transition: 'background-color 0.2s, width 0.2s',
+              transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
               width: collapsed ? 'auto' : 'calc(100% - 32px)',
               marginLeft: collapsed ? 0 : 16,
-              marginRight: collapsed ? 0 : 16
+              marginRight: collapsed ? 0 : 16,
+              transform: 'translateZ(0)', // 硬件加速
+              backfaceVisibility: 'hidden' // 减少重绘
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgTextHover}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+              e.currentTarget.style.transform = 'translateZ(0)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.transform = 'translateZ(0)';
+            }}
             >
               <Avatar 
                 size={32}
@@ -549,7 +761,9 @@ const RoleBasedLayout = ({ children }) => {
       
       <Layout style={{ 
         marginLeft: collapsed ? '80px' : '200px',
-        transition: 'margin-left 0.2s'
+        transition: 'margin-left 0.15s ease', // 更快的过渡
+        transform: 'translateZ(0)',            // 硬件加速
+        willChange: 'margin-left'              // 优化margin变化
       }}>
         <Content style={{ 
           margin: '16px',
@@ -558,7 +772,9 @@ const RoleBasedLayout = ({ children }) => {
           borderRadius: token.borderRadius,
           minHeight: '280px'
         }}>
-          {children}
+          <SidebarProvider collapsed={collapsed}>
+            {children}
+          </SidebarProvider>
         </Content>
       </Layout>
       

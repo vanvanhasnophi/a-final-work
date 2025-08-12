@@ -5,6 +5,7 @@ import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../u
 import { formatDateTime } from '../utils/dateFormat';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import FixedTop from '../components/FixedTop';
+import ResponsiveButton from '../components/ResponsiveButton';
 import { useI18n } from '../contexts/I18nContext';
 
 export default function ApplicationStatusMonitor() {
@@ -250,20 +251,20 @@ export default function ApplicationStatusMonitor() {
                 title={t('applicationStatus.expiringTitle', '即将过期的申请（15分钟内）')} 
                 extra={
                   <Space>
-                    <Button 
+                    <ResponsiveButton 
                       icon={<ReloadOutlined />} 
                       onClick={fetchExpiringApplications}
                       loading={loading}
                     >
                       {t('common.refresh', '刷新')}
-                    </Button>
-                    <Button 
+                    </ResponsiveButton>
+                    <ResponsiveButton 
                       type="primary"
                       onClick={updateAllApplicationStatuses}
                       loading={loading}
                     >
                       {t('applicationStatus.actions.updateAll', '批量更新状态')}
-                    </Button>
+                    </ResponsiveButton>
                   </Space>
                 }
               >

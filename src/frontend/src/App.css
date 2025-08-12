@@ -192,7 +192,39 @@ code, pre, pre code {
   transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 
+/* 复选框样式优化 */
+.ant-checkbox-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  margin-bottom: 0 !important;
+}
 
+.ant-checkbox {
+  margin-right: 6px !important; /* 降低与文字的距离 */
+  margin-top: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ant-checkbox .ant-checkbox-inner {
+  border-radius: 3px !important; /* 降低圆角 */
+  margin-top: 0 !important;
+}
+
+.ant-checkbox-wrapper .ant-checkbox + span {
+  line-height: 1.4 !important;
+  padding-left: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* 筛选区域中的复选框特殊优化 */
+.filter-checkbox .ant-checkbox-wrapper {
+  height: 32px !important; /* 与其他筛选控件高度一致 */
+  display: flex !important;
+  align-items: center !important;
+}
 
 /* 按钮样式 */
 .ant-btn {
@@ -898,14 +930,14 @@ code, pre, pre code {
   
   /* 移动端 Message 样式 */
   .ant-message {
-    max-width: 95vw !important;
+    max-width: none !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     top: 50px !important;
   }
   
   .ant-message-notice {
-    max-width: 95vw !important;
+    max-width: none !important;
     width: auto !important;
     white-space: normal !important;
     word-wrap: break-word !important;
@@ -996,7 +1028,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   top: 50px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  max-width: 120vw !important;
+  max-width: none !important;
   width: auto !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1010,7 +1042,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   border-radius: 8px !important;
   box-shadow: var(--shadow) !important;
   margin-bottom: 8px !important;
-  max-width: 600px !important;
+  max-width: none !important;
   width: auto !important;
   display: flex !important;
   align-items: center !important;
@@ -1019,10 +1051,10 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   font-size: 14px !important; 
   line-height: 1.5 !important;
   color: var(--text-color) !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 100% !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
   /* 优化过渡动画 */
   transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease !important;
 }
@@ -1302,3 +1334,12 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #ff4d4f !important;
 }
 
+/* 过期申请行样式 - 降低整体透明度 */
+.ant-table-tbody .expired-row {
+  opacity: 0.6;
+}
+
+/* 深色模式下的过期行样式 */
+[data-theme="dark"] .ant-table-tbody .expired-row {
+  opacity: 0.6;
+}

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.roomx.constant.enums.ApplicationStatus;
+import com.roomx.constant.enums.RoomStatus;
 import com.roomx.exception.ConcurrentModificationException;
 import com.roomx.model.dto.ApplicationDTO;
 import com.roomx.model.dto.ApplicationQuery;
@@ -237,6 +238,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("roomCapacity"), query.getRoomCapacity()));
             }
             
+            // 处理过期筛选逻辑
+            if (query.getShowExpired() != null && !query.getShowExpired()) {
+                // 如果不显示过期记录，排除数据库中expired=true的记录
+                predicates.add(cb.notEqual(root.get("expired"), true));
+            }
+            
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         
@@ -366,13 +373,85 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new IllegalArgumentException("申请不存在");
         }
         
-        // 检查申请状态
+        // 检查申请状态，现在支持更多状态的取消
         if (application.getStatus() != ApplicationStatus.PENDING && 
-            application.getStatus() != ApplicationStatus.APPROVED) {
-            throw new IllegalArgumentException("只能取消待审批或已批准的申请");
+            application.getStatus() != ApplicationStatus.APPROVED &&
+            application.getStatus() != ApplicationStatus.PENDING_CHECKIN &&
+            application.getStatus() != ApplicationStatus.IN_USE) {
+            throw new IllegalArgumentException("只能取消待审批、已批准、待签到或使用中的申请");
         }
         
-        application.setStatus(ApplicationStatus.CANCELLED);
+        // 根据当前状态执行不同的取消逻辑
+        if (application.getStatus() == ApplicationStatus.PENDING_CHECKIN) {
+            // 待签到状态下取消，执行未签到逻辑
+            application.setExpired(true);
+            application.setStatus(ApplicationStatus.CANCELLED);
+            
+            // 如果教室当前状态是预约中且只有这一个申请，则将教室状态恢复为可用
+            Room room = roomRepository.findById(application.getRoomId()).orElse(null);
+            if (room != null && room.getStatus() == RoomStatus.RESERVED) {
+                // 检查是否还有其他待签到的申请
+                List<Application> otherPendingCheckinApps = applicationRepository
+                    .findByRoomIdAndStatus(application.getRoomId(), ApplicationStatus.PENDING_CHECKIN)
+                    .stream()
+                    .filter(app -> !app.getId().equals(applicationId))
+                    .toList();
+                
+                if (otherPendingCheckinApps.isEmpty()) {
+                    room.setStatus(RoomStatus.AVAILABLE);
+                    room.setUpdateTime(new Date());
+                    roomRepository.save(room);
+                }
+            }
+        } else if (application.getStatus() == ApplicationStatus.IN_USE) {
+            // 使用中状态下取消，执行完成使用逻辑
+            application.setStatus(ApplicationStatus.COMPLETED);
+            
+            // 更新教室状态为需要清洁
+            Room room = roomRepository.findById(application.getRoomId()).orElse(null);
+            if (room != null) {
+                room.setStatus(RoomStatus.PENDING_CLEANING);
+                room.setUpdateTime(new Date());
+                roomRepository.save(room);
+            }
+        } else {
+            // 其他状态（PENDING、APPROVED）正常取消
+            application.setStatus(ApplicationStatus.CANCELLED);
+        }
+        
+        applicationRepository.save(application);
+    }
+
+    @Override
+    @Transactional
+    public void checkin(Long applicationId) {
+        Application application = applicationRepository.findById(applicationId).orElse(null);
+        if (application == null) {
+            throw new IllegalArgumentException("申请不存在");
+        }
+        
+        // 检查申请状态，只有待签到状态才能签到
+        if (application.getStatus() != ApplicationStatus.PENDING_CHECKIN) {
+            throw new IllegalArgumentException("只能签到待签到状态的申请");
+        }
+        
+        // 检查是否在预约时间内
+        Date now = new Date();
+        if (now.before(application.getStartTime())) {
+            throw new IllegalArgumentException("还未到预约开始时间，无法签到");
+        }
+        
+        // 设置签到时间并更新状态为使用中
+        application.setCheckinTime(now);
+        application.setStatus(ApplicationStatus.IN_USE);
+        
+        // 同时更新教室状态为使用中
+        Room room = application.getRoom();
+        if (room != null) {
+            room.setStatus(com.roomx.constant.enums.RoomStatus.USING);
+            roomRepository.save(room);
+        }
+        
         applicationRepository.save(application);
     }
 
