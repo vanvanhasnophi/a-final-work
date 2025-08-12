@@ -586,7 +586,7 @@ export default function UserList() {
           transition: 'padding 0.3s ease'
         }}>
           <ResponsiveFilterContainer 
-            threshold={900}
+            threshold={800}
             onCollapseStateChange={setIsFilterCollapsed}
           >
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -678,16 +678,85 @@ export default function UserList() {
                 overflowY: 'hidden',
                 height: '100%'
               }}>
+                <style jsx>{`
+                  div::-webkit-scrollbar {
+                    height: 8px;
+                    background: transparent;
+                  }
+                  div::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  
+                  /* 浅色模式 - 默认样式 */
+                  div::-webkit-scrollbar-thumb {
+                    background: rgba(0, 0, 0, 0.15);
+                    border-radius: 4px;
+                    transition: background 0.2s ease;
+                  }
+                  div::-webkit-scrollbar-thumb:hover {
+                    background: rgba(0, 0, 0, 0.25);
+                  }
+                  div {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+                  }
+                  
+                  /* 深色模式适配 - 半透明白色 */
+                  [data-theme="dark"] div::-webkit-scrollbar-thumb,
+                  .dark div::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                  }
+                  [data-theme="dark"] div::-webkit-scrollbar-thumb:hover,
+                  .dark div::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.35);
+                  }
+                  [data-theme="dark"] div,
+                  .dark div {
+                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                  }
+                  
+                  /* 系统深色模式 */
+                  @media (prefers-color-scheme: dark) {
+                    div::-webkit-scrollbar-thumb {
+                      background: rgba(255, 255, 255, 0.2);
+                    }
+                    div::-webkit-scrollbar-thumb:hover {
+                      background: rgba(255, 255, 255, 0.35);
+                    }
+                    div {
+                      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                    }
+                  }
+                  
+                  /* 明确的浅色模式覆盖（当明确指定浅色主题时） */
+                  [data-theme="light"] div::-webkit-scrollbar-thumb,
+                  .light div::-webkit-scrollbar-thumb {
+                    background: rgba(0, 0, 0, 0.15);
+                  }
+                  [data-theme="light"] div::-webkit-scrollbar-thumb:hover,
+                  .light div::-webkit-scrollbar-thumb:hover {
+                    background: rgba(0, 0, 0, 0.25);
+                  }
+                  [data-theme="light"] div,
+                  .light div {
+                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+                  }
+                `}</style>
                 <Table
                   columns={columns}
                   dataSource={users}
                   rowKey="id"
                   loading={usersLoading}
-                  scroll={{ x: 1200, y: undefined, scrollToFirstRowOnChange: false }}
+                  scroll={{ 
+                    x: 1200, 
+                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
+                    scrollToFirstRowOnChange: false
+                  }}
                   pagination={false}
                   onChange={handleTableChange}
                   size="middle"
-                  style={{ height: '100%', minWidth: '1200px', overflowX: 'hidden' }}
+                  style={{ height: '100%', minWidth: '1200px' }}
+                  overflowX='hidden'
                   sticky={{ offsetHeader: 0 }}
                 />
               </div>
@@ -704,8 +773,8 @@ export default function UserList() {
           }}>
             <Pagination
               {...pagination}
-              showSizeChanger={true}
-              showQuickJumper={true}
+              showSizeChanger={!isFilterCollapsed}
+              showQuickJumper={!isFilterCollapsed}
               showTotal={(total, range) => t('userList.paginationTotal', '第 {from}-{to} 条/共 {total} 条').replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)}
               pageSizeOptions={['10', '20', '50', '100']}
               size="default"
