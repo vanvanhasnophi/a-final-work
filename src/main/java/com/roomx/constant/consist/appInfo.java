@@ -1,5 +1,5 @@
 package com.roomx.constant.consist;
 
-public class appInfo {
-    public static final String VERSION = "2.1.0807";
+public interface appInfo {
+    String VERSION = "2.1.0812";
 }

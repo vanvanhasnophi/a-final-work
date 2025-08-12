@@ -87,7 +87,7 @@ public class DataInitializer implements CommandLineRunner {
         applier2.setPassword(passwordEncoder.encode("123456"));
         applier2.setNickname("蕾缪安");
         applier2.setEmail("lemuen@tsinghua.edu.cn");
-        applier2.setPhone("132345645678");
+        applier2.setPhone("13234564568");
         applier2.setRole(UserRole.APPLIER);
         applier2.setDepartment("管理科学与工程系");
         applier2.setCreateTime(new Date());
@@ -123,7 +123,7 @@ public class DataInitializer implements CommandLineRunner {
         applier5.setPassword(passwordEncoder.encode("123456"));
         applier5.setNickname("艾雅法拉");
         applier5.setEmail("eyjafjalla@tsinghua.edu.cn");
-        applier5.setPhone("1323325523");
+        applier5.setPhone("13233255234");
         applier5.setRole(UserRole.APPLIER);
         applier5.setDepartment("电子系");
         applier5.setCreateTime(new Date());
@@ -347,7 +347,6 @@ public class DataInitializer implements CommandLineRunner {
         User lemuen = userRepository.findByUsername("lemuen");
         User hoshiguma = userRepository.findByUsername("hoshiguma");
 
-        // 由于RoomRepository没有findByName方法，我们直接使用ID
         Room room1 = roomRepository.findById(1L).orElse(null);
         Room room2 = roomRepository.findById(2L).orElse(null);
         Room room3 = roomRepository.findById(3L).orElse(null);
