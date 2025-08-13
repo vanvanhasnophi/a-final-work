@@ -6,6 +6,9 @@ out/
 
 .joycoder/
 
+
+author.sh
+
 ### Eclipse ###
 .apt_generated
 .classpath
