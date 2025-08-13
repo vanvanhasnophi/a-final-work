@@ -9,6 +9,7 @@ import {
   LazyMyApplications,
   LazyUserList,
   LazyUserProfile,
+  LazyDutySchedule,
   LazySettings,
   LazyNotFound,
   LazyLayoutComponents
@@ -104,6 +105,13 @@ function AppRoutes() {
         <AdminRoute>
           <RoleBasedLayout><LazyUserList /></RoleBasedLayout>
         </AdminRoute>
+      } />
+      
+      {/* 值班表管理 - 仅 ADMIN 和 APPROVER 可见 */}
+      <Route path="/duty-schedule" element={
+        <RoleBasedRoute pageName="duty-schedule">
+          <RoleBasedLayout><LazyDutySchedule /></RoleBasedLayout>
+        </RoleBasedRoute>
       } />
       
       {/* 开发环境路由 */}

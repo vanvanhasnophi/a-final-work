@@ -551,7 +551,7 @@ function MyApplicationsContent() {
           transition: 'padding 0.3s ease'
         }}>
           <ResponsiveFilterContainer 
-            threshold={800}
+            threshold={1150}
             onCollapseStateChange={setIsFilterCollapsed}
           >
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -767,7 +767,7 @@ function MyApplicationsContent() {
                   loading={applicationsLoading}
                   scroll={{ 
                     x: 1200, 
-                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
+                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
                     scrollToFirstRowOnChange: false
                   }}
                   pagination={false}
@@ -788,7 +788,10 @@ function MyApplicationsContent() {
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',
             display: 'flex',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            borderBottomLeftRadius: '6px',
+            borderBottomRightRadius: '6px',
+            fontFamily: 'var(--app-font-stack)'
           }}>
             <Pagination
               {...pagination}
@@ -861,20 +864,31 @@ function MyApplicationsContent() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <strong>{t('applicationManagement.columns.status')}：</strong>
-              {currentApplication.status === 'EXPIRED' && currentApplication.originalStatus ? (
-                <>
-                  <Tag color={getApplicationStatusColor(currentApplication.originalStatus)}>
-                    {getApplicationStatusDisplayName(currentApplication.originalStatus)}
-                  </Tag>
-                  <Tag color="default" style={{ marginLeft: 4 }}>
-                    {getApplicationStatusDisplayName(currentApplication.status)}
-                  </Tag>
-                </>
-              ) : (
-                <Tag color={getApplicationStatusColor(currentApplication.status)}>
-                  {getApplicationStatusDisplayName(currentApplication.status)}
-                </Tag>
-              )}
+              {(() => {
+                const isExpired = isApplicationExpired(currentApplication);
+                
+                if (isExpired) {
+                  // 过期申请：显示原状态 + 过期标签
+                  const originalStatus = currentApplication.originalStatus || currentApplication.status;
+                  return (
+                    <>
+                      <Tag color={getApplicationStatusColor(originalStatus)}>
+                        {getApplicationStatusDisplayName(originalStatus)}
+                      </Tag>
+                      <Tag color="default" style={{ marginLeft: 4 }}>
+                        {t('applicationManagement.statusOptions.EXPIRED', '已过期')}
+                      </Tag>
+                    </>
+                  );
+                } else {
+                  // 正常状态：仅显示当前状态
+                  return (
+                    <Tag color={getApplicationStatusColor(currentApplication.status)}>
+                      {getApplicationStatusDisplayName(currentApplication.status)}
+                    </Tag>
+                  );
+                }
+              })()}
               {currentApplication.status === 'PENDING_CHECKIN' && currentApplication.userId === user?.id && (
                 <Button 
                   type="primary" 

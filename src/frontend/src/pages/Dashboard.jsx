@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Button, message } from 'antd';
+import { Card, Row, Col, Statistic, Button, message, Tag, Space } from 'antd';
 import { UserOutlined, HomeOutlined, CalendarOutlined, SettingOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { roomAPI } from '../api/room';
 import { applicationAPI } from '../api/application';
+import { dutyAPI } from '../api/duty';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getApplicationStatusDisplayName } from '../utils/statusMapping';
@@ -11,9 +12,11 @@ import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate } from 'react-router-dom';
 import { canViewOwnApplications } from '../utils/permissionUtils';
 import LatestNews from '../components/LatestNews';
+import FeedbackButton from '../components/FeedbackButton';
 import ResponsiveCardContainer from '../components/ResponsiveCardContainer';
 import { useI18n } from '../contexts/I18nContext';
 import { useActivities } from '../hooks/useActivities';
+import dayjs from 'dayjs';
 
 export default function Dashboard() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -39,6 +42,7 @@ export default function Dashboard() {
     todayCleaningReports: 0,
     todayMaintenanceReports: 0
   });
+  const [todayDuty, setTodayDuty] = useState(null);
   const [messageApi, contextHolder] = message.useMessage();
   const { loading, error, executeWithRetry } = useApiWithRetry();
   
@@ -104,6 +108,15 @@ export default function Dashboard() {
           todayMaintenanceReports: 0 // 占位，暂不实现
         });
         
+        // 获取今日值班人信息
+        try {
+          const dutyResponse = await dutyAPI.getTodayDuty();
+          setTodayDuty(dutyResponse.data);
+        } catch (error) {
+          console.log('获取今日值班人信息失败:', error);
+          setTodayDuty(null);
+        }
+        
         return { rooms, allApplications, myApplications };
       },
       {
@@ -159,6 +172,7 @@ export default function Dashboard() {
         <div style={{ padding: '24px' }}>
       <h1>{t('dashboard.overviewTitle')}</h1>
           
+          {/* 第一行：数据展示 - 统计卡片 */}
           <Row gutter={16} style={{ marginBottom: '24px' }}>
             {/* 通用统计卡片 */}
             <Col span={windowWidth < 600 ? 24 : 6}>
@@ -293,9 +307,10 @@ export default function Dashboard() {
             )}
           </Row>
 
-          <Row gutter={16}>
-            <Col span={windowWidth < 600 ? 24 : 12}>
-      <Card title={t('dashboard.quickActionsTitle')} extra={<SettingOutlined />}>
+          {/* 第二行：快速操作单独一行 */}
+          <Row gutter={16} style={{ marginBottom: '24px' }}>
+            <Col span={24}>
+              <Card title={t('dashboard.quickActionsTitle')} extra={<SettingOutlined />}>
                 {/* 申请教室按钮：审批员(Approver)不展示 */}
                 {!isMaintainer && !isService && !isApprover && (
                   <Button 
@@ -303,7 +318,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('apply')}
                   >
-        {t('dashboard.buttons.applyRoom')}
+                    {t('dashboard.buttons.applyRoom')}
                   </Button>
                 )}
                 {canViewOwnApplications(user?.role) && (
@@ -311,7 +326,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('myApplications')}
                   >
-        {t('dashboard.buttons.myApplications')}
+                    {t('dashboard.buttons.myApplications')}
                   </Button>
                 )}
                 {canViewAllPending && (
@@ -319,7 +334,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('allApplications')}
                   >
-        {t('dashboard.buttons.allApplications')}
+                    {t('dashboard.buttons.allApplications')}
                   </Button>
                 )}
                 {isAdmin && (
@@ -327,7 +342,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('userManagement')}
                   >
-        {t('dashboard.buttons.userManagement')}
+                    {t('dashboard.buttons.userManagement')}
                   </Button>
                 )}
                 {isAdmin && (
@@ -335,7 +350,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('roomManagement')}
                   >
-        {t('dashboard.buttons.roomManagement')}
+                    {t('dashboard.buttons.roomManagement')}
                   </Button>
                 )}
                 {isMaintainer && (
@@ -343,7 +358,7 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('roomManagement')}
                   >
-        {t('dashboard.buttons.roomManagement')}
+                    {t('dashboard.buttons.roomManagement')}
                   </Button>
                 )}
                 {isService && (
@@ -351,31 +366,85 @@ export default function Dashboard() {
                     style={{ marginRight: '8px', marginBottom: '8px' }}
                     onClick={() => handleQuickAction('roomManagement')}
                   >
-        {t('dashboard.buttons.roomManagement')}
+                    {t('dashboard.buttons.roomManagement')}
                   </Button>
                 )}
               </Card>
             </Col>
-            <Col span={windowWidth < 600 ? 24 : 12}>
-      <Card title={t('dashboard.latestNewsTitle')} extra={
-                <Button 
-                  type="link" 
-                  size="small" 
-                  onClick={refreshRecentActivities}
+          </Row>
+
+          {/* 第三行：今日值班和最新动态一行 */}
+          <Row gutter={16}>
+            {/* 今日值班卡片 - 仅对管理员和审批员展示 */}
+            {(user?.role === 'ADMIN' || user?.role === 'APPROVER') && todayDuty && (
+              <Col span={windowWidth < 768 ? 24 : 12}>
+                <Card
+                  title={
+                    <Space>
+                      <UserOutlined />
+                      {t('dashboard.todayDuty.title', '今日值班')}
+                    </Space>
+                  }
+                  hoverable
+                  style={{ height: '200px' }}
                 >
-      {t('common.refresh')}
-                </Button>
-              }>
-                <LatestNews
-                  activities={recentActivities}
-                  loading={false}
-                  maxItems={6}
-      emptyText={t('dashboard.latestNewsEmpty')}
-                  height="calc(100vh - 350px)"
-                  minHeight="200px"
-                />
-              </Card>
-            </Col>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                      {todayDuty.dutyUserNickname || todayDuty.dutyUserName}
+                      {todayDuty.dutyUserNickname && todayDuty.dutyUserName && (
+                        <span style={{ fontSize: '14px', fontWeight: 'normal', color: '#666', marginLeft: '4px' }}>
+                          ({todayDuty.dutyUserName})
+                        </span>
+                      )}
+                    </div>
+                    {(todayDuty.dutyUserPhone || todayDuty.dutyUserEmail) && (
+                      <div style={{ marginBottom: '8px' }}>
+                        {todayDuty.dutyUserPhone && (
+                          <Tag color="green">📞 {todayDuty.dutyUserPhone}</Tag>
+                        )}
+                        {todayDuty.dutyUserEmail && (
+                          <Tag color="blue" style={{ marginLeft: todayDuty.dutyUserPhone ? '4px' : '0' }}>
+                            ✉️ {todayDuty.dutyUserEmail}
+                          </Tag>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                      {dayjs().format('YYYY-MM-DD')}
+                    </div>
+                    {todayDuty.remark && (
+                      <div style={{ fontSize: '12px', color: '#999', marginTop: '4px', fontStyle: 'italic' }}>
+                        {todayDuty.remark}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </Col>
+            )}
+
+            {/* 最新动态 - 仅对管理员和审批员展示 */}
+            {(user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
+              <Col span={windowWidth < 768 ? 24 : (todayDuty ? 12 : 24)}>
+                <Card title={t('dashboard.latestNewsTitle')} extra={
+                  <Button 
+                    type="link" 
+                    size="small" 
+                    onClick={refreshRecentActivities}
+                  >
+                    {t('common.refresh')}
+                  </Button>
+                }>
+                  <LatestNews
+                    activities={recentActivities}
+                    loading={false}
+                    maxItems={6}
+                    emptyText={t('dashboard.latestNewsEmpty')}
+                    height="calc(100vh - 350px)"
+                    minHeight="200px"
+                  />
+                </Card>
+              </Col>
+            )}
           </Row>
         </div>
       </LoadingSpinner>

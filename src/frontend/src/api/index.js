@@ -122,19 +122,19 @@ instance.interceptors.response.use(
           break;
         }
         case 404:
-          showTranslatedMessage(message, 'error', data, '请求的资源不存在');
+          showTranslatedMessage(message, 'error', (data && typeof data === 'object' && data.error) ? data.error : data, '请求的资源不存在');
           break;
         case 409:
-          showTranslatedMessage(message, 'error', data, '操作冲突，请稍后重试');
+          showTranslatedMessage(message, 'error', (data && typeof data === 'object' && data.error) ? data.error : data, '操作冲突，请稍后重试');
           break;
         case 500:
-          showTranslatedMessage(message, 'error', data, '服务器内部错误');
+          showTranslatedMessage(message, 'error', (data && typeof data === 'object' && data.error) ? data.error : data, '服务器内部错误');
           break;
         case 503:
-          showTranslatedMessage(message, 'error', data, '服务不可用，可能在维护中');
+          showTranslatedMessage(message, 'error', (data && typeof data === 'object' && data.error) ? data.error : data, '服务不可用，可能在维护中');
           break;
         default:
-          showTranslatedMessage(message, 'error', data, '请求失败');
+          showTranslatedMessage(message, 'error', (data && typeof data === 'object' && data.error) ? data.error : data, '请求失败');
       }
     } else if (error.request) {
       showTranslatedMessage(message, 'error', 'Network error', '网络连接失败，请检查网络设置');

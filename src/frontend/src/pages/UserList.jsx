@@ -3,7 +3,7 @@ import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, me
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
-import { register, deleteUser as authDeleteUser } from '../api/auth';
+import { register, deleteUser as authDeleteUser, verifyPassword, dangerousOperationVerify } from '../api/auth';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
@@ -24,7 +24,7 @@ const { Option } = Select;
 
 export default function UserList() {
   const { t } = useI18n();
-  const { user, clearAuth } = useAuth();
+  const { user, clearAuth, logout } = useAuth();
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -43,6 +43,12 @@ export default function UserList() {
   const [authError, setAuthError] = useState(null);
   const [createFormRole, setCreateFormRole] = useState(undefined);
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
+
+  // 二次确认弹窗状态
+  const [secondConfirmVisible, setSecondConfirmVisible] = useState(false);
+  const [deleteTargetUser, setDeleteTargetUser] = useState(null);
+  const [confirmationInput, setConfirmationInput] = useState('');
+  const [confirmationError, setConfirmationError] = useState('');
 
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -174,27 +180,173 @@ export default function UserList() {
 
   // 删除用户
   const handleDeleteUser = (record) => {
-    modal.confirm({
-      title: t('userList.confirmDelete.title', '确认删除'),
-      icon: <ExclamationCircleOutlined />,
-      content: t('userList.confirmDelete.content', '确定要删除用户 "{username}" 吗？此操作不可恢复。').replace('{username}', record.username),
-      okText: t('common.confirm', '确认'),
-      cancelText: t('common.cancel', '取消'),
-      okType: 'danger',
-              onOk: async () => {
-          try {
-            await authDeleteUser(record.id);
-            messageApi.success(t('userList.messages.deleteSuccess', '用户删除成功'));
-            fetchUsers(); // 刷新列表
-          } catch (error) {
-            console.error('删除用户失败:', error);
-            messageApi.error(
-              t('userList.messages.deleteFailPrefix', '删除用户失败: ') +
-              (error.response?.data?.message || error.message || t('user.common.notSet', '未知错误'))
-            );
-          }
+    // 检查是否是删除自己
+    const isDeletingSelf = record.id === user?.id;
+    
+    // 二次确认逻辑
+    const showSecondConfirm = () => {
+      setDeleteTargetUser(record);
+      setConfirmationInput('');
+      setConfirmationError('');
+      setSecondConfirmVisible(true);
+    };
+
+    // 主确认弹框
+    const showMainConfirm = () => {
+      modal.confirm({
+        title: t('userList.confirmDelete.title', '确认删除'),
+        icon: <ExclamationCircleOutlined />,
+        content: t('userList.confirmDelete.content', '确定要删除用户 "{username}" 吗？此操作不可恢复。').replace('{username}', record.username),
+        okText: t('userList.confirmDelete.nextStep', '下一步'),
+        cancelText: t('common.cancel', '取消'),
+        okType: 'danger',
+        onOk: showSecondConfirm
+      });
+    };
+
+    // 如果是删除自己，先显示额外警告
+    if (isDeletingSelf) {
+      modal.confirm({
+        title: t('userList.confirmDeleteSelf.title', '警告：删除自己的账户'),
+        icon: <ExclamationCircleOutlined />,
+        content: (
+          <div>
+            <p>{t('userList.confirmDeleteSelf.warning', '您正在尝试删除自己的管理员账户！')}</p>
+            <p>{t('userList.confirmDeleteSelf.consequence', '删除后您将立即退出系统，无法撤销此操作。')}</p>
+            <p><strong>{t('userList.confirmDeleteSelf.confirm', '确定要继续吗？')}</strong></p>
+          </div>
+        ),
+        okText: t('userList.confirmDeleteSelf.continueText', '继续删除'),
+        cancelText: t('common.cancel', '取消'),
+        okType: 'danger',
+        onOk: showSecondConfirm  // 直接跳转到二次确认，跳过主确认
+      });
+    } else {
+      showMainConfirm();
+    }
+  };
+
+  // 处理二次确认
+  const handleSecondConfirm = async () => {
+    if (!deleteTargetUser) return;
+
+    const isDeletingSelf = deleteTargetUser.id === user?.id;
+    let verificationToken = null;
+
+    try {
+      // 验证输入
+      if (isDeletingSelf) {
+        // 删除自己需要输入密码
+        if (!confirmationInput.trim()) {
+          setConfirmationError(t('userList.secondConfirm.passwordRequired', '请输入密码'));
+          return;
         }
-    });
+        
+        // 调用危险操作验证API获取临时令牌
+        const response = await dangerousOperationVerify(confirmationInput.trim(), 'DELETE_USER');
+        if (response.data?.success && response.data?.verificationToken) {
+          verificationToken = response.data.verificationToken;
+        } else {
+          setConfirmationError(t('userList.secondConfirm.passwordIncorrect', '密码不正确'));
+          return;
+        }
+      } else {
+        // 删除其他用户需要输入用户名，然后需要管理员密码验证
+        if (confirmationInput.trim() !== deleteTargetUser.username) {
+          setConfirmationError(t('userList.secondConfirm.usernameIncorrect', '用户名不正确'));
+          return;
+        }
+        
+        // 用户名验证通过，现在需要弹出管理员密码输入框
+        // 为了简化，这里我们提示用户在同一个输入框输入管理员密码
+        const adminPassword = await new Promise((resolve, reject) => {
+          Modal.confirm({
+            title: '管理员验证',
+            content: (
+              <div>
+                <p>删除用户需要管理员权限验证，请输入您的管理员密码：</p>
+                <Input.Password
+                  placeholder="请输入管理员密码"
+                  onPressEnter={(e) => {
+                    resolve(e.target.value);
+                    Modal.destroyAll();
+                  }}
+                  ref={(input) => {
+                    if (input) {
+                      setTimeout(() => input.focus(), 100);
+                    }
+                  }}
+                />
+              </div>
+            ),
+            onOk: (close) => {
+              const input = document.querySelector('.ant-modal input[type="password"]');
+              const password = input ? input.value : '';
+              if (password.trim()) {
+                resolve(password.trim());
+              } else {
+                reject(new Error('密码不能为空'));
+              }
+            },
+            onCancel: () => {
+              reject(new Error('用户取消'));
+            },
+          });
+        });
+        
+        // 使用管理员密码进行验证
+        const response = await dangerousOperationVerify(adminPassword, 'DELETE_USER');
+        if (response.data?.success && response.data?.verificationToken) {
+          verificationToken = response.data.verificationToken;
+        } else {
+          setConfirmationError('管理员密码验证失败');
+          return;
+        }
+      }
+
+      if (verificationToken) {
+        await authDeleteUser(deleteTargetUser.id, verificationToken);
+        messageApi.success(t('userList.messages.deleteSuccess', '用户删除成功'));
+        
+        // 如果删除的是自己，自动退出登录
+        if (isDeletingSelf) {
+          messageApi.info(t('userList.messages.selfDeleteLogout', '您已删除自己的账户，即将退出登录'));
+          setTimeout(() => {
+            logout();
+          }, 2000);
+        } else {
+          fetchUsers(); // 刷新列表
+        }
+        
+        // 关闭弹窗
+        setSecondConfirmVisible(false);
+        setDeleteTargetUser(null);
+        setConfirmationInput('');
+        setConfirmationError('');
+      }
+    } catch (error) {
+      console.error('删除用户失败:', error);
+      if (error.message === '用户取消') {
+        // 用户取消了管理员密码输入
+        return;
+      }
+      if (error.response?.data?.message?.includes('验证令牌') || error.response?.data?.message?.includes('验证失败')) {
+        setConfirmationError(t('userList.secondConfirm.passwordIncorrect', '密码不正确'));
+      } else {
+        messageApi.error(
+          t('userList.messages.deleteFailPrefix', '删除用户失败: ') +
+          (error.response?.data?.message || error.message || t('user.common.notSet', '未知错误'))
+        );
+      }
+    }
+  };
+
+  // 取消二次确认
+  const handleSecondConfirmCancel = () => {
+    setSecondConfirmVisible(false);
+    setDeleteTargetUser(null);
+    setConfirmationInput('');
+    setConfirmationError('');
   };
 
   // 关闭抽屉
@@ -273,11 +425,15 @@ export default function UserList() {
             // 使用auth的register接口创建用户，需要包含密码
             const userData = {
               username: values.username,
-              password: values.password, // 添加密码字段
+              password: values.password,
               nickname: values.nickname,
               email: values.email,
               phone: values.phone,
-              role: values.role
+              role: values.role,
+              department: values.department,
+              permission: values.permission,
+              serviceArea: values.serviceArea,
+              skill: values.skill,
             };
             const response = await register(userData);
       messageApi.success(t('userList.messages.createSuccess', '用户创建成功'));
@@ -586,7 +742,7 @@ export default function UserList() {
           transition: 'padding 0.3s ease'
         }}>
           <ResponsiveFilterContainer 
-            threshold={800}
+            threshold={1000}
             onCollapseStateChange={setIsFilterCollapsed}
           >
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -749,7 +905,7 @@ export default function UserList() {
                   loading={usersLoading}
                   scroll={{ 
                     x: 1200, 
-                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
+                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
                     scrollToFirstRowOnChange: false
                   }}
                   pagination={false}
@@ -763,13 +919,16 @@ export default function UserList() {
             </FixedTop>
           </div>
           
-          {/* 分页组件 - 常驻 */}
+          {/* 分页组件 - 放置在 Card 内部底部 */}
           <div style={{
             padding: '12px 16px',
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',
             display: 'flex',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            borderBottomLeftRadius: '6px',
+            borderBottomRightRadius: '6px',
+            fontFamily: 'var(--app-font-stack)'
           }}>
             <Pagination
               {...pagination}
@@ -782,6 +941,14 @@ export default function UserList() {
                 const newParams = {
                   pageNum: page,
                   pageSize: pageSize,
+                };
+                setSearchParams(prev => ({ ...prev, ...newParams }));
+                fetchUsers(newParams);
+              }}
+              onShowSizeChange={(current, size) => {
+                const newParams = {
+                  pageNum: 1,
+                  pageSize: size,
                 };
                 setSearchParams(prev => ({ ...prev, ...newParams }));
                 fetchUsers(newParams);
@@ -1086,6 +1253,59 @@ export default function UserList() {
           </div>
         )}
       </Drawer>
+
+      {/* 二次确认Modal */}
+      <Modal
+        title={deleteTargetUser?.id === user?.id ? 
+          t('userList.secondConfirm.passwordTitle', '输入密码确认') : 
+          t('userList.secondConfirm.usernameTitle', '输入用户名确认')
+        }
+        open={secondConfirmVisible}
+        onOk={handleSecondConfirm}
+        onCancel={handleSecondConfirmCancel}
+        okText={t('userList.secondConfirm.confirmDelete', '确认删除')}
+        cancelText={t('common.cancel', '取消')}
+        okType="danger"
+        destroyOnClose
+      >
+        <div style={{ marginBottom: 16 }}>
+          <p>
+            {deleteTargetUser?.id === user?.id ? 
+              t('userList.secondConfirm.passwordPrompt', '为了确认删除自己的账户，请输入您的密码：') :
+              t('userList.secondConfirm.usernamePrompt', '为了确认删除用户 "{username}"，请输入该用户的用户名：').replace('{username}', deleteTargetUser?.username || '')
+            }
+          </p>
+        </div>
+        {deleteTargetUser?.id === user?.id ? (
+          <Input.Password
+            placeholder={t('userList.secondConfirm.enterPassword', '请输入密码')}
+            value={confirmationInput}
+            onChange={(e) => {
+              setConfirmationInput(e.target.value);
+              setConfirmationError('');
+            }}
+            status={confirmationError ? 'error' : ''}
+            onPressEnter={handleSecondConfirm}
+          />
+        ) : (
+          <Input
+            placeholder={t('userList.secondConfirm.enterUsername', '请输入用户名')}
+            value={confirmationInput}
+            onChange={(e) => {
+              setConfirmationInput(e.target.value);
+              setConfirmationError('');
+            }}
+            status={confirmationError ? 'error' : ''}
+            onPressEnter={handleSecondConfirm}
+          />
+        )}
+        {confirmationError && (
+          <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: '14px' }}>
+            {confirmationError}
+          </div>
+        )}
+      </Modal>
+
     </div>
     </PageErrorBoundary>
   );

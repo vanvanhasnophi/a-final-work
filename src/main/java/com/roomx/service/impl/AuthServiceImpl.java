@@ -14,6 +14,7 @@ import com.roomx.model.dto.UserUpdatePasswordDTO;
 import com.roomx.model.entity.User;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.AuthService;
+import com.roomx.service.TemporaryTokenService;
 import com.roomx.service.UserSessionService;
 import com.roomx.utils.DateUtil;
 import com.roomx.utils.EnhancedJwtUtil;
@@ -26,10 +27,13 @@ import lombok.Getter;
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final UserSessionService userSessionService;
+    private final TemporaryTokenService temporaryTokenService;
 
-    public AuthServiceImpl(UserRepository userRepository, UserSessionService userSessionService) {
+    public AuthServiceImpl(UserRepository userRepository, UserSessionService userSessionService, 
+                          TemporaryTokenService temporaryTokenService) {
         this.userRepository = userRepository;
         this.userSessionService = userSessionService;
+        this.temporaryTokenService = temporaryTokenService;
     }
 
     @Override
@@ -170,11 +174,66 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void deleteUser(Long userId) {
+    public String dangerousOperationVerify(String username, String password, String operation) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        
+        if (!PasswordEncoderUtil.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("密码验证失败");
+        }
+        
+        // 生成一次性临时令牌（对于删除用户操作，这里不知道具体的targetId，前端会单独传入）
+        return temporaryTokenService.generateToken(username, operation, "ANY");
+    }
+
+    @Override
+    public void deleteUser(Long userId, String verificationToken) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             throw new IllegalArgumentException("用户不存在");
         }
+        
+        // 获取当前认证用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new IllegalArgumentException("未认证用户无法执行删除操作");
+        }
+        
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername);
+        if (currentUser == null) {
+            throw new IllegalArgumentException("当前用户不存在");
+        }
+        
+        // 检查是否有管理员权限
+        if (currentUser.getRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("只有管理员可以删除用户");
+        }
+        
+        // 判断是否删除自己
+        boolean isDeletingSelf = user.getId().equals(currentUser.getId());
+        
+        if (isDeletingSelf) {
+            // 删除自己时，必须提供有效的验证令牌
+            if (verificationToken == null || verificationToken.trim().isEmpty()) {
+                throw new IllegalArgumentException("删除自己的账户需要提供验证令牌");
+            }
+            
+            try {
+                // 使用"ANY"作为targetId，因为生成token时使用的是"ANY"
+                boolean isTokenValid = temporaryTokenService.validateAndConsumeToken(
+                    verificationToken, currentUsername, "DELETE_USER", "ANY"
+                );
+                if (!isTokenValid) {
+                    throw new IllegalArgumentException("验证令牌无效或已过期");
+                }
+            } catch (Exception e) {
+                throw new IllegalArgumentException("验证令牌无效或已过期：" + e.getMessage());
+            }
+        }
+        // 删除其他用户时，不需要验证令牌
         
         // 检查是否为最后一个ADMIN用户
         if (user.getRole() == UserRole.ADMIN) {

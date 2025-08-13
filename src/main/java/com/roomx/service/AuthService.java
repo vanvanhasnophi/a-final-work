@@ -12,9 +12,11 @@ public interface AuthService {
     UserTokenDTO register(UserRegisterDTO userRegisterDTO);
     // 退出登录业务
     int logout(String username);
-    // 修改密码业务
+        // 修改密码业务
     int updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO);
+    // 危险操作验证业务，返回一次性验证token
+    String dangerousOperationVerify(String username, String password, String operation);
     // 删除用户业务
-    void deleteUser(Long userId);
+    void deleteUser(Long userId, String verificationToken);
 
 }

@@ -41,6 +41,11 @@ export const LazyUserProfile = createLazyComponent.page(
   '个人中心'
 );
 
+export const LazyDutySchedule = createLazyComponent.page(
+  () => import('../pages/DutySchedule'),
+  '值班表管理'
+);
+
 export const LazySettings = createLazyComponent.page(
   () => import('../pages/Settings'),
   '设置'

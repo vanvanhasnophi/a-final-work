@@ -636,7 +636,7 @@ function ApplicationManagementContent() {
             transition: 'padding 0.3s ease'
           }}>
             <ResponsiveFilterContainer 
-              threshold={900}
+              threshold={1300}
               onCollapseStateChange={setIsFilterCollapsed}
             >
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -872,7 +872,7 @@ function ApplicationManagementContent() {
                       loading={applicationsLoading}
                       scroll={{ 
                         x: 1200, 
-                        y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
+                        y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
                         scrollToFirstRowOnChange: false
                       }}
                     pagination={false}
@@ -896,7 +896,10 @@ function ApplicationManagementContent() {
               borderTop: '1px solid var(--border-color)',
               backgroundColor: 'var(--component-bg)',
               display: 'flex',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              borderBottomLeftRadius: '6px',
+              borderBottomRightRadius: '6px',
+              fontFamily: 'var(--app-font-stack)'
             }}>
               <Pagination
                 {...pagination}
@@ -954,20 +957,31 @@ function ApplicationManagementContent() {
               <Descriptions.Item label={t('applicationManagement.descriptions.startTime')}><span className="num-mono" data-field="startTime">{formatDateTime(currentApplication.startTime)}</span></Descriptions.Item>
               <Descriptions.Item label={t('applicationManagement.descriptions.endTime')}><span className="num-mono" data-field="endTime">{formatDateTime(currentApplication.endTime)}</span></Descriptions.Item>
               <Descriptions.Item label={t('applicationManagement.descriptions.status')}>
-                {currentApplication.status === 'EXPIRED' && currentApplication.originalStatus ? (
-                  <>
-                    <Tag color={getApplicationStatusColor(currentApplication.originalStatus)}>
-                      {getApplicationStatusDisplayName(currentApplication.originalStatus)}
-                    </Tag>
-                    <Tag color="default" style={{ marginLeft: 4 }}>
-                      {getApplicationStatusDisplayName(currentApplication.status)}
-                    </Tag>
-                  </>
-                ) : (
-                  <Tag color={getApplicationStatusColor(currentApplication.status)}>
-                    {getApplicationStatusDisplayName(currentApplication.status)}
-                  </Tag>
-                )}
+                {(() => {
+                  const isExpired = isApplicationExpired(currentApplication);
+                  
+                  if (isExpired) {
+                    // 过期申请：显示原状态 + 过期标签
+                    const originalStatus = currentApplication.originalStatus || currentApplication.status;
+                    return (
+                      <>
+                        <Tag color={getApplicationStatusColor(originalStatus)}>
+                          {getApplicationStatusDisplayName(originalStatus)}
+                        </Tag>
+                        <Tag color="default" style={{ marginLeft: 4 }}>
+                          {t('applicationManagement.statusOptions.EXPIRED', '已过期')}
+                        </Tag>
+                      </>
+                    );
+                  } else {
+                    // 正常状态：仅显示当前状态
+                    return (
+                      <Tag color={getApplicationStatusColor(currentApplication.status)}>
+                        {getApplicationStatusDisplayName(currentApplication.status)}
+                      </Tag>
+                    );
+                  }
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label={t('applicationManagement.descriptions.createTime')}><span className="num-mono" data-field="createTime">{formatDateTime(currentApplication.createTime)}</span></Descriptions.Item>
               {currentApplication.reason && (

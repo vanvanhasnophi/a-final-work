@@ -163,15 +163,63 @@ public class AuthController {
         }
     }
 
+    // 危险操作验证接口（需要登录）
+    @PostMapping("/auth/dangerous-operation-verify")
+    public ResponseEntity<?> dangerousOperationVerify(@RequestBody Map<String, String> request) {
+        try {
+            // 获取当前认证用户
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "未认证"));
+            }
+            
+            String username = authentication.getName();
+            String password = request.get("password");
+            String operation = request.get("operation");
+            
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "密码不能为空"));
+            }
+            
+            if (operation == null || operation.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "操作类型不能为空"));
+            }
+            
+            String verificationToken = authService.dangerousOperationVerify(username, password, operation);
+            return ResponseEntity.ok().body(Map.of(
+                "success", true,
+                "verificationToken", verificationToken
+            ));
+            
+        } catch (Exception e) {
+            TokenValidationLogger.logException("Dangerous operation verify", e.getMessage(), "Dangerous operation verification failed");
+            return ResponseEntity.badRequest()
+                .body(Map.of("success", false, "message", "验证失败: " + e.getMessage()));
+        }
+    }
+
     // 删除用户接口（ADMIN权限）
     @DeleteMapping("/auth/user/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId, @RequestBody Map<String, String> request) {
         try {
-            authService.deleteUser(userId);
-            return ResponseEntity.ok().body("User deleted successfully");
+            // 验证ADMIN权限
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "未认证"));
+            }
+            
+            String verificationToken = request.get("verificationToken");
+            // 注意：verificationToken可以为空，AuthService会根据是否删除自己来决定是否验证token
+            
+            authService.deleteUser(userId, verificationToken);
+            return ResponseEntity.ok().body(Map.of("success", true, "message", "用户删除成功"));
         } catch (Exception e) {
             TokenValidationLogger.logException("Delete user", e.getMessage(), "Delete user failed for ID: " + userId);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
