@@ -54,14 +54,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // 检查是否被挤下线
-  const checkKickout = useCallback(async () => {
+  // 检查会话状态（包括挤下线和会话失效）
+  const checkSessionStatus = useCallback(async () => {
     try {
       const response = await authAPI.checkSession();
-      return response.data?.kickedOut || false;
+      const sessionData = response.data;
+      
+      return {
+        isValid: sessionData?.valid || false,
+        isKickedOut: sessionData?.kickedOut || false,
+        message: sessionData?.message || 'Unknown session status'
+      };
     } catch (error) {
-      console.error('检查挤下线状态失败:', error);
-      return false;
+      console.error('检查会话状态失败:', error);
+      return {
+        isValid: false,
+        isKickedOut: false,
+        message: 'Session check failed'
+      };
     }
   }, []);
 
@@ -88,9 +98,9 @@ export const AuthProvider = ({ children }) => {
           return;
         }
         
-        // 检查是否被挤下线
-        const isKickedOut = await checkKickout();
-        if (isKickedOut) {
+        // 检查会话状态（包括挤下线和会话失效）
+        const sessionStatus = await checkSessionStatus();
+        if (sessionStatus.isKickedOut) {
           console.debug('检测到账号在其他地方登录，清理认证状态');
           clearAuth();
           setLoading(false);
@@ -120,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       clearAuth();
     }
     setLoading(false);
-  }, [validateToken, checkKickout, clearAuth]);
+  }, [validateToken, checkSessionStatus, clearAuth]);
 
   // 登录
   const login = async (username, password) => {
@@ -285,26 +295,33 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
-  // 定时检查挤下线状态
+  // 定时检查会话状态（挤下线和会话失效）
   useEffect(() => {
     if (!token || !sessionId) return;
 
     const checkInterval = setInterval(async () => {
       try {
-        const isKickedOut = await checkKickout();
-        if (isKickedOut) {
-          console.log('定时检查发现被挤下线');
+        const sessionStatus = await checkSessionStatus();
+        
+        if (!sessionStatus.isValid) {
+          console.log('定时检查发现会话失效:', sessionStatus.message);
           clearAuth();
-          // 跳转到登录页并传递挤下线参数
-          window.location.href = '/login?kickout=true';
+          
+          if (sessionStatus.isKickedOut) {
+            // 被挤下线
+            window.location.href = '/login?kickout=true';
+          } else {
+            // 会话失效（如用户被删除）
+            window.location.href = '/login?sessionExpired=true';
+          }
         }
       } catch (error) {
-        console.error('定时检查挤下线状态失败:', error);
+        console.error('定时检查会话状态失败:', error);
       }
     }, 60000); // 每分钟检查一次
 
     return () => clearInterval(checkInterval);
-  }, [token, sessionId, checkKickout, clearAuth]);
+  }, [token, sessionId, checkSessionStatus, clearAuth]);
 
   const value = {
     user,
@@ -318,7 +335,7 @@ export const AuthProvider = ({ children }) => {
     updateUserInfo,
     refreshUserInfo,
     clearAuth,
-    checkKickout,
+    checkSessionStatus,
   };
 
   return (

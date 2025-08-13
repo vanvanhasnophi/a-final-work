@@ -123,20 +123,34 @@ export function translateMessage(message, defaultMessage = null) {
     return defaultMessage || '未知错误';
   }
   
+  // 如果message不是字符串，尝试提取字符串信息
+  let messageStr = message;
+  if (typeof message === 'object') {
+    if (message.error) {
+      messageStr = message.error;
+    } else if (message.message) {
+      messageStr = message.message;
+    } else {
+      messageStr = JSON.stringify(message);
+    }
+  } else if (typeof message !== 'string') {
+    messageStr = String(message);
+  }
+  
   // 直接匹配
-  if (ERROR_MESSAGE_MAP[message]) {
-    return ERROR_MESSAGE_MAP[message];
+  if (ERROR_MESSAGE_MAP[messageStr]) {
+    return ERROR_MESSAGE_MAP[messageStr];
   }
   
   // 模糊匹配（包含关键词）
   for (const [key, value] of Object.entries(ERROR_MESSAGE_MAP)) {
-    if (message.toLowerCase().includes(key.toLowerCase())) {
+    if (messageStr.toLowerCase().includes(key.toLowerCase())) {
       return value;
     }
   }
   
   // 如果都没有匹配到，返回默认消息或原始消息
-  return defaultMessage || message;
+  return defaultMessage || messageStr;
 }
 
 /**

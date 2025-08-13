@@ -17,6 +17,8 @@
   --fill-color-secondary: #FAFAFA;
   --fill-color-tertiary: #FFFFFF;
   --fill-color-quaternary: #F0F0F0;
+  --info-bg: #E6F7FF;
+  --info-border: #91D5FF;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-secondary: 0 1px 2px rgba(0, 0, 0, 0.06);
   --border-radius: 8px;
@@ -43,6 +45,8 @@
   --fill-color-secondary: #2B2D31;
   --fill-color-tertiary: #161618;
   --fill-color-quaternary: #3C3F45;
+  --info-bg: #111B26;
+  --info-border: #1E3A8A;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-secondary: 0 1px 2px rgba(0, 0, 0, 0.3);
   --border-radius: 8px;
@@ -99,7 +103,13 @@ html, body,
 .ant-segmented, 
 .ant-segmented-item, 
 .ant-radio-wrapper, 
-.ant-checkbox-wrapper {
+.ant-checkbox-wrapper,
+.ant-calendar,
+.ant-calendar-cell,
+.ant-calendar-date,
+.ant-picker,
+.ant-picker-cell,
+.ant-picker-cell-inner {
   font-family: var(--app-font-stack) !important;
 }
 

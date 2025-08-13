@@ -11,7 +11,8 @@ import {
   BulbOutlined,
   SettingOutlined,
   LogoutOutlined,
-  MenuOutlined
+  MenuOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { getRoleColor } from '../utils/permissionUtils';
@@ -21,6 +22,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useI18n } from '../contexts/I18nContext';
 import NotificationCenter from './NotificationCenter';
 import NotificationBanner from './NotificationBanner';
+import FeedbackButton from './FeedbackButton';
 import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
 import { notificationAPI } from '../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../utils/userDisplay';
@@ -49,11 +51,65 @@ const RoleBasedLayout = ({ children }) => {
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const [sidebarMenuCollapsed, setSidebarMenuCollapsed] = useState(false);
   
-  // 响应式阈值
-  const COLLAPSE_THRESHOLD = 800; // 小于此宽度自动折叠 (从1200降低到800)
-  const EXPAND_THRESHOLD = 1000;   // 大于此宽度自动展开 (从1280降低到1000)
-  const HEIGHT_COLLAPSE_THRESHOLD = 370; // 小于此高度启用汉堡菜单
-  const HEIGHT_EXPAND_THRESHOLD = 400;   // 大于此高度恢复正常菜单
+  // 获取用户角色的菜单配置（移除个人资料）
+  const getMenuItems = (userRole) => {
+    const baseMenu = [
+      { key: 'dashboard', label: t('layout.menu.dashboard'), icon: 'DashboardOutlined' },
+    ];
+
+    const roleSpecificMenu = [];
+    
+    switch (userRole) {
+      case 'ADMIN':
+        roleSpecificMenu.push(
+          { key: 'user-management', label: t('layout.menu.users'), icon: 'TeamOutlined' },
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' },
+          { key: 'application-management', label: t('layout.menu.applications'), icon: 'FileTextOutlined' },
+          { key: 'duty-schedule', label: t('layout.menu.dutySchedule'), icon: 'CalendarOutlined' }
+        );
+        break;
+      case 'APPLIER':
+        roleSpecificMenu.push(
+          { key: 'my-applications', label: t('layout.menu.myApplications'), icon: 'FormOutlined' },
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+      case 'APPROVER':
+        roleSpecificMenu.push(
+          { key: 'application-management', label: t('layout.menu.applications'), icon: 'FileTextOutlined' },
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' },
+          { key: 'duty-schedule', label: t('layout.menu.dutySchedule'), icon: 'CalendarOutlined' }
+        );
+        break;
+      case 'SERVICE':
+      case 'MAINTAINER':
+        roleSpecificMenu.push(
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+      default:
+        // 默认情况下只显示房间管理
+        roleSpecificMenu.push(
+          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
+        );
+        break;
+    }
+    
+    return [...baseMenu, ...roleSpecificMenu];
+  };
+  
+  // 响应式阈值 - 根据菜单项数动态调整
+  const WIDTH_COLLAPSE_THRESHOLD_BASE = 800; // 小于此宽度自动折叠
+  const WIDTH_EXPAND_THRESHOLD_BASE = 820;   // 大于此宽度自动展开
+  
+  // 获取菜单项数量用于计算阈值
+  const getMenuItemCount = (userRole) => {
+    return getMenuItems(userRole).length;
+  };
+  
+  const menuItemCount = user ? getMenuItemCount(user.role) : 4;
+  const HEIGHT_COLLAPSE_THRESHOLD_BASE = 220 + menuItemCount  * 40;
+  const HEIGHT_EXPAND_THRESHOLD_BASE = HEIGHT_COLLAPSE_THRESHOLD_BASE + 30;
 
   // 响应式侧栏处理
   useEffect(() => {
@@ -90,20 +146,20 @@ const RoleBasedLayout = ({ children }) => {
             setWindowHeight(newHeight);
             
             // 宽度响应式：自动折叠逻辑
-            if (newWidth < COLLAPSE_THRESHOLD && !collapsed) {
+            if (newWidth < WIDTH_COLLAPSE_THRESHOLD_BASE && !collapsed) {
               setCollapsed(true);
               setIsAutoCollapsed(true);
             } 
             // 宽度响应式：自动展开逻辑 (只有在自动折叠时才自动展开)
-            else if (newWidth > EXPAND_THRESHOLD && collapsed && isAutoCollapsed) {
+            else if (newWidth > WIDTH_EXPAND_THRESHOLD_BASE && collapsed && isAutoCollapsed) {
               setCollapsed(false);
               setIsAutoCollapsed(false);
             }
             
             // 高度响应式：菜单折叠逻辑
-            if (newHeight < HEIGHT_COLLAPSE_THRESHOLD) {
+            if (newHeight < HEIGHT_COLLAPSE_THRESHOLD_BASE) {
               setSidebarMenuCollapsed(true);
-            } else if (newHeight > HEIGHT_EXPAND_THRESHOLD) {
+            } else if (newHeight > HEIGHT_EXPAND_THRESHOLD_BASE) {
               setSidebarMenuCollapsed(false);
             }
           }
@@ -119,20 +175,20 @@ const RoleBasedLayout = ({ children }) => {
       setWindowHeight(newHeight);
       
       // 宽度响应式：自动折叠逻辑
-      if (newWidth < COLLAPSE_THRESHOLD && !collapsed) {
+      if (newWidth < WIDTH_COLLAPSE_THRESHOLD_BASE && !collapsed) {
         setCollapsed(true);
         setIsAutoCollapsed(true);
       } 
       // 宽度响应式：自动展开逻辑 (只有在自动折叠时才自动展开)
-      else if (newWidth > EXPAND_THRESHOLD && collapsed && isAutoCollapsed) {
+      else if (newWidth > WIDTH_EXPAND_THRESHOLD_BASE && collapsed && isAutoCollapsed) {
         setCollapsed(false);
         setIsAutoCollapsed(false);
       }
       
       // 高度响应式：菜单折叠逻辑
-      if (newHeight < HEIGHT_COLLAPSE_THRESHOLD) {
+      if (newHeight < HEIGHT_COLLAPSE_THRESHOLD_BASE) {
         setSidebarMenuCollapsed(true);
-      } else if (newHeight > HEIGHT_EXPAND_THRESHOLD) {
+      } else if (newHeight > HEIGHT_EXPAND_THRESHOLD_BASE) {
         setSidebarMenuCollapsed(false);
       }
     };
@@ -149,7 +205,7 @@ const RoleBasedLayout = ({ children }) => {
         clearTimeout(resizeTimer);
       }
     };
-  }, [collapsed, isAutoCollapsed, windowWidth, windowHeight, COLLAPSE_THRESHOLD, EXPAND_THRESHOLD, HEIGHT_COLLAPSE_THRESHOLD, HEIGHT_EXPAND_THRESHOLD]);
+  }, [collapsed, isAutoCollapsed, windowWidth, windowHeight, WIDTH_COLLAPSE_THRESHOLD_BASE, WIDTH_EXPAND_THRESHOLD_BASE, HEIGHT_COLLAPSE_THRESHOLD_BASE, HEIGHT_EXPAND_THRESHOLD_BASE]);
   
   // 手动控制折叠状态
   const handleToggleCollapse = () => {
@@ -361,51 +417,6 @@ const RoleBasedLayout = ({ children }) => {
     }
   ];
 
-  // 获取用户角色的菜单配置（移除个人资料）
-  const getMenuItems = (userRole) => {
-    const baseMenu = [
-      { key: 'dashboard', label: t('layout.menu.dashboard'), icon: 'DashboardOutlined' },
-    ];
-
-    const roleSpecificMenu = [];
-    
-    switch (userRole) {
-      case 'ADMIN':
-        roleSpecificMenu.push(
-          { key: 'user-management', label: t('layout.menu.users'), icon: 'TeamOutlined' },
-          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' },
-          { key: 'application-management', label: t('layout.menu.applications'), icon: 'FileTextOutlined' }
-        );
-        break;
-      case 'APPLIER':
-        roleSpecificMenu.push(
-          { key: 'my-applications', label: t('layout.menu.myApplications'), icon: 'FormOutlined' },
-          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
-        );
-        break;
-      case 'APPROVER':
-        roleSpecificMenu.push(
-          { key: 'application-management', label: t('layout.menu.applications'), icon: 'FileTextOutlined' },
-          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
-        );
-        break;
-      case 'SERVICE':
-      case 'MAINTAINER':
-        roleSpecificMenu.push(
-          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
-        );
-        break;
-      default:
-        // 默认情况下只显示房间管理
-        roleSpecificMenu.push(
-          { key: 'rooms', label: t('layout.menu.rooms'), icon: 'HomeOutlined' }
-        );
-        break;
-    }
-    
-    return [...baseMenu, ...roleSpecificMenu];
-  };
-
   const menuItems = getMenuItems(user.role);
   
   // 处理菜单点击
@@ -432,6 +443,9 @@ const RoleBasedLayout = ({ children }) => {
       case 'my-applications':
         navigate('/my-applications');
         break;
+      case 'duty-schedule':
+        navigate('/duty-schedule');
+        break;
       case 'user-list':
         navigate('/user-list');
         break;
@@ -457,6 +471,8 @@ const RoleBasedLayout = ({ children }) => {
         return <FileTextOutlined />;
       case 'FormOutlined':
         return <FormOutlined />;
+      case 'CalendarOutlined':
+        return <CalendarOutlined />;
       default:
         return <UserOutlined />;
     }
@@ -868,6 +884,9 @@ const RoleBasedLayout = ({ children }) => {
           setBannerNotification(null);
         }}
       />
+      
+      {/* 悬浮反馈按钮 */}
+      <FeedbackButton />
     </Layout>
   );
 };

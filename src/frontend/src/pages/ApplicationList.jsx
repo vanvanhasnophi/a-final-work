@@ -858,7 +858,7 @@ export default function ApplicationList() {
                   loading={applicationsLoading}
                   scroll={{ 
                     x: 1200, 
-                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
+                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
                     scrollToFirstRowOnChange: false
                   }}
                   pagination={false}
@@ -878,7 +878,10 @@ export default function ApplicationList() {
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',
             display: 'flex',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            borderBottomLeftRadius: '6px',
+            borderBottomRightRadius: '6px',
+            fontFamily: 'var(--app-font-stack)'
           }}>
             <Pagination
               {...pagination}

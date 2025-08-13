@@ -33,6 +33,7 @@ export default function Login() {
     const kickout = urlParams.get('kickout');
     const expired = urlParams.get('expired');
     const unauthorized = urlParams.get('unauthorized');
+    const sessionExpired = urlParams.get('sessionExpired');
     
     if (kickout === 'true') {
       setKickoutMessage(t('login.errors.accountKickout'));
@@ -40,10 +41,12 @@ export default function Login() {
       setKickoutMessage(t('login.errors.loginExpired'));
     } else if (unauthorized === 'true') {
       setKickoutMessage(t('login.errors.loginUnauthorized'));
+    } else if (sessionExpired === 'true') {
+      setKickoutMessage(t('login.errors.accountDeleted'));
     }
     
     // 如果有任何错误参数，清除URL参数
-    if (kickout === 'true' || expired === 'true' || unauthorized === 'true') {
+    if (kickout === 'true' || expired === 'true' || unauthorized === 'true' || sessionExpired === 'true') {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }

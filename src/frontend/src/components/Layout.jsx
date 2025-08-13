@@ -9,12 +9,14 @@ import {
   SettingOutlined,
   BulbOutlined,
   BulbFilled,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getRoleDisplayName } from '../utils/roleMapping';
 import NotificationCenter from './NotificationCenter';
+import FeedbackButton from './FeedbackButton';
 import { getCsrfStatus, probeCsrf } from '../security/csrf';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -64,6 +66,12 @@ export default function AppLayout({ children }) {
       key: '/my-applications',
       icon: <FileTextOutlined />,
   label: t('layout.menu.myApplications'),
+    }] : []),
+    // 值班表管理 - 仅 ADMIN 和 APPROVER 可见
+    ...(user?.role === 'ADMIN' || user?.role === 'APPROVER' ? [{
+      key: '/duty-schedule',
+      icon: <CalendarOutlined />,
+      label: t('layout.menu.dutySchedule'),
     }] : []),
     // 仅管理员可见的用户管理菜单
     ...(user?.role === 'ADMIN' ? [{
@@ -262,6 +270,9 @@ export default function AppLayout({ children }) {
         }}>
           {children}
         </Content>
+        
+        {/* 悬浮反馈按钮 */}
+        <FeedbackButton />
       </Layout>
     </Layout>
   );

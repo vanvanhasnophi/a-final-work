@@ -42,6 +42,9 @@ public class RoomStatusSchedulerService {
         
         // 每1分钟检查一次申请状态（提高频率以及时更新申请状态）
         scheduler.scheduleAtFixedRate(this::updateApplicationStatuses, 0, 1, TimeUnit.MINUTES);
+        
+        // 每10分钟批量处理过期申请（处理历史数据和遗漏的过期申请）
+        scheduler.scheduleAtFixedRate(this::batchProcessExpiredApplications, 1, 10, TimeUnit.MINUTES);
     }
     
     @PreDestroy
@@ -84,6 +87,7 @@ public class RoomStatusSchedulerService {
     public void updateApplicationStatuses() {
         try {
             Date now = new Date();
+            log.debug("开始更新申请状态，当前时间: {}", now);
             
             // 获取需要检查的申请：待审批、已批准、待签到和使用中的申请
             List<ApplicationStatus> activeStatuses = List.of(
@@ -94,11 +98,23 @@ public class RoomStatusSchedulerService {
             );
             List<Application> activeApplications = applicationRepository.findByStatusIn(activeStatuses);
             
+            int updatedCount = 0;
             for (Application application : activeApplications) {
-                updateApplicationStatus(application, now);
+                try {
+                    ApplicationStatus oldStatus = application.getStatus();
+                    updateApplicationStatus(application, now);
+                    
+                    // 统计实际更新的申请数量
+                    if (oldStatus != application.getStatus()) {
+                        updatedCount++;
+                    }
+                } catch (Exception e) {
+                    log.error("更新申请 {} 状态时发生错误: {}", application.getId(), e.getMessage(), e);
+                }
             }
             
-            log.debug("申请状态更新完成，检查了 {} 个申请", activeApplications.size());
+            log.debug("申请状态更新完成，检查了 {} 个申请，实际更新了 {} 个申请", 
+                activeApplications.size(), updatedCount);
         } catch (Exception e) {
             log.error("更新申请状态时发生错误", e);
         }
@@ -126,21 +142,54 @@ public class RoomStatusSchedulerService {
      */
     private void updateApplicationStatus(Application application, Date now) {
         ApplicationStatus currentStatus = application.getStatus();
+        Boolean wasExpired = application.getExpired();
+        
         ApplicationStatus newStatus = determineApplicationStatus(application, now);
         
-        if (currentStatus != newStatus) {
-            application.setStatus(newStatus);
-            application.setUpdateTime(now);
-            applicationRepository.save(application);
-            
-            log.info("申请 {} 状态从 {} 更新为 {}", 
-                application.getId(), currentStatus, newStatus);
-            
-            // 申请状态变更时，同步更新对应教室的状态
-            Room room = roomRepository.findById(application.getRoomId()).orElse(null);
+        boolean statusChanged = currentStatus != newStatus;
+        boolean expiredChanged = !java.util.Objects.equals(wasExpired, application.getExpired());
+        
+        if (statusChanged || expiredChanged) {
+            try {
+                application.setStatus(newStatus);
+                application.setUpdateTime(now);
+                applicationRepository.save(application);
+                
+                if (statusChanged) {
+                    log.debug("申请 {} 状态从 {} 更新为 {}", 
+                        application.getId(), currentStatus, newStatus);
+                }
+                
+                if (expiredChanged && application.getExpired()) {
+                    log.debug("申请 {} 过期", application.getId());
+                }
+                
+                // 申请状态变更时，同步更新对应教室的状态
+                updateRelatedRoomStatus(application.getRoomId(), now);
+                
+            } catch (Exception e) {
+                log.error("保存申请 {} 状态更新时发生错误: {}", application.getId(), e.getMessage(), e);
+                // 恢复原始状态，避免数据不一致
+                application.setStatus(currentStatus);
+                application.setExpired(wasExpired);
+                throw e;
+            }
+        }
+    }
+    
+    /**
+     * 更新相关教室状态
+     */
+    private void updateRelatedRoomStatus(Long roomId, Date now) {
+        try {
+            Room room = roomRepository.findById(roomId).orElse(null);
             if (room != null) {
                 updateRoomStatus(room, now);
+            } else {
+                log.warn("尝试更新不存在的教室状态，教室ID: {}", roomId);
             }
+        } catch (Exception e) {
+            log.error("更新相关教室 {} 状态时发生错误: {}", roomId, e.getMessage(), e);
         }
     }
     
@@ -261,57 +310,115 @@ public class RoomStatusSchedulerService {
      * 确定申请状态
      */
     private ApplicationStatus determineApplicationStatus(Application application, Date now) {
-        // 过期标记：今天以前且离结束时间12小时以上的申请设为已过期
-        Date twelveHoursAfterEnd = new Date(application.getEndTime().getTime() + 12 * 60 * 60 * 1000);
+        ApplicationStatus currentStatus = application.getStatus();
+        
+        // 首先处理过期标记逻辑
+        markApplicationIfExpired(application, now);
+        
+        // 根据当前状态和时间判断新状态
+        switch (currentStatus) {
+            case PENDING:
+                return handlePendingStatus(application, now);
+            
+            case APPROVED:
+                return handleApprovedStatus(application, now);
+            
+            case PENDING_CHECKIN:
+                return handlePendingCheckinStatus(application, now);
+            
+            case IN_USE:
+                return handleInUseStatus(application, now);
+            
+            default:
+                return currentStatus;
+        }
+    }
+    
+    /**
+     * 标记申请为过期（如果符合条件）
+     */
+    private void markApplicationIfExpired(Application application, Date now) {
+        // 如果已经标记为过期，则跳过
+        if (application.getExpired() != null && application.getExpired()) {
+            return;
+        }
+        
+        // 获取今天零点时间
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
-        Date today = cal.getTime();
+        Date todayStart = cal.getTime();
         
-        if (application.getEndTime().before(today) && now.after(twelveHoursAfterEnd) && 
-            (application.getExpired() == null || !application.getExpired())) {
-            application.setExpired(true);
-        }
-        
-        // 待批准的申请在开始时间后15分钟自动被驳回
-        if (application.getStatus() == ApplicationStatus.PENDING) {
-            Date fifteenMinutesAfterStart = new Date(application.getStartTime().getTime() + 15 * 60 * 1000);
-            if (now.after(fifteenMinutesAfterStart)) {
+        // 结束时间在今天之前，且距离结束时间已超过12小时的申请标记为过期
+        if (application.getEndTime().before(todayStart)) {
+            Date twelveHoursAfterEnd = new Date(application.getEndTime().getTime() + 12 * 60 * 60 * 1000);
+            if (now.after(twelveHoursAfterEnd)) {
                 application.setExpired(true);
-                return ApplicationStatus.REJECTED;
+                log.info("申请 {} 标记为过期，结束时间: {}, 当前时间: {}", 
+                    application.getId(), application.getEndTime(), now);
             }
         }
-        
+    }
+    
+    /**
+     * 处理待审批状态的申请
+     */
+    private ApplicationStatus handlePendingStatus(Application application, Date now) {
+        // 待审批的申请在开始时间后15分钟自动驳回
+        Date fifteenMinutesAfterStart = new Date(application.getStartTime().getTime() + 15 * 60 * 1000);
+        if (now.after(fifteenMinutesAfterStart)) {
+            log.info("申请 {} 因超时未审批自动驳回，开始时间: {}, 当前时间: {}", 
+                application.getId(), application.getStartTime(), now);
+            return ApplicationStatus.REJECTED;
+        }
+        return ApplicationStatus.PENDING;
+    }
+    
+    /**
+     * 处理已批准状态的申请
+     */
+    private ApplicationStatus handleApprovedStatus(Application application, Date now) {
         // 已批准的申请在开始时间前15分钟变为待签到
-        if (application.getStatus() == ApplicationStatus.APPROVED) {
-            Date fifteenMinutesBeforeStart = new Date(application.getStartTime().getTime() - 15 * 60 * 1000);
-            if (now.after(fifteenMinutesBeforeStart)) {
-                return ApplicationStatus.PENDING_CHECKIN;
-            }
+        Date fifteenMinutesBeforeStart = new Date(application.getStartTime().getTime() - 15 * 60 * 1000);
+        if (now.after(fifteenMinutesBeforeStart)) {
+            log.info("申请 {} 进入待签到状态，开始时间: {}, 当前时间: {}", 
+                application.getId(), application.getStartTime(), now);
+            return ApplicationStatus.PENDING_CHECKIN;
+        }
+        return ApplicationStatus.APPROVED;
+    }
+    
+    /**
+     * 处理待签到状态的申请
+     */
+    private ApplicationStatus handlePendingCheckinStatus(Application application, Date now) {
+        
+        
+        // 开始时间后30分钟或者过了结束时间还未签到，则自动取消
+        Date thirtyMinutesAfterStart = new Date(application.getStartTime().getTime() + 30 * 60 * 1000);
+        if (now.after(thirtyMinutesAfterStart)||now.after(application.getEndTime())) {
+            application.setExpired(true);
+            log.info("申请 {} 因超时未签到自动取消，开始时间: {}, 结束时间: {}, 当前时间: {}", 
+                application.getId(), application.getStartTime(), application.getEndTime(), now);
+            return ApplicationStatus.CANCELLED;
         }
         
-        // 开始时间后30分钟如果还未签到，则自动取消申请
-        if (application.getStatus() == ApplicationStatus.PENDING_CHECKIN) {
-            Date thirtyMinutesAfterStart = new Date(application.getStartTime().getTime() + 30 * 60 * 1000);
-            if (now.after(thirtyMinutesAfterStart)) {
-                application.setExpired(true);
-                return ApplicationStatus.CANCELLED;
-            }
-        }
-        
+        return ApplicationStatus.PENDING_CHECKIN;
+    }
+    
+    /**
+     * 处理使用中状态的申请
+     */
+    private ApplicationStatus handleInUseStatus(Application application, Date now) {
         // 结束时间后，使用中的申请状态为已完成
-        if (application.getStatus() == ApplicationStatus.IN_USE && now.after(application.getEndTime())) {
+        if (now.after(application.getEndTime())) {
+            log.info("申请 {} 使用结束，标记为已完成，结束时间: {}, 当前时间: {}", 
+                application.getId(), application.getEndTime(), now);
             return ApplicationStatus.COMPLETED;
         }
-        
-        // 如果申请处于待签到状态且已超过结束时间，直接标记为已完成
-        if (application.getStatus() == ApplicationStatus.PENDING_CHECKIN && now.after(application.getEndTime())) {
-            return ApplicationStatus.COMPLETED;
-        }
-        
-        return application.getStatus();
+        return ApplicationStatus.IN_USE;
     }
     
     /**
@@ -353,9 +460,67 @@ public class RoomStatusSchedulerService {
      */
     public void triggerApplicationStatusUpdate(Long applicationId) {
         try {
-            applicationRepository.findById(applicationId).ifPresent(application -> updateApplicationStatus(application, new Date()));
+            applicationRepository.findById(applicationId).ifPresent(application -> 
+                updateApplicationStatus(application, new Date()));
         } catch (Exception e) {
             log.error("手动更新申请状态时发生错误", e);
+        }
+    }
+    
+    /**
+     * 手动触发批量过期申请处理
+     */
+    public void triggerBatchProcessExpiredApplications() {
+        try {
+            log.info("手动触发批量过期申请处理");
+            batchProcessExpiredApplications();
+        } catch (Exception e) {
+            log.error("手动触发批量过期申请处理时发生错误", e);
+        }
+    }
+    
+    /**
+     * 批量处理过期申请（通常在系统启动时或定期维护时调用）
+     */
+    public void batchProcessExpiredApplications() {
+        try {
+            Date now = new Date();
+            log.info("开始批量处理过期申请，当前时间: {}", now);
+            
+            // 获取所有可能需要标记过期的申请状态
+            List<ApplicationStatus> expirableStatuses = List.of(
+                ApplicationStatus.PENDING, 
+                ApplicationStatus.APPROVED,
+                ApplicationStatus.PENDING_CHECKIN,
+                ApplicationStatus.IN_USE,
+                ApplicationStatus.COMPLETED,
+                ApplicationStatus.CANCELLED,
+                ApplicationStatus.REJECTED
+            );
+            
+            // 获取未标记过期但可能已过期的申请
+            List<Application> applicationsToCheck = applicationRepository
+                .findByStatusIn(expirableStatuses)
+                .stream()
+                .filter(app -> app.getExpired() == null || !app.getExpired())
+                .toList();
+            
+            int markedExpiredCount = 0;
+            for (Application application : applicationsToCheck) {
+                Boolean wasExpired = application.getExpired();
+                markApplicationIfExpired(application, now);
+                
+                if (application.getExpired() && !java.util.Objects.equals(wasExpired, application.getExpired())) {
+                    applicationRepository.save(application);
+                    markedExpiredCount++;
+                }
+            }
+            
+            log.info("批量处理过期申请完成，检查了 {} 个申请，标记过期 {} 个申请", 
+                applicationsToCheck.size(), markedExpiredCount);
+                
+        } catch (Exception e) {
+            log.error("批量处理过期申请时发生错误", e);
         }
     }
 } 

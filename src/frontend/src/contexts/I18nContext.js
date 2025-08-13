@@ -75,6 +75,7 @@ const dictionaries = {
         rooms: '教室管理',
         applications: '申请管理',
         myApplications: '我的申请',
+        dutySchedule: '值班表',
         users: '用户管理',
         profile: '个人资料'
       },
@@ -180,7 +181,10 @@ const dictionaries = {
       },
       latestNewsTitle: '最新动态',
       latestNewsEmpty: '暂无最新动态',
-      fetchError: '获取统计数据失败，请检查网络连接'
+      fetchError: '获取统计数据失败，请检查网络连接',
+      todayDuty: {
+        title: '今日值班'
+      }
     },
     roomList: {
       title: '教室列表',
@@ -430,6 +434,7 @@ const dictionaries = {
       messages: {
         deleteSuccess: '用户删除成功',
         deleteFailPrefix: '删除用户失败: ',
+        selfDeleteLogout: '您已删除自己的账户，即将退出登录',
         createSuccess: '用户创建成功',
         createFail: '用户创建失败',
         updateSuccess: '用户信息更新成功',
@@ -448,7 +453,27 @@ const dictionaries = {
       },
       confirmDelete: {
         title: '确认删除',
-        content: '确定要删除用户 "{username}" 吗？此操作不可恢复。'
+        content: '确定要删除用户 "{username}" 吗？这是一个无法恢复，极其危险的操作！被删除用户将会立即登出。',
+        nextStep: '下一步'
+      },
+      confirmDeleteSelf: {
+        title: '警告：删除自己的账户',
+        warning: '您正在尝试删除自己的管理员账户！',
+        consequence: '删除后您将立即退出系统，无法撤销此操作。',
+        confirm: '确定要继续吗？',
+        continueText: '继续删除'
+      },
+      secondConfirm: {
+        passwordTitle: '输入密码确认',
+        usernameTitle: '输入用户名确认',
+        passwordPrompt: '为了确认删除自己的账户，请输入您的密码：',
+        usernamePrompt: '为了确认删除用户 "{username}"，请输入该用户的用户名：',
+        enterPassword: '请输入密码',
+        enterUsername: '请输入用户名',
+        confirmDelete: '确认删除',
+        passwordRequired: '请输入密码',
+        passwordIncorrect: '密码不正确',
+        usernameIncorrect: '用户名不正确'
       }
     },
     userProfile: {
@@ -665,6 +690,89 @@ const dictionaries = {
         cancelFail: '撤销操作失败'
       }
     },
+    dutySchedule: {
+      title: '值班表',
+      messages: {
+        fetchFail: '获取值班安排失败',
+        createSuccess: '创建成功',
+        updateSuccess: '更新成功',
+        deleteSuccess: '删除成功',
+        deleteFail: '删除失败',
+        submitFail: '提交失败'
+      },
+      columns: {
+        dutyDate: '值班日期',
+        dutyUser: '值班人员',
+        remark: '备注',
+        createdBy: '创建人',
+        createTime: '创建时间',
+        actions: '操作'
+      },
+      tooltips: {
+        edit: '编辑',
+        delete: '删除'
+      },
+      buttons: {
+        create: '新建值班安排'
+      },
+      confirmDelete: {
+        title: '确认删除',
+        content: '确定要删除这个值班安排吗？此操作不可恢复。'
+      },
+      drawer: {
+        create: '新建值班安排',
+        edit: '编辑值班安排'
+      },
+      monthPicker: {
+        placeholder: '选择月份'
+      },
+      form: {
+        dutyDate: '值班日期',
+        selectDate: '请选择值班日期',
+        dutyUser: '值班人员',
+        selectUser: '请选择值班人员',
+        remark: '备注',
+        enterRemark: '请输入备注信息'
+      },
+      todayDuty: {
+        title: '今日值班',
+        noDuty: '今日无人值班'
+      },
+      calendar: {
+        adminHint: '点击日历格子可添加或编辑值班安排',
+        userHint: '查看值班安排'
+      },
+      paginationTotal: '显示第 {from}-{to} 条，共 {total} 条'
+    },
+    feedback: {
+      buttonText: '意见反馈',
+      buttonHint: '如有问题或建议，请点击反馈',
+      todayDutyTitle: '可直接联系今日值班',
+      noDutyToday: '暂无人值班，您可以先写反馈，我们稍后会及时传达。',
+      modalTitle: '意见反馈',
+      submitSuccess: '反馈提交成功，感谢您的建议！',
+      submitFail: '提交失败，请稍后重试',
+      submit: '提交反馈',
+      form: {
+        type: '反馈类型',
+        selectType: '请选择反馈类型',
+        title: '反馈标题',
+        enterTitle: '请输入反馈标题',
+        titleTooLong: '标题不能超过50个字符',
+        content: '反馈内容',
+        enterContent: '请详细描述您的问题或建议...',
+        contentTooShort: '反馈内容至少10个字符',
+        contentTooLong: '反馈内容不能超过500个字符',
+        contact: '联系方式（选填）',
+        enterContact: '请输入邮箱或手机号'
+      },
+      types: {
+        bug: '问题反馈',
+        suggestion: '功能建议',
+        complaint: '服务投诉',
+        other: '其他'
+      }
+    },
     notification: {
       title: '通知中心',
       refresh: '刷新',
@@ -763,6 +871,7 @@ const dictionaries = {
         accountKickout: '您的账号在其他地方登录，当前会话已失效',
         loginExpired: '登录已过期，请重新登录',
         loginUnauthorized: '登录状态异常，请重新登录',
+        accountDeleted: '您的账户已被删除，请联系管理员',
         usernameRequired: '用户名必填!',
         usernameMinLength: '用户名至少3个字符!',
         usernamePattern: '用户名只能包含字母、数字和下划线!',
@@ -825,6 +934,7 @@ const dictionaries = {
         rooms: 'Rooms',
         applications: 'Applications',
         myApplications: 'My Applications',
+        dutySchedule: 'Duty Schedule',
         users: 'Users',
         profile: 'Profile'
       },
@@ -970,7 +1080,10 @@ const dictionaries = {
       },
       latestNewsTitle: 'Latest Updates',
       latestNewsEmpty: 'No latest updates',
-      fetchError: 'Failed to fetch statistics, please check network connection'
+      fetchError: 'Failed to fetch statistics, please check network connection',
+      todayDuty: {
+        title: 'Today\'s Duty'
+      }
     },
     login: {
       title: 'Sign in',
@@ -1006,6 +1119,7 @@ const dictionaries = {
         accountKickout: 'Your account has been logged in elsewhere, current session is expired',
         loginExpired: 'Login expired, please log in again',
         loginUnauthorized: 'Login status is abnormal, please log in again',
+        accountDeleted: 'Your account has been deleted, please contact administrator',
         usernameRequired: 'Username is required!',
         usernameMinLength: 'Username must be at least 3 characters!',
         usernamePattern: 'Username can only contain letters, numbers & underscores!',
@@ -1282,6 +1396,7 @@ const dictionaries = {
       messages: {
         deleteSuccess: 'User deleted',
         deleteFailPrefix: 'Delete user failed: ',
+        selfDeleteLogout: 'You have deleted your own account and will be logged out shortly',
         createSuccess: 'User created',
         createFail: 'Failed to create user',
         updateSuccess: 'User updated',
@@ -1300,7 +1415,27 @@ const dictionaries = {
       },
       confirmDelete: {
         title: 'Confirm delete',
-        content: 'Delete user "{username}"? This action cannot be undone.'
+        content: 'Delete user "{username}"? This is a irreversible and very dangerous action! The deleted user will be logged out immediately.',
+        nextStep: 'Continue'
+      },
+      confirmDeleteSelf: {
+        title: 'Warning: Deleting Your Own Account',
+        warning: 'You are attempting to delete your own admin account!',
+        consequence: 'You will be immediately logged out after deletion, and this action cannot be undone.',
+        confirm: 'Are you sure you want to continue?',
+        continueText: 'Continue'
+      },
+      secondConfirm: {
+        passwordTitle: 'Enter Password to Confirm',
+        usernameTitle: 'Enter Username to Confirm',
+        passwordPrompt: 'To confirm deleting your own account, please enter your password:',
+        usernamePrompt: 'To confirm deleting user "{username}", please enter the username:',
+        enterPassword: 'Enter password',
+        enterUsername: 'Enter username',
+        confirmDelete: 'Confirm Delete',
+        passwordRequired: 'Password is required',
+        passwordIncorrect: 'Password is incorrect',
+        usernameIncorrect: 'Username is incorrect'
       }
     },
     userProfile: {
@@ -1515,6 +1650,89 @@ const dictionaries = {
         approveSuccess: 'Approval succeeded',
         cancelSuccess: 'Application cancelled',
         cancelFail: 'Cancel failed'
+      }
+    },
+    dutySchedule: {
+      title: 'Duty Schedule',
+      messages: {
+        fetchFail: 'Failed to fetch duty schedules',
+        createSuccess: 'Created successfully',
+        updateSuccess: 'Updated successfully',
+        deleteSuccess: 'Deleted successfully',
+        deleteFail: 'Delete failed',
+        submitFail: 'Submit failed'
+      },
+      columns: {
+        dutyDate: 'Duty Date',
+        dutyUser: 'Duty Personnel',
+        remark: 'Remark',
+        createdBy: 'Created By',
+        createTime: 'Created At',
+        actions: 'Actions'
+      },
+      tooltips: {
+        edit: 'Edit',
+        delete: 'Delete'
+      },
+      buttons: {
+        create: 'New Duty Schedule'
+      },
+      confirmDelete: {
+        title: 'Confirm Delete',
+        content: 'Are you sure you want to delete this duty schedule? This action cannot be undone.'
+      },
+      drawer: {
+        create: 'New Duty Schedule',
+        edit: 'Edit Duty Schedule'
+      },
+      monthPicker: {
+        placeholder: 'Select Month'
+      },
+      form: {
+        dutyDate: 'Duty Date',
+        selectDate: 'Please select duty date',
+        dutyUser: 'Duty Personnel',
+        selectUser: 'Please select duty personnel',
+        remark: 'Remark',
+        enterRemark: 'Please enter remark'
+      },
+      todayDuty: {
+        title: 'Today\'s Duty',
+        noDuty: 'No one on duty today'
+      },
+      calendar: {
+        adminHint: 'Click calendar cells to add or edit duty schedules',
+        userHint: 'View duty schedules'
+      },
+      paginationTotal: '{from}-{to} of {total} items'
+    },
+    feedback: {
+      buttonText: 'Feedback',
+      buttonHint: 'Click to provide feedback if you have any issues or suggestions',
+      todayDutyTitle: 'You can contact today\'s Duty',
+      noDutyToday: 'No one on duty today, you can write feedback directly, we will forward it later to the relevant personnel.',
+      modalTitle: 'Feedback',
+      submitSuccess: 'Feedback submitted successfully. Thank you for your suggestion!',
+      submitFail: 'Submit failed, please try again later',
+      submit: 'Submit Feedback',
+      form: {
+        type: 'Feedback Type',
+        selectType: 'Please select feedback type',
+        title: 'Feedback Title',
+        enterTitle: 'Please enter feedback title',
+        titleTooLong: 'Title cannot exceed 50 characters',
+        content: 'Feedback Content',
+        enterContent: 'Please describe your issue or suggestion in detail...',
+        contentTooShort: 'Feedback content must be at least 10 characters',
+        contentTooLong: 'Feedback content cannot exceed 500 characters',
+        contact: 'Contact Info (Optional)',
+        enterContact: 'Please enter email or phone number'
+      },
+      types: {
+        bug: 'Bug Report',
+        suggestion: 'Feature Suggestion',
+        complaint: 'Service Complaint',
+        other: 'Other'
       }
     },
     myApplications: {

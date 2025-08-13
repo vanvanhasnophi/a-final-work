@@ -43,7 +43,8 @@ export const PagePermissions = {
   'user-management': [UserRole.ADMIN],
   'rooms': [UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER, UserRole.SERVICE, UserRole.MAINTAINER],
   'application-management': [UserRole.ADMIN, UserRole.APPROVER],
-  'my-applications': [UserRole.APPLIER]
+  'my-applications': [UserRole.APPLIER],
+  'duty-schedule': [UserRole.ADMIN, UserRole.APPROVER]
 };
 
 /**

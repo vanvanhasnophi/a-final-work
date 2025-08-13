@@ -40,8 +40,20 @@ export const updatePassword = (oldPassword, newPassword) => {
 };
 
 // 删除用户（ADMIN权限）
-export const deleteUser = (userId) => {
-  return request.delete(`/auth/user/${userId}`);
+export const deleteUser = (userId, verificationToken) => {
+  return request.delete(`/auth/user/${userId}`, {
+    data: { verificationToken }
+  });
+};
+
+// 危险操作验证
+export const dangerousOperationVerify = (password, operation) => {
+  return request.post('/auth/dangerous-operation-verify', { password, operation });
+};
+
+// 验证密码（保持向后兼容）
+export const verifyPassword = (password) => {
+  return dangerousOperationVerify(password, 'PASSWORD_VERIFY');
 };
 
 
@@ -53,7 +65,9 @@ const authAPI = {
   checkSession,
   refreshToken,
   updatePassword,
-  deleteUser
+  deleteUser,
+  verifyPassword,
+  dangerousOperationVerify
 };
 
 export default authAPI; 

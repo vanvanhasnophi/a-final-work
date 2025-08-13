@@ -654,7 +654,7 @@ export default function RoomList() {
           transition: 'padding 0.3s ease'
         }}>
           <ResponsiveFilterContainer 
-            threshold={800}
+            threshold={950}
             heightThreshold={600}
             onCollapseStateChange={setIsFilterCollapsed}
           >
@@ -836,7 +836,7 @@ export default function RoomList() {
                   loading={loading}
                   scroll={{ 
                     x: 1200, 
-                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 301px)',
+                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
                     scrollToFirstRowOnChange: false
                   }}
                   pagination={false}
@@ -860,7 +860,10 @@ export default function RoomList() {
             borderTop: '1px solid var(--border-color)',
             backgroundColor: 'var(--component-bg)',
             display: 'flex',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            borderBottomLeftRadius: '6px',
+            borderBottomRightRadius: '6px',
+            fontFamily: 'var(--app-font-stack)'
           }}>
             <Pagination
               {...pagination}
