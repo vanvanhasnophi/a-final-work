@@ -146,9 +146,9 @@ export default function DutySchedule() {
               }
             }
           });
-        }, 30); // 减少延迟从50ms到30ms
+        }, 30); 
       }
-    }, 150); // 减少延迟从200ms到150ms
+    }, 150); 
   }, [selectedDate, lang]);
 
   // 计算日历高度，响应窗口大小
