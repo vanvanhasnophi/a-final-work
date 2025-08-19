@@ -1,19 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Button, message, Tag, Space } from 'antd';
+import { Card, Row, Col, Statistic, Button, Tag, Space } from 'antd';
 import { UserOutlined, HomeOutlined, CalendarOutlined, SettingOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { roomAPI } from '../api/room';
 import { applicationAPI } from '../api/application';
 import { dutyAPI } from '../api/duty';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getApplicationStatusDisplayName } from '../utils/statusMapping';
 import { useAuth } from '../contexts/AuthContext';
-import { getRoleDisplayName } from '../utils/roleMapping';
 import { useNavigate } from 'react-router-dom';
 import { canViewOwnApplications } from '../utils/permissionUtils';
 import LatestNews from '../components/LatestNews';
-import FeedbackButton from '../components/FeedbackButton';
-import ResponsiveCardContainer from '../components/ResponsiveCardContainer';
 import { useI18n } from '../contexts/I18nContext';
 import { useActivities } from '../hooks/useActivities';
 import dayjs from 'dayjs';
@@ -43,8 +39,7 @@ export default function Dashboard() {
     todayMaintenanceReports: 0
   });
   const [todayDuty, setTodayDuty] = useState(null);
-  const [messageApi, contextHolder] = message.useMessage();
-  const { loading, error, executeWithRetry } = useApiWithRetry();
+  const { loading, executeWithRetry } = useApiWithRetry();
   
   // 使用活动Hook
   const { 
@@ -169,8 +164,6 @@ export default function Dashboard() {
   };
 
   return (
-    <>
-      {contextHolder}
     <LoadingSpinner loading={loading} text={t('dashboard.loadingStats')}>
         <div style={{ padding: '24px' }}>
       <h1>{t('dashboard.overviewTitle')}</h1>
@@ -471,6 +464,5 @@ export default function Dashboard() {
           </Row>
         </div>
       </LoadingSpinner>
-    </>
   );
 } 

@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, Alert, Tag, Pagination, Checkbox, Tooltip, message, Modal, App } from 'antd';
-import { EyeOutlined, CloseOutlined, PlusOutlined, ReloadOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, Alert, Tag, Pagination, Checkbox, Tooltip, App } from 'antd';
+import { EyeOutlined, PlusOutlined, ReloadOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicationExpired } from '../utils/statusMapping';
-import { getRoomTypeDisplayName } from '../utils/roomMapping';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,7 +14,6 @@ import FixedTop from '../components/FixedTop';
 import ResponsiveButton from '../components/ResponsiveButton';
 import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
 import FilterDropdownButton from '../components/FilterDropdownButton';
-import dayjs from 'dayjs';
 import { MessageContext } from '../App';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -829,10 +827,10 @@ function MyApplicationsContent() {
           drawerType === 'cancel' ? (
             <div style={{ textAlign: 'right' }}>
               <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                {t('common.cancel')}
+                {t('applicationManagement.messages.cancelConfirmCancel')}
               </Button>
               <Button type="primary" danger onClick={() => form.submit()}>
-                {t('myApplications.actions.confirmCancel', '确认撤销')}
+                {t('applicationManagement.messages.cancelConfirmOk')}
               </Button>
             </div>
           ) : null

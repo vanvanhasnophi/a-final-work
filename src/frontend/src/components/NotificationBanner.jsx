@@ -83,7 +83,7 @@ const NotificationBanner = ({
         }
       }
     }
-  }, [notification?.id]);
+  }, [notification]);
 
   // 只有在横幅真正开始显示时才增加计数（防抖机制）
   useEffect(() => {
@@ -100,7 +100,7 @@ const NotificationBanner = ({
       
       return () => clearTimeout(timer);
     }
-  }, [notification?.id, shouldShow, visible]); // 只在这些值真正改变时触发
+  }, [notification, shouldShow, visible]); // 添加完整的notification依赖
 
   // 自动关闭计时器和进度条
   useEffect(() => {

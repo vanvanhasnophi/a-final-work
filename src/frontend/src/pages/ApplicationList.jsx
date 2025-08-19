@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, TimePicker, Tag, Pagination, Switch, Tooltip } from 'antd';
-import { PlusOutlined, EyeOutlined, CheckOutlined, CloseOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, Tag, Pagination, Switch, Tooltip } from 'antd';
+import { PlusOutlined, EyeOutlined, CheckOutlined, ReloadOutlined } from '@ant-design/icons';
 import { applicationAPI } from '../api/application';
 import { roomAPI } from '../api/room';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
@@ -10,7 +10,7 @@ import { getRoleDisplayName } from '../utils/roleMapping';
 import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
 import { getRoomTypeDisplayName } from '../utils/roomMapping';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime, formatTimeRange, formatRelativeTime } from '../utils/dateFormat';
+import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
 import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import ResponsiveButton from '../components/ResponsiveButton';
@@ -63,7 +63,7 @@ export default function ApplicationList() {
   const [currentApplication, setCurrentApplication] = useState(null);
   
   const { loading: applicationsLoading, error: applicationsError, executeWithRetry: executeApplications } = useApiWithRetry();
-  const { loading: roomsLoading, error: roomsError, executeWithRetry: executeRooms } = useApiWithRetry();
+  const { error: roomsError, executeWithRetry: executeRooms } = useApiWithRetry();
   
   // 页面刷新Hook
   const handlePageRefresh = usePageRefresh(() => {

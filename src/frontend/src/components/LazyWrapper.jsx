@@ -51,7 +51,7 @@ function buildLazy(importFunc, options) {
       if (!timeout) return;
       const id = setTimeout(() => setTimedOut(true), timeout);
       return () => clearTimeout(id);
-    }, [timeout, retryKey]);
+    }, [retryKey]); // 移除timeout依赖
 
     const doRetry = () => {
       setTimedOut(false);
@@ -87,16 +87,13 @@ function buildLazy(importFunc, options) {
     );
 
     // 防抖显示：保障最少显示时间，避免一闪而过（可扩展）
-    const [showSpinner, setShowSpinner] = useState(true);
     useEffect(() => {
       const left = minSpinnerTime - (Date.now() - startTs);
       if (left > 0) {
-        const id = setTimeout(() => setShowSpinner(false), left);
+        const id = setTimeout(() => {}, left);
         return () => clearTimeout(id);
-      } else {
-        setShowSpinner(false);
       }
-    }, [startTs, retryKey, minSpinnerTime]);
+    }, [startTs, retryKey]); // 移除minSpinnerTime依赖，删除未使用的showSpinner
 
     const fallback = timedOut ? timeoutFallback : spinner;
 

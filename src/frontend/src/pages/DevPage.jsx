@@ -7,12 +7,11 @@ import {
   TagsOutlined, 
   KeyOutlined, 
   ApiOutlined,
-  DatabaseOutlined,
   SettingOutlined,
   ExperimentOutlined
 } from '@ant-design/icons';
 
-const { Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 export default function DevPage() {
   const navigate = useNavigate();

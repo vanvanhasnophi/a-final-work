@@ -28,7 +28,7 @@ import { notificationAPI } from '../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../utils/userDisplay';
 import { SidebarProvider } from './ResponsiveButton';
 
-const { Sider, Content, Header } = Layout;
+const { Sider, Content } = Layout;
 const { Text } = Typography;
 
 const RoleBasedLayout = ({ children }) => {
@@ -136,7 +136,7 @@ const RoleBasedLayout = ({ children }) => {
       // 防抖：延迟执行真正的处理逻辑
       resizeTimer = setTimeout(() => {
         // 使用 requestAnimationFrame 确保在下一个重绘周期执行
-        const animationFrameId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           const newWidth = window.innerWidth;
           const newHeight = window.innerHeight;
           
@@ -820,7 +820,6 @@ const RoleBasedLayout = ({ children }) => {
             console.log(`通知 ${notificationId} 当前未读状态: ${wasUnread}`);
             
             // 更新本地存储的通知状态（如果存在）
-            let localUpdated = false;
             const localRaw = localStorage.getItem('localNotifications');
             if (localRaw) {
               try {
@@ -829,7 +828,6 @@ const RoleBasedLayout = ({ children }) => {
                 if (targetIndex !== -1) {
                   localList[targetIndex] = { ...localList[targetIndex], isRead: true };
                   localStorage.setItem('localNotifications', JSON.stringify(localList));
-                  localUpdated = true;
                   console.log(`本地通知 ${notificationId} 已更新为已读`);
                 }
               } catch (e) {

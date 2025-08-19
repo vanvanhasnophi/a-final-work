@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Card, 
   Button, 
-  Space, 
   Drawer, 
   Form, 
   DatePicker, 
@@ -10,18 +9,14 @@ import {
   Input, 
   message, 
   Modal, 
-  Tag, 
   Tooltip,
   Calendar,
-  Badge,
   Avatar,
   ConfigProvider
 } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import enUS from 'antd/locale/en_US';
 import { 
-  PlusOutlined, 
-  EditOutlined, 
   DeleteOutlined, 
   ExclamationCircleOutlined,
   CalendarOutlined,
@@ -33,8 +28,6 @@ import { dutyAPI } from '../api/duty';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { canManageUsers } from '../utils/permissionUtils';
-import { formatDateTime } from '../utils/dateFormat';
-import ResponsiveButton from '../components/ResponsiveButton';
 import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import dayjs from 'dayjs';
@@ -46,7 +39,6 @@ export default function DutySchedule() {
   const { t, lang } = useI18n();
   const { user } = useAuth();
   const [schedules, setSchedules] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   
   // 根据当前语言设置Antd locale

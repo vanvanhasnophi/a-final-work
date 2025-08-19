@@ -7,27 +7,22 @@ import {
   Select, 
   message, 
   Space, 
-  Tag, 
   Typography,
   Tooltip
 } from 'antd';
 import { 
   MessageOutlined, 
-  UserOutlined,
   SendOutlined
 } from '@ant-design/icons';
 import { dutyAPI } from '../api/duty';
-import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { useTheme } from '../contexts/ThemeContext';
-import dayjs from 'dayjs';
 
 const { TextArea } = Input;
 const { Option } = Select;
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export default function FeedbackButton() {
-  const { user } = useAuth();
   const { t } = useI18n();
   const { isDarkMode } = useTheme();
   const [todayDuty, setTodayDuty] = useState(null);

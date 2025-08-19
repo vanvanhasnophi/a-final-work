@@ -75,6 +75,17 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new IllegalArgumentException("使用原因不能为空");
         }
         
+        // 验证开始时间不能在过去
+        Date now = new Date();
+        if (applicationDTO.getStartTime().before(now)) {
+            throw new IllegalArgumentException("申请开始时间不能早于当前时间");
+        }
+        
+        // 验证结束时间必须在开始时间之后
+        if (!applicationDTO.getEndTime().after(applicationDTO.getStartTime())) {
+            throw new IllegalArgumentException("结束时间必须晚于开始时间");
+        }
+        
         Long roomId = applicationDTO.getRoomId();
         Lock roomLock = getRoomLock(roomId);
         

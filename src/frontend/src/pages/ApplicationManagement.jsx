@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Table, Card, Button, Space, Form, Input, DatePicker, Select, 
   message, Alert, Tag, Pagination, Result, Drawer, Descriptions, 
-  Divider, Tooltip, Modal, App, Checkbox 
+  Divider, Tooltip, App, Checkbox 
 } from 'antd';
 import { 
   EyeOutlined, ReloadOutlined, 
-  CheckOutlined, UndoOutlined, DeleteOutlined
+  CheckOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
@@ -941,10 +941,14 @@ function ApplicationManagementContent() {
             drawerType === 'approve' || drawerType === 'cancel' ? (
               <div style={{ textAlign: 'right' }}>
                 <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                  {t('common.cancel')}
+                  {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmCancel') : t('common.cancel')}
                 </Button>
-                <Button type="primary" onClick={() => form.submit()}>
-                  {t('common.confirm')}
+                <Button 
+                  type="primary" 
+                  danger={drawerType === 'cancel'} 
+                  onClick={() => form.submit()}
+                >
+                  {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmOk') : t('common.confirm')}
                 </Button>
               </div>
             ) : null

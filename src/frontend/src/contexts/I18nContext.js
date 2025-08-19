@@ -85,30 +85,6 @@ const dictionaries = {
         logout: '退出登录'
       }
     },
-    myApplications: {
-      title: '我的申请',
-      filters: {
-        onlyMine: '仅看我的',
-        allRooms: '全部教室'
-      },
-      form: {
-        crowd: '参与人数',
-        enterCrowd: '请输入参与人数',
-        contact: '联系方式',
-        enterContact: '请输入联系方式',
-        peopleUnit: '人'
-      },
-      actions: {
-        confirmCancel: '确认撤销该申请？',
-        checkin: '签到',
-        checkinSuccess: '签到成功',
-        checkinFail: '签到失败',
-        checkinConfirmTitle: '确认签到',
-        checkinConfirmContent: '确认对该申请进行签到吗？签到后将无法撤销。',
-        checkinConfirmOk: '确认签到',
-        checkinConfirmCancel: '取消'
-      }
-    },
     applicationStatus: {
       title: '申请状态监控',
       subtitle: '监控申请状态，自动处理过期申请',
@@ -656,6 +632,21 @@ const dictionaries = {
         checkinConfirmOk: '确认签到',
         checkinConfirmCancel: '取消'
       },
+      messages: {
+        cancelConfirmContent: '确认要取消该申请吗？取消后将无法恢复。',
+        cancelConfirmContentApproved: '该申请已批准，取消后将释放教室预约。确认要取消吗？',
+        cancelConfirmContentPendingCheckin: '该申请正在等待签到，取消后将释放教室预约。确认要取消吗？',
+        cancelConfirmContentInUse: '该申请正在使用中，取消后将标记为完成使用。确认要取消吗？',
+        cancelConfirmTitle: '确认撤销申请',
+        cancelConfirmOk: '确认撤销',
+        cancelConfirmCancel: '取消',
+        approveApproved: '申请已批准',
+        approveRejected: '申请已驳回',
+        approveFail: '审批操作失败',
+        approveSuccess: '审批操作成功',
+        cancelSuccess: '申请已撤销',
+        cancelFail: '撤销操作失败'
+      },
       columns: {
         roomName: '教室名称',
         applicant: '申请人',
@@ -701,15 +692,7 @@ const dictionaries = {
           1: '结束时间'
         }
       },
-      paginationTotal: '第 {from}-{to} 条/共 {total} 条',
-      messages: {
-        approveApproved: '申请已批准',
-        approveRejected: '申请已驳回',
-        approveFail: '审批操作失败',
-        approveSuccess: '审批操作成功',
-        cancelSuccess: '申请已撤销',
-        cancelFail: '撤销操作失败'
-      }
+      paginationTotal: '第 {from}-{to} 条/共 {total} 条'
     },
     dutySchedule: {
       title: '值班表',
@@ -1621,6 +1604,21 @@ const dictionaries = {
         result403NeedRole: 'Approver or admin required to access Applications.',
         resultErrorTitle: 'Access failed'
       },
+      messages: {
+        cancelConfirmContent: 'Are you sure you want to cancel this application?',
+        cancelConfirmContentApproved: 'Are you sure you want to cancel this approved application? The room booking will be canceled.',
+        cancelConfirmContentPendingCheckin: 'Are you sure you want to cancel this application? Your check-in appointment will be canceled.',
+        cancelConfirmContentInUse: 'Cannot cancel application that is currently in use.',
+        cancelConfirmTitle: 'Confirm Cancel',
+        cancelConfirmOk: 'Cancel Application',
+        cancelConfirmCancel: 'Keep Application',
+        approveApproved: 'Application approved',
+        approveRejected: 'Application rejected',
+        approveFail: 'Approval failed',
+        approveSuccess: 'Approval succeeded',
+        cancelSuccess: 'Application cancelled',
+        cancelFail: 'Cancel failed'
+      },
       actions: {
         back: 'Back',
         login: 'Sign in',
@@ -1677,15 +1675,7 @@ const dictionaries = {
           1: 'End time'
         }
       },
-      paginationTotal: '{from}-{to} of {total} items',
-      messages: {
-        approveApproved: 'Application approved',
-        approveRejected: 'Application rejected',
-        approveFail: 'Approval failed',
-        approveSuccess: 'Approval succeeded',
-        cancelSuccess: 'Application cancelled',
-        cancelFail: 'Cancel failed'
-      }
+      paginationTotal: '{from}-{to} of {total} items'
     },
     dutySchedule: {
       title: 'Duty Schedule',
@@ -1768,30 +1758,6 @@ const dictionaries = {
         suggestion: 'Feature Suggestion',
         complaint: 'Service Complaint',
         other: 'Other'
-      }
-    },
-    myApplications: {
-      title: 'My Applications',
-      filters: {
-        onlyMine: 'Mine only',
-        allRooms: 'All rooms'
-      },
-      form: {
-        crowd: 'Participants',
-        enterCrowd: 'Enter number of participants',
-        contact: 'Contact',
-        enterContact: 'Enter contact info',
-        peopleUnit: ''
-      },
-      actions: {
-        confirmCancel: 'Cancel this application?',
-        checkin: 'Check In',
-        checkinSuccess: 'Check in successful',
-        checkinFail: 'Check in failed',
-        checkinConfirmTitle: 'Confirm Check In',
-        checkinConfirmContent: 'Are you sure you want to check in for this application? This action cannot be undone.',
-        checkinConfirmOk: 'Confirm Check In',
-        checkinConfirmCancel: 'Cancel'
       }
     },
     applicationStatus: {

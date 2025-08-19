@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Button } from 'antd';
-import { FilterOutlined } from '@ant-design/icons';
 
 const ResponsiveFilterContainer = ({ 
   children, 
@@ -12,7 +10,6 @@ const ResponsiveFilterContainer = ({
 }) => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   useEffect(() => {
     let resizeTimer;

@@ -30,8 +30,15 @@ export const parseDateTimeFromBackend = (dateTimeString) => {
 
 // 验证时间范围
 export const validateTimeRange = (startTime, endTime) => {
+  const now = dayjs();
+  
   if (!startTime || !endTime) {
     return { valid: false, message: '请选择开始和结束时间' };
+  }
+  
+  // 检查开始时间不能在过去
+  if (startTime.isBefore(now)) {
+    return { valid: false, message: '申请开始时间不能早于当前时间' };
   }
   
   if (endTime.isBefore(startTime)) {
