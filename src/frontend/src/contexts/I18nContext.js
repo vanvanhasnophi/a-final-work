@@ -172,6 +172,9 @@ const dictionaries = {
         todayCleaningReports: '今日报清洁数'
       },
       quickActionsTitle: '快速操作',
+      quickActions: {
+        goToSettings: '前往设置'
+      },
       buttons: {
         applyRoom: '申请教室',
         myApplications: '我的申请',
@@ -302,6 +305,17 @@ const dictionaries = {
           unavailable: '不可用'
         }
       },
+      modals: {
+        confirmDeleteTitle: '确认删除教室',
+        confirmDeleteQuestion: '确定删除以下教室？',
+        warnIrreversible: '⚠️ 警告：此操作不可恢复，删除教室将同时删除所有相关的申请记录。',
+        confirmDeleteOk: '确认删除',
+        cancel: '取消',
+        confirmUpdateTitle: '确认更新教室信息',
+        confirmUpdateTip: '确定要更新教室信息吗？更新后可能导致一些业务无法正常进行，请谨慎操作',
+        changesTitle: '变更详情：',
+        confirmUpdateOk: '确定更新'
+      },
   deleteInUseWarning: '教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。',
   timeConflict: '所选时间段与已有预约冲突，请选择其他时间'
     },
@@ -408,6 +422,13 @@ const dictionaries = {
         serviceArea: '负责区域',
         permission: '审批权限',
         skill: '维修范围'
+      },
+      adminVerify: {
+        title: '管理员验证',
+        content: '删除用户需要管理员权限验证，请输入您的管理员密码：',
+        placeholder: '请输入管理员密码',
+        okText: '确认',
+        required: '管理员密码不能为空'
       },
       form: {
         username: '用户名',
@@ -1071,6 +1092,9 @@ const dictionaries = {
         todayCleaningReports: 'Today\'s Cleanings'
       },
       quickActionsTitle: 'Quick Actions',
+      quickActions: {
+        goToSettings: 'Go to Settings'
+      },
       buttons: {
         applyRoom: 'Apply for Room',
         myApplications: 'My Applications',
@@ -1263,7 +1287,18 @@ const dictionaries = {
           pending_maintenance: 'Pending maintenance',
           unavailable: 'Unavailable'
         }
-  },
+      },
+      modals: {
+        confirmDeleteTitle: 'Confirm Room Deletion',
+        confirmDeleteQuestion: 'Are you sure you want to delete the following room?',
+        warnIrreversible: '⚠️ Warning: This action is irreversible. Deleting the room will also delete all related application records.',
+        confirmDeleteOk: 'Confirm Delete',
+        cancel: 'Cancel',
+        confirmUpdateTitle: 'Confirm Room Information Update',
+        confirmUpdateTip: 'Are you sure you want to update room information? Updates may affect ongoing operations. Please proceed with caution.',
+        changesTitle: 'Changes:',
+        confirmUpdateOk: 'Confirm Update'
+      },
   deleteInUseWarning: 'Room is in use or reserved and cannot be deleted.',
   timeConflict: 'Selected time conflicts with existing bookings. Please choose another.'
     },

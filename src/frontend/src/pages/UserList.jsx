@@ -261,15 +261,17 @@ export default function UserList() {
         // 为了简化，这里我们提示用户在同一个输入框输入管理员密码
         const adminPassword = await new Promise((resolve, reject) => {
           Modal.confirm({
-            title: '管理员验证',
+            title: t('userList.adminVerify.title', '管理员验证'),
             content: (
               <div>
-                <p>删除用户需要管理员权限验证，请输入您的管理员密码：</p>
+                <p>{t('userList.adminVerify.content', '删除用户需要管理员权限验证，请输入您的管理员密码：')}</p>
                 <Input.Password
-                  placeholder="请输入管理员密码"
+                  placeholder={t('userList.adminVerify.placeholder', '请输入管理员密码')}
                   onPressEnter={(e) => {
-                    resolve(e.target.value);
-                    Modal.destroyAll();
+                    if (e.target.value.trim()) {
+                      resolve(e.target.value.trim());
+                      Modal.destroyAll();
+                    }
                   }}
                   ref={(input) => {
                     if (input) {
@@ -279,13 +281,16 @@ export default function UserList() {
                 />
               </div>
             ),
-            onOk: (close) => {
+            okText: t('userList.adminVerify.okText', '确认'),
+            cancelText: t('common.cancel', '取消'),
+            onOk: () => {
               const input = document.querySelector('.ant-modal input[type="password"]');
               const password = input ? input.value : '';
               if (password.trim()) {
                 resolve(password.trim());
               } else {
-                reject(new Error('密码不能为空'));
+                message.error(t('userList.adminVerify.required', '管理员密码不能为空'));
+                return Promise.reject();
               }
             },
             onCancel: () => {
@@ -1267,6 +1272,7 @@ export default function UserList() {
         cancelText={t('common.cancel', '取消')}
         okType="danger"
         destroyOnClose
+        confirmLoading={false}
       >
         <div style={{ marginBottom: 16 }}>
           <p>
@@ -1285,7 +1291,11 @@ export default function UserList() {
               setConfirmationError('');
             }}
             status={confirmationError ? 'error' : ''}
-            onPressEnter={handleSecondConfirm}
+            onPressEnter={e => {
+              e.preventDefault();
+              handleSecondConfirm();
+            }}
+            autoFocus
           />
         ) : (
           <Input
@@ -1296,7 +1306,11 @@ export default function UserList() {
               setConfirmationError('');
             }}
             status={confirmationError ? 'error' : ''}
-            onPressEnter={handleSecondConfirm}
+            onPressEnter={e => {
+              e.preventDefault();
+              handleSecondConfirm();
+            }}
+            autoFocus
           />
         )}
         {confirmationError && (

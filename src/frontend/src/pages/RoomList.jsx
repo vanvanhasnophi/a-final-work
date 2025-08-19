@@ -1498,10 +1498,10 @@ export default function RoomList() {
                 {t('roomList.modals.confirmDeleteQuestion', '确定删除以下教室？')}
               </p>
               <div style={{ 
-                background: '#f5f5f5', 
+                background: 'var(--component-bg, #f5f5f5)', 
                 padding: '12px', 
                 borderRadius: '6px',
-                border: '1px solid #d9d9d9'
+                border: '1px solid var(--border-color, #d9d9d9)'
               }}>
                 <p style={{ margin: '4px 0', fontWeight: 'bold' }}>
                   {t('roomList.form.name', '教室名称')}：{deleteRoomRecord.name}
@@ -1524,12 +1524,12 @@ export default function RoomList() {
               </div>
             </div>
             <div style={{ 
-              background: '#fff2e8', 
+              background: 'var(--warning-bg, #fff2e8)', 
               padding: '12px', 
               borderRadius: '6px',
-              border: '1px solid #ffd591'
+              border: '1px solid var(--warning-border, #ffd591)'
             }}>
-              <p style={{ color: '#d46b08', fontSize: '12px', margin: 0 }}>
+              <p style={{ color: 'var(--warning-text, #d46b08)', fontSize: '12px', margin: 0 }}>
                 {t('roomList.modals.warnIrreversible', '⚠️ 警告：此操作不可恢复，删除教室将同时删除所有相关的申请记录。')}
               </p>
             </div>

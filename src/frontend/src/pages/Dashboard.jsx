@@ -160,6 +160,9 @@ export default function Dashboard() {
       case 'roomManagement':
         navigate('/rooms');
         break;
+      case 'settings':
+        navigate('/settings');
+        break;
       default:
         break;
     }
@@ -310,7 +313,27 @@ export default function Dashboard() {
           {/* 第二行：快速操作单独一行 */}
           <Row gutter={16} style={{ marginBottom: '24px' }}>
             <Col span={24}>
-              <Card title={t('dashboard.quickActionsTitle')} extra={<SettingOutlined />}>
+              <Card 
+                title={t('dashboard.quickActionsTitle')} 
+                extra={
+                  <SettingOutlined 
+                    style={{ 
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      color: 'var(--text-color-secondary)',
+                      transition: 'color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.color = 'var(--primary-color)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.color = 'var(--text-color-secondary)';
+                    }}
+                    onClick={() => handleQuickAction('settings')}
+                    title={t('dashboard.quickActions.goToSettings', '前往设置')}
+                  />
+                }
+              >
                 {/* 申请教室按钮：审批员(Approver)不展示 */}
                 {!isMaintainer && !isService && !isApprover && (
                   <Button 
