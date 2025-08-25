@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, InputNumber, message, Space, Typography, Divider } from 'antd';
-import { applicationAPI } from '../api/application';
+import { Card, Button,  message, Space, Typography, Divider } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -8,10 +7,17 @@ export default function TestConcurrency() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
 
+  // 动态获取API前缀，自动去除末尾/api，避免重复
+  const getApiBaseUrl = () => {
+    let url = process.env.REACT_APP_API_URL || (window && window.location && window.location.origin) || '';
+    url = url.replace(/\/?api\/?$/, '');
+    return url;
+  };
+
   const testConcurrentApply = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/test/concurrency/test-apply?threadCount=10&roomId=1&userId=1', {
+      const response = await fetch(getApiBaseUrl() + '/test/concurrency/test-apply?threadCount=10&roomId=1&userId=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +43,7 @@ export default function TestConcurrency() {
   const testConcurrentApprove = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/test/concurrency/test-approve?threadCount=5&applicationId=1', {
+      const response = await fetch(getApiBaseUrl() + '/test/concurrency/test-approve?threadCount=5&applicationId=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,4 +135,4 @@ export default function TestConcurrency() {
       </Card>
     </div>
   );
-} 
+}

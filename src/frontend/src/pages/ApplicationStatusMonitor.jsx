@@ -75,6 +75,13 @@ export default function ApplicationStatusMonitor() {
     fetchExpiringApplications();
   }, []);
 
+  // 动态获取API前缀，自动去除末尾/api，避免重复
+  const getApiBaseUrl = () => {
+    let url = process.env.REACT_APP_API_URL || (window && window.location && window.location.origin) || '';
+    url = url.replace(/\/?api\/?$/, '');
+    return url;
+  };
+
   // 即将过期申请的表格列
   const expiringColumns = [
     {
@@ -141,7 +148,7 @@ export default function ApplicationStatusMonitor() {
             icon={<ReloadOutlined />}
             onClick={() => {
               // 手动更新单个申请状态
-              fetch(`/api/application-status/update/${record.id}`, {
+              fetch(getApiBaseUrl() + `/application-status/update/${record.id}`, {
                 method: 'POST'
               }).then(() => {
                 messageApi.success(t('applicationStatus.messages.updateOneSuccess', '申请状态更新成功'));
@@ -335,4 +342,4 @@ export default function ApplicationStatusMonitor() {
       </div>
     </>
   );
-} 
+}

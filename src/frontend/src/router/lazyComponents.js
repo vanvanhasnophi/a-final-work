@@ -108,7 +108,7 @@ export const LazyLayoutComponents = {
   ),
 };
 
-export default {
+const lazyComponentsExport = {
   LazyLogin,
   LazyDashboard,
   LazyRoomList,
@@ -124,3 +124,5 @@ export default {
   LazyTestComponents,
   LazyLayoutComponents,
 };
+
+export default lazyComponentsExport;

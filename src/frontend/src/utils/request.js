@@ -1,8 +1,15 @@
 import axios from 'axios';
 
 // 创建axios实例
+// 动态获取API地址：优先用环境变量，否则用当前页面origin
+const getApiBaseUrl = () => {
+  let url = process.env.REACT_APP_API_BASE_URL || (window && window.location && window.location.origin) || '';
+  url = url.replace(/\/?api\/?$/, '');
+  return url;
+};
+
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080',
+  baseURL: getApiBaseUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -77,4 +84,4 @@ instance.interceptors.response.use(
 
 export function request(config) {
   return instance(config);
-} 
+}

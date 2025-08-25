@@ -3,10 +3,17 @@ import { message } from 'antd';
 import { showTranslatedMessage } from '../utils/messageTranslator';
 
 // 创建axios实例
+// 动态获取API地址：优先用环境变量，否则用当前页面origin + '/api'
+const getApiBaseUrl = () => {
+  if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
+  if (window && window.location && window.location.origin) {
+    return window.location.origin + '/api';
+  }
+  return '/api';
+};
+
 const instance = axios.create({
-  baseURL: process.env.NODE_ENV === 'production'
-    ? process.env.REACT_APP_API_URL || '/api'
-    : 'http://localhost:8080/api',
+  baseURL: getApiBaseUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
