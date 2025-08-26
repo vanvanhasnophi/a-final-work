@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Radio, Space, Typography, Divider, Alert } from 'antd';
-import { useI18n } from '../contexts/I18nContext';
-
+import { Card, Radio, Space, Typography, Divider, Alert, Switch } from 'antd';
+import { useI18n } from '../../contexts/I18nContext';
+const BLUR_PREF_KEY = 'enableMoreBlur';
 const { Title, Paragraph, Text } = Typography;
 const FONT_PREF_KEY = 'fontPreference';
 
@@ -9,6 +9,26 @@ export default function Settings() {
   const { t, lang, setLang } = useI18n();
   const [fontPref, setFontPref] = useState('inter');
   const [isApple, setIsApple] = useState(false);
+  const [enableMoreBlur, setEnableMoreBlur] = useState(() => {
+  try {
+    return localStorage.getItem(BLUR_PREF_KEY) === '1';
+  } catch { return false; }
+});
+// 保证刷新后 Switch 状态与 localStorage 一致
+useEffect(() => {
+  const val = localStorage.getItem(BLUR_PREF_KEY) === '1';
+  setEnableMoreBlur(val);
+}, []);
+// 切换时立即同步 localStorage 并广播
+const handleBlurSwitch = (checked) => {
+  setEnableMoreBlur(checked);
+  try {
+    localStorage.setItem(BLUR_PREF_KEY, checked ? '1' : '0');
+  } catch {}
+  if (window.dispatchEvent) {
+    window.dispatchEvent(new CustomEvent('blur-setting-changed', { detail: checked }));
+  }
+};
 
   useEffect(() => {
     try {
@@ -72,6 +92,18 @@ export default function Settings() {
             <Radio value="en-US">{t('settings.enUS')}</Radio>
           </Space>
         </Radio.Group>
+      </Card>
+      {/* 开启更多模糊效果 */}
+      <Card title="界面模糊效果" bordered style={{ maxWidth: 600, marginBottom: 16 }}>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>开启更多模糊效果（Dropdown/弹窗等）</span>
+            <Switch checked={enableMoreBlur} onChange={handleBlurSwitch} />
+          </div>
+          <Paragraph type="secondary" style={{ fontSize: 12 }}>
+            开启后，所有下拉菜单、弹窗等界面将使用毛玻璃模糊背景。标题栏始终模糊。
+          </Paragraph>
+        </Space>
       </Card>
       {/* 字体渲染设置 */}
       <Card title={t('settings.font')} bordered style={{ maxWidth: 600, marginBottom: 16 }}>

@@ -8,26 +8,26 @@ import {
   EyeOutlined, ReloadOutlined, 
   CheckOutlined, DeleteOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import { usePageRefresh } from '../hooks/usePageRefresh';
-import PageErrorBoundary from '../components/PageErrorBoundary';
-import FixedTop from '../components/FixedTop';
-import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
+import { useAuth } from '../../contexts/AuthContext';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import { usePageRefresh } from '../../hooks/usePageRefresh';
+import PageErrorBoundary from '../../components/PageErrorBoundary';
+import FixedTop from '../../components/FixedTop';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../../components/FilterDropdownButton';
 
 import { 
   canViewAllApplications, canViewOwnApplications, canApproveApplication, 
   canCancelApplication
-} from '../utils/permissionUtils';
-import { getRoleDisplayName } from '../utils/roleMapping';
-import { applicationAPI } from '../api/application';
-import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
-import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicationExpired } from '../utils/statusMapping';
-import { useI18n } from '../contexts/I18nContext';
-import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
-import { getUserDisplayName } from '../utils/userDisplay';
+} from '../../utils/permissionUtils';
+import { getRoleDisplayName } from '../../utils/roleMapping';
+import { applicationAPI } from '../../api/application';
+import { formatDateTime, formatTimeRange } from '../../utils/dateFormat';
+import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicationExpired } from '../../utils/statusMapping';
+import { useI18n } from '../../contexts/I18nContext';
+import { useDebounceSearchV2 } from '../../hooks/useDebounceSearchV2';
+import { getUserDisplayName } from '../../utils/userDisplay';
 
 const { Option } = Select;
 
@@ -467,6 +467,8 @@ function ApplicationManagementContent() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Card 
+        className="transparent-card"
+        variant="borderless" 
           title={
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>{t('applicationManagement.title')}</span>

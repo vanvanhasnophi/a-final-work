@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, Alert, Tag, Pagination, Checkbox, Tooltip, App } from 'antd';
 import { EyeOutlined, PlusOutlined, ReloadOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
-import { applicationAPI } from '../api/application';
-import { roomAPI } from '../api/room';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import { usePageRefresh } from '../hooks/usePageRefresh';
-import PageErrorBoundary from '../components/PageErrorBoundary';
-import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicationExpired } from '../utils/statusMapping';
+import { applicationAPI } from '../../api/application';
+import { roomAPI } from '../../api/room';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import { usePageRefresh } from '../../hooks/usePageRefresh';
+import PageErrorBoundary from '../../components/PageErrorBoundary';
+import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicationExpired } from '../../utils/statusMapping';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
-import { useAuth } from '../contexts/AuthContext';
-import FixedTop from '../components/FixedTop';
-import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
-import { MessageContext } from '../App';
-import { useI18n } from '../contexts/I18nContext';
+import { formatDateTime, formatTimeRange } from '../../utils/dateFormat';
+import { useAuth } from '../../contexts/AuthContext';
+import FixedTop from '../../components/FixedTop';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../../components/FilterDropdownButton';
+import { MessageContext } from '../../App';
+import { useI18n } from '../../contexts/I18nContext';
 
 const { Option } = Select;
 
@@ -360,6 +360,8 @@ function MyApplicationsContent() {
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
+        className="transparent-card"
+        variant="borderless" 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{t('myApplications.title', t('applicationManagement.title'))}</span>

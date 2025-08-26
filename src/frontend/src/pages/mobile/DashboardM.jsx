@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Statistic, Button, Tag, Space } from 'antd';
 import { UserOutlined, HomeOutlined, CalendarOutlined, SettingOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { roomAPI } from '../api/room';
-import { applicationAPI } from '../api/application';
-import { dutyAPI } from '../api/duty';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
+import { roomAPI } from '../../api/room';
+import { applicationAPI } from '../../api/application';
+import { dutyAPI } from '../../api/duty';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { canViewOwnApplications } from '../utils/permissionUtils';
-import LatestNews from '../components/LatestNews';
-import { useI18n } from '../contexts/I18nContext';
-import { useActivities } from '../hooks/useActivities';
+import { canViewOwnApplications } from '../../utils/permissionUtils';
+import LatestNews from '../../components/LatestNews';
+import { useI18n } from '../../contexts/I18nContext';
+import { useActivities } from '../../hooks/useActivities';
 import dayjs from 'dayjs';
 
 export default function Dashboard() {

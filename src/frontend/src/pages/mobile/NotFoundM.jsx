@@ -1,7 +1,7 @@
 import React from 'react';
 import { Result, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../../contexts/I18nContext';
 
 export default function NotFound() {
   const navigate = useNavigate();

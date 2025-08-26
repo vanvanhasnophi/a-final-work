@@ -24,12 +24,12 @@ import {
   LeftOutlined,
   RightOutlined
 } from '@ant-design/icons';
-import { dutyAPI } from '../api/duty';
-import { useAuth } from '../contexts/AuthContext';
-import { useI18n } from '../contexts/I18nContext';
-import { canManageUsers } from '../utils/permissionUtils';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import PageErrorBoundary from '../components/PageErrorBoundary';
+import { dutyAPI } from '../../api/duty';
+import { useAuth } from '../../contexts/AuthContext';
+import { useI18n } from '../../contexts/I18nContext';
+import { canManageUsers } from '../../utils/permissionUtils';
+import ResponsiveFilterContainer from '../../components/ResponsiveFilterContainer';
+import PageErrorBoundary from '../../components/PageErrorBoundary';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -927,7 +927,7 @@ export default function DutySchedule() {
         </ResponsiveFilterContainer>
 
         {/* 主内容区域 */}
-        <Card bodyStyle={{ padding: '16px' }}>
+        <Card style={{ padding: '16px' }}>
           {/* 今日值班人提示 */}
           <div 
             className="today-duty-card"

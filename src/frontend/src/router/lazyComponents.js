@@ -72,6 +72,74 @@ export const LazyDevPage = createLazyComponent.page(
   '开发页面'
 );
 
+// 移动端
+
+export const LazyLoginMobile = createLazyComponent.page(
+  () => import('../pages/mobile/LoginM'),
+  '移动端登录页面'
+);
+
+export const LazyDashboardMobile = createLazyComponent.page(
+  () => import('../pages/mobile/DashboardM'),
+  '移动端仪表盘'
+);
+
+export const LazyRoomListMobile = createLazyComponent.page(
+  () => import('../pages/mobile/RoomListM'),
+  '移动端教室列表'
+);
+
+export const LazyApplicationManagementMobile = createLazyComponent.page(
+  () => import('../pages/mobile/ApplicationManagementM'),
+  '移动端申请管理'
+);
+
+export const LazyMyApplicationsMobile = createLazyComponent.page(
+  () => import('../pages/mobile/MyApplicationsM'),
+  '移动端我的申请'
+);
+
+export const LazyUserListMobile = createLazyComponent.page(
+  () => import('../pages/mobile/UserListM'),
+  '移动端用户管理'
+);
+
+export const LazyUserProfileMobile  = createLazyComponent.page(
+  () => import('../pages/mobile/UserProfileM'),
+  '移动端个人中心'
+);
+
+export const LazyDutyScheduleMobile = createLazyComponent.page(
+  () => import('../pages/mobile/DutyScheduleM'),
+  '移动端值班表管理'
+);
+
+export const LazySettingsMobile = createLazyComponent.page(
+  () => import('../pages/mobile/SettingsM'),
+  '移动端设置'
+);
+
+export const LazyNotFoundMobile = createLazyComponent.page(
+  () => import('../pages/mobile/NotFoundM'),
+  '移动端404页面'
+);
+
+// 测试和开发页面（按需懒加载）
+export const LazyActivityManagementMobile = createLazyComponent.page(
+  () => import('../pages/mobile/ActivityManagementM'),
+  '移动端活动管理'
+);
+
+export const LazyApplicationListMobile = createLazyComponent.page(
+  () => import('../pages/mobile/ApplicationListM'),
+  '移动端申请列表'
+);
+
+export const LazyDevPageMobile = createLazyComponent.page(
+  () => import('../pages/mobile/DevPageM'),
+  '移动端开发页面'
+);
+
 // 测试组件（开发环境专用）
 export const LazyTestComponents = {
   TestConcurrency: createLazyComponent.page(
@@ -103,6 +171,10 @@ export const LazyLayoutComponents = {
     () => import('../components/layout/Layout'),
     '应用布局'
   ),
+  AppLayoutMobile: createLazyComponent.component(
+    () => import('../components/layout/LayoutM'),
+    '移动端应用布局'
+  ),
 };
 
 const lazyComponentsExport = {
@@ -120,6 +192,18 @@ const lazyComponentsExport = {
   LazyDevPage,
   LazyTestComponents,
   LazyLayoutComponents,
+  LazyLoginMobile,
+  LazyDashboardMobile,
+  LazyRoomListMobile,
+  LazyApplicationManagementMobile,
+  LazyMyApplicationsMobile,
+  LazyUserListMobile,
+  LazyUserProfileMobile,
+  LazySettingsMobile,
+  LazyNotFoundMobile,
+  LazyActivityManagementMobile,
+  LazyApplicationListMobile,
+  LazyDevPageMobile,
 };
 
 export default lazyComponentsExport;

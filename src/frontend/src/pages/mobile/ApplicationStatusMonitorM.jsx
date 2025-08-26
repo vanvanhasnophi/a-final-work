@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Button, Space, Table, Tag, message, Alert, Tooltip } from 'antd';
 import { ReloadOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
-import { formatDateTime } from '../utils/dateFormat';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import FixedTop from '../components/FixedTop';
-import ResponsiveButton from '../components/ResponsiveButton';
-import { useI18n } from '../contexts/I18nContext';
+import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../../utils/statusMapping';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import FixedTop from '../../components/FixedTop';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import { useI18n } from '../../contexts/I18nContext';
 
 export default function ApplicationStatusMonitor() {
   const { t } = useI18n();

@@ -371,13 +371,13 @@ export default function Login() {
             fontWeight: 600, /* 数值权重便于变量字体过渡 */
             fontVariationSettings: "'wght' 600"
           }}>
-            {t('appName')}
+            {t(isLoginMode ? 'appName' : 'login.registerTitle')}
           </Title>
           <Text type="secondary" style={{ 
             color: 'var(--text-color-secondary)',
             fontSize: '14px',
           }}>
-            {t('login.subtitle')}
+            {t(isLoginMode ? 'login.subtitle' : '')}
           </Text>
         </div>
 

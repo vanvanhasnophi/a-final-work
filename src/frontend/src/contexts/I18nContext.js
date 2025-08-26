@@ -862,6 +862,7 @@ const dictionaries = {
         empty: '暂无数据'
       },
       register: '注册',
+      registerTitle: '注册新账号',
       switchToRegister: '立即注册',
       switchToLogin: '立即登录',
       subtitle: '更现代的教室预约管理',
@@ -1113,6 +1114,7 @@ const dictionaries = {
         empty: 'No Data'
       },
       register: 'Sign up',
+      registerTitle: 'Create a new account',
       switchToRegister: 'Sign up',
       switchToLogin: 'Sign in',
       subtitle: 'Modern Classroom Reservation Management',

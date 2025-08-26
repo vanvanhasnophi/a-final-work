@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
-import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
+import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { userAPI } from '../api/user';
-import { register, deleteUser as authDeleteUser, verifyPassword, dangerousOperationVerify } from '../api/auth';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import { usePageRefresh } from '../hooks/usePageRefresh';
-import PageErrorBoundary from '../components/PageErrorBoundary';
-import { getRoleDisplayName } from '../utils/roleMapping';
-import { getPermissionDisplayName } from '../utils/permissionMapping';
-import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
-import { formatDateTime } from '../utils/dateFormat';
-import { useAuth } from '../contexts/AuthContext';
-import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../utils/permissionUtils';
-import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
-import { getUserDisplayName } from '../utils/userDisplay';
-import FixedTop from '../components/FixedTop';
-import { useI18n } from '../contexts/I18nContext';
+import { userAPI } from '../../api/user';
+import { register, deleteUser as authDeleteUser, verifyPassword, dangerousOperationVerify } from '../../api/auth';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import { usePageRefresh } from '../../hooks/usePageRefresh';
+import PageErrorBoundary from '../../components/PageErrorBoundary';
+import { getRoleDisplayName } from '../../utils/roleMapping';
+import { getPermissionDisplayName } from '../../utils/permissionMapping';
+import { useDebounceSearchV2 } from '../../hooks/useDebounceSearchV2';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useAuth } from '../../contexts/AuthContext';
+import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../../utils/permissionUtils';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../../components/FilterDropdownButton';
+import { getUserDisplayName } from '../../utils/userDisplay';
+import FixedTop from '../../components/FixedTop';
+import { useI18n } from '../../contexts/I18nContext';
 
 const { Option } = Select;
 
@@ -622,6 +622,8 @@ export default function UserList() {
       {contextHolderModal}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
+        className="transparent-card"
+        variant="borderless" 
         title={t('userList.title', '用户管理')} 
         extra={
           <Space>

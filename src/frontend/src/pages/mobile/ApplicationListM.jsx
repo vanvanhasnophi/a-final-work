@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, InputNumber, Tag, Pagination, Switch, Tooltip } from 'antd';
 import { PlusOutlined, EyeOutlined, CheckOutlined, ReloadOutlined } from '@ant-design/icons';
-import { applicationAPI } from '../api/application';
-import { roomAPI } from '../api/room';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import { usePageRefresh } from '../hooks/usePageRefresh';
-import PageErrorBoundary from '../components/PageErrorBoundary';
-import { getRoleDisplayName } from '../utils/roleMapping';
-import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
-import { getRoomTypeDisplayName } from '../utils/roomMapping';
+import { applicationAPI } from '../../api/application';
+import { roomAPI } from '../../api/room';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import { usePageRefresh } from '../../hooks/usePageRefresh';
+import PageErrorBoundary from '../../components/PageErrorBoundary';
+import { getRoleDisplayName } from '../../utils/roleMapping';
+import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../../utils/statusMapping';
+import { getRoomTypeDisplayName } from '../../utils/roomMapping';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime, formatTimeRange } from '../utils/dateFormat';
-import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
-import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
-import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
-import { useAuth } from '../contexts/AuthContext';
-import FixedTop from '../components/FixedTop';
+import { formatDateTime, formatTimeRange } from '../../utils/dateFormat';
+import { formatDateTimeForBackend, validateTimeRange } from '../../utils/dateUtils';
+import { useDebounceSearchV2 } from '../../hooks/useDebounceSearchV2';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../../components/FilterDropdownButton';
+import { useAuth } from '../../contexts/AuthContext';
+import FixedTop from '../../components/FixedTop';
 import dayjs from 'dayjs';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '../../contexts/I18nContext';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -351,6 +351,8 @@ export default function ApplicationList() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
+        className="transparent-card"
+        variant="borderless" 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{t('applicationManagement.title')}</span>

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useContext } from 'react';
 import { Layout, Menu, Avatar, Dropdown, Typography, Button, theme } from 'antd';
+import { BlurContext } from '../../App';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -35,6 +36,7 @@ const { Text } = Typography;
 export default function AppLayout({ children }) {
   const { user, clearAuth, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const enableMoreBlur = useContext(BlurContext);
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
@@ -504,7 +506,7 @@ export default function AppLayout({ children }) {
           left: 0,
           top: 0,
           bottom: 0,
-          zIndex: 1000,
+          zIndex: 999,
           transform: 'translateZ(0)', // 硬件加速
           willChange: 'width'          // 优化宽度变化性能
         }}
@@ -546,8 +548,11 @@ export default function AppLayout({ children }) {
                     icon: getMenuIcon(item.icon),
                     label: item.label,
                     onClick: () => handleMenuClick({ key: item.key })
-                  }))
+                  })),
+                  selectedKeys: getSelectedKeys(),
+                  className: enableMoreBlur ? 'blur-dropdown-menu' : ''
                 }}
+                overlayClassName={enableMoreBlur ? 'blur-dropdown-menu' : ''}
                 trigger={['hover']}
                 placement="rightTop"
               >
@@ -717,7 +722,10 @@ export default function AppLayout({ children }) {
           </Button>
           {/* 用户信息 */}
           <Dropdown
-            menu={{ items: userMenuItems }}
+            menu={{ items: userMenuItems ,
+                  className: enableMoreBlur ? 'blur-dropdown-menu' : ''
+                }}
+                overlayClassName={enableMoreBlur ? 'blur-dropdown-menu' : ''}
             placement="topRight"
             arrow
           >

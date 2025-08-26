@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, message, Alert, Dropdown } from 'antd';
-import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
+import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, GlobalOutlined, DownOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import ThemeToggleButton from '../components/ThemeToggleButton';
-import { showTranslatedMessage } from '../utils/messageTranslator';
-import { useI18n } from '../contexts/I18nContext';
-import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import ThemeToggleButton from '../../components/ThemeToggleButton';
+import { showTranslatedMessage } from '../../utils/messageTranslator';
+import { useI18n } from '../../contexts/I18nContext';
+import { notificationEvents, NOTIFICATION_EVENTS } from '../../utils/notificationEvents';
 
 const { Title, Text } = Typography;
 
@@ -354,12 +354,14 @@ export default function Login() {
         </Dropdown>
         <ThemeToggleButton />
       </div>
-      <Card
+      <Card 
+        className="transparent-card"
+        variant="borderless"
         style={{
           width: 400,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: '0 0px 0px rgba(0,0,0,0)',
           borderRadius: '16px',
-          background: 'var(--component-bg)',
+          background: 'transparent',
           position: 'relative',
         }}
       >
@@ -367,17 +369,17 @@ export default function Login() {
           <Title level={2} style={{ 
             margin: 0, 
             color: 'var(--primary-color)',
-            fontSize: '28px',
+            fontSize: '32px',
             fontWeight: 600, /* 数值权重便于变量字体过渡 */
             fontVariationSettings: "'wght' 600"
           }}>
-            {t('appName')}
+            {t(isLoginMode ? 'appName' : 'login.registerTitle')}
           </Title>
           <Text type="secondary" style={{ 
             color: 'var(--text-color-secondary)',
-            fontSize: '14px',
+            fontSize: '16px',
           }}>
-            {t('login.subtitle')}
+            {t(isLoginMode ? 'login.subtitle' : '')}
           </Text>
         </div>
 
@@ -593,12 +595,12 @@ export default function Login() {
               className="login-toggle-link"
               onClick={() => setIsLoginMode(!isLoginMode)}
               style={{
-                padding: 0,
-                marginLeft: '4px',
+                padding: '12px',
+                margin: '4px',
                 color: 'var(--primary-color)',
                 fontWeight: 600,
                 fontVariationSettings: "'wght' 600",
-                fontSize: '14px',
+                fontSize: '16px',
                 textDecoration: 'none',
                 border: 'none',
                 background: 'transparent',
@@ -615,4 +617,4 @@ export default function Login() {
     </div>
     </>
   );
-} 
+}

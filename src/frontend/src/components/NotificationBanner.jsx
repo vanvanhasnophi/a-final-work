@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { BlurContext } from '../App';
 import { Button, Tag } from 'antd';
-import { BellOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { BellOutlined, ArrowUpOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../contexts/I18nContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -19,6 +20,12 @@ const NotificationBanner = ({
   const [visible, setVisible] = useState(true);
   const [progress, setProgress] = useState(100);
   const [isPaused, setIsPaused] = useState(false);
+  const enableMoreBlur = useContext(BlurContext);
+  // 控制消失动画
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    if (!visible) setLeaving(true);
+  }, [visible]);
   
   // 初始化shouldShow状态 - 立即检查是否应该显示
   const [shouldShow, setShouldShow] = useState(() => {
@@ -85,7 +92,7 @@ const NotificationBanner = ({
     }
   }, [notification]);
 
-  // 只有在横幅真正开始显示时才增加计数（防抖机制）
+  // 只有在横幅真正开始显示时增加计数（防抖机制）
   useEffect(() => {
     if (notification && shouldShow && visible) {
       const today = new Date().toDateString();
@@ -134,26 +141,12 @@ const NotificationBanner = ({
   }, [onClose, isPaused, visible]); // 添加 visible 依赖项
 
   // 提前返回：如果没有通知或不应该显示，直接不渲染
-  if (!notification || !shouldShow) {
-    return null;
-  }
 
-  if (!visible) {
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          top: '8px',
-          right: '8px',
-          zIndex: 9999,
-          maxWidth: '380px',
-          minWidth: '320px',
-          animation: 'slideOutToRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          ...style
-        }}
-      />
-    );
-  }
+  if (!notification || !shouldShow) return null;
+  if (!visible) return null;
+
+  // 判断是否为移动端
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const handleClose = () => {
     setVisible(false);
@@ -341,58 +334,130 @@ const NotificationBanner = ({
     return t(`notification.type.${type}`) || t('notification.type.default');
   };
   
-  // 亚克力效果样式（移除彩色边框）
+  // 受全局模糊设置控制的亚克力效果样式
   const acrylicStyle = {
-    backgroundColor: isDarkMode 
-      ? 'rgba(0, 0, 0, 0.6)' 
-      : 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)', // Safari支持
+    backgroundColor: enableMoreBlur ? 'var(--component-bg-allow-blur)' : 'var(--component-bg)',
+    backdropFilter: enableMoreBlur ? 'blur(20px)' : 'none',
+    WebkitBackdropFilter: enableMoreBlur ? 'blur(20px)' : 'none', // Safari支持
     border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
   };
 
-  return (
+
+  return (isMobile) ? (
+      <div
+        style={{
+          position: 'fixed',
+          top: 78,
+          left: 12,
+          right: 12,
+          zIndex: 998, // header一般999
+          borderRadius: 16,
+          background: enableMoreBlur ? 'var(--component-bg-allow-blur)' : 'var(--component-bg)',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.18)', // 更重阴影
+          padding: '10px 16px 10px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          minHeight: 48,
+          maxWidth: 'calc(100vw - 24px)',
+          overflow: 'hidden',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          backdropFilter: enableMoreBlur ? 'blur(16px)' : 'none',
+          WebkitBackdropFilter: enableMoreBlur ? 'blur(16px)' : 'none',
+          animation: leaving
+            ? 'slideUpBanner 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            : 'slideDownBanner 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        onClick={handleNotificationClick}
+      >
+        <BellOutlined style={{ fontSize: 18, color: '#ff7875', marginRight: 8, flexShrink: 0 }} />
+        <span style={{
+          fontWeight: 600,
+          fontSize: 15,
+          lineHeight: '1.4',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          flex: 1,
+          marginRight: 8
+        }}>{getNotificationContent(notification)}</span>
+        <Button
+          type="text"
+          icon={<ArrowUpOutlined style={{ fontSize: 18 }} />}
+          onClick={e => { e.stopPropagation(); setLeaving(true); setTimeout(handleClose, 350); }}
+          style={{ marginLeft: 4, color: '#999', fontSize: 18 }}
+          aria-label="关闭"
+        />
+        <style>{`
+          @keyframes slideDownBanner {
+            from {
+              transform: translateY(-40px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+          @keyframes slideUpBanner {
+            from {
+              transform: translateY(0);
+              opacity: 1;
+            }
+            to {
+              transform: translateY(-40px);
+              opacity: 0;
+            }
+          }
+        `}</style>
+      </div>
+    ) : (
     <div
       style={{
         position: 'fixed',
-        top: '8px',
-        right: '8px',
+        top: isMobile ? 56 : 8, // 不遮挡header，header高度一般为56px
+        left: isMobile ? 0 : 'auto',
+        right: isMobile ? 0 : 8,
+        width: isMobile ? '100vw' : 'auto',
         zIndex: 9999,
-        maxWidth: '380px',
-        minWidth: '320px',
-        animation: 'slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        maxWidth: isMobile ? '100vw' : '380px',
+        minWidth: isMobile ? '0' : '320px',
+        animation: isMobile ? 'slideInFromTop 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         ...style
       }}
     >
       <div
         style={{
           ...acrylicStyle,
-          position: 'relative', // 为进度条提供定位上下文
-          borderRadius: '12px',
-          padding: '12px 16px',
-          boxShadow: isDarkMode 
-            ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
-            : '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02)',
+          position: 'relative',
+          borderRadius: isMobile ? '0 0 12px 12px' : '12px',
+          padding: isMobile ? '10px 12px' : '12px 16px',
+          boxShadow: isMobile
+            ? '0 2px 12px rgba(0,0,0,0.08)'
+            : (isDarkMode 
+                ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+                : '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02)'),
           color: isDarkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.85)',
-          overflow: 'hidden', // 确保进度条不会溢出圆角
+          overflow: 'hidden',
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
         onMouseEnter={(e) => {
           setIsPaused(true);
-          // 增加悬停效果
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = isDarkMode 
-            ? '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)' 
-            : '0 12px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.03)';
+          if (!isMobile) {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)' 
+              : '0 12px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.03)';
+          }
         }}
         onMouseLeave={(e) => {
           setIsPaused(false);
-          // 恢复原始状态
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = isDarkMode 
-            ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
-            : '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02)';
+          if (!isMobile) {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+              : '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02)';
+          }
         }}
         onClick={handleNotificationClick}
       >
@@ -526,7 +591,16 @@ const NotificationBanner = ({
             opacity: 1;
           }
         }
-        
+        @keyframes slideInFromTop {
+          from {
+            transform: translateY(-40px) scale(0.98);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
         @keyframes slideOutToRight {
           from {
             transform: translateX(0) scale(1);
@@ -535,6 +609,17 @@ const NotificationBanner = ({
           to {
             transform: translateX(100%) scale(0.95);
             opacity: 0;
+          }
+        }
+        @media (max-width: 768px) {
+          .notification-banner-mobile {
+            width: 100vw !important;
+            left: 0 !important;
+            right: 0 !important;
+            border-radius: 0 0 12px 12px !important;
+            top: 56px !important;
+            max-width: 100vw !important;
+            min-width: 0 !important;
           }
         }
       `}</style>

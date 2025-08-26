@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Card, Row, Col, Select, Space, Tag, Typography } from 'antd';
 import { ReloadOutlined, ClearOutlined } from '@ant-design/icons';
-import RecentActivities from '../components/RecentActivities';
-import ResponsiveButton from '../components/ResponsiveButton';
-import { useActivities } from '../hooks/useActivities';
-import ActivityGenerator from '../utils/activityGenerator';
-import { useAuth } from '../contexts/AuthContext';
+import RecentActivities from '../../components/RecentActivities';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import { useActivities } from '../../hooks/useActivities';
+import ActivityGenerator from '../../utils/activityGenerator';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -65,7 +65,9 @@ export default function ActivityManagement() {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Card>
+      <Card 
+        className="transparent-card"
+        variant="borderless">
         <Row gutter={16} style={{ marginBottom: '24px' }}>
           <Col span={24}>
             <Title level={3}>活动管理</Title>

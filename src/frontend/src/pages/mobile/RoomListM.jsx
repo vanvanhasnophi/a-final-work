@@ -2,24 +2,24 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Card, Button, Tag, Space, Input, Select, message, Alert, Drawer, Form, InputNumber, DatePicker, Pagination, Modal, Tooltip } from 'antd';
 import { PlusOutlined, ReloadOutlined, EyeOutlined, DeleteOutlined, FileTextOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { roomAPI } from '../api/room';
-import { applicationAPI } from '../api/application';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import { useDebounce } from '../hooks/useDebounce';
-import { usePageRefresh } from '../hooks/usePageRefresh';
-import PageErrorBoundary from '../components/PageErrorBoundary';
-import { formatTimeRange } from '../utils/dateFormat';
-import { getRoomTypeDisplayName, getRoomTypeEnumValue, getRoomTypeFrontendValue, roomTypeOptions } from '../utils/roomMapping';
-import { getRoomStatusDisplayName, getRoomStatusColor, roomStatusOptions } from '../utils/roomStatusMapping';
-import { formatDateTimeForBackend, validateTimeRange } from '../utils/dateUtils';
-import { useTimeConflictCheck } from '../hooks/useTimeConflictCheck';
-import { useAuth } from '../contexts/AuthContext';
-import { useI18n } from '../contexts/I18nContext';
-import { canCreateRoom, canDeleteRoom, canUpdateRoom, canCreateApplication } from '../utils/permissionUtils';
-import FixedTop from '../components/FixedTop';
-import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
+import { roomAPI } from '../../api/room';
+import { applicationAPI } from '../../api/application';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import { useDebounce } from '../../hooks/useDebounce';
+import { usePageRefresh } from '../../hooks/usePageRefresh';
+import PageErrorBoundary from '../../components/PageErrorBoundary';
+import { formatTimeRange } from '../../utils/dateFormat';
+import { getRoomTypeDisplayName, getRoomTypeEnumValue, getRoomTypeFrontendValue, roomTypeOptions } from '../../utils/roomMapping';
+import { getRoomStatusDisplayName, getRoomStatusColor, roomStatusOptions } from '../../utils/roomStatusMapping';
+import { formatDateTimeForBackend, validateTimeRange } from '../../utils/dateUtils';
+import { useTimeConflictCheck } from '../../hooks/useTimeConflictCheck';
+import { useAuth } from '../../contexts/AuthContext';
+import { useI18n } from '../../contexts/I18nContext';
+import { canCreateRoom, canDeleteRoom, canUpdateRoom, canCreateApplication } from '../../utils/permissionUtils';
+import FixedTop from '../../components/FixedTop';
+import ResponsiveButton from '../../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../../components/FilterDropdownButton';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -521,6 +521,8 @@ export default function RoomList() {
       {contextHolder}
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
+        className="transparent-card"
+        variant="borderless" 
         title={t('roomList.title')}
         extra={
           <Space>

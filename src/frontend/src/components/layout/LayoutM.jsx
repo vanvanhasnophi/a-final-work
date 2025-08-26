@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Typography, Button, theme } from 'antd';
+import React, { useState, useEffect, useContext } from 'react';
+import '../../App.css';
+import { Layout, Menu, Avatar, Dropdown, Typography, Button, Space, theme } from 'antd';
+import { BlurContext } from '../../App';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -10,6 +12,7 @@ import {
   LogoutOutlined,
   SettingOutlined,
   BulbOutlined,
+  BulbFilled,
   CalendarOutlined,
   FormOutlined,
   MenuOutlined,
@@ -26,25 +29,26 @@ import FeedbackButton from '../FeedbackButton';
 import { notificationEvents, NOTIFICATION_EVENTS } from '../../utils/notificationEvents';
 import { notificationAPI } from '../../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../../utils/userDisplay';
-import { SidebarProvider } from '../ResponsiveButton';
 // import { getCsrfStatus, probeCsrf } from '../../security/csrf';
 
-const { Sider, Content } = Layout;
+const { Header, Content } = Layout;
 const { Text } = Typography;
 
 export default function AppLayoutMobile({ children }) {
+  const enableMoreBlur = useContext(BlurContext);
   const { user, clearAuth, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const { token } = theme.useToken();
   const [unreadCount, setUnreadCount] = useState(0);
   const [bannerNotification, setBannerNotification] = useState(null);
   const [lastBannerNotificationId, setLastBannerNotificationId] = useState(null);
   const [lastBannerTime, setLastBannerTime] = useState(0);
+
+
   /*
   const [csrfInfo, setCsrfInfo] = useState({ enabled: true, tokenPresent: false });
   
@@ -61,11 +65,6 @@ export default function AppLayoutMobile({ children }) {
   }, []);
   */
   
-  // 响应式侧栏状态
-  const [isAutoCollapsed, setIsAutoCollapsed] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
-  const [sidebarMenuCollapsed, setSidebarMenuCollapsed] = useState(false);
   
   // 获取用户角色的菜单配置（移除个人资料）
   const getMenuItems = (userRole) => {
@@ -116,123 +115,6 @@ export default function AppLayoutMobile({ children }) {
 
 
   const menuItems = getMenuItems(user.role);
-  // 获取菜单项数量用于计算阈值
-  const getMenuItemCount = (userRole) => {
-    return getMenuItems(userRole).length;
-  };
-
-  // 响应式阈值 - 根据菜单项数动态调整
-  const WIDTH_COLLAPSE_THRESHOLD_BASE = 800; // 小于此宽度自动折叠
-  const WIDTH_EXPAND_THRESHOLD_BASE = 820;   // 大于此宽度自动展开
-  const menuItemCount = user ? getMenuItemCount(user.role) : 4;
-  const HEIGHT_COLLAPSE_THRESHOLD_BASE = 220 + menuItemCount  * 40;
-  const HEIGHT_EXPAND_THRESHOLD_BASE = HEIGHT_COLLAPSE_THRESHOLD_BASE + 30;
-  
-  
-  
-  // 响应式侧栏处理
-  useEffect(() => {
-    let resizeTimer;
-    let lastResizeTime = 0;
-    const THROTTLE_DELAY = 50;  // 节流延迟：50ms (从100ms降低)
-    const DEBOUNCE_DELAY = 100; // 防抖延迟：100ms (从200ms降低)
-
-    const handleResize = () => {
-      const now = Date.now();
-      
-      // 节流：如果距离上次执行时间小于延迟，跳过
-      if (now - lastResizeTime < THROTTLE_DELAY) {
-        return;
-      }
-      
-      lastResizeTime = now;
-      
-      // 清除之前的防抖计时器
-      if (resizeTimer) {
-        clearTimeout(resizeTimer);
-      }
-      
-      // 防抖：延迟执行真正的处理逻辑
-      resizeTimer = setTimeout(() => {
-        // 使用 requestAnimationFrame 确保在下一个重绘周期执行
-        requestAnimationFrame(() => {
-          const newWidth = window.innerWidth;
-          const newHeight = window.innerHeight;
-          
-          // 只有当宽度或高度真正发生变化时才更新状态
-          if (newWidth !== windowWidth || newHeight !== windowHeight) {
-            setWindowWidth(newWidth);
-            setWindowHeight(newHeight);
-            
-            // 宽度响应式：自动折叠逻辑
-            if (newWidth < WIDTH_COLLAPSE_THRESHOLD_BASE && !collapsed) {
-              setCollapsed(true);
-              setIsAutoCollapsed(true);
-            } 
-            // 宽度响应式：自动展开逻辑 (只有在自动折叠时才自动展开)
-            else if (newWidth > WIDTH_EXPAND_THRESHOLD_BASE && collapsed && isAutoCollapsed) {
-              setCollapsed(false);
-              setIsAutoCollapsed(false);
-            }
-            
-            // 高度响应式：菜单折叠逻辑
-            if (newHeight < HEIGHT_COLLAPSE_THRESHOLD_BASE) {
-              setSidebarMenuCollapsed(true);
-            } else if (newHeight > HEIGHT_EXPAND_THRESHOLD_BASE) {
-              setSidebarMenuCollapsed(false);
-            }
-          }
-        });
-      }, DEBOUNCE_DELAY);
-    };
-    
-    // 初始化检查（不使用防抖，立即执行）
-    const initResize = () => {
-      const newWidth = window.innerWidth;
-      const newHeight = window.innerHeight;
-      setWindowWidth(newWidth);
-      setWindowHeight(newHeight);
-      
-      // 宽度响应式：自动折叠逻辑
-      if (newWidth < WIDTH_COLLAPSE_THRESHOLD_BASE && !collapsed) {
-        setCollapsed(true);
-        setIsAutoCollapsed(true);
-      } 
-      // 宽度响应式：自动展开逻辑 (只有在自动折叠时才自动展开)
-      else if (newWidth > WIDTH_EXPAND_THRESHOLD_BASE && collapsed && isAutoCollapsed) {
-        setCollapsed(false);
-        setIsAutoCollapsed(false);
-      }
-      
-      // 高度响应式：菜单折叠逻辑
-      if (newHeight < HEIGHT_COLLAPSE_THRESHOLD_BASE) {
-        setSidebarMenuCollapsed(true);
-      } else if (newHeight > HEIGHT_EXPAND_THRESHOLD_BASE) {
-        setSidebarMenuCollapsed(false);
-      }
-    };
-    
-    initResize();
-    
-    // 添加监听器
-    window.addEventListener('resize', handleResize);
-    
-    // 清理函数
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (resizeTimer) {
-        clearTimeout(resizeTimer);
-      }
-    };
-  }, [collapsed, isAutoCollapsed, windowWidth, windowHeight, WIDTH_COLLAPSE_THRESHOLD_BASE, WIDTH_EXPAND_THRESHOLD_BASE, HEIGHT_COLLAPSE_THRESHOLD_BASE, HEIGHT_EXPAND_THRESHOLD_BASE]);
-  
-  // 手动控制折叠状态
-  const handleToggleCollapse = () => {
-    setCollapsed(!collapsed);
-    // 手动操作时重置自动折叠状态
-    setIsAutoCollapsed(false);
-  };
-
   
 
   // 处理菜单点击
@@ -488,57 +370,24 @@ export default function AppLayoutMobile({ children }) {
       minHeight: '100vh',
       background: 'var(--background-color)',
     }}>
-      <Sider 
-        trigger={null} 
-        collapsible 
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        style={{
-          boxShadow: 'var(--shadow)',
-          background: 'var(--component-bg)',
-          borderRight: `1px solid ${token.colorBorder}`,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100vh',
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          zIndex: 1000,
-          transform: 'translateZ(0)', // 硬件加速
-          willChange: 'width'          // 优化宽度变化性能
-        }}
-      >
-        
-        <div 
-          style={{ 
-            padding: '16px', 
-            textAlign: 'center',
-            borderBottom: `1px solid ${token.colorBorder}`,
-            cursor: 'pointer',
-            transition: 'background-color 0.15s ease', // 更快的过渡
-            transform: 'translateZ(0)', // 硬件加速
-            backfaceVisibility: 'hidden' // 减少重绘
-          }}
-          onClick={handleToggleCollapse}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = token.colorBgTextHover;
-            e.currentTarget.style.transform = 'translateZ(0)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.transform = 'translateZ(0)';
-          }}
-        >
-          <Text strong style={{ fontSize: collapsed ? '18px' : '18px', fontWeight: 600, fontVariationSettings: "'wght' 600" }}>
-            {collapsed ? 'RX' : 'RoomX'}
-          </Text>
-        </div>
-        
-        <div style={{ flex: 1, overflow: 'auto' }} className="custom-scrollbar">
-          {sidebarMenuCollapsed ? (
-            // 高度压缩模式：显示折叠的菜单（样式与原菜单项保持一致）
-            <div style={{ padding: '8px' }}>
+      <Header style={{ 
+                position: 'fixed',
+                top: 0,
+                right: 0,
+                left: 0,
+                zIndex: 999,
+                background: 'var(--component-bg-allow-blur)',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: 'var(--shadow)',
+                borderBottom: '1px solid var(--border-color)',
+                transition: 'left 0.2s',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+              }}>
+              <div style={{ flex: '0 0 100px' }} >
               <Dropdown
                 menu={{
                   items: menuItems.map(item => ({
@@ -546,15 +395,20 @@ export default function AppLayoutMobile({ children }) {
                     icon: getMenuIcon(item.icon),
                     label: item.label,
                     onClick: () => handleMenuClick({ key: item.key })
-                  }))
+                  })),
+                  selectedKeys: getSelectedKeys(),
+                  className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'
                 }}
+                overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
                 trigger={['hover']}
-                placement="rightTop"
+                placement="bottomRight"
               >
                 <div style={{
                   height: '40px',
+                  width: '56px',
                   lineHeight: '40px',
-                  padding: '0 23px',
+                  padding: '20px',
+                  textAlign: 'center',
                   margin: '0 0 0 0',
                   cursor: 'pointer',
                   borderRadius: '6px',
@@ -577,227 +431,163 @@ export default function AppLayoutMobile({ children }) {
                     style={{ 
                       fontSize: '16px',
                       color: token.colorText,
-                      marginRight: collapsed ? 0 : 12,
-                      marginLeft: collapsed ? 0 : 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
+                      marginRight: 0,
+                      marginLeft: 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }} 
                     theme={isDarkMode ? 'dark' : 'light'}
                   />
-                  {!collapsed && (
-                    <span style={{ 
-                      opacity: collapsed ? 0 : 1,
-                      transition: 'opacity 0.2s',
-                      whiteSpace: 'nowrap'
-                    }}
-                    theme={isDarkMode ? 'dark' : 'light'}>
-                      {t('layout.menu.navigation')}
-                    </span>
-                  )}
                 </div>
               </Dropdown>
             </div>
-          ) : (
-            // 正常模式：显示完整菜单
-            <Menu
-              mode="inline"
-              selectedKeys={getSelectedKeys()}
-              items={menuItems.map(item => ({
-                key: item.key,
-                icon: getMenuIcon(item.icon),
-                label: item.label
-              }))}
-              onClick={handleMenuClick}
+            <Text strong 
               style={{
-                borderRight: 0,
-                background: 'transparent'
+                flex: '1 1 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                fontSize: '20px',
+                fontWeight: 600, 
+                fontVariationSettings: "'wght' 600" 
               }}
-              theme={isDarkMode ? 'dark' : 'light'}
-            />
-          )}
-        </div>
-        
-        {/* 底部功能区 */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '100%',
-            background: 'transparent',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '7px',
-            padding: '16px 0',
-            zIndex: 10,
-            transform: 'translateZ(0)', // 启用硬件加速
-            willChange: 'transform'      // 优化动画性能
-          }}
-        >
-          {/* 通知中心 */}
-          <Button
-            type="text"
-            icon={<BellOutlined />}
-            onClick={() => setNotificationVisible(true)}
-            className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
-            style={{
-              height: '35px',
-              width: collapsed ? 'auto' : 'calc(100% - 40px)',
-              padding: collapsed ? '0' : '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              border: 'none',
-              boxShadow: 'none',
-              transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
-              marginLeft: collapsed ? 0 : 20,
-              marginRight: collapsed ? 0 : 20,
-              fontWeight: unreadCount > 0 ? 600 : 'normal',
-              transform: 'translateZ(0)', // 硬件加速
-              backfaceVisibility: 'hidden' // 减少重绘
-            }}
-            onMouseEnter={(e) => {
-              if (unreadCount === 0) {
+            >
+              RoomX
+            </Text>
+            <div style={{ flex: '0 0 100px' }} >
+            <Space>
+            {/* 通知中心 */}
+            <Button
+              type="text"
+              icon={<BellOutlined />}
+              onClick={() => setNotificationVisible(true)}
+              className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
+              style={{
+                height: '35px',
+                width: 'auto',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                border: 'none',
+                boxShadow: 'none',
+                transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
+                marginLeft: 0,
+                marginRight: 0,
+                fontWeight: unreadCount > 0 ? 600 : 'normal',
+                transform: 'translateZ(0)', // 硬件加速
+                backfaceVisibility: 'hidden' // 减少重绘
+              }}
+              onMouseEnter={(e) => {
+                if (unreadCount === 0) {
+                  e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (unreadCount === 0) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }
+              }}
+            >
+            { unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6 }}>{unreadCount}</span> : null}
+            </Button>
+            {/* 主题切换 */}
+            <Button
+              type="text"
+              icon={<BulbOutlined />}
+              onClick={toggleTheme}
+              style={{
+                height: '35px',
+                width: 'auto',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                border: 'none',
+                boxShadow: 'none',
+                borderRadius: '6px',
+                transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
+                marginLeft: 0 ,
+                marginRight: 0 ,
+                transform: 'translateZ(0)', // 硬件加速
+                backfaceVisibility: 'hidden' // 减少重绘
+              }}
+              onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = token.colorBgTextHover;
                 e.currentTarget.style.transform = 'translateZ(0)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (unreadCount === 0) {
+              }}
+              onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
                 e.currentTarget.style.transform = 'translateZ(0)';
-              }
-            }}
-          >
-            {collapsed ? (
-              unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6 }}>{unreadCount}</span> : null
-            ) : (
-              <span style={{ marginLeft: 8 }}>
-                {t('layout.notifications','通知')}{unreadCount > 0 ? `(${unreadCount})` : ''}
-              </span>
-            )}
-          </Button>
-          {/* 主题切换 */}
-          <Button
-            type="text"
-            icon={<BulbOutlined />}
-            onClick={toggleTheme}
-            style={{
-              height: '35px',
-              width: collapsed ? 'auto' : 'calc(100% - 40px)',
-              padding: collapsed ? '0' : '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              border: 'none',
-              boxShadow: 'none',
-              borderRadius: '6px',
-              transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
-              marginLeft: collapsed ? 0 : 20,
-              marginRight: collapsed ? 0 : 20,
-              transform: 'translateZ(0)', // 硬件加速
-              backfaceVisibility: 'hidden' // 减少重绘
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = token.colorBgTextHover;
-              e.currentTarget.style.transform = 'translateZ(0)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.transform = 'translateZ(0)';
-            }}
-          >
-            {!collapsed && (
-              <span style={{ marginLeft: 8 }}>
-                {isDarkMode ? t('layout.themeLight') : t('layout.themeDark')}
-              </span>
-            )}
-          </Button>
-          {/* 用户信息 */}
-          <Dropdown
-            menu={{ items: userMenuItems }}
-            placement="topRight"
-            arrow
-          >
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: collapsed ? 0 : '8px',
-              padding: '8px',
-              cursor: 'pointer',
-              borderRadius: '6px',
-              transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
-              width: collapsed ? 'auto' : 'calc(100% - 32px)',
-              marginLeft: collapsed ? 0 : 16,
-              marginRight: collapsed ? 0 : 16,
-              transform: 'translateZ(0)', // 硬件加速
-              backfaceVisibility: 'hidden' // 减少重绘
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = token.colorBgTextHover;
-              e.currentTarget.style.transform = 'translateZ(0)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.transform = 'translateZ(0)';
-            }}
+              }}
+            >   
+            </Button>
+            {/* 用户信息 */}
+            <Dropdown
+              menu={{ items: userMenuItems, className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu' }}
+              overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
+              placement="bottomLeft"
             >
-              <Avatar 
-                size={32}
-                style={{ 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0,
+                padding: '4px',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                background: 'transparent',
+                transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
+                width: 'auto',
+                marginLeft: 0,
+                marginRight: 0 ,
+                transform: 'translateZ(0)', // 硬件加速
+                backfaceVisibility: 'hidden' // 减少重绘
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }}
+              >
+                <Avatar 
+                  size={32}
+                  style={{ 
                   backgroundColor: getRoleColor(user.role),
                   flexShrink: 0,
                   color: '#ffffff'
-                }}
-              >
+                  }}
+                >
                 {getUserAvatarChar(user)}
-              </Avatar>
-              {!collapsed && (
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ 
-                    fontSize: '14px', 
-                    fontWeight: 500,
-                    color: token.colorText,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {getUserDisplayName(user)}
-                  </div>
-                  <div style={{ 
-                    fontSize: '12px', 
-                    color: token.colorTextSecondary,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {getRoleDisplayName(user.role)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Dropdown>
-        </div>
-      </Sider>
+                </Avatar>
+              </div>
+            </Dropdown>
+            </Space >
+          </div>
+      </Header>
+      
+      
       
       <Layout style={{ 
         background: 'var(--background-color)',
-        marginLeft: collapsed ? '80px' : '200px',
         transition: 'margin-left 0.15s ease', // 更快的过渡
         transform: 'translateZ(0)',            // 硬件加速
         willChange: 'margin-left'              // 优化margin变化
       }}>
         <Content style={{ 
-          margin: '16px',
-          padding: '24px',
+          marginTop: '64px',
           background: token.colorBgContainer,
           borderRadius: token.borderRadius
         }}>
-          <SidebarProvider collapsed={collapsed}>
-            {children}
-          </SidebarProvider>
+          {children}
         </Content>
       </Layout>
       

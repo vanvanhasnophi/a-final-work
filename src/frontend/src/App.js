@@ -1,4 +1,4 @@
-import React, { createContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { ConfigProvider, message, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import AppRouter from './router';
@@ -7,6 +7,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import useRoutePreload from './hooks/useRoutePreload';
 import './App.css';
+import '@ant-design/v5-patch-for-react-19';
 
 // 配置全局message
 message.config({
@@ -21,6 +22,8 @@ message.config({
 
 // 新增：创建全局MessageContext
 export const MessageContext = createContext(null);
+// 新增：全局模糊设置 context
+export const BlurContext = createContext(false);
 
 // 内部组件，用于应用主题
 function AppContent() {
@@ -29,6 +32,32 @@ function AppContent() {
   
   // 启用路由预加载
   useRoutePreload();
+  // 全局模糊设置
+  const [enableMoreBlur, setEnableMoreBlur] = useState(() => {
+  try {
+    return localStorage.getItem('enableMoreBlur') === '1';
+  } catch { return false; }
+  });
+  // 页面刷新时同步 localStorage
+  useEffect(() => {
+    const val = localStorage.getItem('enableMoreBlur') === '1';
+    setEnableMoreBlur(val);
+  }, []);
+  // 监听自定义事件和 storage 事件
+  useEffect(() => {
+  const handler = (e) => setEnableMoreBlur(e.detail);
+  const storageHandler = (e) => {
+    if (e.key === 'enableMoreBlur') {
+      setEnableMoreBlur(e.newValue === '1');
+    }
+  };
+  window.addEventListener('blur-setting-changed', handler);
+  window.addEventListener('storage', storageHandler);
+  return () => {
+    window.removeEventListener('blur-setting-changed', handler);
+    window.removeEventListener('storage', storageHandler);
+  };
+}, []);
   
   const themeConfig = {
     token: {
@@ -54,12 +83,14 @@ function AppContent() {
       locale={zhCN}
       theme={themeConfig}
     >
-      <MessageContext.Provider value={messageApi}>
-        {contextHolder}
-        <div className="App">
-          <AppRouter />
-        </div>
-      </MessageContext.Provider>
+      <BlurContext.Provider value={enableMoreBlur}>
+        <MessageContext.Provider value={messageApi}>
+          {contextHolder}
+          <div className="App">
+            <AppRouter />
+          </div>
+        </MessageContext.Provider>
+      </BlurContext.Provider>
     </ConfigProvider>
   );
 }

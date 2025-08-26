@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Input, Button, Avatar, Row, Col, Divider, List, Tag, Space, message, Select, Modal } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
+import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { UserOutlined, CloseOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
-import { userAPI } from '../api/user';
-import { getRoleDisplayName } from '../utils/roleMapping';
-import { getPermissionDisplayName } from '../utils/permissionMapping';
-import { useAuth } from '../contexts/AuthContext';
-import RecentActivities from '../components/RecentActivities';
-import { useActivities } from '../hooks/useActivities';
-import ActivityGenerator from '../utils/activityGenerator';
-import { useI18n } from '../contexts/I18nContext';
-import ResponsiveButton  from '../components/ResponsiveButton';
+import { userAPI } from '../../api/user';
+import { getRoleDisplayName } from '../../utils/roleMapping';
+import { getPermissionDisplayName } from '../../utils/permissionMapping';
+import { useAuth } from '../../contexts/AuthContext';
+import RecentActivities from '../../components/RecentActivities';
+import { useActivities } from '../../hooks/useActivities';
+import ActivityGenerator from '../../utils/activityGenerator';
+import { useI18n } from '../../contexts/I18nContext';
+import ResponsiveButton  from '../../components/ResponsiveButton';
 
 const { Option } = Select;
 
