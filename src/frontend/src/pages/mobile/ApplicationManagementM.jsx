@@ -128,7 +128,7 @@ function ApplicationManagementContent() {
       }
     );
     return result;
-  }, [executeApplications, t, searchParams, messageApi]);
+  }, [executeApplications, searchParams, messageApi]);
 
   // 初始化加载
   useEffect(() => {
@@ -801,7 +801,7 @@ function ApplicationManagementContent() {
                   overflowY: 'hidden',
                   height: '100%'
                 }}>
-                  <style>{`
+                  <style jsx>{`
                     div::-webkit-scrollbar {
                       height: 8px;
                       background: transparent;

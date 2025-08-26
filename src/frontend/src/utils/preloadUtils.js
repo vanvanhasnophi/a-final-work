@@ -115,7 +115,7 @@ export const preloadStrategies = {
       requestIdleCallback(() => {
         preloadComponents([
           { importFunc: () => import('../pages/NotFound'), key: 'NotFound' },
-          { importFunc: () => import('../components/Layout'), key: 'Layout' },
+          { importFunc: () => import('../components/layout/Layout'), key: 'Layout' },
         ]);
       });
     }
@@ -151,9 +151,4 @@ export const preloadStatus = {
   },
 };
 
-export default {
-  preloadComponent,
-  preloadComponents,
-  preloadStrategies,
-  preloadStatus,
-};
+

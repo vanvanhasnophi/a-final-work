@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Typography, theme, Button, Dropdown } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Typography, Button, theme } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -7,32 +7,33 @@ import {
   TeamOutlined,
   HomeOutlined,
   FileTextOutlined,
-  FormOutlined,
-  BulbOutlined,
-  SettingOutlined,
   LogoutOutlined,
+  SettingOutlined,
+  BulbOutlined,
+  CalendarOutlined,
+  FormOutlined,
   MenuOutlined,
-  CalendarOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
-import { getRoleColor } from '../utils/permissionUtils';
-import { getRoleDisplayName } from '../utils/roleMapping';
+import { useAuth } from '../../contexts/AuthContext';
+import { getRoleColor } from '../../utils/permissionUtils';
+import { getRoleDisplayName } from '../../utils/roleMapping';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
-import { useI18n } from '../contexts/I18nContext';
-import NotificationCenter from './NotificationCenter';
-import NotificationBanner from './NotificationBanner';
-import FeedbackButton from './FeedbackButton';
-import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
-import { notificationAPI } from '../api/notification';
-import { getUserDisplayName, getUserAvatarChar } from '../utils/userDisplay';
-import { SidebarProvider } from './ResponsiveButton';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useI18n } from '../../contexts/I18nContext';
+import NotificationCenter from '../NotificationCenter';
+import NotificationBanner from '../NotificationBanner';
+import FeedbackButton from '../FeedbackButton';
+import { notificationEvents, NOTIFICATION_EVENTS } from '../../utils/notificationEvents';
+import { notificationAPI } from '../../api/notification';
+import { getUserDisplayName, getUserAvatarChar } from '../../utils/userDisplay';
+import { SidebarProvider } from '../ResponsiveButton';
+// import { getCsrfStatus, probeCsrf } from '../../security/csrf';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
 
-const RoleBasedLayout = ({ children }) => {
-  const { user, clearAuth } = useAuth();
+export default function AppLayoutMobile({ children }) {
+  const { user, clearAuth, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -44,6 +45,21 @@ const RoleBasedLayout = ({ children }) => {
   const [bannerNotification, setBannerNotification] = useState(null);
   const [lastBannerNotificationId, setLastBannerNotificationId] = useState(null);
   const [lastBannerTime, setLastBannerTime] = useState(0);
+  /*
+  const [csrfInfo, setCsrfInfo] = useState({ enabled: true, tokenPresent: false });
+  
+
+  useEffect(() => {
+    // 初次挂载探测一次 CSRF 状态
+    (async () => {
+      try { await probeCsrf(); setCsrfInfo(getCsrfStatus()); } catch (_) {}
+    })();
+    const interval = setInterval(() => {
+      setCsrfInfo(getCsrfStatus());
+    }, 30000); // 30s 刷新一次展示状态
+    return () => clearInterval(interval);
+  }, []);
+  */
   
   // 响应式侧栏状态
   const [isAutoCollapsed, setIsAutoCollapsed] = useState(false);
@@ -97,20 +113,23 @@ const RoleBasedLayout = ({ children }) => {
     
     return [...baseMenu, ...roleSpecificMenu];
   };
-  
-  // 响应式阈值 - 根据菜单项数动态调整
-  const WIDTH_COLLAPSE_THRESHOLD_BASE = 800; // 小于此宽度自动折叠
-  const WIDTH_EXPAND_THRESHOLD_BASE = 820;   // 大于此宽度自动展开
-  
+
+
+  const menuItems = getMenuItems(user.role);
   // 获取菜单项数量用于计算阈值
   const getMenuItemCount = (userRole) => {
     return getMenuItems(userRole).length;
   };
-  
+
+  // 响应式阈值 - 根据菜单项数动态调整
+  const WIDTH_COLLAPSE_THRESHOLD_BASE = 800; // 小于此宽度自动折叠
+  const WIDTH_EXPAND_THRESHOLD_BASE = 820;   // 大于此宽度自动展开
   const menuItemCount = user ? getMenuItemCount(user.role) : 4;
   const HEIGHT_COLLAPSE_THRESHOLD_BASE = 220 + menuItemCount  * 40;
   const HEIGHT_EXPAND_THRESHOLD_BASE = HEIGHT_COLLAPSE_THRESHOLD_BASE + 30;
-
+  
+  
+  
   // 响应式侧栏处理
   useEffect(() => {
     let resizeTimer;
@@ -213,7 +232,49 @@ const RoleBasedLayout = ({ children }) => {
     // 手动操作时重置自动折叠状态
     setIsAutoCollapsed(false);
   };
+
   
+
+  // 处理菜单点击
+  const handleMenuClick = ({ key }) => {
+    navigate('/'+key);
+  };
+
+  const handleLogout = () => {
+        try {
+          localStorage.removeItem('localNotifications');
+        } catch(e) {}
+        clearAuth();
+        // 额外可清理未读计数
+        setUnreadCount(0);
+        logout();
+        navigate('/login');
+  };
+
+  const userMenuItems = [
+    {
+      key: 'profile',
+      icon: <UserOutlined />,
+      label: t('layout.userMenu.profile'),
+      onClick: () => navigate('/profile'),
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: t('layout.userMenu.settings'),
+      onClick: () => navigate('/settings'),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: t('layout.userMenu.logout'),
+      onClick: handleLogout,
+    },
+  ];
+
   // 温柔的事件驱动通知系统
   useEffect(() => {
     // 监听新通知事件
@@ -368,7 +429,7 @@ const RoleBasedLayout = ({ children }) => {
       unsubscribeUnreadChanged();
       clearInterval(gentleTimer);
     };
-  }, [bannerNotification]);
+  }, [bannerNotification, lastBannerNotificationId, lastBannerTime, unreadCount]);
 
   // 登录跳转后若存在自动打开通知中心标记，则打开后清除
   useEffect(() => {
@@ -384,75 +445,9 @@ const RoleBasedLayout = ({ children }) => {
     return <div>{t('layout.pleaseLogin')}</div>;
   }
 
-  // 用户菜单项
-  const userMenuItems = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: t('layout.userMenu.profile'),
-      onClick: () => navigate('/profile')
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: t('layout.userMenu.settings'),
-      onClick: () => navigate('/settings')
-    },
-    {
-      type: 'divider'
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: t('layout.userMenu.logout'),
-      onClick: () => {
-        try {
-          localStorage.removeItem('localNotifications');
-        } catch(e) {}
-        clearAuth();
-        // 额外可清理未读计数
-        setUnreadCount(0);
-        navigate('/login');
-      }
-    }
-  ];
 
-  const menuItems = getMenuItems(user.role);
   
-  // 处理菜单点击
-  const handleMenuClick = ({ key }) => {
-    switch (key) {
-      case 'dashboard':
-        navigate('/dashboard');
-        break;
-      case 'profile':
-        navigate('/profile');
-        break;
-      case 'notifications':
-        navigate('/notifications');
-        break;
-      case 'user-management':
-        navigate('/user-management');
-        break;
-      case 'rooms':
-        navigate('/rooms');
-        break;
-      case 'application-management':
-        navigate('/application-management');
-        break;
-      case 'my-applications':
-        navigate('/my-applications');
-        break;
-      case 'duty-schedule':
-        navigate('/duty-schedule');
-        break;
-      case 'user-list':
-        navigate('/user-list');
-        break;
-      default:
-        break;
-    }
-  };
+  
 
   // 获取菜单图标
   const getMenuIcon = (iconName) => {
@@ -483,18 +478,24 @@ const RoleBasedLayout = ({ children }) => {
   // 获取当前选中的菜单项
   const getSelectedKeys = () => {
     const pathname = location.pathname;
-    const key = pathname.substring(1); // 移除开头的 '/'
-    return [key];
+    const match = menuItems.find(item => pathname.startsWith('/' + item.key));
+    return match ? [match.key] : [];
   };
 
+  
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ 
+      minHeight: '100vh',
+      background: 'var(--background-color)',
+    }}>
       <Sider 
         trigger={null} 
         collapsible 
         collapsed={collapsed}
+        onCollapse={setCollapsed}
         style={{
-          background: token.colorBgContainer,
+          boxShadow: 'var(--shadow)',
+          background: 'var(--component-bg)',
           borderRight: `1px solid ${token.colorBorder}`,
           display: 'flex',
           flexDirection: 'column',
@@ -502,11 +503,13 @@ const RoleBasedLayout = ({ children }) => {
           position: 'fixed',
           left: 0,
           top: 0,
+          bottom: 0,
           zIndex: 1000,
           transform: 'translateZ(0)', // 硬件加速
           willChange: 'width'          // 优化宽度变化性能
         }}
       >
+        
         <div 
           style={{ 
             padding: '16px', 
@@ -568,6 +571,7 @@ const RoleBasedLayout = ({ children }) => {
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
+                theme={isDarkMode ? 'dark' : 'light'}
                 >
                   <MenuOutlined 
                     style={{ 
@@ -579,13 +583,15 @@ const RoleBasedLayout = ({ children }) => {
                       alignItems: 'center',
                       justifyContent: 'center'
                     }} 
+                    theme={isDarkMode ? 'dark' : 'light'}
                   />
                   {!collapsed && (
                     <span style={{ 
                       opacity: collapsed ? 0 : 1,
                       transition: 'opacity 0.2s',
                       whiteSpace: 'nowrap'
-                    }}>
+                    }}
+                    theme={isDarkMode ? 'dark' : 'light'}>
                       {t('layout.menu.navigation')}
                     </span>
                   )}
@@ -607,6 +613,7 @@ const RoleBasedLayout = ({ children }) => {
                 borderRight: 0,
                 background: 'transparent'
               }}
+              theme={isDarkMode ? 'dark' : 'light'}
             />
           )}
         </div>
@@ -776,6 +783,7 @@ const RoleBasedLayout = ({ children }) => {
       </Sider>
       
       <Layout style={{ 
+        background: 'var(--background-color)',
         marginLeft: collapsed ? '80px' : '200px',
         transition: 'margin-left 0.15s ease', // 更快的过渡
         transform: 'translateZ(0)',            // 硬件加速
@@ -883,10 +891,10 @@ const RoleBasedLayout = ({ children }) => {
         }}
       />
       
+        
+        
       {/* 悬浮反馈按钮 */}
       <FeedbackButton />
     </Layout>
   );
-};
-
-export default RoleBasedLayout; 
+} 

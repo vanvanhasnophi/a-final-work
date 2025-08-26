@@ -60,7 +60,7 @@ function MyApplicationsContent() {
   const [currentApplication, setCurrentApplication] = useState(null);
   
   const { loading: applicationsLoading, error: applicationsError, executeWithRetry: executeApplications } = useApiWithRetry();
-  const { /*loading: roomsLoading,*/ error: roomsError, executeWithRetry: executeRooms } = useApiWithRetry();
+  const { loading: roomsLoading, error: roomsError, executeWithRetry: executeRooms } = useApiWithRetry();
   
   // 页面刷新Hook
   const handlePageRefresh = usePageRefresh(() => {
@@ -102,7 +102,7 @@ function MyApplicationsContent() {
       }
     );
     return result;
-  }, [executeApplications,searchParams,t, user?.id]);
+  }, [executeApplications, user?.id]);
 
   // 获取教室列表（用于下拉选择）
   const fetchRooms = useCallback(async () => {
@@ -120,7 +120,7 @@ function MyApplicationsContent() {
       }
     );
     return result;
-  }, [executeRooms,t]);
+  }, [executeRooms]);
 
   // 初始化加载
   useEffect(() => {
@@ -128,7 +128,7 @@ function MyApplicationsContent() {
       fetchApplications();
       fetchRooms();
     }
-  }, [user?.id, fetchApplications, fetchRooms]); // 依赖用户ID
+  }, [user?.id]); // 依赖用户ID
 
   // 处理表格分页变化
   const handleTableChange = (pagination, filters, sorter) => {
@@ -694,7 +694,7 @@ function MyApplicationsContent() {
                 overflowY: 'hidden',
                 height: '100%'
               }}>
-                <style>{`
+                <style jsx>{`
                   div::-webkit-scrollbar {
                     height: 8px;
                     background: transparent;

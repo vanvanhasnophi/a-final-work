@@ -758,7 +758,7 @@ export default function RoomList() {
                 overflowY: 'hidden',
                 height: '100%'
               }}>
-                <style>{`
+                <style jsx>{`
                   div::-webkit-scrollbar {
                     height: 8px;
                     background: transparent;

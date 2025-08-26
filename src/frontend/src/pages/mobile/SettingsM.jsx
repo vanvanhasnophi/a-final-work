@@ -4,38 +4,6 @@ import { useI18n } from '../contexts/I18nContext';
 
 const { Title, Paragraph, Text } = Typography;
 const FONT_PREF_KEY = 'fontPreference';
-// 动态插入 InterVariable 字体 preload
-function ensureInterPreload(fontPref) {
-  const id = 'intervariable-preload';
-  let link = document.getElementById(id);
-  if (fontPref === 'inter') {
-    // 已设置默认字体，确保 preload 存在
-    if (!link) {
-      link = document.createElement('link');
-      link.id = id;
-      link.rel = 'preload';
-      link.href = process.env.PUBLIC_URL + '/fonts/InterVariable.woff2';
-      link.as = 'font';
-      link.type = 'font/woff2';
-      link.crossOrigin = 'anonymous';
-      document.head.appendChild(link);
-    }
-  } else {
-    // 只有在设置页时才插入 preload
-    if (!link) {
-      link = document.createElement('link');
-      link.id = id;
-      link.rel = 'preload';
-      link.href = process.env.PUBLIC_URL + '/fonts/InterVariable.woff2';
-      link.as = 'font';
-      link.type = 'font/woff2';
-      link.crossOrigin = 'anonymous';
-      document.head.appendChild(link);
-    }
-  }
-}
-
-
 
 export default function Settings() {
   const { t, lang, setLang } = useI18n();
@@ -91,15 +59,6 @@ export default function Settings() {
 
   useEffect(() => {
     applyPref(fontPref);
-    // 进入设置页时动态插入 preload，若已设置默认字体则始终 preload
-    ensureInterPreload(fontPref);
-    // 离开设置页时，若未设置默认字体则移除 preload
-    return () => {
-      if (fontPref !== 'inter') {
-        const link = document.getElementById('intervariable-preload');
-        if (link) link.remove();
-      }
-    };
   }, [fontPref]);
 
   return (

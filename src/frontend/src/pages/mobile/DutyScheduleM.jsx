@@ -52,10 +52,10 @@ export default function DutySchedule() {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [modal, contextHolderModal] = Modal.useModal();
-  const [/*isFilterCollapsed,*/ setIsFilterCollapsed] = useState(false);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [calendarHeight, setCalendarHeight] = useState(400);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  // const [themeVersion, setThemeVersion] = useState(0); // 用于强制重新渲染
+  const [themeVersion, setThemeVersion] = useState(0); // 用于强制重新渲染
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // 监听窗口大小变化

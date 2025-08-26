@@ -128,7 +128,7 @@ export default function ApplicationList() {
       }
     );
     return result;
-  }, [executeApplications, searchParams, user?.id]); // 移除showOnlyMyApplications依赖
+  }, [executeApplications, showOnlyMyApplications, t ,  searchParams, user?.id]); // 移除showOnlyMyApplications依赖
 
   // 获取教室列表（用于下拉选择）
   const fetchRooms = useCallback(async () => {
@@ -146,7 +146,7 @@ export default function ApplicationList() {
       }
     );
     return result;
-  }, [executeRooms]);
+  }, [executeRooms, t]);
 
   // 初始化加载
   useEffect(() => {
@@ -787,7 +787,7 @@ export default function ApplicationList() {
                 overflowY: 'hidden',
                 height: '100%'
               }}>
-                <style jsx>{`
+                <style>{`
                   div::-webkit-scrollbar {
                     height: 8px;
                     background: transparent;

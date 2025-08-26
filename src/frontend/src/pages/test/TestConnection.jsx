@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Space, Alert, Divider, Typography, message } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { testConnection, testLogin, testRoomList, testApplicationList } from '../utils/testConnection';
+import { testConnection, testLogin, testRoomList, testApplicationList } from '../../utils/testConnection';
 
 const { Title, Text } = Typography;
 

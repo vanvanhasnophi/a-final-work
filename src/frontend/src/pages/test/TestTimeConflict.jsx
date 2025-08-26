@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, message, Space, Tag } from 'antd';
-import { applicationAPI } from '../api/application';
-import { formatTimeRange } from '../utils/dateFormat';
+import { applicationAPI } from '../../api/application';
+import { formatTimeRange } from '../../utils/dateFormat';
 
 export default function TestTimeConflict() {
   const [roomId, setRoomId] = useState(1); // 测试教室ID

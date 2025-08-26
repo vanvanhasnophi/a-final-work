@@ -7,7 +7,7 @@ import {
   FileTextOutlined,
   DashboardOutlined 
 } from '@ant-design/icons';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 

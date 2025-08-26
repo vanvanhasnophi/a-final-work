@@ -1,5 +1,5 @@
 // 权限管理工具类
-import { getRoleDisplayName } from './roleMapping';
+// import { getRoleDisplayName } from './roleMapping';
 
 // 角色枚举
 export const UserRole = {
@@ -237,6 +237,7 @@ export function getRoleMenuConfig(userRole) {
         { key: 'rooms', label: '教室列表', icon: 'HomeOutlined' }
       );
       break;
+    default: break;
   }
   
   return [...baseMenu, ...roleSpecificMenu];

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Card, Row, Col, Typography, message } from 'antd';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ErrorBoundary from '../components/ErrorBoundary';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 const { Title, Text } = Typography;
 

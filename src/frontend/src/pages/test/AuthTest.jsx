@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Space, Alert, Typography, Divider } from 'antd';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Button, Typography, Space } from 'antd';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { Title, Text } = Typography;
 

@@ -1,54 +1,35 @@
-import { request } from '../utils/request';
+import  api  from './index';
 
 export const dutyAPI = {
   // 创建值班安排
   createDutySchedule: (data) => {
-    return request({
-      url: '/duty',
-      method: 'POST',
-      data
-    });
+    return api.post('/duty', { data });
   },
 
   // 更新值班安排
   updateDutySchedule: (id, data) => {
-    return request({
-      url: `/duty/${id}`,
-      method: 'PUT',
-      data
-    });
+    return api.put(`/duty/${id}`, { data });
   },
 
   // 删除值班安排
   deleteDutySchedule: (id) => {
-    return request({
-      url: `/duty/${id}`,
-      method: 'DELETE'
-    });
+    return api.delete(`/duty/${id}`);
   },
 
   // 获取值班安排详情
   getDutySchedule: (id) => {
-    return request({
-      url: `/duty/${id}`,
-      method: 'GET'
-    });
+    return api.get(`/duty/${id}`);
   },
 
   // 分页查询值班安排
   getDutySchedules: (params) => {
-    return request({
-      url: '/duty/page',
-      method: 'GET',
-      params
-    });
+    return api.get('/duty/page', { params });
+     
   },
 
   // 按日期范围查询值班安排
   getDutySchedulesByDateRange: (startDate, endDate) => {
-    return request({
-      url: '/duty/range',
-      method: 'GET',
+    return api.get('/duty/range', {
       params: {
         startDate,
         endDate
@@ -58,17 +39,10 @@ export const dutyAPI = {
 
   // 获取今日值班人
   getTodayDuty: () => {
-    return request({
-      url: '/duty/today',
-      method: 'GET'
-    });
+    return api.get('/duty/today');
   },
-
   // 获取可值班人员列表
   getAvailableDutyUsers: () => {
-    return request({
-      url: '/duty/available-users',
-      method: 'GET'
-    });
+    return api.get('/duty/available-users');
   }
 };

@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Button, Card, Space, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
-import { useApiWithRetry } from '../hooks/useApiWithRetry';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function TestLoading() {
   const [messageApi, contextHolder] = message.useMessage();

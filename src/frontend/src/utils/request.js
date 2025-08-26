@@ -5,7 +5,7 @@ import axios from 'axios';
 const getApiBaseUrl = () => {
   let url = process.env.REACT_APP_API_BASE_URL || (window && window.location && window.location.origin) || '';
   url = url.replace(/\/?api\/?$/, '');
-  return url;
+  return url+'/api';
 };
 
 const instance = axios.create({

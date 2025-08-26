@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Space, Tag, Typography } from 'antd';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { Title, Paragraph } = Typography;
 

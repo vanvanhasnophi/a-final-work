@@ -27,7 +27,7 @@ const ERROR_MESSAGE_MAP = {
   'Record not found': '记录不存在',
   'Application not found': '申请记录不存在',
   'Room not found': '教室不存在',
-  'User not found': '用户不存在',
+  //'User not found': '用户不存在',
   'Operation failed': '操作失败',
   'Save failed': '保存失败',
   'Update failed': '更新失败',
@@ -225,9 +225,11 @@ export function translateMessages(messages) {
   }));
 }
 
+/*
 export default {
   translateMessage,
   translateErrorResponse,
   showTranslatedMessage,
   translateMessages
 }; 
+*/

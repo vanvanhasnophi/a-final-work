@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
+import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
-import { register, deleteUser as authDeleteUser, /*verifyPassword,*/ dangerousOperationVerify } from '../api/auth';
+import { register, deleteUser as authDeleteUser, verifyPassword, dangerousOperationVerify } from '../api/auth';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
@@ -12,7 +12,7 @@ import { getPermissionDisplayName } from '../utils/permissionMapping';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { formatDateTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
-import { canCreateUser, canDeleteUser, canViewUsers/*, UserRole*/ } from '../utils/permissionUtils';
+import { canCreateUser, canDeleteUser, canViewUsers, UserRole } from '../utils/permissionUtils';
 import ResponsiveButton from '../components/ResponsiveButton';
 import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
 import FilterDropdownButton from '../components/FilterDropdownButton';
@@ -127,12 +127,12 @@ export default function UserList() {
       }
     );
     return result;
-  }, [executeUsers, searchParams, messageApi, clearAuth, t]);
+  }, [executeUsers, searchParams, messageApi, clearAuth]); // 修复依赖
 
   // 初始化加载
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, [fetchUsers]); // 修复依赖
 
   // 处理表格分页变化
   const handleTableChange = (pagination, filters, sorter) => {
@@ -839,7 +839,7 @@ export default function UserList() {
                 overflowY: 'hidden',
                 height: '100%'
               }}>
-                <style>{`
+                <style jsx>{`
                   div::-webkit-scrollbar {
                     height: 8px;
                     background: transparent;

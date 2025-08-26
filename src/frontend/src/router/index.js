@@ -24,7 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 
 // 解构懒加载的布局组件
-const { RoleBasedLayout } = LazyLayoutComponents;
+const { AppLayout } = LazyLayoutComponents;
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -53,64 +53,64 @@ function AppRoutes() {
       {/* 需要认证的路由 - 使用基于角色的布局 */}
       <Route path="/" element={
         <ProtectedRoute>
-          <RoleBasedLayout><LazyDashboard /></RoleBasedLayout>
+          <AppLayout><LazyDashboard /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <RoleBasedLayout><LazyDashboard /></RoleBasedLayout>
+          <AppLayout><LazyDashboard /></AppLayout>
         </ProtectedRoute>
       } />
 
       <Route path="/rooms" element={
         <RoleBasedRoute pageName="rooms">
-          <RoleBasedLayout><LazyRoomList /></RoleBasedLayout>
+          <AppLayout><LazyRoomList /></AppLayout>
         </RoleBasedRoute>
       } />
       <Route path="/application-management" element={
         <RoleBasedRoute pageName="application-management">
-          <RoleBasedLayout>
+          <AppLayout>
             <LazyApplicationManagement />
-          </RoleBasedLayout>
+          </AppLayout>
         </RoleBasedRoute>
       } />
       <Route path="/my-applications" element={
         <ProtectedRoute>
-          <RoleBasedLayout><LazyMyApplications /></RoleBasedLayout>
+          <AppLayout><LazyMyApplications /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/profile/*" element={
         <ProtectedRoute>
-          <RoleBasedLayout><LazyUserProfile /></RoleBasedLayout>
+          <AppLayout><LazyUserProfile /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/profile" element={
         <ProtectedRoute>
-          <RoleBasedLayout><LazyUserProfile /></RoleBasedLayout>
+          <AppLayout><LazyUserProfile /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/settings" element={
         <ProtectedRoute>
-          <RoleBasedLayout><LazySettings /></RoleBasedLayout>
+          <AppLayout><LazySettings /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/user-management" element={
         <AdminRoute>
-          <RoleBasedLayout><LazyUserList /></RoleBasedLayout>
+          <AppLayout><LazyUserList /></AppLayout>
         </AdminRoute>
       } />
       
 
       <Route path="/users" element={
         <AdminRoute>
-          <RoleBasedLayout><LazyUserList /></RoleBasedLayout>
+          <AppLayout><LazyUserList /></AppLayout>
         </AdminRoute>
       } />
       
       {/* 值班表管理 - 仅 ADMIN 和 APPROVER 可见 */}
       <Route path="/duty-schedule" element={
         <RoleBasedRoute pageName="duty-schedule">
-          <RoleBasedLayout><LazyDutySchedule /></RoleBasedLayout>
+          <AppLayout><LazyDutySchedule /></AppLayout>
         </RoleBasedRoute>
       } />
       

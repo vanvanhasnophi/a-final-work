@@ -87,7 +87,7 @@ export const getActivityTypeIcon = (type) => {
 
 // 生成活动描述
 export const generateActivityDescription = (activity) => {
-  const { type, user, room, application } = activity;
+  const { type, user, room /*,application*/ } = activity;
   
   switch (type) {
     case ActivityType.APPLICATION_CREATED:

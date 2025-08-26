@@ -75,36 +75,33 @@ export const LazyDevPage = createLazyComponent.page(
 // 测试组件（开发环境专用）
 export const LazyTestComponents = {
   TestConcurrency: createLazyComponent.page(
-    () => import('../pages/TestConcurrency'),
+    () => import('../pages/test/TestConcurrency'),
     '并发测试'
   ),
   TestConnection: createLazyComponent.page(
-    () => import('../pages/TestConnection'),
+    () => import('../pages/test/TestConnection'),
     '连接测试'
   ),
   TestRetry: createLazyComponent.page(
-    () => import('../pages/TestRetry'),
+    () => import('../pages/test/TestRetry'),
     '重试测试'
   ),
   AuthTest: createLazyComponent.page(
-    () => import('../pages/AuthTest'),
+    () => import('../pages/test/AuthTest'),
     '认证测试'
   ),
   ThemeTest: createLazyComponent.page(
-    () => import('../pages/ThemeTest'),
+    () => import('../pages/test/ThemeTest'),
     '主题测试'
   ),
 };
 
+
 // 布局组件懒加载
 export const LazyLayoutComponents = {
   AppLayout: createLazyComponent.component(
-    () => import('../components/Layout'),
+    () => import('../components/layout/Layout'),
     '应用布局'
-  ),
-  RoleBasedLayout: createLazyComponent.component(
-    () => import('../components/RoleBasedLayout'),
-    '角色布局'
   ),
 };
 
