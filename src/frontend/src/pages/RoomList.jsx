@@ -829,7 +829,7 @@ export default function RoomList() {
                   loading={loading}
                   scroll={{ 
                     x: 1200, 
-                    y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
+                    y: isFilterCollapsed ? 'calc(100vh - 219px)' : 'calc(100vh - 275px)',
                     scrollToFirstRowOnChange: false
                   }}
                   pagination={false}

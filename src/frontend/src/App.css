@@ -1,3 +1,16 @@
+/* 保证所有模糊弹层和内容区圆角与overflow一致，防止模糊超出 */
+.blur-dropdown-menu.ant-dropdown,
+.blur-dropdown-menu.ant-dropdown > .ant-dropdown-content,
+.blur-dropdown-menu.ant-dropdown .ant-dropdown-menu,
+.blur-dropdown-menu.ant-dropdown .ant-dropdown-menu-root,
+.blur-dropdown-menu.ant-dropdown .ant-slide-up-appear,
+.blur-dropdown-menu.ant-dropdown .ant-slide-up-enter,
+.blur-dropdown-menu.ant-dropdown .ant-slide-up-leave,
+.ant-modal-content{
+  border-radius: var(--border-radius-lg, 12px) !important;
+  overflow: hidden !important;
+}
+
 /* 全局CSS变量 - 浅色模式 */
 :root {
   --primary-color: #660874;
@@ -6,7 +19,9 @@
   --background-color: #F2F2F2;
   --component-bg: #FFFFFF;
   --component-bg-elevated: #FFFFFF;
-  --component-bg-allow-blur: #FFFFFF90;
+  --component-bg-allow-blur: #FFFFFF40;
+  --component-bg-blur-cover: #FFFFFF60;
+  --component-bg-blur-cover-alt: #FFFFFF60;
   --table-header-bg: #F8F9FA;
   --text-color: #000000;
   --text-color-secondary: #666666;
@@ -38,7 +53,9 @@
   --background-color: #161618;
   --component-bg: #2B2D31;
   --component-bg-elevated: #2B2D31;
-  --component-bg-allow-blur: #22232690;
+  --component-bg-allow-blur: #15161820;
+  --component-bg-blur-cover: #2B2D3160;
+  --component-bg-blur-cover-alt: #15161860;
   --table-header-bg: #1F2023;
   --text-color: #FFFFFF;
   --text-color-secondary: #CCCCCC;
@@ -151,7 +168,7 @@ code, pre, pre code {
 
 /* 输入框样式 */
 .ant-input {
-  background-color: var(--component-bg) !important;
+  background-color: var(--component-bg-blur-cover-alt) !important;
   color: var(--text-color) !important;
   border-color: var(--border-color) !important;
   /* 优化过渡动画 - 只对边框和背景应用过渡 */
@@ -1201,6 +1218,10 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   color: #faad14 !important;
 }
 
+.ant-select {
+  background-color: var(--component-bg-blur-cover) !important;
+}
+
 /* 深色模式下的额外优化 */
 [data-theme="dark"] .ant-select {
   color: #FFFFFF !important;
@@ -1214,7 +1235,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
-[data-theme="dark"] .ant-select-dropdown {
+[data-theme="dark"] .ant-select-dropdown:not(.blur-dropdown-menu) {
   background-color: #2B2D31 !important;
   border: 1px solid #3C3F45 !important;
 }
@@ -1222,6 +1243,8 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 [data-theme="dark"] .ant-select-item {
   color: #FFFFFF !important;
 }
+
+
 
 /* 移除强制主题色设置，使用 Ant Design 默认主题 */
 
@@ -1390,26 +1413,8 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 }
 
 
-/* 自定义 Dropdown 菜单尺寸和背景模糊 */
 
-.m-blur-dropdown-menu .ant-dropdown-menu {
-  min-width: 180px;
-  font-size: 16px !important;
-  padding: 4px 4px;
-  border-radius: 12px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: var(--component-bg-allow-blur) !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  transition: background 0.15s, backdrop-filter 0.15s;
-}
 
-/* 动画期间为实心背景，无模糊 */
-.m-blur-dropdown-menu .ant-dropdown-menu .ant-slide-up {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: var(--component-bg) !important ;
-}
 
 .m-blur-dropdown-menu .ant-dropdown-menu-item {
   min-height: 48px;
@@ -1445,19 +1450,47 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   font-size: 18px !important;
 }
 
-.blur-dropdown-menu .ant-dropdown-menu {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+
+
+/* 保证所有带.blur-dropdown-menu的Dropdown及其动画层始终模糊 */
+.blur-dropdown-menu.ant-dropdown,
+.blur-dropdown-menu.ant-dropdown > .ant-dropdown-content,
+.blur-dropdown-menu.ant-dropdown .ant-dropdown-menu,
+.blur-dropdown-menu.ant-dropdown .ant-dropdown-menu-root,
+.blur-dropdown-menu.ant-dropdown .ant-slide-up-appear,
+.blur-dropdown-menu.ant-dropdown .ant-slide-up-enter,
+.blur-dropdown-menu.ant-dropdown .ant-slide-up-leave,
+.blur-dropdown-menu.ant-select-dropdown,
+.blur-dropdown-menu.ant-select-dropdown > .ant-dropdown-content,
+.blur-dropdown-menu.ant-select-dropdown .ant-dropdown-menu,
+.blur-dropdown-menu.ant-select-dropdown .ant-dropdown-menu-root,
+.blur-dropdown-menu.ant-select-dropdown .ant-slide-up-appear,
+.blur-dropdown-menu.ant-select-dropdown .ant-slide-up-enter,
+.blur-dropdown-menu.ant-select-dropdown .ant-slide-up-leave {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   background: var(--component-bg-allow-blur) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-  transition: background 0.15s, backdrop-filter 0.15s;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12)!important;
+  transition: background 0.15s, backdrop-filter 0.15s !important;
 }
 
-/* 动画期间为实心背景，无模糊 */
-.blur-dropdown-menu .ant-dropdown-menu .ant-slide-up {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: var(--component-bg) !important ;
+
+/* 保证所有带.blur-dropdown-menu的Dropdown及其动画层始终模糊 */
+.m-blur-dropdown-menu.ant-dropdown,
+.m-blur-dropdown-menu.ant-dropdown > .ant-dropdown-content,
+.m-blur-dropdown-menu.ant-dropdown .ant-dropdown-menu,
+.m-blur-dropdown-menu.ant-dropdown .ant-dropdown-menu-root,
+.m-blur-dropdown-menu.ant-dropdown .ant-slide-up-appear,
+.m-blur-dropdown-menu.ant-dropdown .ant-slide-up-enter,
+.m-blur-dropdown-menu.ant-dropdown .ant-slide-up-leave {
+  min-width: 180px;
+  font-size: 16px !important;
+  border-radius: 12px;
+  backdrop-filter: blur(16px)!important;
+  -webkit-backdrop-filter: blur(16px)!important;
+  background: var(--component-bg-allow-blur) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12)!important;
+  transition: background 0.15s, backdrop-filter 0.15s !important;
 }
 
 

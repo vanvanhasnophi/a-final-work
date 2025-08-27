@@ -579,34 +579,36 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
 
 
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   return (
   <Drawer
     title={t('notification.title')}
-      placement="right"
-      width={400}
-      open={visible}
-      onClose={onClose}
-      extra={
-        <Space>
+    placement={isMobile ? 'top' : 'right'}
+    width={isMobile ? '100vw' : 400}
+    
+    open={visible}
+    onClose={onClose}
+    extra={
+      <Space>
+        <Button
+          type="text"
+          size="small"
+          onClick={() => { fetchNotifications(); fetchUnreadCount(); }}
+          loading={loading}
+        >{t('notification.refresh')}</Button>
+        {unreadCount > 0 && (
           <Button
             type="text"
             size="small"
-            onClick={() => { fetchNotifications(); fetchUnreadCount(); }}
-            loading={loading}
-                  >{t('notification.refresh')}</Button>
-          {unreadCount > 0 && (
-            <Button
-              type="text"
-              size="small"
-              icon={<CheckOutlined />}
-              onClick={handleMarkAllAsRead}
-            >
-                      {t('notification.markAllRead')}
-            </Button>
-          )}
-        </Space>
-      }
-    >
+            icon={<CheckOutlined />}
+            onClick={handleMarkAllAsRead}
+          >
+            {t('notification.markAllRead')}
+          </Button>
+        )}
+      </Space>
+    }
+  >
               <div style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }} className="custom-scrollbar">
         {notifications.length > 0 ? (
           <Space direction="vertical" style={{ width: '100%' }} size={12}>

@@ -349,7 +349,11 @@ export default function ApplicationList() {
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' ,
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      paddingLeft: 'env(safe-area-inset-left)',
+      paddingRight: 'env(safe-area-inset-right)',}}>
       <Card 
         className="transparent-card"
         variant="borderless" 

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Dropdown, Button } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
+import { BlurContext } from '../App';
 
 const FilterDropdownButton = ({ 
   children, 
@@ -8,6 +9,7 @@ const FilterDropdownButton = ({
   placement = "bottomRight",
   ...props 
 }) => {
+  const enableMoreBlur = useContext(BlurContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   if (!visible) {
@@ -20,17 +22,20 @@ const FilterDropdownButton = ({
       onOpenChange={setDropdownOpen}
       trigger={['hover']}
       placement={placement}
-      dropdownRender={() => (
+      overlayClassName={enableMoreBlur ? 'blur-dropdown-menu' : ''}
+      popupRender={() => (
         <div
           style={{
-            background: 'var(--component-bg)',
+            background: enableMoreBlur ? 'var(--component-bg-allow-blur)' : 'var(--component-bg)',
             border: '1px solid var(--border-color)',
-            borderRadius: '8px',
+            borderRadius: '12px',
             padding: '12px',
             boxShadow: 'var(--shadow)',
             minWidth: '300px',
             maxWidth: '500px',
-            zIndex: 1050
+            zIndex: 1050,
+            backdropFilter: enableMoreBlur ? 'blur(16px)' : 'none',
+            WebkitBackdropFilter: enableMoreBlur ? 'blur(16px)' : 'none',
           }}
         >
           {children}

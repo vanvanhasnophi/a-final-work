@@ -360,8 +360,6 @@ function MyApplicationsContent() {
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
-        className="transparent-card"
-        variant="borderless" 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{t('myApplications.title', t('applicationManagement.title'))}</span>

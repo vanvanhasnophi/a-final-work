@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { BlurContext } from '../App';
 import { Button, Tag } from 'antd';
-import { BellOutlined, ArrowUpOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { BellOutlined, CloseOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../contexts/I18nContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,6 +14,11 @@ const NotificationBanner = ({
   onCollapseNotificationCenter,
   style = {} 
 }) => {
+  // 桌面端拖拽关闭横幅
+  const [dragging, setDragging] = useState(false);
+  // 拖拽事件处理
+  const handleAnimationEnd = () => setDragging(true);
+
   const { t } = useI18n();
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -22,7 +27,41 @@ const NotificationBanner = ({
   const [isPaused, setIsPaused] = useState(false);
   const enableMoreBlur = useContext(BlurContext);
   // 控制消失动画
+
+  // 判断是否为移动端（需最前面声明，供所有事件处理用）
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
   const [leaving, setLeaving] = useState(false);
+  // 移动端向上拖动消失
+  const [DragY, setDragY] = useState(0);
+  const dragThreshold = 25; // 拖动超过此距离自动关闭
+
+  // 移动端拖拽事件
+  const handleMobileTouchStart = (e) => {
+    if (!isMobile) return;
+    setDragging(true);
+    setDragY(0);
+    if (e.touches && e.touches[0]) {
+      e.target.dataset.startY = e.touches[0].clientY;
+    }
+  };
+  const handleMobileTouchMove = (e) => {
+    if (!dragging || !isMobile) return;
+    let clientY = e.touches[0].clientY;
+    let startY = Number(e.currentTarget.dataset.startY || 0);
+    // 只允许向上拖动
+    const deltaY = Math.min(0, clientY - startY);
+    setDragY(deltaY);
+  };
+  const handleMobileTouchEnd = (e) => {
+    if (!isMobile) return;
+    if (Math.abs(DragY) > dragThreshold) {
+      setLeaving(true);
+      setTimeout(handleClose, 350);
+    }
+    setDragging(false);
+    setDragY(0);
+  };
   useEffect(() => {
     if (!visible) setLeaving(true);
   }, [visible]);
@@ -145,8 +184,6 @@ const NotificationBanner = ({
   if (!notification || !shouldShow) return null;
   if (!visible) return null;
 
-  // 判断是否为移动端
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const handleClose = () => {
     setVisible(false);
@@ -161,9 +198,12 @@ const NotificationBanner = ({
   // 根据通知类型跳转到对应页面
   const handleNotificationClick = async () => {
     if (!notification) return;
-    
+    if (isMobile) {
+      if (onViewNotifications) onViewNotifications();
+      return;
+    }
+    // ...existing code for桌面端跳转...
     console.log(`点击横幅通知: ${notification.id}`);
-    
     // 首先标记通知为已读
     if (onMarkAsRead && notification.id && !notification.isRead) {
       try {
@@ -173,12 +213,10 @@ const NotificationBanner = ({
         console.error('标记横幅通知已读失败:', error);
       }
     }
-    
     const notificationType = notification.type || '';
     const notificationContent = (notification.content || '').toLowerCase();
     const notificationTitle = (notification.title || '').toLowerCase();
     const searchText = (notificationContent + ' ' + notificationTitle).toLowerCase();
-    
     try {
       // 根据通知类型或内容判断跳转页面
       if (notificationType === 'security' || 
@@ -211,12 +249,10 @@ const NotificationBanner = ({
         // 默认跳转到仪表板
         navigate('/dashboard');
       }
-      
       // 折叠通知中心
       if (onCollapseNotificationCenter) {
         onCollapseNotificationCenter();
       }
-      
       // 跳转后关闭通知
       handleClose();
     } catch (error) {
@@ -347,65 +383,92 @@ const NotificationBanner = ({
       <div
         style={{
           position: 'fixed',
-          top: 78,
+          top: 78 + DragY,
           left: 12,
           right: 12,
           zIndex: 998, // header一般999
           borderRadius: 16,
           background: enableMoreBlur ? 'var(--component-bg-allow-blur)' : 'var(--component-bg)',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.18)', // 更重阴影
+          boxShadow: '0 16px 48px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.18)',
           padding: '10px 16px 10px 12px',
           display: 'flex',
           alignItems: 'center',
           minHeight: 48,
           maxWidth: 'calc(100vw - 24px)',
           overflow: 'hidden',
-          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: dragging ? 'none' : 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           backdropFilter: enableMoreBlur ? 'blur(16px)' : 'none',
           WebkitBackdropFilter: enableMoreBlur ? 'blur(16px)' : 'none',
           animation: leaving
-            ? 'slideUpBanner 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-            : 'slideDownBanner 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            ? 'slideUpBannerBlur 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            : 'slideDownBannerBlur 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          opacity: DragY ? Math.max(0.2, 1 + DragY / 80) : 1,
+          touchAction: 'none',
+          cursor: dragging ? 'grabbing' : 'grab',
         }}
-        onClick={handleNotificationClick}
       >
-        <BellOutlined style={{ fontSize: 18, color: '#ff7875', marginRight: 8, flexShrink: 0 }} />
-        <span style={{
-          fontWeight: 600,
-          fontSize: 15,
-          lineHeight: '1.4',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          flex: 1,
-          marginRight: 8
-        }}>{getNotificationContent(notification)}</span>
-        <Button
-          type="text"
-          icon={<ArrowUpOutlined style={{ fontSize: 18 }} />}
-          onClick={e => { e.stopPropagation(); setLeaving(true); setTimeout(handleClose, 350); }}
-          style={{ marginLeft: 4, color: '#999', fontSize: 18 }}
-          aria-label="关闭"
+        {/* 触摸层 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 2,
+            background: 'transparent',
+            borderRadius: 16,
+          }}
+          data-start-y={0}
+          onTouchStart={handleMobileTouchStart}
+          onTouchMove={handleMobileTouchMove}
+          onTouchEnd={handleMobileTouchEnd}
+          onTouchCancel={handleMobileTouchEnd}
+          onClick={handleNotificationClick}
         />
+        <BellOutlined style={{ fontSize: 18, color: '#ff7875', marginRight: 8, flexShrink: 0 }} />
+        <span
+          style={{
+            fontWeight: 600,
+            fontSize: 15,
+            lineHeight: '1.4',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            flex: 1,
+            marginRight: 8
+          }}
+        >
+          {getNotificationTitle(notification)}
+        </span>
+        
         <style>{`
-          @keyframes slideDownBanner {
+          @keyframes slideDownBannerBlur {
             from {
               transform: translateY(-40px);
               opacity: 0;
+              backdrop-filter: blur(0px);
+              -webkit-backdrop-filter: blur(0px);
             }
             to {
               transform: translateY(0);
               opacity: 1;
+              backdrop-filter: blur(16px);
+              -webkit-backdrop-filter: blur(16px);
             }
           }
-          @keyframes slideUpBanner {
+          @keyframes slideUpBannerBlur {
             from {
               transform: translateY(0);
               opacity: 1;
+              backdrop-filter: blur(16px);
+              -webkit-backdrop-filter: blur(16px);
             }
             to {
               transform: translateY(-40px);
               opacity: 0;
+              backdrop-filter: blur(0px);
+              -webkit-backdrop-filter: blur(0px);
             }
           }
         `}</style>
@@ -414,16 +477,19 @@ const NotificationBanner = ({
     <div
       style={{
         position: 'fixed',
-        top: isMobile ? 56 : 8, // 不遮挡header，header高度一般为56px
-        left: isMobile ? 0 : 'auto',
-        right: isMobile ? 0 : 8,
-        width: isMobile ? '100vw' : 'auto',
+        top: 8, // 不遮挡header，header高度一般为56px
+        left: 'auto',
+        right: 8,
+        width: 'auto',
         zIndex: 9999,
-        maxWidth: isMobile ? '100vw' : '380px',
-        minWidth: isMobile ? '0' : '320px',
-        animation: isMobile ? 'slideInFromTop 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        maxWidth: '380px',
+        minWidth:  '320px',
+        animation: leaving
+          ? 'slideOutToRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+          : 'slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         ...style
       }}
+      onAnimationEnd={handleAnimationEnd}
     >
       <div
         style={{
@@ -585,30 +651,28 @@ const NotificationBanner = ({
           from {
             transform: translateX(100%) scale(0.95);
             opacity: 0;
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
           }
           to {
             transform: translateX(0) scale(1);
             opacity: 1;
-          }
-        }
-        @keyframes slideInFromTop {
-          from {
-            transform: translateY(-40px) scale(0.98);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0) scale(1);
-            opacity: 1;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
           }
         }
         @keyframes slideOutToRight {
           from {
             transform: translateX(0) scale(1);
             opacity: 1;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
           }
           to {
             transform: translateX(100%) scale(0.95);
             opacity: 0;
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
           }
         }
         @media (max-width: 768px) {

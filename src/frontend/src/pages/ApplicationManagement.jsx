@@ -1,24 +1,20 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Table, Card, Button, Space, Form, Input, DatePicker, Select, 
-  message, Alert, Tag, Pagination, Result, Drawer, Descriptions, 
-  Divider, Tooltip, App, Checkbox 
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import {
+  Table, Card, Button, Space, Form, Input, DatePicker, Select,
+  message, Alert, Tag, Pagination, Result, Drawer, Descriptions,
+  Divider, Tooltip, App, Checkbox
 } from 'antd';
-import { 
-  EyeOutlined, ReloadOutlined, 
-  CheckOutlined, DeleteOutlined
-} from '@ant-design/icons';
+import { EyeOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
-import FixedTop from '../components/FixedTop';
 import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
+import ManagementPageContainer from '../components/ManagementPageContainer';
 import FilterDropdownButton from '../components/FilterDropdownButton';
 
-import { 
-  canViewAllApplications, canViewOwnApplications, canApproveApplication, 
+import {
+  canViewAllApplications, canViewOwnApplications, canApproveApplication,
   canCancelApplication
 } from '../utils/permissionUtils';
 import { getRoleDisplayName } from '../utils/roleMapping';
@@ -28,6 +24,7 @@ import { getApplicationStatusDisplayName, getApplicationStatusColor, isApplicati
 import { useI18n } from '../contexts/I18nContext';
 import { useDebounceSearchV2 } from '../hooks/useDebounceSearchV2';
 import { getUserDisplayName } from '../utils/userDisplay';
+import { BlurContext } from '../App';
 
 const { Option } = Select;
 
@@ -36,6 +33,7 @@ function ApplicationManagementContent() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { modal } = App.useApp();
+  const { enableMoreBlur } = useContext(BlurContext);
   const [applications, setApplications] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -49,7 +47,7 @@ function ApplicationManagementContent() {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [authError, setAuthError] = useState(null);
-  
+
   // 筛选控件状态
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(undefined);
@@ -57,29 +55,29 @@ function ApplicationManagementContent() {
   const datePickerRef = useRef(null);
   const statusSelectRef = useRef(null);
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
-  
+
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerType, setDrawerType] = useState(''); // 'detail', 'approve', 'cancel'
   const [currentApplication, setCurrentApplication] = useState(null);
-  
 
-  
+
+
   const { loading: applicationsLoading, error: applicationsError, executeWithRetry: executeApplications } = useApiWithRetry();
-  
+
   // 防抖搜索Hook
   const roomSearch = useDebounceSearchV2((value) => {
     const newParams = { roomName: value || undefined, pageNum: 1 };
     setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchApplications(newParams);
   }, 500);
-  
+
   const applicantSearch = useDebounceSearchV2((value) => {
     const newParams = { username: value || undefined, pageNum: 1 };
     setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchApplications(newParams);
   }, 500);
-  
+
   // 页面刷新Hook
   const handlePageRefresh = usePageRefresh(() => {
     fetchApplications();
@@ -94,22 +92,22 @@ function ApplicationManagementContent() {
           ...currentSearchParams,
           ...params,
         };
-        
+
         console.log('发送申请分页请求参数:', requestParams);
         const response = await applicationAPI.getApplicationList(requestParams);
-        
+
         const { records, total, pageNum, pageSize } = response.data;
         console.log('申请分页响应数据:', response.data);
-        
+
         setApplications(records || []);
         setPagination({
           current: pageNum || 1,
           pageSize: pageSize || 10,
           total: total || 0,
         });
-        
+
         setAuthError(null);
-        
+
         return response.data;
       },
       {
@@ -189,7 +187,7 @@ function ApplicationManagementContent() {
               reason: values.reason
             };
             const response = await applicationAPI.approveApplication(approvalData);
-            messageApi.success(values.approved 
+            messageApi.success(values.approved
               ? t('applicationManagement.messages.approveApproved')
               : t('applicationManagement.messages.approveRejected')
             );
@@ -238,11 +236,11 @@ function ApplicationManagementContent() {
         <Result
           status="403"
           title="403"
-      subTitle={t('applicationManagement.auth.result403Subtitle')}
+          subTitle={t('applicationManagement.auth.result403Subtitle')}
           extra={
             <div>
-        <p>{t('applicationManagement.auth.result403RolePrefix')}{getRoleDisplayName(user?.role)}</p>
-        <p>{t('applicationManagement.auth.result403NeedRole')}</p>
+              <p>{t('applicationManagement.auth.result403RolePrefix')}{getRoleDisplayName(user?.role)}</p>
+              <p>{t('applicationManagement.auth.result403NeedRole')}</p>
             </div>
           }
         />
@@ -256,14 +254,14 @@ function ApplicationManagementContent() {
       <div style={{ padding: '24px' }}>
         <Result
           status="error"
-      title={t('applicationManagement.auth.resultErrorTitle')}
+          title={t('applicationManagement.auth.resultErrorTitle')}
           subTitle={authError}
           extra={[
             <Button key="back" onClick={() => window.history.back()}>
-        {t('applicationManagement.actions.back')}
+              {t('applicationManagement.actions.back')}
             </Button>,
             <Button key="login" type="primary" onClick={() => window.location.href = '/login'}>
-        {t('applicationManagement.actions.login')}
+              {t('applicationManagement.actions.login')}
             </Button>
           ]}
         />
@@ -275,7 +273,7 @@ function ApplicationManagementContent() {
   const handleCheckinApplication = (record) => {
     const roomName = record.roomName || t('applicationManagement.columns.roomName', '教室');
     const timeRange = formatTimeRange(record.startTime, record.endTime);
-    
+
     modal.confirm({
       title: (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -286,10 +284,10 @@ function ApplicationManagementContent() {
       content: (
         <div>
           <p>{t('applicationManagement.actions.checkinConfirmContent', '确认对该申请进行签到吗？签到后将无法撤销。')}</p>
-          <div style={{ 
-            marginTop: '16px', 
-            padding: '12px', 
-            backgroundColor: 'var(--background-color)', 
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: 'var(--background-color)',
             borderRadius: '6px',
             border: '1px solid var(--border-color)'
           }}>
@@ -337,12 +335,12 @@ function ApplicationManagementContent() {
 
   const columns = [
     {
-  title: t('applicationManagement.columns.roomName'),
+      title: t('applicationManagement.columns.roomName'),
       dataIndex: 'roomName',
       key: 'roomName',
     },
     {
-  title: t('applicationManagement.columns.applicant'),
+      title: t('applicationManagement.columns.applicant'),
       dataIndex: 'userNickname',
       key: 'userNickname',
       render: (userNickname, record) => {
@@ -351,7 +349,7 @@ function ApplicationManagementContent() {
       },
     },
     {
-  title: t('applicationManagement.columns.status'),
+      title: t('applicationManagement.columns.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status, record) => {
@@ -380,12 +378,12 @@ function ApplicationManagementContent() {
             {status === 'PENDING_CHECKIN' && (
               // 管理员可以为任何申请签到，普通用户只能为自己的申请签到
               (user?.role === 'ADMIN' || record.userId === user?.id) && (
-              <Button 
-                type="primary"
-                size="small"
-                style={{ marginLeft: 8 }}
-                onClick={() => handleCheckinApplication(record)}
-              >{t('applicationManagement.actions.checkin', '签到')}</Button>
+                <Button
+                  type="primary"
+                  size="small"
+                  style={{ marginLeft: 8 }}
+                  onClick={() => handleCheckinApplication(record)}
+                >{t('applicationManagement.actions.checkin', '签到')}</Button>
               )
             )}
           </div>
@@ -393,7 +391,7 @@ function ApplicationManagementContent() {
       },
     },
     {
-  title: t('applicationManagement.columns.usageTime'),
+      title: t('applicationManagement.columns.usageTime'),
       key: 'time',
       onCell: () => ({ 'data-field': 'timeRange' }),
       render: (_, record) => {
@@ -410,12 +408,12 @@ function ApplicationManagementContent() {
       },
     },
     {
-  title: t('applicationManagement.columns.reason'),
+      title: t('applicationManagement.columns.reason'),
       dataIndex: 'reason',
       key: 'reason',
     },
     {
-  title: t('applicationManagement.columns.createTime'),
+      title: t('applicationManagement.columns.createTime'),
       dataIndex: 'createTime',
       key: 'createTime',
       onCell: () => ({ 'data-field': 'createTime' }),
@@ -424,24 +422,24 @@ function ApplicationManagementContent() {
       ),
     },
     {
-  title: t('applicationManagement.columns.actions'),
+      title: t('applicationManagement.columns.actions'),
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title={t('applicationManagement.tooltips.viewDetail')}>
-            <Button 
-              type="text" 
-              icon={<EyeOutlined />} 
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
               size="small"
               onClick={() => handleViewDetail(record)}
             />
           </Tooltip>
           {canApprove && record.status === 'PENDING' && (
             <Tooltip title={t('applicationManagement.tooltips.approve')}>
-              <Button 
-                type="text" 
-                icon={<CheckOutlined />} 
-                size="small" 
+              <Button
+                type="text"
+                icon={<CheckOutlined />}
+                size="small"
                 style={{ color: '#52c41a' }}
                 onClick={() => handleApprove(record)}
               />
@@ -449,623 +447,299 @@ function ApplicationManagementContent() {
           )}
           {canCancel && (record.status === 'PENDING' || record.status === 'APPROVED' || record.status === 'PENDING_CHECKIN' || record.status === 'IN_USE') && (
             <Tooltip title={t('applicationManagement.tooltips.cancel')}>
-              <Button 
-                type="text" 
-                icon={<DeleteOutlined />} 
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
                 size="small"
                 onClick={() => handleCancel(record)}
               />
             </Tooltip>
           )}
+
         </Space>
       ),
     },
   ];
 
+  // ...existing code...
+  // 1. filterControls（主筛选区控件）
+  const filterControls = [
+    <div style={{ minWidth: '200px' }} key="room">
+      <Input
+        placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
+        allowClear
+        style={{ width: '100%' }}
+        value={roomSearch.searchValue}
+        onChange={e => roomSearch.updateSearchValue(e.target.value)}
+        onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
+      />
+    </div>,
+    <div style={{ minWidth: '150px' }} key="user">
+      <Input
+        placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
+        allowClear
+        style={{ width: '100%' }}
+        value={applicantSearch.searchValue}
+        onChange={e => applicantSearch.updateSearchValue(e.target.value)}
+        onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
+      />
+    </div>,
+    <div style={{ minWidth: '120px' }} key="status">
+      <Select
+        ref={statusSelectRef}
+        placeholder={t('applicationManagement.filters.statusPlaceholder')}
+        allowClear
+        style={{ width: '100%' }}
+        value={selectedStatus}
+        overlayClassName={enableMoreBlur ? 'blur-dropdown-menu' : ''}
+        onChange={value => {
+          setSelectedStatus(value);
+          const newParams = { status: value || undefined, pageNum: 1 };
+          setSearchParams(prev => ({ ...prev, ...newParams }));
+          fetchApplications(newParams);
+        }}
+      >
+        <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
+        <Option value="PENDING_CHECKIN">{t('applicationManagement.statusOptions.PENDING_CHECKIN')}</Option>
+        <Option value="IN_USE">{t('applicationManagement.statusOptions.IN_USE')}</Option>
+        <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
+        <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
+        <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
+        <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
+      </Select>
+    </div>,
+    <div style={{ minWidth: '150px' }} key="date">
+      <DatePicker
+        ref={datePickerRef}
+        style={{ width: '100%' }}
+        placeholder={t('applicationManagement.filters.datePlaceholder')}
+        format="YYYY-MM-DD"
+        value={selectedDate}
+        onChange={date => {
+          setSelectedDate(date);
+          let newParams = { pageNum: 1 };
+          if (date) {
+            newParams = { ...newParams, queryDate: date.format('YYYY-MM-DD') };
+          } else {
+            newParams = { ...newParams, queryDate: undefined };
+          }
+          setSearchParams(prev => ({ ...prev, ...newParams }));
+          fetchApplications(newParams);
+        }}
+      />
+    </div>,
+    <div className="filter-checkbox" style={{ minWidth: '120px', display: 'flex', alignItems: 'center' }} key="expired">
+      <Checkbox
+        checked={showExpired}
+        onChange={e => {
+          const checked = e.target.checked;
+          setShowExpired(checked);
+          const newParams = { showExpired: checked, pageNum: 1 };
+          setSearchParams(prev => ({ ...prev, ...newParams }));
+          fetchApplications(newParams);
+        }}
+      >
+        {t('applicationManagement.filters.showExpired', '显示过期申请')}
+      </Checkbox>
+      <Button
+        key="clear"
+        style={{ marginLeft: 8 }}
+        onClick={() => {
+          roomSearch.updateSearchValue('');
+          applicantSearch.updateSearchValue('');
+          setSelectedDate(null);
+          setSelectedStatus(undefined);
+          setShowExpired(false);
+          const newParams = {
+            pageNum: 1,
+            roomName: undefined,
+            username: undefined,
+            status: undefined,
+            queryDate: undefined,
+            showExpired: undefined
+          };
+          setSearchParams(newParams);
+          fetchApplications(newParams);
+        }}
+      >
+        {t('applicationManagement.filters.clearFilters')}
+      </Button>
+    </div>,
+  ];
+
+
+
+  // 2. actions（常规操作按钮）
+  const actions = [
+    <ResponsiveButton
+      icon={<ReloadOutlined />}
+      onClick={() => fetchApplications()}
+      loading={applicationsLoading}
+      key="refresh"
+    >
+      {t('common.refresh')}
+    </ResponsiveButton>
+  ];
+
+  // 3. tableProps
+  const tableProps = {
+    columns,
+    dataSource: applications,
+    rowKey: 'id',
+    loading: applicationsLoading,
+    scroll: { x: 1200, y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)' },
+    pagination: false,
+    onChange: handleTableChange,
+    size: 'middle',
+    sticky: { offsetHeader: 0 },
+    rowClassName: record => isApplicationExpired(record) ? 'expired-row' : ''
+  };
+
+  // 4. pageProps
+  const pageProps = {
+    ...pagination,
+    showTotal: (total, range) => {
+      const tpl = t('applicationManagement.paginationTotal');
+      return tpl.replace('{from}', String(range[0])).replace('{to}', String(range[1])).replace('{total}', String(total));
+    },
+    pageSizeOptions: ['10', '20', '50', '100'],
+    size: 'default',
+    onChange: (page, pageSize) => {
+      const newParams = { pageNum: page, pageSize };
+      setSearchParams(prev => ({ ...prev, ...newParams }));
+      fetchApplications(newParams);
+    },
+    showSizeChanger: !isFilterCollapsed,
+    showQuickJumper: !isFilterCollapsed
+  };
+
+  // 5. 错误提示
+  const error = applicationsError && {
+    title: t('applicationManagement.error.dataFetchTitle'),
+    description: String(applicationsError)
+  };
+
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Card 
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{t('applicationManagement.title')}</span>
-              <span style={{ 
-                fontSize: '12px', 
-                color: 'var(--text-color-secondary)', 
-                fontWeight: 'normal',
-                backgroundColor: 'var(--fill-color-secondary)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)'
-              }}>
-                {t('applicationManagement.badgeRetention')}
-              </span>
-            </div>
-          }
-          extra={
-            <Space>
-              {isFilterCollapsed && (
-                <FilterDropdownButton>
-                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    {/* 教室搜索 */}
-                    <div style={{ minWidth: '200px' }}>
-                      <Input
-                        placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
-                        allowClear
-                        style={{ width: '100%' }}
-                        value={roomSearch.searchValue}
-                        onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
-                        onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
-                      />
-                    </div>
-                    
-                    {/* 申请人搜索 */}
-                    <div style={{ minWidth: '150px' }}>
-                      <Input
-                        placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
-                        allowClear
-                        style={{ width: '100%' }}
-                        value={applicantSearch.searchValue}
-                        onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
-                        onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
-                      />
-                    </div>
-                    
-                    {/* 状态筛选 */}
-                    <div style={{ minWidth: '120px' }}>
-                      <Select
-                        ref={statusSelectRef}
-                        placeholder={t('applicationManagement.filters.statusPlaceholder')}
-                        allowClear
-                        style={{ width: '100%' }}
-                        value={selectedStatus}
-                        onChange={(value) => {
-                          setSelectedStatus(value);
-                          const newParams = { status: value || undefined, pageNum: 1 };
-                          setSearchParams(prev => ({ ...prev, ...newParams }));
-                          fetchApplications(newParams);
-                        }}
-                      >
-                        <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
-                        <Option value="PENDING_CHECKIN">{t('applicationManagement.statusOptions.PENDING_CHECKIN')}</Option>
-                        <Option value="IN_USE">{t('applicationManagement.statusOptions.IN_USE')}</Option>
-                        <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
-                        <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
-                        <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
-                        <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
-                      </Select>
-                    </div>
-                    
-                    {/* 使用时间筛选 */}
-                    <div style={{ minWidth: '150px' }}>
-                      <DatePicker
-                        ref={datePickerRef}
-                        style={{ width: '100%' }}
-                        placeholder={t('applicationManagement.filters.datePlaceholder')}
-                        format="YYYY-MM-DD"
-                        value={selectedDate}
-                        onChange={(date) => {
-                          setSelectedDate(date);
-                          let newParams = { pageNum: 1 };
-                          if (date) {
-                            // 将dayjs对象转换为YYYY-MM-DD格式的字符串
-                            newParams = {
-                              ...newParams,
-                              queryDate: date.format('YYYY-MM-DD'),
-                            };
-                          } else {
-                            newParams = {
-                              ...newParams,
-                              queryDate: undefined,
-                            };
-                          }
-                          setSearchParams(prev => ({ ...prev, ...newParams }));
-                          fetchApplications(newParams);
-                        }}
-                      />
-                    </div>
-                    
-                    {/* 过期申请筛选 */}
-                    <div className="filter-checkbox" style={{ minWidth: '120px', display: 'flex', alignItems: 'center' }}>
-                      <Checkbox
-                        checked={showExpired}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setShowExpired(checked);
-                          const newParams = { showExpired: checked, pageNum: 1 };
-                          setSearchParams(prev => ({ ...prev, ...newParams }));
-                          fetchApplications(newParams);
-                        }}
-                      >
-                        {t('applicationManagement.filters.showExpired', '显示过期申请')}
-                      </Checkbox>
-                    </div>
-                    
-                    {/* 操作按钮 */}
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <Button
-                        onClick={() => {
-                          // 清空筛选控件内容
-                          roomSearch.updateSearchValue('');
-                          applicantSearch.updateSearchValue('');
-                          // 清除日期选择器
-                          setSelectedDate(null);
-                          // 清空状态选择器
-                          setSelectedStatus(undefined);
-                          // 清空过期申请复选框
-                          setShowExpired(false);
-                          // 清空搜索参数并刷新数据
-                          const newParams = {
-                            pageNum: 1,
-                            roomName: undefined,
-                            username: undefined,
-                            status: undefined,
-                            queryDate: undefined,
-                            showExpired: undefined
-                          };
-                          setSearchParams(newParams);
-                          fetchApplications(newParams);
-                        }}
-                      >
-                        {t('applicationManagement.filters.clearFilters')}
-                      </Button>
-                    </div>
-                  </div>
-                </FilterDropdownButton>
-              )}
-              <ResponsiveButton 
-                icon={<ReloadOutlined />} 
-                onClick={() => {
-                  fetchApplications();
-                }}
-                loading={applicationsLoading}
-              >
-                {t('common.refresh')}
-              </ResponsiveButton>
-            </Space>
-          }
-          style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-          bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
-        >
-          {/* 筛选区域 */}
-          <div style={{
-            padding: isFilterCollapsed ? '4px' : '16px',
-            borderBottom: '1px solid var(--border-color)',
-            backgroundColor: 'var(--component-bg)',
-            transition: 'padding 0.3s ease'
-          }}>
-            <ResponsiveFilterContainer 
-              threshold={1300}
-              onCollapseStateChange={setIsFilterCollapsed}
-            >
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                {/* 教室搜索 */}
-                <div style={{ minWidth: '200px' }}>
-                  <Input
-                    placeholder={t('applicationManagement.filters.roomSearchPlaceholder')}
-                    allowClear
-                    style={{ width: '100%' }}
-                    value={roomSearch.searchValue}
-                    onChange={(e) => roomSearch.updateSearchValue(e.target.value)}
-                    onPressEnter={() => roomSearch.searchImmediately(roomSearch.searchValue)}
-                  />
-                </div>
-                
-                {/* 申请人搜索 */}
-                <div style={{ minWidth: '150px' }}>
-                  <Input
-                    placeholder={t('applicationManagement.filters.applicantSearchPlaceholder')}
-                    allowClear
-                    style={{ width: '100%' }}
-                    value={applicantSearch.searchValue}
-                    onChange={(e) => applicantSearch.updateSearchValue(e.target.value)}
-                    onPressEnter={() => applicantSearch.searchImmediately(applicantSearch.searchValue)}
-                  />
-                </div>
-                
-                {/* 状态筛选 */}
-                <div style={{ minWidth: '120px' }}>
-                  <Select
-                    ref={statusSelectRef}
-                    placeholder={t('applicationManagement.filters.statusPlaceholder')}
-                    allowClear
-                    style={{ width: '100%' }}
-                    value={selectedStatus}
-                    onChange={(value) => {
-                      setSelectedStatus(value);
-                      const newParams = { status: value || undefined, pageNum: 1 };
-                      setSearchParams(prev => ({ ...prev, ...newParams }));
-                      fetchApplications(newParams);
-                    }}
-                  >
-                    <Option value="PENDING">{t('applicationManagement.statusOptions.PENDING')}</Option>
-                    <Option value="PENDING_CHECKIN">{t('applicationManagement.statusOptions.PENDING_CHECKIN')}</Option>
-                    <Option value="IN_USE">{t('applicationManagement.statusOptions.IN_USE')}</Option>
-                    <Option value="APPROVED">{t('applicationManagement.statusOptions.APPROVED')}</Option>
-                    <Option value="REJECTED">{t('applicationManagement.statusOptions.REJECTED')}</Option>
-                    <Option value="CANCELLED">{t('applicationManagement.statusOptions.CANCELLED')}</Option>
-                    <Option value="COMPLETED">{t('applicationManagement.statusOptions.COMPLETED')}</Option>
-                  </Select>
-                </div>
-                
-                {/* 使用时间筛选 */}
-                <div style={{ minWidth: '150px' }}>
-                  <DatePicker
-                    ref={datePickerRef}
-                    style={{ width: '100%' }}
-                    placeholder={t('applicationManagement.filters.datePlaceholder')}
-                    format="YYYY-MM-DD"
-                    value={selectedDate}
-                    onChange={(date) => {
-                      setSelectedDate(date);
-                      let newParams = { pageNum: 1 };
-                      if (date) {
-                        // 将dayjs对象转换为YYYY-MM-DD格式的字符串
-                        newParams = {
-                          ...newParams,
-                          queryDate: date.format('YYYY-MM-DD'),
-                        };
-                      } else {
-                        newParams = {
-                          ...newParams,
-                          queryDate: undefined,
-                        };
-                      }
-                      setSearchParams(prev => ({ ...prev, ...newParams }));
-                      fetchApplications(newParams);
-                    }}
-                  />
-                </div>
-                
-                {/* 过期申请筛选 */}
-                <div className="filter-checkbox" style={{ minWidth: '120px', display: 'flex', alignItems: 'center' }}>
-                  <Checkbox
-                    checked={showExpired}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setShowExpired(checked);
-                      const newParams = { showExpired: checked, pageNum: 1 };
-                      setSearchParams(prev => ({ ...prev, ...newParams }));
-                      fetchApplications(newParams);
-                    }}
-                  >
-                    {t('applicationManagement.filters.showExpired', '显示过期申请')}
-                  </Checkbox>
-                </div>
-                
-                {/* 操作按钮 */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button
-                    onClick={() => {
-                      // 清空筛选控件内容
-                      roomSearch.updateSearchValue('');
-                      applicantSearch.updateSearchValue('');
-                      // 清除日期选择器
-                      setSelectedDate(null);
-                      // 清空状态选择器
-                      setSelectedStatus(undefined);
-                      // 清空过期申请复选框
-                      setShowExpired(false);
-                      // 清空搜索参数并刷新数据
-                      const newParams = {
-                        pageNum: 1,
-                        roomName: undefined,
-                        username: undefined,
-                        status: undefined,
-                        queryDate: undefined,
-                        showExpired: undefined
-                      };
-                      setSearchParams(newParams);
-                      fetchApplications(newParams);
-                    }}
-                  >
-                    {t('applicationManagement.filters.clearFilters')}
-                  </Button>
-                </div>
-              </div>
-            </ResponsiveFilterContainer>
-          </div>
-
-          {/* 错误提示 */}
-          {applicationsError && (
-            <Alert
-              message={t('applicationManagement.error.dataFetchTitle')}
-              description={String(applicationsError)}
-              type="error"
-              showIcon
-              style={{ marginBottom: '16px' }}
-            />
-          )}
-          
-          <div style={{ 
-            flex: 1,
-            // minHeight: '280px',
-            display: 'flex',
-            flexDirection: 'column',
-            border: '0px solid var(--border-color)',
-            borderRadius: '0px',
-            overflow: 'hidden',
-            height: '100%',
-            maxHeight: '100%',
-            position: 'relative'
-          }}>
-            {/* 表格内容区域 */}
-            <div style={{ 
-              flex: 1,
-              overflow: 'hidden'
-            }}>
-              <FixedTop>
-                <div style={{
-                  overflowX: 'auto',
-                  overflowY: 'hidden',
-                  height: '100%'
-                }}>
-                  <style>{`
-                    div::-webkit-scrollbar {
-                      height: 8px;
-                      background: transparent;
-                    }
-                    div::-webkit-scrollbar-track {
-                      background: transparent;
-                    }
-                    
-                    /* 浅色模式 - 默认样式 */
-                    div::-webkit-scrollbar-thumb {
-                      background: rgba(0, 0, 0, 0.15);
-                      border-radius: 4px;
-                      transition: background 0.2s ease;
-                    }
-                    div::-webkit-scrollbar-thumb:hover {
-                      background: rgba(0, 0, 0, 0.25);
-                    }
-                    div {
-                      scrollbar-width: thin;
-                      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-                    }
-                    
-                    /* 深色模式适配 - 半透明白色 */
-                    [data-theme="dark"] div::-webkit-scrollbar-thumb,
-                    .dark div::-webkit-scrollbar-thumb {
-                      background: rgba(255, 255, 255, 0.2);
-                    }
-                    [data-theme="dark"] div::-webkit-scrollbar-thumb:hover,
-                    .dark div::-webkit-scrollbar-thumb:hover {
-                      background: rgba(255, 255, 255, 0.35);
-                    }
-                    [data-theme="dark"] div,
-                    .dark div {
-                      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-                    }
-                    
-                    /* 系统深色模式 */
-                    @media (prefers-color-scheme: dark) {
-                      div::-webkit-scrollbar-thumb {
-                        background: rgba(255, 255, 255, 0.2);
-                      }
-                      div::-webkit-scrollbar-thumb:hover {
-                        background: rgba(255, 255, 255, 0.35);
-                      }
-                      div {
-                        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-                      }
-                    }
-                    
-                    /* 明确的浅色模式覆盖（当明确指定浅色主题时） */
-                    [data-theme="light"] div::-webkit-scrollbar-thumb,
-                    .light div::-webkit-scrollbar-thumb {
-                      background: rgba(0, 0, 0, 0.15);
-                    }
-                    [data-theme="light"] div::-webkit-scrollbar-thumb:hover,
-                    .light div::-webkit-scrollbar-thumb:hover {
-                      background: rgba(0, 0, 0, 0.25);
-                    }
-                    [data-theme="light"] div,
-                    .light div {
-                      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-                    }
-                  `}</style>
-                    <Table
-                      columns={columns}
-                      dataSource={applications}
-                      rowKey="id"
-                      loading={applicationsLoading}
-                      scroll={{ 
-                        x: 1200, 
-                        y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
-                        scrollToFirstRowOnChange: false
-                      }}
-                    pagination={false}
-                    onChange={handleTableChange}
-                    size="middle"
-                    style={{ 
-                      height: '100%',
-                      minWidth: '1200px',
-                    }}
-                    overflowX='hidden'
-                    sticky={{ offsetHeader: 0 }}
-                    rowClassName={(record) => isApplicationExpired(record) ? 'expired-row' : ''}
-                  />
-                </div>
-              </FixedTop>
-            </div>
-            
-            {/* 分页组件 */}
-            <div style={{
-              padding: '12px 16px',
-              borderTop: '1px solid var(--border-color)',
-              backgroundColor: 'var(--component-bg)',
-              display: 'flex',
-              justifyContent: 'center',
-              borderBottomLeftRadius: '6px',
-              borderBottomRightRadius: '6px',
-              fontFamily: 'var(--app-font-stack)'
-            }}>
-              <Pagination
-                {...pagination}
-                showSizeChanger={true}
-                showQuickJumper={true}
-                showTotal={(total, range) => {
-                  const tpl = t('applicationManagement.paginationTotal');
-                  return tpl
-                    .replace('{from}', String(range[0]))
-                    .replace('{to}', String(range[1]))
-                    .replace('{total}', String(total));
-                }}
-                pageSizeOptions={['10', '20', '50', '100']}
-                size="default"
-                onChange={(page, pageSize) => {
-                  const newParams = {
-                    pageNum: page,
-                    pageSize: pageSize,
-                  };
-                  setSearchParams(prev => ({ ...prev, ...newParams }));
-                  fetchApplications(newParams);
-                }}
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* 抽屉组件 */}
-        <Drawer
-          title={
-            drawerType === 'detail' ? t('applicationManagement.drawer.detail') :
+      <ManagementPageContainer
+        title={t('applicationManagement.title')}
+        badge={<div style={{fontWeight: 'normal', fontVariationSettings:"'wght' 400"}}>{t('applicationManagement.badgeRetention')}</div>}
+        actions={actions}
+        filterControls={filterControls}
+        filterCollapsed={isFilterCollapsed}
+        onFilterCollapseChange={setIsFilterCollapsed}
+        tableProps={tableProps}
+        pageProps={pageProps}
+        error={error}
+      />
+      {/* Drawer/Modal等业务弹窗保留 */}
+      <Drawer
+        title={
+          drawerType === 'detail' ? t('applicationManagement.drawer.detail') :
             drawerType === 'approve' ? t('applicationManagement.drawer.approve') :
-            drawerType === 'cancel' ? t('applicationManagement.drawer.cancel') : ''
-          }
-          width={600}
-          open={drawerVisible}
-          onClose={handleCloseDrawer}
-          footer={
-            drawerType === 'approve' || drawerType === 'cancel' ? (
-              <div style={{ textAlign: 'right' }}>
-                <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                  {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmCancel') : t('common.cancel')}
-                </Button>
-                <Button 
-                  type="primary" 
-                  danger={drawerType === 'cancel'} 
-                  onClick={() => form.submit()}
-                >
-                  {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmOk') : t('common.confirm')}
-                </Button>
-              </div>
-            ) : null
-          }
-        >
-          {drawerType === 'detail' && currentApplication && (
-            <Descriptions column={1} bordered>
+              drawerType === 'cancel' ? t('applicationManagement.drawer.cancel') : ''
+        }
+        width={600}
+        open={drawerVisible}
+        onClose={handleCloseDrawer}
+        footer={
+          drawerType === 'approve' || drawerType === 'cancel' ? (
+            <div style={{ textAlign: 'right' }}>
+              <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
+                {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmCancel') : t('common.cancel')}
+              </Button>
+              <Button
+                type="primary"
+                danger={drawerType === 'cancel'}
+                onClick={() => form.submit()}
+              >
+                {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmOk') : t('common.confirm')}
+              </Button>
+            </div>
+          ) : null
+        }
+      >
+        {/* ...existing Drawer content... */}
+        {drawerType === 'detail' && currentApplication && (
+          <Descriptions column={1} bordered>
+            <Descriptions.Item label={t('applicationManagement.descriptions.applicant')}>{currentApplication.username}</Descriptions.Item>
+            <Descriptions.Item label={t('applicationManagement.descriptions.roomName')}>{currentApplication.roomName}</Descriptions.Item>
+            <Descriptions.Item label={t('applicationManagement.descriptions.startTime')}><span className="num-mono" data-field="startTime">{formatDateTime(currentApplication.startTime)}</span></Descriptions.Item>
+            <Descriptions.Item label={t('applicationManagement.descriptions.endTime')}><span className="num-mono" data-field="endTime">{formatDateTime(currentApplication.endTime)}</span></Descriptions.Item>
+            <Descriptions.Item label={t('applicationManagement.descriptions.status')}>
+              {(() => {
+                const isExpired = isApplicationExpired(currentApplication);
+                if (isExpired) {
+                  const originalStatus = currentApplication.originalStatus || currentApplication.status;
+                  return <><Tag color={getApplicationStatusColor(originalStatus)}>{getApplicationStatusDisplayName(originalStatus)}</Tag><Tag color="default" style={{ marginLeft: 4 }}>{t('applicationManagement.statusOptions.EXPIRED', '已过期')}</Tag></>;
+                } else {
+                  return <Tag color={getApplicationStatusColor(currentApplication.status)}>{getApplicationStatusDisplayName(currentApplication.status)}</Tag>;
+                }
+              })()}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('applicationManagement.descriptions.createTime')}><span className="num-mono" data-field="createTime">{formatDateTime(currentApplication.createTime)}</span></Descriptions.Item>
+            {currentApplication.reason && (
+              <Descriptions.Item label={t('applicationManagement.descriptions.reason')}>{currentApplication.reason}</Descriptions.Item>
+            )}
+          </Descriptions>
+        )}
+        {(drawerType === 'approve' || drawerType === 'cancel') && currentApplication && (
+          <div>
+            <Descriptions column={1} bordered style={{ marginBottom: 16 }}>
               <Descriptions.Item label={t('applicationManagement.descriptions.applicant')}>{currentApplication.username}</Descriptions.Item>
               <Descriptions.Item label={t('applicationManagement.descriptions.roomName')}>{currentApplication.roomName}</Descriptions.Item>
-              <Descriptions.Item label={t('applicationManagement.descriptions.startTime')}><span className="num-mono" data-field="startTime">{formatDateTime(currentApplication.startTime)}</span></Descriptions.Item>
-              <Descriptions.Item label={t('applicationManagement.descriptions.endTime')}><span className="num-mono" data-field="endTime">{formatDateTime(currentApplication.endTime)}</span></Descriptions.Item>
-              <Descriptions.Item label={t('applicationManagement.descriptions.status')}>
+              <Descriptions.Item label={t('applicationManagement.descriptions.time')}>
                 {(() => {
-                  const isExpired = isApplicationExpired(currentApplication);
-                  
-                  if (isExpired) {
-                    // 过期申请：显示原状态 + 过期标签
-                    const originalStatus = currentApplication.originalStatus || currentApplication.status;
-                    return (
-                      <>
-                        <Tag color={getApplicationStatusColor(originalStatus)}>
-                          {getApplicationStatusDisplayName(originalStatus)}
-                        </Tag>
-                        <Tag color="default" style={{ marginLeft: 4 }}>
-                          {t('applicationManagement.statusOptions.EXPIRED', '已过期')}
-                        </Tag>
-                      </>
-                    );
-                  } else {
-                    // 正常状态：仅显示当前状态
-                    return (
-                      <Tag color={getApplicationStatusColor(currentApplication.status)}>
-                        {getApplicationStatusDisplayName(currentApplication.status)}
-                      </Tag>
-                    );
-                  }
+                  const r = formatTimeRange(currentApplication.startTime, currentApplication.endTime, { structured: true });
+                  return r.crossDay ? (
+                    <span className="num-mono" data-field="timeRange"><div>{r.startFormatted} -</div><div>{r.endFormatted}</div></span>
+                  ) : (
+                    <span className="num-mono" data-field="timeRange">{r.text}</span>
+                  );
                 })()}
               </Descriptions.Item>
-              <Descriptions.Item label={t('applicationManagement.descriptions.createTime')}><span className="num-mono" data-field="createTime">{formatDateTime(currentApplication.createTime)}</span></Descriptions.Item>
-              {currentApplication.reason && (
-                <Descriptions.Item label={t('applicationManagement.descriptions.reason')}>{currentApplication.reason}</Descriptions.Item>
-              )}
             </Descriptions>
-          )}
-
-          {(drawerType === 'approve' || drawerType === 'cancel') && currentApplication && (
-            <div>
-              <Descriptions column={1} bordered style={{ marginBottom: 16 }}>
-                <Descriptions.Item label={t('applicationManagement.descriptions.applicant')}>{currentApplication.username}</Descriptions.Item>
-                <Descriptions.Item label={t('applicationManagement.descriptions.roomName')}>{currentApplication.roomName}</Descriptions.Item>
-                <Descriptions.Item label={t('applicationManagement.descriptions.time')}>
-                  {(() => {
-                    const r = formatTimeRange(currentApplication.startTime, currentApplication.endTime, { structured: true });
-                    return r.crossDay ? (
-                      <span className="num-mono" data-field="timeRange">
-                        <div>{r.startFormatted} -</div>
-                        <div>{r.endFormatted}</div>
-                      </span>
-                    ) : (
-                      <span className="num-mono" data-field="timeRange">{r.text}</span>
-                    );
-                  })()}
-                </Descriptions.Item>
-              </Descriptions>
-              
-              <Divider />
-              
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-              >
-                {drawerType === 'approve' && (
-                  <Form.Item
-                    name="approved"
-                    label={t('applicationManagement.form.approveResult')}
-                    rules={[{ required: true, message: t('applicationManagement.form.pleaseSelectApproveResult') }]}
-                  >
-                    <Select placeholder={t('applicationManagement.form.pleaseSelectApproveResult')}>
-                      <Option value={true}>{t('applicationManagement.form.approveOptionApprove')}</Option>
-                      <Option value={false}>{t('applicationManagement.form.approveOptionReject')}</Option>
-                    </Select>
-                  </Form.Item>
-                )}
-
+            <Divider />
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+            >
+              {drawerType === 'approve' && (
+                <Form.Item
+                  name="approved"
+                  label={t('applicationManagement.form.approveResult')}
+                  rules={[{ required: true, message: t('applicationManagement.form.pleaseSelectApproveResult') }]}
+                >
+                  <Select placeholder={t('applicationManagement.form.pleaseSelectApproveResult')}>
+                    <Option value={true}>{t('applicationManagement.form.approveOptionApprove')}</Option>
+                    <Option value={false}>{t('applicationManagement.form.approveOptionReject')}</Option>
+                  </Select>
+                </Form.Item>
+              )}
               {drawerType === 'cancel' && currentApplication && (
                 <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'var(--fill-color)', borderRadius: 6 }}>
-                  {currentApplication.status === 'APPROVED' && (
-                    <span>{t('applicationManagement.messages.cancelConfirmContentApproved')}</span>
-                  )}
-                  {currentApplication.status === 'PENDING_CHECKIN' && (
-                    <span>{t('applicationManagement.messages.cancelConfirmContentPendingCheckin')}</span>
-                  )}
-                  {currentApplication.status === 'IN_USE' && (
-                    <span>{t('applicationManagement.messages.cancelConfirmContentInUse')}</span>
-                  )}
-                  {currentApplication.status === 'PENDING' && (
-                    <span>{t('applicationManagement.messages.cancelConfirmContent')}</span>
-                  )}
+                  {currentApplication.status === 'APPROVED' && (<span>{t('applicationManagement.messages.cancelConfirmContentApproved')}</span>)}
+                  {currentApplication.status === 'PENDING_CHECKIN' && (<span>{t('applicationManagement.messages.cancelConfirmContentPendingCheckin')}</span>)}
+                  {currentApplication.status === 'IN_USE' && (<span>{t('applicationManagement.messages.cancelConfirmContentInUse')}</span>)}
+                  {currentApplication.status === 'PENDING' && (<span>{t('applicationManagement.messages.cancelConfirmContent')}</span>)}
                 </div>
               )}
-
-                <Form.Item
-                  name="reason"
-                  label={drawerType === 'approve' ? t('applicationManagement.form.approveOpinion') : t('applicationManagement.form.cancelReason')}
-                  rules={[{ required: true, message: drawerType === 'approve' ? t('applicationManagement.form.enterApproveOpinion') : t('applicationManagement.form.enterCancelReason') }]}
-                >
-                  <Input.TextArea 
-                    rows={4} 
-                    placeholder={drawerType === 'approve' ? t('applicationManagement.form.enterApproveOpinion') : t('applicationManagement.form.enterCancelReason')} 
-                  />
-                </Form.Item>
-              </Form>
-            </div>
-          )}
-        </Drawer>
-      </div>
+              <Form.Item
+                name="reason"
+                label={drawerType === 'approve' ? t('applicationManagement.form.approveOpinion') : t('applicationManagement.form.cancelReason')}
+                rules={[{ required: true, message: drawerType === 'approve' ? t('applicationManagement.form.enterApproveOpinion') : t('applicationManagement.form.enterCancelReason') }]}
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder={drawerType === 'approve' ? t('applicationManagement.form.enterApproveOpinion') : t('applicationManagement.form.enterCancelReason')}
+                />
+              </Form.Item>
+            </Form>
+          </div>
+        )}
+      </Drawer>
     </PageErrorBoundary>
   );
 }

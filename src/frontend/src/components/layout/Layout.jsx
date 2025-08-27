@@ -798,10 +798,10 @@ export default function AppLayout({ children }) {
         willChange: 'margin-left'              // 优化margin变化
       }}>
         <Content style={{ 
-          margin: '16px',
+          margin: '0px',
           padding: '24px',
-          background: token.colorBgContainer,
-          borderRadius: token.borderRadius
+          background: 'transparent',
+          borderRadius: 0
         }}>
           <SidebarProvider collapsed={collapsed}>
             {children}

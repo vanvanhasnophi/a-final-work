@@ -369,6 +369,12 @@ export default function AppLayoutMobile({ children }) {
     <Layout style={{ 
       minHeight: '100vh',
       background: 'var(--background-color)',
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      paddingLeft: 'env(safe-area-inset-left)',
+      paddingRight: 'env(safe-area-inset-right)',
+      boxSizing: 'border-box',
+      overflowX: 'hidden',
     }}>
       <Header style={{ 
                 position: 'fixed',
@@ -377,7 +383,8 @@ export default function AppLayoutMobile({ children }) {
                 left: 0,
                 zIndex: 999,
                 background: 'var(--component-bg-allow-blur)',
-                padding: '8px',
+                padding: 'calc(1vw + 8px)',
+                height: 'calc(2vw + 56px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -387,7 +394,7 @@ export default function AppLayoutMobile({ children }) {
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
               }}>
-              <div style={{ flex: '0 0 100px' }} >
+              <div style={{ flex: '0 0 30vw' }} >
               <Dropdown
                 menu={{
                   items: menuItems.map(item => ({
@@ -404,20 +411,20 @@ export default function AppLayoutMobile({ children }) {
                 placement="bottomRight"
               >
                 <div style={{
-                  height: '40px',
-                  width: '56px',
-                  lineHeight: '40px',
-                  padding: '20px',
+                  height: 'calc(2vw + 32px)',
+                  width: 'calc(2vw + 48px)',
+                  lineHeight: 'calc(1vw + 36px)',
+                  padding: 'calc(0.5vw + 18px)',
                   textAlign: 'center',
                   margin: '0 0 0 0',
                   cursor: 'pointer',
-                  borderRadius: '6px',
+                  borderRadius: 'calc(0.5vw + 2.5px)',
                   transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
                   display: 'flex',
                   alignItems: 'center',
                   position: 'relative',
                   color: token.colorText,
-                  fontSize: '14px'
+                  fontSize: 'calc(1vw + 10px)'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = token.colorBgTextHover;
@@ -429,7 +436,7 @@ export default function AppLayoutMobile({ children }) {
                 >
                   <MenuOutlined 
                     style={{ 
-                      fontSize: '16px',
+                      fontSize: 'calc(1vw + 12px)',
                       color: token.colorText,
                       marginRight: 0,
                       marginLeft: 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
@@ -449,85 +456,99 @@ export default function AppLayoutMobile({ children }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                fontSize: '20px',
+                fontSize: 'calc(1vw + 16px)',
                 fontWeight: 600, 
                 fontVariationSettings: "'wght' 600" 
               }}
             >
               RoomX
             </Text>
-            <div style={{ flex: '0 0 100px' }} >
-            <Space>
+            <div style={{ flex: '0 0 30vw' }} >
+            <Space style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             {/* 通知中心 */}
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              onClick={() => setNotificationVisible(true)}
+            <div
               className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
+              onClick={() => setNotificationVisible(true)}
               style={{
-                height: '35px',
-                width: 'auto',
-                padding: '4px',
+                height: 'calc(1vw + 32px)',
+                minWidth: 'calc(1vw + 20px)',
+                fontSize: 'calc(0.5vw + 12px)',
+                padding: '0 1vw',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'transparent',
+                background: 'none',
                 border: 'none',
                 boxShadow: 'none',
-                transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
+                borderRadius: 'calc(0.5vw + 2.5px)',
                 marginLeft: 0,
                 marginRight: 0,
-                fontWeight: unreadCount > 0 ? 600 : 'normal',
-                transform: 'translateZ(0)', // 硬件加速
-                backfaceVisibility: 'hidden' // 减少重绘
+                transform: 'translateZ(0)',
+                backfaceVisibility: 'hidden',
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={e => {
                 if (unreadCount === 0) {
-                  e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                  e.currentTarget.style.background = token.colorBgTextHover;
                   e.currentTarget.style.transform = 'translateZ(0)';
                 }
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={e => {
                 if (unreadCount === 0) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.background = 'none';
                   e.currentTarget.style.transform = 'translateZ(0)';
                 }
               }}
+              tabIndex={0}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') setNotificationVisible(true);
+              }}
+              aria-label={t('notification.openNotificationCenter', '打开通知中心')}
             >
-            { unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6 }}>{unreadCount}</span> : null}
-            </Button>
+              <BellOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
+              { unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6, fontWeight:  600 ,  fontVariationSettings: "'wght' 600" }}>{unreadCount}</span> : null}
+            </div>
             {/* 主题切换 */}
-            <Button
-              type="text"
-              icon={<BulbOutlined />}
+            <div
               onClick={toggleTheme}
               style={{
-                height: '35px',
-                width: 'auto',
-                padding: '4px',
+                height: 'calc(1vw + 32px)',
+                minWidth: 'calc(1vw + 20px)',
+                fontSize: 'calc(0.5vw + 12px)',
+                padding: '1vw',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'transparent',
+                background: 'none',
                 border: 'none',
+                borderRadius: 'calc(0.5vw + 2.5px)',
                 boxShadow: 'none',
-                borderRadius: '6px',
-                transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
-                marginLeft: 0 ,
-                marginRight: 0 ,
-                transform: 'translateZ(0)', // 硬件加速
-                backfaceVisibility: 'hidden' // 减少重绘
+                marginLeft: 0,
+                marginRight: 0,
+                transform: 'translateZ(0)',
+                backfaceVisibility: 'hidden',
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+              onMouseEnter={e => {
+                e.currentTarget.style.background = token.colorBgTextHover;
                 e.currentTarget.style.transform = 'translateZ(0)';
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'none';
                 e.currentTarget.style.transform = 'translateZ(0)';
               }}
-            >   
-            </Button>
+              tabIndex={0}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') toggleTheme();
+              }}
+              aria-label={t('layout.themeSwitch', '切换主题')}
+            >
+              <BulbOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
+            </div>
             {/* 用户信息 */}
             <Dropdown
               menu={{ items: userMenuItems, className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu' }}
@@ -538,9 +559,9 @@ export default function AppLayoutMobile({ children }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0,
-                padding: '4px',
+                padding: '1vw',
                 cursor: 'pointer',
-                borderRadius: '6px',
+                borderRadius: 'calc(0.5vw + 2.5px)',
                 background: 'transparent',
                 transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
                 width: 'auto',
@@ -559,7 +580,7 @@ export default function AppLayoutMobile({ children }) {
                 }}
               >
                 <Avatar 
-                  size={32}
+                  size={`calc(2vw + 24px)`}
                   style={{ 
                   backgroundColor: getRoleColor(user.role),
                   flexShrink: 0,
@@ -687,4 +708,4 @@ export default function AppLayoutMobile({ children }) {
       <FeedbackButton />
     </Layout>
   );
-} 
+}

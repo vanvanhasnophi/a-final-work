@@ -52,8 +52,6 @@ export default function DutySchedule() {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [modal, contextHolderModal] = Modal.useModal();
-  const [/*isFilterCollapsed,*/ setIsFilterCollapsed] = useState(false);
-  const [calendarHeight, setCalendarHeight] = useState(400);
   const [isTransitioning, setIsTransitioning] = useState(false);
   // const [themeVersion, setThemeVersion] = useState(0); // 用于强制重新渲染
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -68,20 +66,23 @@ export default function DutySchedule() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  function isToday(date) {
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
   // 手动清理和重新应用今日标记的函数
   const refreshTodayMarks = useCallback(() => {
-    // 延迟执行确保DOM更新完成
-    setTimeout(() => {
+    // 只在切换月份和页面刷新时调用
       const today = dayjs();
-      const todayNumber = today.date();
-      const currentMonth = selectedDate.format('YYYY-MM');
-      const todayMonth = today.format('YYYY-MM');
-      
       // 清理之前的标记
       document.querySelectorAll('.custom-today-mark').forEach(el => {
         el.remove();
       });
-      
       // 清理之前应用的今日样式
       document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date').forEach(cell => {
         const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
@@ -93,89 +94,64 @@ export default function DutySchedule() {
           dateValue.style.fontWeight = '';
         }
       });
-      
-      // 只有在当前显示的月份是今天的月份时才重新应用今日标记
-      if (currentMonth === todayMonth) {
-        setTimeout(() => {
-          const cells = document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date');
-          cells.forEach(cell => {
-            const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
-            if (dateValue && parseInt(dateValue.textContent) === todayNumber) {
-              const cellContainer = cell.closest('.ant-picker-cell');
-              if (cellContainer && !cellContainer.classList.contains('ant-picker-cell-disabled')) {
-                // 检测主题模式
-                const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
-                             document.documentElement.classList.contains('dark') ||
-                             document.body.classList.contains('dark') ||
-                             window.matchMedia('(prefers-color-scheme: dark)').matches;
-                
-                // 应用今日样式
-                cell.style.position = 'relative';
-                if (isDark) {
-                  cell.style.background = 'linear-gradient(135deg, rgba(179, 15, 204, 0.15), rgba(179, 15, 204, 0.08))';
-                  cell.style.border = '1px solid rgba(179, 15, 204, 0.4)';
-                  cell.style.boxShadow = '0 2px 4px rgba(179, 15, 204, 0.2)';
-                  dateValue.style.color = '#B30FCC';
-                } else {
-                  cell.style.background = 'linear-gradient(135deg, rgba(102, 8, 116, 0.08), rgba(102, 8, 116, 0.04))';
-                  cell.style.border = '1px solid rgba(102, 8, 116, 0.3)';
-                  cell.style.boxShadow = '0 2px 4px rgba(102, 8, 116, 0.1)';
-                  dateValue.style.color = '#660874';
-                }
-                
-                dateValue.style.fontWeight = 'bold';
-                
-                // 添加今日标记
-                const mark = document.createElement('div');
-                mark.className = 'custom-today-mark';
-                mark.textContent = lang === 'en-US' ? 'Today' : '今日';
-                mark.style.cssText = `
-                  position: absolute;
-                  top: 2px;
-                  right: 2px;
-                  background: ${isDark ? '#B30FCC' : '#660874'};
-                  color: white;
-                  font-size: ${lang === 'en-US' ? '9px' : '10px'};
-                  padding: 1px ${lang === 'en-US' ? '3px' : '4px'};
-                  border-radius: 8px;
-                  line-height: 1;
-                  font-weight: bold;
-                  z-index: 10;
-                `;
-                cell.appendChild(mark);
-              }
+        // 以外层td.title为准，title为YYYY-MM-DD
+        const cells = document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date');
+        cells.forEach(cell => {
+          const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
+          if (!dateValue) return;
+          // 找到外层td
+          let td = cell.closest('td[title]');
+          if (!td) return;
+          const dateStr = td.getAttribute('title');
+          if (!dateStr) return;
+          const cellDate = dayjs(dateStr);
+          if (
+            cellDate.year() === today.year() &&
+            cellDate.month() === today.month() &&
+            cellDate.date() === today.date()
+          ) {
+            console.log('match!');
+            // 检测主题模式
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+              document.documentElement.classList.contains('dark') ||
+              document.body.classList.contains('dark') ||
+              window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // 应用今日样式
+            cell.style.position = 'relative';
+            if (isDark) {
+              cell.style.background = 'linear-gradient(135deg, rgba(179, 15, 204, 0.15), rgba(179, 15, 204, 0.08))';
+              cell.style.border = '1px solid rgba(179, 15, 204, 0.4)';
+              cell.style.boxShadow = '0 2px 4px rgba(179, 15, 204, 0.2)';
+              dateValue.style.color = '#B30FCC';
+            } else {
+              cell.style.background = 'linear-gradient(135deg, rgba(102, 8, 116, 0.08), rgba(102, 8, 116, 0.04))';
+              cell.style.border = '1px solid rgba(102, 8, 116, 0.3)';
+              cell.style.boxShadow = '0 2px 4px rgba(102, 8, 116, 0.1)';
+              dateValue.style.color = '#660874';
             }
-          });
-        }, 30); 
-      }
-    }, 150); 
+            dateValue.style.fontWeight = 'bold';
+            // 添加今日标记
+            const mark = document.createElement('div');
+            mark.className = 'custom-today-mark';
+            mark.textContent = t('common.today', 'Today');
+            mark.style.cssText = `
+              position: absolute;
+              top: 2px;
+              right: 2px;
+              background: ${isDark ? '#B30FCC' : '#660874'};
+              color: white;
+              font-size: ${lang === 'en-US' ? '9px' : '10px'};
+              padding: 1px ${lang === 'en-US' ? '3px' : '4px'};
+              border-radius: 8px;
+              line-height: 1;
+              font-weight: bold;
+              z-index: 10;
+            `;
+            cell.appendChild(mark);
+          }
+        });
   }, [selectedDate, lang]);
 
-  // 计算日历高度，响应窗口大小
-  React.useEffect(() => {
-    const updateCalendarHeight = () => {
-      const windowHeight = window.innerHeight;
-      const headerHeight = 64; // 顶部导航高度
-      const paddingHeight = 24; // 页面内边距
-      const titleHeight = 50; // 标题区域高度
-      const todayDutyHeight = 60; // 今日值班卡片高度
-      const monthPickerHeight = 72; // 月份选择器高度
-      const hintHeight = 48; // 提示信息高度
-      const cardPadding = 32; // Card组件内边距
-      const scrollBarHeight = 16; // 滚动条预留高度
-      const minHeight = 480; // 最小高度
-      
-      const usedHeight = headerHeight + paddingHeight + titleHeight + todayDutyHeight + monthPickerHeight + hintHeight + cardPadding + scrollBarHeight;
-      const availableHeight = windowHeight - usedHeight;
-      const calculatedHeight = Math.max(minHeight, Math.min(availableHeight, 780));
-      
-      setCalendarHeight(calculatedHeight);
-    };
-
-    updateCalendarHeight();
-    window.addEventListener('resize', updateCalendarHeight);
-    return () => window.removeEventListener('resize', updateCalendarHeight);
-  }, []);
 
   // 简化的样式设置
   React.useEffect(() => {
@@ -458,102 +434,11 @@ export default function DutySchedule() {
     document.head.appendChild(style);
     
     // 动态应用今日标记
-    const applyTodayMark = () => {
-      setTimeout(() => {
-        const today = dayjs();
-        const todayNumber = today.date();
-        const currentMonth = selectedDate.format('YYYY-MM');
-        const todayMonth = today.format('YYYY-MM');
-        
-        // 移除之前的今日标记
-        document.querySelectorAll('.custom-today-mark').forEach(el => {
-          el.remove();
-        });
-        
-        // 只有在当前显示的月份是今天的月份时才显示今日标记
-        if (currentMonth !== todayMonth) {
-          return;
-        }
-        
-        // 寻找今日单元格并添加标记
-        const cells = document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date');
-        cells.forEach(cell => {
-          const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
-          if (dateValue && parseInt(dateValue.textContent) === todayNumber) {
-            // 检查这个单元格是否在当前月份（不是灰色的其他月份日期）
-            const cellContainer = cell.closest('.ant-picker-cell');
-            if (cellContainer && !cellContainer.classList.contains('ant-picker-cell-disabled')) {
-              // 检测主题模式
-              const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
-                           document.documentElement.classList.contains('dark') ||
-                           document.body.classList.contains('dark') ||
-                           window.matchMedia('(prefers-color-scheme: dark)').matches;
-              
-              // 应用今日样式 - 使用项目紫色主题
-              cell.style.position = 'relative';
-              if (isDark) {
-                cell.style.background = 'linear-gradient(135deg, rgba(179, 15, 204, 0.15), rgba(179, 15, 204, 0.08))';
-                cell.style.border = '1px solid rgba(179, 15, 204, 0.4)';
-                cell.style.boxShadow = '0 2px 4px rgba(179, 15, 204, 0.2)';
-                dateValue.style.color = '#B30FCC';
-              } else {
-                cell.style.background = 'linear-gradient(135deg, rgba(102, 8, 116, 0.08), rgba(102, 8, 116, 0.04))';
-                cell.style.border = '1px solid rgba(102, 8, 116, 0.3)';
-                cell.style.boxShadow = '0 2px 4px rgba(102, 8, 116, 0.1)';
-                dateValue.style.color = '#660874';
-              }
-              
-              dateValue.style.fontWeight = 'bold';
-              
-              // 添加"今日"标记 - 标签始终为白色
-              const mark = document.createElement('div');
-              mark.className = 'custom-today-mark';
-              mark.textContent = lang === 'en-US' ? 'Today' : '今日';
-              mark.style.cssText = `
-                position: absolute;
-                top: 2px;
-                right: 2px;
-                background: ${isDark ? '#B30FCC' : '#660874'};
-                color: white;
-                font-size: ${lang === 'en-US' ? '9px' : '10px'};
-                padding: 1px ${lang === 'en-US' ? '3px' : '4px'};
-                border-radius: 8px;
-                line-height: 1;
-                font-weight: bold;
-                z-index: 10;
-              `;
-              cell.appendChild(mark);
-            }
-          }
-        });
-      }, 50); // 减少延迟从100ms到50ms
-    };
     
-    // 初始应用
-    applyTodayMark();
+    
     
     // 当月份变化时重新应用
-    const observer = new MutationObserver((mutations) => {
-      // 只在日历内容发生变化时触发，避免过度执行
-      const shouldApply = mutations.some(mutation => 
-        mutation.target.closest?.('.ant-picker-calendar') ||
-        Array.from(mutation.addedNodes).some(node => 
-          node.nodeType === 1 && node.closest?.('.ant-picker-calendar')
-        )
-      );
-      if (shouldApply) {
-        applyTodayMark();
-      }
-    });
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
     
-    return () => {
-      document.head.removeChild(style);
-      observer.disconnect();
-    };
   }, [lang, selectedDate]); // 添加selectedDate依赖，确保月份变化时重新应用
 
   // 获取值班安排列表（获取整月数据）
@@ -742,7 +627,7 @@ export default function DutySchedule() {
       fetchSchedules(value);
       setIsTransitioning(false);
       // 月份切换完成后刷新今日标记
-      setTimeout(() => refreshTodayMarks(), 200);
+      setTimeout(() => refreshTodayMarks(), 50);
     }, 150);
   };
 
@@ -758,7 +643,7 @@ export default function DutySchedule() {
       fetchSchedules(prevMonth);
       setIsTransitioning(false);
       // 月份切换完成后刷新今日标记
-      setTimeout(() => refreshTodayMarks(), 200);
+      setTimeout(() => refreshTodayMarks(), 50);
     }, 150);
   };
 
@@ -876,8 +761,9 @@ export default function DutySchedule() {
       }
 
       handleCloseDrawer();
-      fetchSchedules(selectedDate);
-      fetchTodayDuty(); // 刷新今日值班人信息
+      await fetchSchedules(selectedDate);
+      await fetchTodayDuty(); // 刷新今日值班人信息
+      setTimeout(() => refreshTodayMarks(), 200); // 值班变更后刷新今日标记
     } catch (error) {
       console.error('提交失败:', error);
       const errorMessage = error.response?.data || error.message;
@@ -905,12 +791,6 @@ export default function DutySchedule() {
           fontFamily: 'var(--app-font-stack)',
           transition: 'font 0.2s ease'
         }}>
-        {/* 筛选器容器 */}
-        <ResponsiveFilterContainer
-          widthThreshold={800}
-          heightThreshold={600}
-          onCollapseChange={setIsFilterCollapsed}
-        >
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -924,10 +804,9 @@ export default function DutySchedule() {
               </h2>
             </div>
           </div>
-        </ResponsiveFilterContainer>
 
         {/* 主内容区域 */}
-        <Card bodyStyle={{ padding: '16px' }}>
+        <Card styles={{ body: { padding: '16px', height: 'calc(100vh - 115px)' } }}>
           {/* 今日值班人提示 */}
           <div 
             className="today-duty-card"
@@ -1059,9 +938,7 @@ export default function DutySchedule() {
             className={`calendar-container ${isTransitioning ? 'transitioning' : ''}`}
             data-lang={lang}
             style={{ 
-              height: `${calendarHeight}px`,
-              minHeight: '420px',
-              maxHeight: '780px',
+              height: `calc(100vh - 305px)`,
               overflow: 'auto',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
