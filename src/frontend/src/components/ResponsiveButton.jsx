@@ -30,9 +30,9 @@ const ResponsiveButton = ({
     
     let resizeTimer;
     let lastResizeTime = 0;
-    const THROTTLE_DELAY = 100; // 按钮响应可以更快，100ms节流
-    const DEBOUNCE_DELAY = 200;  // 200ms防抖
-    
+    const THROTTLE_DELAY = 50; // 按钮响应可以更快，50ms节流
+    const DEBOUNCE_DELAY = 100;  // 100ms防抖
+
     const handleResize = () => {
       const now = Date.now();
       

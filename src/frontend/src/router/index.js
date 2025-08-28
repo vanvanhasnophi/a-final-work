@@ -25,8 +25,6 @@ import {
   LazyNotFoundMobile,
   LazyLayoutComponentsMobile,
 } from './lazyComponents';
-// 开发环境路由
-import DevRoutes from './DevRoutes';
 // 保留必要的即时加载组件（轻量级组件）
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
@@ -132,9 +130,7 @@ function AppRoutes() {
         </RoleBasedRoute>
       } />
       
-      {/* 开发环境路由 */}
-      <Route path="/dev/*" element={<DevRoutes />} />
-      
+  
       {/* 404页面 */}
       <Route path="/404" element={<LazyNotFound />} />
       
@@ -213,9 +209,6 @@ function AppRoutes() {
           <AppLayout><LazyDutySchedule /></AppLayout>
         </RoleBasedRoute>
       } />
-      
-      {/* 开发环境路由 */}
-      <Route path="/dev/*" element={<DevRoutes />} />
       
       {/* 404页面 */}
       <Route path="/404" element={<LazyNotFound />} />

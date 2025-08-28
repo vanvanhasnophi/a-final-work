@@ -6,6 +6,18 @@
 // 预加载映射表
 const preloadMap = new Map();
 
+// 动态延迟预加载启动器
+let preloadStarted = false;
+/**
+ * 在主加载任务完成后由外部调用，开始预加载页面
+ * @param {Array<Function>} pages - 需要预加载的 import 函数数组
+ */
+export function startPreloadPages(pages = []) {
+  if (preloadStarted) return;
+  preloadStarted = true;
+  pages.forEach(fn => fn());
+}
+
 /**
  * 预加载指定的懒加载组件
  * @param {Function} importFunc - 动态import函数
@@ -65,7 +77,6 @@ export const preloadStrategies = {
   afterLogin: (userRole) => {
     const coreComponents = [
       { importFunc: () => import('../pages/Dashboard'), key: 'Dashboard' },
-      { importFunc: () => import('../pages/MyApplications'), key: 'MyApplications' },
       { importFunc: () => import('../pages/UserProfile'), key: 'UserProfile' },
     ];
 
@@ -80,6 +91,12 @@ export const preloadStrategies = {
     if (userRole === 'ADMIN') {
       coreComponents.push(
         { importFunc: () => import('../pages/UserList'), key: 'UserList' }
+      );
+    }
+
+    if(userRole === 'APPLIER'){
+      coreComponents.push(
+        { importFunc: () => import('../pages/MyApplications'), key: 'MyApplications' }
       );
     }
 
@@ -120,6 +137,9 @@ export const preloadStrategies = {
       });
     }
   },
+  manual: (importFunc, key) => {
+    preloadComponent(importFunc, key);
+  }
 };
 
 /**

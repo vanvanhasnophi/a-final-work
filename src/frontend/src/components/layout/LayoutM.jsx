@@ -367,7 +367,7 @@ export default function AppLayoutMobile({ children }) {
   
   return (
     <Layout style={{ 
-      minHeight: '100vh',
+      minHeight: '100vh-100px',
       background: 'var(--background-color)',
       paddingTop: 'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
@@ -604,8 +604,8 @@ export default function AppLayoutMobile({ children }) {
         willChange: 'margin-left'              // 优化margin变化
       }}>
         <Content style={{ 
-          marginTop: '64px',
-          background: token.colorBgContainer,
+          marginTop: 'calc(2vw + 56px)',
+          background: 'transparent',
           borderRadius: token.borderRadius
         }}>
           {children}

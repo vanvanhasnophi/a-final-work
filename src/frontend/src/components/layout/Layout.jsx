@@ -136,8 +136,8 @@ export default function AppLayout({ children }) {
   useEffect(() => {
     let resizeTimer;
     let lastResizeTime = 0;
-    const THROTTLE_DELAY = 50;  // 节流延迟：50ms (从100ms降低)
-    const DEBOUNCE_DELAY = 100; // 防抖延迟：100ms (从200ms降低)
+    const THROTTLE_DELAY = 50;  // 节流延迟：50ms 
+    const DEBOUNCE_DELAY = 100; // 防抖延迟：100ms 
 
     const handleResize = () => {
       const now = Date.now();
@@ -424,7 +424,7 @@ export default function AppLayout({ children }) {
       } catch (e) {
         console.debug('定期检查失败:', e);
       }
-    }, 300000); // 5分钟
+    }, 30000); // 30s
 
     return () => {
       unsubscribeNewNotification();

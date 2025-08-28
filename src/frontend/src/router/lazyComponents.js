@@ -56,22 +56,6 @@ export const LazyNotFound = createLazyComponent.page(
   '404页面'
 );
 
-// 测试和开发页面（按需懒加载）
-export const LazyActivityManagement = createLazyComponent.page(
-  () => import('../pages/ActivityManagement'),
-  '活动管理'
-);
-
-export const LazyApplicationList = createLazyComponent.page(
-  () => import('../pages/ApplicationList'),
-  '申请列表'
-);
-
-export const LazyDevPage = createLazyComponent.page(
-  () => import('../pages/DevPage'),
-  '开发页面'
-);
-
 // 移动端
 
 export const LazyLoginMobile = createLazyComponent.page(
@@ -124,47 +108,6 @@ export const LazyNotFoundMobile = createLazyComponent.page(
   '移动端404页面'
 );
 
-// 测试和开发页面（按需懒加载）
-export const LazyActivityManagementMobile = createLazyComponent.page(
-  () => import('../pages/mobile/ActivityManagementM'),
-  '移动端活动管理'
-);
-
-export const LazyApplicationListMobile = createLazyComponent.page(
-  () => import('../pages/mobile/ApplicationListM'),
-  '移动端申请列表'
-);
-
-export const LazyDevPageMobile = createLazyComponent.page(
-  () => import('../pages/mobile/DevPageM'),
-  '移动端开发页面'
-);
-
-// 测试组件（开发环境专用）
-export const LazyTestComponents = {
-  TestConcurrency: createLazyComponent.page(
-    () => import('../pages/test/TestConcurrency'),
-    '并发测试'
-  ),
-  TestConnection: createLazyComponent.page(
-    () => import('../pages/test/TestConnection'),
-    '连接测试'
-  ),
-  TestRetry: createLazyComponent.page(
-    () => import('../pages/test/TestRetry'),
-    '重试测试'
-  ),
-  AuthTest: createLazyComponent.page(
-    () => import('../pages/test/AuthTest'),
-    '认证测试'
-  ),
-  ThemeTest: createLazyComponent.page(
-    () => import('../pages/test/ThemeTest'),
-    '主题测试'
-  ),
-};
-
-
 // 布局组件懒加载
 export const LazyLayoutComponents = {
   AppLayout: createLazyComponent.component(
@@ -187,10 +130,6 @@ const lazyComponentsExport = {
   LazyUserProfile,
   LazySettings,
   LazyNotFound,
-  LazyActivityManagement,
-  LazyApplicationList,
-  LazyDevPage,
-  LazyTestComponents,
   LazyLayoutComponents,
   LazyLoginMobile,
   LazyDashboardMobile,
@@ -201,9 +140,6 @@ const lazyComponentsExport = {
   LazyUserProfileMobile,
   LazySettingsMobile,
   LazyNotFoundMobile,
-  LazyActivityManagementMobile,
-  LazyApplicationListMobile,
-  LazyDevPageMobile,
 };
 
 export default lazyComponentsExport;

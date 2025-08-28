@@ -17,7 +17,7 @@ function buildLazy(importFunc, options) {
     timeout = 15000,
   fallbackTip,
     fullScreen = false,
-    minSpinnerTime = 400, // 防抖，避免闪烁
+    minSpinnerTime = 0, // 最小加载时间
   } = options || {};
 
   // 包装 import，支持重试

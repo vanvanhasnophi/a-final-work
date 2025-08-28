@@ -14,9 +14,9 @@ const ResponsiveFilterContainer = ({
   useEffect(() => {
     let resizeTimer;
     let lastResizeTime = 0;
-    const THROTTLE_DELAY = 120; // 过滤器响应延迟稍长，120ms节流
-    const DEBOUNCE_DELAY = 250;  // 250ms防抖
-    
+    const THROTTLE_DELAY = 80; // 过滤器响应延迟稍长，80ms节流
+    const DEBOUNCE_DELAY = 150;  // 150ms防抖
+
     const handleResize = () => {
       const now = Date.now();
       
