@@ -429,7 +429,7 @@ export default function AppLayoutMobile({ children }) {
     <div>
 
       {floatContent && (
-          <div style={{ position: 'fixed', zIndex: 997, pointerEvents: 'auto', left: 0, right: 0, bottom: 0 ,top: 0 }}>
+          <div style={{ position: 'fixed', zIndex: 997, pointerEvents: 'auto'}}>
             {floatContent}
           </div>
       )}
