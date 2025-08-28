@@ -58,7 +58,7 @@
 
 /* 动画效果 */
 .lazy-loading-container {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
 @keyframes fadeIn {

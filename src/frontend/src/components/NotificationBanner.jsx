@@ -14,7 +14,7 @@ const NotificationBanner = ({
   onCollapseNotificationCenter,
   style = {} 
 }) => {
-  // 桌面端拖拽关闭横幅
+  // 移动端拖拽关闭横幅
   const [dragging, setDragging] = useState(false);
   // 拖拽事件处理
   const handleAnimationEnd = () => setDragging(true);
@@ -151,8 +151,8 @@ const NotificationBanner = ({
   // 自动关闭计时器和进度条
   useEffect(() => {
     if (!visible) return; // 如果已经不可见，不启动计时器
-    
-    const duration = 12000; // 12秒 - 给用户更多时间阅读
+
+    const duration = isMobile ? 8000 : 12000; // 移动端8秒，桌面端12秒 - 给用户更多时间阅读
     const interval = 50; // 每50ms更新一次进度
     const step = 100 / (duration / interval);
     

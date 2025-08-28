@@ -85,9 +85,7 @@ const LoadingSpinner = ({
             backgroundColor: 'var(--component-bg)',
             border: '1px solid var(--border-color)'
           }}
-          bodyStyle={{
-            padding: '20px'
-          }}
+          styles={{body: {padding: '20px'}}}
           extra={
             showCancelButton && onCancel ? (
               <Button 
