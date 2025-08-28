@@ -12,7 +12,6 @@ import {
   LogoutOutlined,
   SettingOutlined,
   BulbOutlined,
-  BulbFilled,
   CalendarOutlined,
   FormOutlined,
   MenuOutlined,
@@ -35,6 +34,8 @@ const { Header, Content } = Layout;
 const { Text } = Typography;
 
 export default function AppLayoutMobile({ children }) {
+  // 用于存储全局悬浮内容
+  const [floatContent, setFloatContent] = useState(null);
   const enableMoreBlur = useContext(BlurContext);
   const { user, clearAuth, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
@@ -48,6 +49,65 @@ export default function AppLayoutMobile({ children }) {
   const [lastBannerNotificationId, setLastBannerNotificationId] = useState(null);
   const [lastBannerTime, setLastBannerTime] = useState(0);
 
+
+  // 路由path/pageName到title的静态映射（可补充）
+  const staticTitleMap = {
+    '/dashboard': t('layout.menu.dashboard', '仪表板'),
+    '/rooms': t('layout.menu.rooms', '房间管理'),
+    '/application-management': t('layout.menu.applications', '申请管理'),
+    '/my-applications': t('myApplications.title', t('applicationManagement.title', '我的申请')),
+    '/user-management': t('layout.menu.users', '用户管理'),
+    '/users': t('layout.menu.users', '用户管理'),
+    '/duty-schedule': t('dutySchedule.title', '值班表管理'),
+    '/profile': t('layout.userMenu.profile', '个人资料'),
+    '/settings': t('layout.userMenu.settings', '设置'),
+  };
+
+  // 路由pageName到title的映射
+  const pageNameTitleMap = {
+    'rooms': t('layout.menu.rooms', '房间管理'),
+    'application-management': t('layout.menu.applications', '申请管理'),
+    'my-applications': t('myApplications.title', t('applicationManagement.title', '我的申请')),
+    'user-management': t('layout.menu.users', '用户管理'),
+    'duty-schedule': t('dutySchedule.title', '值班表管理'),
+    'dashboard': t('layout.menu.dashboard', '仪表板'),
+  };
+
+  // 动态页面标题：优先 静态title > 路由pageName > menuItems > fallback
+  const getPageTitle = () => {
+    const pathname = location.pathname;
+    // 1. 静态title（精确匹配）
+    if (staticTitleMap[pathname]) return simplifyTitle(staticTitleMap[pathname]);
+    // 2. 路由pageName（通过path前缀匹配）
+    const routeMatch = Object.keys(pageNameTitleMap).find(key => pathname.includes(key));
+    if (routeMatch) return simplifyTitle(pageNameTitleMap[routeMatch]);
+    // 3. menuItems label 匹配
+    const menuMatch = menuItems.find(item => pathname.startsWith('/' + item.key));
+    if (menuMatch) return simplifyTitle(menuMatch.label);
+    // 4. fallback
+    return 'RoomX';
+  };
+
+  const simplifyTitle = (title) => {
+    // 只对英文标题做简称映射
+    switch (title) {
+      case 'My Applications':
+      case 'Application Management':
+        return 'Applications';
+      case 'User Management':
+        return 'Users';
+      case 'Duty Schedule':
+        return 'Duty';
+      case 'Dashboard':
+      case '仪表板':
+        return 'RoomX';
+      case 'Room Management':
+      case 'Rooms':
+        return 'Rooms';
+      default:
+        return title;
+    }
+  };
 
   /*
   const [csrfInfo, setCsrfInfo] = useState({ enabled: true, tokenPresent: false });
@@ -64,8 +124,8 @@ export default function AppLayoutMobile({ children }) {
     return () => clearInterval(interval);
   }, []);
   */
-  
-  
+
+
   // 获取用户角色的菜单配置（移除个人资料）
   const getMenuItems = (userRole) => {
     const baseMenu = [
@@ -73,7 +133,7 @@ export default function AppLayoutMobile({ children }) {
     ];
 
     const roleSpecificMenu = [];
-    
+
     switch (userRole) {
       case 'ADMIN':
         roleSpecificMenu.push(
@@ -109,28 +169,28 @@ export default function AppLayoutMobile({ children }) {
         );
         break;
     }
-    
+
     return [...baseMenu, ...roleSpecificMenu];
   };
 
 
   const menuItems = getMenuItems(user.role);
-  
+
 
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
-    navigate('/'+key);
+    navigate('/' + key);
   };
 
   const handleLogout = () => {
-        try {
-          localStorage.removeItem('localNotifications');
-        } catch(e) {}
-        clearAuth();
-        // 额外可清理未读计数
-        setUnreadCount(0);
-        logout();
-        navigate('/login');
+    try {
+      localStorage.removeItem('localNotifications');
+    } catch (e) { }
+    clearAuth();
+    // 额外可清理未读计数
+    setUnreadCount(0);
+    logout();
+    navigate('/login');
   };
 
   const userMenuItems = [
@@ -169,7 +229,7 @@ export default function AppLayoutMobile({ children }) {
         }
 
         const now = Date.now();
-        
+
         // 防止短时间内重复显示相同通知（30秒间隔）
         if (lastBannerNotificationId === notification.id && now - lastBannerTime < 30000) {
           console.log(`通知 ${notification.id} 在30秒内重复触发，跳过显示`);
@@ -180,9 +240,9 @@ export default function AppLayoutMobile({ children }) {
         const today = new Date().toDateString();
         const bannerCountKey = `notification_banner_count_${notification.id}_${today}`;
         const currentCount = parseInt(localStorage.getItem(bannerCountKey) || '0');
-        
+
         console.log(`检查通知 ${notification.id}: 今天横幅显示次数 ${currentCount}`);
-        
+
         if (currentCount >= 3) {
           console.log(`通知 ${notification.id} 今天横幅显示次数已达上限，阻止设置横幅`);
           return;
@@ -215,7 +275,7 @@ export default function AppLayoutMobile({ children }) {
     const initializeUnreadCount = async () => {
       try {
         console.log('初始化未读计数...');
-        
+
         // 先获取服务器未读数量
         let serverUnread = 0;
         try {
@@ -242,7 +302,7 @@ export default function AppLayoutMobile({ children }) {
         const totalUnread = serverUnread + localUnread;
         console.log(`总未读数量: ${totalUnread}`);
         setUnreadCount(totalUnread);
-        
+
         // 触发未读数量变化事件
         notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
       } catch (e) {
@@ -256,36 +316,36 @@ export default function AppLayoutMobile({ children }) {
     const gentleTimer = setInterval(async () => {
       try {
         console.log('定期检查未读数量和新通知...');
-        
+
         // 1. 检查未读数量
         const res = await notificationAPI.getUnreadCount();
         const serverUnread = res?.data?.unreadCount || 0;
-        
+
         const localRaw = localStorage.getItem('localNotifications');
         let localUnread = 0;
         if (localRaw) {
           const list = JSON.parse(localRaw).filter(n => !n.isRead);
           localUnread = list.length;
         }
-        
+
         const totalUnread = serverUnread + localUnread;
         console.log(`定期检查 - 服务器: ${serverUnread}, 本地: ${localUnread}, 总计: ${totalUnread}`);
-        
+
         // 2. 如果未读数量增加，可能有新通知，触发通知检查
         if (totalUnread > unreadCount) {
           console.log(`检测到未读数量增加 (${unreadCount} -> ${totalUnread})，检查新通知`);
-          
+
           // 获取最新通知列表来检查是否有新通知
           try {
             const notificationsRes = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 5 });
             const notifications = notificationsRes?.data?.records || notificationsRes?.data?.list || notificationsRes?.data || [];
-            
+
             if (notifications.length > 0) {
               // 查找最新的未读通知
               const latestUnread = notifications.find(n => !n.isRead);
               if (latestUnread) {
                 console.log(`发现新通知: ${latestUnread.id}`);
-                
+
                 // 触发新通知事件
                 setTimeout(() => {
                   notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, latestUnread);
@@ -296,9 +356,9 @@ export default function AppLayoutMobile({ children }) {
             console.warn('获取通知列表失败:', notificationError);
           }
         }
-        
+
         setUnreadCount(totalUnread);
-        
+
         // 触发未读数量变化事件
         notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
       } catch (e) {
@@ -320,7 +380,7 @@ export default function AppLayoutMobile({ children }) {
         setNotificationVisible(true);
         localStorage.removeItem('openNotificationCenter');
       }
-    } catch(e) {}
+    } catch (e) { }
   }, []);
 
   if (!user) {
@@ -328,8 +388,8 @@ export default function AppLayoutMobile({ children }) {
   }
 
 
-  
-  
+
+
 
   // 获取菜单图标
   const getMenuIcon = (iconName) => {
@@ -364,9 +424,16 @@ export default function AppLayoutMobile({ children }) {
     return match ? [match.key] : [];
   };
 
-  
+
   return (
-    <Layout style={{ 
+    <div>
+
+      {floatContent && (
+          <div style={{ position: 'fixed', zIndex: 997, pointerEvents: 'auto', left: 0, right: 0, bottom: 0 ,top: 0 }}>
+            {floatContent}
+          </div>
+      )}
+    <Layout style={{
       minHeight: '100vh-100px',
       background: 'var(--background-color)',
       paddingTop: 'env(safe-area-inset-top)',
@@ -376,56 +443,63 @@ export default function AppLayoutMobile({ children }) {
       boxSizing: 'border-box',
       overflowX: 'hidden',
     }}>
-      <Header style={{ 
-                position: 'fixed',
-                top: 0,
-                right: 0,
-                left: 0,
-                zIndex: 999,
-                background: 'var(--component-bg-allow-blur)',
-                padding: 'calc(1vw + 8px)',
-                height: 'calc(2vw + 56px)',
+      <Header style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        left: 0,
+        zIndex: 999,
+        background: 'var(--component-bg-allow-blur)',
+        padding: 'calc(1vw + 8px)',
+        height: 'calc(2vw + 56px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: 'var(--shadow)',
+        borderBottom: '1px solid var(--border-color)',
+        transition: 'left 0.2s',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          paddingTop: 'env(safe-area-inset-top)', // 只内容加
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ flex: '0 0 30vw' }} >
+            <Dropdown
+              menu={{
+                items: menuItems.map(item => ({
+                  key: item.key,
+                  icon: getMenuIcon(item.icon),
+                  label: item.label,
+                  onClick: () => handleMenuClick({ key: item.key })
+                })),
+                selectedKeys: getSelectedKeys(),
+                className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'
+              }}
+              overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
+              trigger={['hover']}
+              placement="bottomRight"
+            >
+              <div style={{
+                height: 'calc(2vw + 32px)',
+                width: 'calc(2vw + 48px)',
+                lineHeight: 'calc(1vw + 36px)',
+                padding: 'calc(0.5vw + 18px)',
+                textAlign: 'center',
+                margin: '0 0 0 0',
+                cursor: 'pointer',
+                borderRadius: 'calc(0.5vw + 2.5px)',
+                transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                boxShadow: 'var(--shadow)',
-                borderBottom: '1px solid var(--border-color)',
-                transition: 'left 0.2s',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-              }}>
-              <div style={{ flex: '0 0 30vw' }} >
-              <Dropdown
-                menu={{
-                  items: menuItems.map(item => ({
-                    key: item.key,
-                    icon: getMenuIcon(item.icon),
-                    label: item.label,
-                    onClick: () => handleMenuClick({ key: item.key })
-                  })),
-                  selectedKeys: getSelectedKeys(),
-                  className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'
-                }}
-                overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
-                trigger={['hover']}
-                placement="bottomRight"
-              >
-                <div style={{
-                  height: 'calc(2vw + 32px)',
-                  width: 'calc(2vw + 48px)',
-                  lineHeight: 'calc(1vw + 36px)',
-                  padding: 'calc(0.5vw + 18px)',
-                  textAlign: 'center',
-                  margin: '0 0 0 0',
-                  cursor: 'pointer',
-                  borderRadius: 'calc(0.5vw + 2.5px)',
-                  transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  position: 'relative',
-                  color: token.colorText,
-                  fontSize: 'calc(1vw + 10px)'
-                }}
+                position: 'relative',
+                color: token.colorText,
+                fontSize: 'calc(1vw + 10px)'
+              }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = token.colorBgTextHover;
                 }}
@@ -433,192 +507,198 @@ export default function AppLayoutMobile({ children }) {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 theme={isDarkMode ? 'dark' : 'light'}
-                >
-                  <MenuOutlined 
-                    style={{ 
-                      fontSize: 'calc(1vw + 12px)',
-                      color: token.colorText,
-                      marginRight: 0,
-                      marginLeft: 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }} 
-                    theme={isDarkMode ? 'dark' : 'light'}
-                  />
-                </div>
-              </Dropdown>
-            </div>
-            <Text strong 
-              style={{
-                flex: '1 1 0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                fontSize: 'calc(1vw + 16px)',
-                fontWeight: 600, 
-                fontVariationSettings: "'wght' 600" 
-              }}
-            >
-              RoomX
-            </Text>
-            <div style={{ flex: '0 0 30vw' }} >
-            <Space style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            {/* 通知中心 */}
-            <div
-              className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
-              onClick={() => setNotificationVisible(true)}
-              style={{
-                height: 'calc(1vw + 32px)',
-                minWidth: 'calc(1vw + 20px)',
-                fontSize: 'calc(0.5vw + 12px)',
-                padding: '0 1vw',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                boxShadow: 'none',
-                borderRadius: 'calc(0.5vw + 2.5px)',
-                marginLeft: 0,
-                marginRight: 0,
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden',
-                outline: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
-              }}
-              onMouseEnter={e => {
-                if (unreadCount === 0) {
-                  e.currentTarget.style.background = token.colorBgTextHover;
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (unreadCount === 0) {
-                  e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }
-              }}
-              tabIndex={0}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') setNotificationVisible(true);
-              }}
-              aria-label={t('notification.openNotificationCenter', '打开通知中心')}
-            >
-              <BellOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
-              { unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6, fontWeight:  600 ,  fontVariationSettings: "'wght' 600" }}>{unreadCount}</span> : null}
-            </div>
-            {/* 主题切换 */}
-            <div
-              onClick={toggleTheme}
-              style={{
-                height: 'calc(1vw + 32px)',
-                minWidth: 'calc(1vw + 20px)',
-                fontSize: 'calc(0.5vw + 12px)',
-                padding: '1vw',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                borderRadius: 'calc(0.5vw + 2.5px)',
-                boxShadow: 'none',
-                marginLeft: 0,
-                marginRight: 0,
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden',
-                outline: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = token.colorBgTextHover;
-                e.currentTarget.style.transform = 'translateZ(0)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'none';
-                e.currentTarget.style.transform = 'translateZ(0)';
-              }}
-              tabIndex={0}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') toggleTheme();
-              }}
-              aria-label={t('layout.themeSwitch', '切换主题')}
-            >
-              <BulbOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
-            </div>
-            {/* 用户信息 */}
-            <Dropdown
-              menu={{ items: userMenuItems, className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu' }}
-              overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
-              placement="bottomLeft"
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0,
-                padding: '1vw',
-                cursor: 'pointer',
-                borderRadius: 'calc(0.5vw + 2.5px)',
-                background: 'transparent',
-                transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
-                width: 'auto',
-                marginLeft: 0,
-                marginRight: 0 ,
-                transform: 'translateZ(0)', // 硬件加速
-                backfaceVisibility: 'hidden' // 减少重绘
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = token.colorBgTextHover;
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }}
               >
-                <Avatar 
-                  size={`calc(2vw + 24px)`}
-                  style={{ 
-                  backgroundColor: getRoleColor(user.role),
-                  flexShrink: 0,
-                  color: '#ffffff'
+                <MenuOutlined
+                  style={{
+                    fontSize: 'calc(1vw + 12px)',
+                    color: token.colorText,
+                    marginRight: 0,
+                    marginLeft: 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
-                >
-                {getUserAvatarChar(user)}
-                </Avatar>
+                  theme={isDarkMode ? 'dark' : 'light'}
+                />
               </div>
             </Dropdown>
+          </div>
+          <Text strong
+            style={{
+              flex: '1 1 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              fontSize: 'calc(0.75vw + 16px)',
+              fontWeight: 600,
+              fontVariationSettings: "'wght' 600"
+            }}
+          >
+            {getPageTitle()}
+          </Text>
+          <div style={{ flex: '0 0 30vw' }} >
+            <Space style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              {/* 通知中心 */}
+              <div
+                className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
+                onClick={() => setNotificationVisible(true)}
+                style={{
+                  height: 'calc(1vw + 32px)',
+                  minWidth: 'calc(1vw + 20px)',
+                  fontSize: 'calc(0.5vw + 12px)',
+                  padding: '0 1vw',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  borderRadius: 'calc(0.5vw + 2.5px)',
+                  marginLeft: 0,
+                  marginRight: 0,
+                  transform: 'translateZ(0)',
+                  backfaceVisibility: 'hidden',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  if (unreadCount === 0) {
+                    e.currentTarget.style.background = token.colorBgTextHover;
+                    e.currentTarget.style.transform = 'translateZ(0)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (unreadCount === 0) {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.transform = 'translateZ(0)';
+                  }
+                }}
+                tabIndex={0}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') setNotificationVisible(true);
+                }}
+                aria-label={t('notification.openNotificationCenter', '打开通知中心')}
+              >
+                <BellOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
+                {unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6, fontWeight: 600, fontVariationSettings: "'wght' 600" }}>{unreadCount}</span> : null}
+              </div>
+              {/* 主题切换 */}
+              <div
+                onClick={toggleTheme}
+                style={{
+                  height: 'calc(1vw + 32px)',
+                  minWidth: 'calc(1vw + 20px)',
+                  fontSize: 'calc(0.5vw + 12px)',
+                  padding: '1vw',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: 'calc(0.5vw + 2.5px)',
+                  boxShadow: 'none',
+                  marginLeft: 0,
+                  marginRight: 0,
+                  transform: 'translateZ(0)',
+                  backfaceVisibility: 'hidden',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = token.colorBgTextHover;
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'none';
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }}
+                tabIndex={0}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') toggleTheme();
+                }}
+                aria-label={t('layout.themeSwitch', '切换主题')}
+              >
+                <BulbOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
+              </div>
+              {/* 用户信息 */}
+              <Dropdown
+                menu={{ items: userMenuItems, className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu' }}
+                overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
+                placement="bottomLeft"
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0,
+                  padding: '1vw',
+                  cursor: 'pointer',
+                  borderRadius: 'calc(0.5vw + 2.5px)',
+                  background: 'transparent',
+                  transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
+                  width: 'auto',
+                  marginLeft: 0,
+                  marginRight: 0,
+                  transform: 'translateZ(0)', // 硬件加速
+                  backfaceVisibility: 'hidden' // 减少重绘
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                    e.currentTarget.style.transform = 'translateZ(0)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.transform = 'translateZ(0)';
+                  }}
+                >
+                  <Avatar
+                    size={`calc(2vw + 24px)`}
+                    style={{
+                      backgroundColor: getRoleColor(user.role),
+                      flexShrink: 0,
+                      color: '#ffffff'
+                    }}
+                  >
+                    {getUserAvatarChar(user)}
+                  </Avatar>
+                </div>
+              </Dropdown>
             </Space >
           </div>
+        </div>
       </Header>
-      
-      
-      
-      <Layout style={{ 
+
+
+
+      <Layout style={{
         background: 'var(--background-color)',
         transition: 'margin-left 0.15s ease', // 更快的过渡
         transform: 'translateZ(0)',            // 硬件加速
         willChange: 'margin-left'              // 优化margin变化
       }}>
-        <Content style={{ 
+        <Content style={{
           marginTop: 'calc(2vw + 56px)',
           background: 'transparent',
-          borderRadius: token.borderRadius
         }}>
-          {children}
+          {/* 让子组件可以通过 props 传递 setFloatContent 回调 */}
+          {React.isValidElement(children)
+            ? React.cloneElement(children, { setFloatContent })
+            : children}
         </Content>
+        {/* 全局悬浮内容，fixed 定位 */}
+        
       </Layout>
       
+
       {/* 通知中心 */}
-      <NotificationCenter 
+      <NotificationCenter
         visible={notificationVisible}
         onClose={() => setNotificationVisible(false)}
         onUnreadChange={(n) => setUnreadCount(n)}
       />
-      
+
       {/* 温柔的通知横幅 */}
       <NotificationBanner
         notification={bannerNotification}
@@ -631,13 +711,13 @@ export default function AppLayoutMobile({ children }) {
           // 实际标记已读逻辑
           try {
             console.log(`标记通知 ${notificationId} 为已读`);
-            
+
             // 获取当前通知信息
             const notification = bannerNotification;
             const wasUnread = notification && !notification.isRead;
-            
+
             console.log(`通知 ${notificationId} 当前未读状态: ${wasUnread}`);
-            
+
             // 更新本地存储的通知状态（如果存在）
             const localRaw = localStorage.getItem('localNotifications');
             if (localRaw) {
@@ -653,7 +733,7 @@ export default function AppLayoutMobile({ children }) {
                 console.warn('更新本地通知失败:', e);
               }
             }
-            
+
             // 调用API标记为已读（如果不是纯本地通知）
             if (notification && !notification.local) {
               try {
@@ -664,33 +744,33 @@ export default function AppLayoutMobile({ children }) {
                 // API失败时不影响本地计数更新
               }
             }
-            
+
             // 只有当通知确实从未读变为已读时才减少计数
             if (wasUnread) {
               setUnreadCount(prevCount => {
                 const newCount = Math.max(0, prevCount - 1);
                 console.log(`未读计数更新: ${prevCount} -> ${newCount} (通知${notificationId}已读)`);
-                
+
                 // 触发未读数量变化事件（使用最新的计数值）
                 setTimeout(() => {
                   notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newCount);
                 }, 0);
-                
+
                 return newCount;
               });
-              
+
               // 触发通知已读事件，通知其他组件（如NotificationCenter）
               setTimeout(() => {
-                notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, { 
-                  id: notificationId, 
-                  notification 
+                notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, {
+                  id: notificationId,
+                  notification
                 });
               }, 0);
-              
+
             } else {
               console.log(`通知 ${notificationId} 已经是已读状态，无需更新计数`);
             }
-            
+
             console.log('通知标记已读操作完成:', notificationId);
           } catch (error) {
             console.error('标记通知已读失败:', error);
@@ -701,11 +781,12 @@ export default function AppLayoutMobile({ children }) {
           setBannerNotification(null);
         }}
       />
-      
-        
-        
+
+
+
       {/* 悬浮反馈按钮 */}
       <FeedbackButton />
     </Layout>
+    </div>
   );
 }

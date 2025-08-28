@@ -5,6 +5,7 @@ import { BellOutlined, CloseOutlined, ArrowRightOutlined } from '@ant-design/ico
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../contexts/I18nContext';
 import { useTheme } from '../contexts/ThemeContext';
+import isMobileFn from '../utils/isMobile';
 
 const NotificationBanner = ({ 
   notification, 
@@ -26,10 +27,11 @@ const NotificationBanner = ({
   const [progress, setProgress] = useState(100);
   const [isPaused, setIsPaused] = useState(false);
   const enableMoreBlur = useContext(BlurContext);
+  const isMobile = isMobileFn();
   // 控制消失动画
 
   // 判断是否为移动端（需最前面声明，供所有事件处理用）
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const isMobileStyle = typeof window !== 'undefined' && window.innerWidth <= 768 && isMobile;
 
   const [leaving, setLeaving] = useState(false);
   // 移动端向上拖动消失
@@ -38,7 +40,7 @@ const NotificationBanner = ({
 
   // 移动端拖拽事件
   const handleMobileTouchStart = (e) => {
-    if (!isMobile) return;
+    if (!isMobileStyle) return;
     setDragging(true);
     setDragY(0);
     if (e.touches && e.touches[0]) {
@@ -46,7 +48,7 @@ const NotificationBanner = ({
     }
   };
   const handleMobileTouchMove = (e) => {
-    if (!dragging || !isMobile) return;
+    if (!dragging || !isMobileStyle) return;
     let clientY = e.touches[0].clientY;
     let startY = Number(e.currentTarget.dataset.startY || 0);
     // 只允许向上拖动
@@ -54,7 +56,7 @@ const NotificationBanner = ({
     setDragY(deltaY);
   };
   const handleMobileTouchEnd = (e) => {
-    if (!isMobile) return;
+    if (!isMobileStyle) return;
     if (Math.abs(DragY) > dragThreshold) {
       setLeaving(true);
       setTimeout(handleClose, 350);
@@ -152,7 +154,7 @@ const NotificationBanner = ({
   useEffect(() => {
     if (!visible) return; // 如果已经不可见，不启动计时器
 
-    const duration = isMobile ? 8000 : 12000; // 移动端8秒，桌面端12秒 - 给用户更多时间阅读
+    const duration = isMobileStyle ? 8000 : 12000; // 移动端8秒，桌面端12秒 - 给用户更多时间阅读
     const interval = 50; // 每50ms更新一次进度
     const step = 100 / (duration / interval);
     
@@ -198,7 +200,7 @@ const NotificationBanner = ({
   // 根据通知类型跳转到对应页面
   const handleNotificationClick = async () => {
     if (!notification) return;
-    if (isMobile) {
+    if (isMobileStyle) {
       if (onViewNotifications) onViewNotifications();
       return;
     }
@@ -379,7 +381,7 @@ const NotificationBanner = ({
   };
 
 
-  return (isMobile) ? (
+  return (isMobileStyle) ? (
       <div
         style={{
           position: 'fixed',
@@ -495,9 +497,9 @@ const NotificationBanner = ({
         style={{
           ...acrylicStyle,
           position: 'relative',
-          borderRadius: isMobile ? '0 0 12px 12px' : '12px',
-          padding: isMobile ? '10px 12px' : '12px 16px',
-          boxShadow: isMobile
+          borderRadius: isMobileStyle ? '0 0 12px 12px' : '12px',
+          padding: isMobileStyle ? '10px 12px' : '12px 16px',
+          boxShadow: isMobileStyle
             ? '0 2px 12px rgba(0,0,0,0.08)'
             : (isDarkMode 
                 ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
@@ -509,7 +511,7 @@ const NotificationBanner = ({
         }}
         onMouseEnter={(e) => {
           setIsPaused(true);
-          if (!isMobile) {
+          if (!isMobileStyle) {
             e.currentTarget.style.transform = 'translateY(-2px)';
             e.currentTarget.style.boxShadow = isDarkMode 
               ? '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)' 
@@ -518,7 +520,7 @@ const NotificationBanner = ({
         }}
         onMouseLeave={(e) => {
           setIsPaused(false);
-          if (!isMobile) {
+          if (!isMobileStyle) {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.boxShadow = isDarkMode 
               ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)' 

@@ -6,6 +6,7 @@ import { notificationAPI } from '../api/notification';
 import { formatRelativeTime } from '../utils/dateFormat';
 import { useI18n } from '../contexts/I18nContext';
 import { notificationEvents, NOTIFICATION_EVENTS } from '../utils/notificationEvents';
+import isMobileFn from '../utils/isMobile';
 
 const { Text } = Typography;
 
@@ -16,6 +17,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
+  const isMobile = isMobileFn();
 
   // 获取通知标题（支持国际化键）
   const getNotificationTitle = useCallback((notification) => {
@@ -579,12 +581,12 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
 
 
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const isMobileStyle = typeof window !== 'undefined' && window.innerWidth <= 768&& isMobile;
   return (
   <Drawer
     title={t('notification.title')}
-    placement={isMobile ? 'top' : 'right'}
-    width={isMobile ? '100vw' : 400}
+    placement={isMobileStyle ? 'top' : 'right'}
+    width={isMobileStyle ? '100vw' : 400}
     
     open={visible}
     onClose={onClose}

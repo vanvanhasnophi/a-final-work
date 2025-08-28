@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, DatePicker, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
+import { Table, Card, Button, Space, Drawer, Form, Input, Divider, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../../api/user';
@@ -22,7 +22,9 @@ import { useI18n } from '../../contexts/I18nContext';
 
 const { Option } = Select;
 
-export default function UserList() {
+export default function UserList(props) {
+  // 悬浮卡片内容示例
+  
   const { t } = useI18n();
   const { user, clearAuth, logout } = useAuth();
   const [users, setUsers] = useState([]);
@@ -75,6 +77,92 @@ export default function UserList() {
     setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchUsers(newParams);
   }, 500);
+
+  useEffect(() => {
+    if (props.setFloatContent) {
+      props.setFloatContent(
+        <div style={{
+          width: 'calc(100vw - 24px)',
+          margin: 'calc(2vw + 68px) 12px',
+          background: 'var(--component-bg-allow-blur)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 12,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+          padding: 16,
+          textAlign: 'center',
+        }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  {/* 用户名搜索 */}
+                  <div style={{ minWidth: '200px' }}>
+                    <Input
+                      placeholder={t('userList.filters.searchUsername', '搜索用户名')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={usernameSearch.searchValue}
+                      onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
+                      onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
+                    />
+                  </div>
+                  
+                  {/* 昵称搜索 */}
+                  <div style={{ minWidth: '150px' }}>
+                    <Input
+                      placeholder={t('userList.filters.searchNickname', '搜索昵称')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={nicknameSearch.searchValue}
+                      onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
+                      onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+                    />
+                  </div>
+                  
+                  {/* 角色筛选 */}
+                  <div style={{ minWidth: '120px' }}>
+                    <Select
+                      ref={roleSelectRef}
+                      placeholder={t('userList.allRoles', '全部角色')}
+                      allowClear
+                      style={{ width: '100%' }}
+                      value={selectedRole}
+                      onChange={(value) => {
+                        setSelectedRole(value);
+                        const newParams = { role: value || undefined, pageNum: 1 };
+                        setSearchParams(prev => ({ ...prev, ...newParams }));
+                        fetchUsers(newParams);
+                      }}
+                    >
+                      <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+                      <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                      <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                      <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                      <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
+                    </Select>
+                  </div>
+                  
+                  {/* 操作按钮 */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button
+                      onClick={() => {
+                        // 清空筛选控件内容
+                        usernameSearch.updateSearchValue('');
+                        nicknameSearch.updateSearchValue('');
+                        // 清空角色选择器
+                        setSelectedRole(undefined);
+                      }}
+                    >
+                      {t('common.clearFilters', '清空筛选')}
+                    </Button>
+                  </div>
+                </div>
+        </div>
+      );
+    }
+    // 页面卸载时清除
+    return () => {
+      if (props.setFloatContent) props.setFloatContent(null);
+    };
+  }, [props.setFloatContent, t]);
 
   // 获取用户列表
   const fetchUsers = useCallback(async (params = {}) => {
@@ -620,10 +708,12 @@ export default function UserList() {
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
       {contextHolderModal}
+      
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card 
         className="transparent-card"
         variant="borderless" 
+        marginTop={'32px'}
         title={t('userList.title', '用户管理')} 
         extra={
           <Space>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import {
-  Table, Card, Button, Space, Form, Input, DatePicker, Select,
-  message, Alert, Tag, Pagination, Result, Drawer, Descriptions,
+  Button, Space, Form, Input, DatePicker, Select,
+  message, Tag, Result, Drawer, Descriptions,
   Divider, Tooltip, App, Checkbox
 } from 'antd';
 import { EyeOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -11,8 +11,6 @@ import { usePageRefresh } from '../hooks/usePageRefresh';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import ResponsiveButton from '../components/ResponsiveButton';
 import ManagementPageContainer from '../components/ManagementPageContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
-
 import {
   canViewAllApplications, canViewOwnApplications, canApproveApplication,
   canCancelApplication
@@ -587,10 +585,7 @@ function ApplicationManagementContent() {
     dataSource: applications,
     rowKey: 'id',
     loading: applicationsLoading,
-    scroll: { x: 1200, y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)' },
-    pagination: false,
     onChange: handleTableChange,
-    size: 'middle',
     sticky: { offsetHeader: 0 },
     rowClassName: record => isApplicationExpired(record) ? 'expired-row' : ''
   };
@@ -624,7 +619,7 @@ function ApplicationManagementContent() {
       {contextHolder}
       <ManagementPageContainer
         title={t('applicationManagement.title')}
-        badge={<div style={{fontWeight: 'normal', fontVariationSettings:"'wght' 400"}}>{t('applicationManagement.badgeRetention')}</div>}
+        badge={<div style={{ fontWeight: 'normal', fontVariationSettings: "'wght' 400" }}>{t('applicationManagement.badgeRetention')}</div>}
         actions={actions}
         filterControls={filterControls}
         filterCollapsed={isFilterCollapsed}

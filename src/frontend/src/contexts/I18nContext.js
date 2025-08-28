@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
 
-const I18nContext = createContext({ t: (k)=>k, lang: 'zh-CN', setLang: ()=>{} });
+const I18nContext = createContext({ t: (k) => k, lang: 'zh-CN', setLang: () => { } });
 const I18N_LANG_KEY = 'app.lang';
 
 const dictionaries = {
@@ -236,7 +236,7 @@ const dictionaries = {
         applySuccess: '申请提交成功，正在跳转到申请列表...',
         applySuccessBrief: '申请提交成功',
         applyFail: '申请提交失败',
-  operationFailed: '操作失败，请重试'
+        operationFailed: '操作失败，请重试'
       },
       errors: {
         delete: {
@@ -245,7 +245,7 @@ const dictionaries = {
           notExists: '删除失败：教室不存在或已被删除。',
           unknownPrefix: '删除教室失败: '
         },
-  fetchRoomDetailFail: '获取教室详情失败',
+        fetchRoomDetailFail: '获取教室详情失败',
         fetchListFail: '获取教室列表失败，请检查网络连接',
         dataFetchTitle: '数据获取失败'
       },
@@ -292,8 +292,8 @@ const dictionaries = {
         changesTitle: '变更详情：',
         confirmUpdateOk: '确定更新'
       },
-  deleteInUseWarning: '教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。',
-  timeConflict: '所选时间段与已有预约冲突，请选择其他时间'
+      deleteInUseWarning: '教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。',
+      timeConflict: '所选时间段与已有预约冲突，请选择其他时间'
     },
     room: {
       status: {
@@ -795,7 +795,7 @@ const dictionaries = {
           message: '您的申请「{{title}}」已获得批准。{{reason}}'
         },
         rejected: {
-          title: '申请已拒绝', 
+          title: '申请已拒绝',
           message: '您的申请「{{title}}」被拒绝。{{reason}}'
         }
       },
@@ -901,22 +901,39 @@ const dictionaries = {
       }
     },
     settings: {
-        title: '设置',
-        language: '语言',
-        theme: '主题',
-        zhCN: '简体中文',
-        enUS: 'English',
-        font: '字体',
-        fontIntro: '选择界面使用的主要字体渲染方式：',
+      title: '设置',
+      language: {
+        title: '语言',
+        options: {
+          zhCN: '简体中文',
+          enUS: 'English'
+        }
+      },
+      theme: '主题',
+      blur :{
+        title: '模糊效果',
+        caption: '启用更多模糊',
+        description: '开启后，下拉菜单，通知横幅等控件将应用模糊效果，会些微影响性能'
+      },
+      font: {
+        title: '字体',
         appleTitle: 'Apple 平台默认使用系统字体',
         appleDesc: '为提升渲染效果和一致性，Apple 设备默认选择系统字体。你仍可手动切换到 Inter（可能在部分 Safari 版本上存在渲染差异）。',
-        tipLocal: '当前选择将保存在本地浏览器（localStorage），不会同步到服务器。切换后页面无需刷新即刻生效。',
-        previewCurrent: '当前字体预览：',
-        previewNumber: '数字 (lining + tabular)：'
+        fontIntro: '选择界面使用的主要字体渲染方式：',
+        options: {
+          default: '默认',
+          system: '系统',
+          browser: '浏览器设置'
+        },
+        preview:{
+          caption: '当前字体预览：',
+          number: '数字 (lining + tabular)：'
+        }
+      },
     }
-      
-      
-    
+
+
+
   },
   'en-US': {
     appName: 'RoomX',
@@ -1213,7 +1230,7 @@ const dictionaries = {
         edit: 'Edit Room',
         detail: 'Room Details',
         apply: 'Apply for Room'
-  },
+      },
       detail: {
         futureApprovedTitle: 'Future approved bookings',
         noneFuture: 'No upcoming bookings'
@@ -1228,7 +1245,7 @@ const dictionaries = {
         applySuccess: 'Submitted. Redirecting to applications…',
         applySuccessBrief: 'Submitted',
         applyFail: 'Submit failed',
-  operationFailed: 'Operation failed, please retry'
+        operationFailed: 'Operation failed, please retry'
       },
       errors: {
         delete: {
@@ -1237,7 +1254,7 @@ const dictionaries = {
           notExists: 'Delete failed: room not found or already deleted.',
           unknownPrefix: 'Delete room failed: '
         },
-  fetchRoomDetailFail: 'Failed to fetch room details',
+        fetchRoomDetailFail: 'Failed to fetch room details',
         fetchListFail: 'Failed to load rooms. Check your connection.',
         dataFetchTitle: 'Failed to load data'
       },
@@ -1284,8 +1301,8 @@ const dictionaries = {
         changesTitle: 'Changes:',
         confirmUpdateOk: 'Confirm Update'
       },
-  deleteInUseWarning: 'Room is in use or reserved and cannot be deleted.',
-  timeConflict: 'Selected time conflicts with existing bookings. Please choose another.'
+      deleteInUseWarning: 'Room is in use or reserved and cannot be deleted.',
+      timeConflict: 'Selected time conflicts with existing bookings. Please choose another.'
     },
     room: {
       status: {
@@ -1810,17 +1827,34 @@ const dictionaries = {
     },
     settings: {
       title: 'Settings',
-      language: 'Language',
+      language: {
+        title: 'Language',
+        options: {
+          zhCN: '简体中文',
+          enUS: 'English'
+        }
+      },
       theme: 'Theme',
-      zhCN: '简体中文',
-      enUS: 'English',
-      font: 'Font Rendering',
-      fontIntro: 'Choose the primary font rendering for the UI:',
-      appleTitle: 'Apple devices prefer system font by default',
-      appleDesc: 'For better rendering consistency, Apple devices default to system font. You can still switch to Inter (some Safari versions may render slightly different).',
-      tipLocal: 'Your choice is saved at localStorage and takes effect immediately without page reload.',
-      previewCurrent: 'Preview:',
-      previewNumber: 'Numbers (lining + tabular):'
+      blur :{
+        title: 'Blur Experience',
+        caption: 'Enable more blur',
+        description: 'After enabling, dropdowns, notification banners, etc., will be blurred, which may slightly impact performance'
+      },
+      font: {
+        title: 'Font',
+        appleTitle: 'Apple devices prefer system font by default',
+        appleDesc: 'For better rendering consistency, Apple devices default to system font. You can still switch to Inter (some Safari versions may render slightly different).',
+        fontIntro: 'Choose the primary font rendering for the UI:',
+        options: {
+          default: 'Default',
+          system: 'System',
+          browser: 'Browser'
+        },
+        preview:{
+          caption: 'Font preview:',
+          number: 'Numbers (lining + tabular):'
+        }
+      },
     }
   }
 };
@@ -1828,15 +1862,15 @@ const dictionaries = {
 export function I18nProvider({ children }) {
   const [lang, setLangState] = useState('zh-CN');
   useEffect(() => {
-  try {
+    try {
       const saved = localStorage.getItem(I18N_LANG_KEY);
       if (saved) setLangState(saved);
-    } catch(_) {}
+    } catch (_) { }
   }, []);
 
   const setLang = (l) => {
     setLangState(l);
-    try { localStorage.setItem(I18N_LANG_KEY, l); } catch(_) {}
+    try { localStorage.setItem(I18N_LANG_KEY, l); } catch (_) { }
   };
 
   const t = useMemo(() => {
@@ -1866,7 +1900,7 @@ export function tGlobal(key, fallback) {
   try {
     const saved = localStorage.getItem(I18N_LANG_KEY);
     if (saved) lang = saved;
-  } catch (_) {}
+  } catch (_) { }
 
   const dict = dictionaries[lang] || dictionaries['zh-CN'];
   const parts = key.split('.');

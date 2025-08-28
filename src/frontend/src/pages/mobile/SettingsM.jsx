@@ -82,58 +82,58 @@ const handleBlurSwitch = (checked) => {
   }, [fontPref]);
 
   return (
+    
     <div style={{ padding: 24 }}>
       <Title level={3}>{t('settings.title')}</Title>
       {/* 语言设置置于最上方 */}
-      <Card title={t('settings.language')} bordered style={{ maxWidth: 600, marginBottom: 16 }}>
+      <Card title={t('settings.language.title')} variant='bordered' style={{ maxWidth: 600, marginBottom: 16 }}>
         <Radio.Group onChange={(e)=>setLang(e.target.value)} value={lang}>
           <Space direction="vertical">
-            <Radio value="zh-CN">{t('settings.zhCN')}</Radio>
-            <Radio value="en-US">{t('settings.enUS')}</Radio>
+            <Radio value="zh-CN">{t('settings.language.options.zhCN')}</Radio>
+            <Radio value="en-US">{t('settings.language.options.enUS')}</Radio>
           </Space>
         </Radio.Group>
       </Card>
       {/* 开启更多模糊效果 */}
-      <Card title="界面模糊效果" bordered style={{ maxWidth: 600, marginBottom: 16 }}>
+      <Card title={t('settings.blur.title')} variant='bordered' style={{ maxWidth: 600, marginBottom: 16 }}>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>开启更多模糊效果（Dropdown/弹窗等）</span>
+            <span>{t('settings.blur.caption')}</span>
             <Switch checked={enableMoreBlur} onChange={handleBlurSwitch} />
           </div>
           <Paragraph type="secondary" style={{ fontSize: 12 }}>
-            开启后，所有下拉菜单、弹窗等界面将使用毛玻璃模糊背景。标题栏始终模糊。
+            {t('settings.blur.description')}
           </Paragraph>
         </Space>
       </Card>
       {/* 字体渲染设置 */}
-      <Card title={t('settings.font')} bordered style={{ maxWidth: 600, marginBottom: 16 }}>
+      <Card title={t('settings.font.title')} variant='bordered' style={{ maxWidth: 600, marginBottom: 16 }}>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           {isApple && (
             <Alert
               type="info"
               showIcon
-              message={t('settings.appleTitle')}
-              description={<span>{t('settings.appleDesc')}</span>}
+              message={t('settings.font.appleTitle')}
+              description={<span>{t('settings.font.appleDesc')}</span>}
             />
           )}
-          <Paragraph>{t('settings.fontIntro')}</Paragraph>
+          <Paragraph>{t('settings.font.fontIntro')}</Paragraph>
           <Radio.Group onChange={onChange} value={fontPref}>
             <Space direction="vertical">
-              <Radio value="inter">{t('common.default')}</Radio>
-              <Radio value="system">{t('common.system')}</Radio>
-              <Radio value="browser">{t('common.browser')}</Radio>
+              <Radio value="inter">{t('settings.font.options.default')}</Radio>
+              <Radio value="system">{t('settings.font.options.system')}</Radio>
+              <Radio value="browser">{t('settings.font.options.browser')}</Radio>
             </Space>
           </Radio.Group>
           <Divider style={{ margin: '12px 0' }} />
-          <Paragraph type="secondary" style={{ fontSize: 12 }}>{t('settings.tipLocal')}</Paragraph>
           <Paragraph style={{ marginBottom: 4 }}>
-            <Text strong>{t('settings.previewCurrent')}</Text>{' '}
+            <Text strong style={{fontSize:'16px',fontWeight:'bold',fontVariationSettings:"'wght'600"}}>{t('settings.font.preview.caption')}<br /><br /></Text>{' '}
             <span style={{ fontFamily: 'var(--app-font-stack)', transition: 'font 0.2s' }}>
               The quick brown fox jumps over the lazy dog 观自在菩萨 行深般若波罗蜜多时 1234567890
             </span>
           </Paragraph>
           <Paragraph style={{ marginBottom: 0, fontSize: 13 }}>
-            <Text strong>{t('settings.previewNumber')}</Text>{' '}
+            <Text strong style={{fontSize:'16px',fontWeight:'bold',fontVariationSettings:"'wght'600"}}>{t('settings.font.preview.number')}<br /><br /></Text>{' '}
             <span className="num-mono" style={{ fontFamily: 'var(--app-font-stack)', transition: 'font 0.2s' }}>0 1 2 3 4 5 6 7 8 9  00 11 22 33 44 55 66 77 88 99  2025-08-08  12:34:56</span>
           </Paragraph>
         </Space>

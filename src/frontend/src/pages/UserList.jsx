@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
+import { Button, Space, Drawer, Form, Input, Select, message, Tag, Result, Modal, Tooltip, App } from 'antd';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
@@ -14,15 +14,13 @@ import { formatDateTime } from '../utils/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 import { canCreateUser, canDeleteUser, canViewUsers/*, UserRole*/ } from '../utils/permissionUtils';
 import ResponsiveButton from '../components/ResponsiveButton';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
-import FilterDropdownButton from '../components/FilterDropdownButton';
 import { getUserDisplayName } from '../utils/userDisplay';
-import FixedTop from '../components/FixedTop';
 import { useI18n } from '../contexts/I18nContext';
+import ManagementPageContainer from '../components/ManagementPageContainer';
 
 const { Option } = Select;
 
-export default function UserList() {
+function UserListContent() {
   const { t } = useI18n();
   const { user, clearAuth, logout } = useAuth();
   const [users, setUsers] = useState([]);
@@ -55,21 +53,21 @@ export default function UserList() {
   const [drawerType, setDrawerType] = useState(''); // 'detail', 'edit', 'create'
   const [createPassword, setCreatePassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
-  
+
   const { loading: usersLoading, error: usersError, executeWithRetry: executeUsers } = useApiWithRetry();
-  
+
   // 页面刷新Hook
   const handlePageRefresh = usePageRefresh(() => {
     fetchUsers();
   });
-  
+
   // 防抖搜索Hook
   const usernameSearch = useDebounceSearchV2((value) => {
     const newParams = { username: value || undefined, pageNum: 1 };
     setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchUsers(newParams);
   }, 500);
-  
+
   const nicknameSearch = useDebounceSearchV2((value) => {
     const newParams = { nickname: value || undefined, pageNum: 1 };
     setSearchParams(prev => ({ ...prev, ...newParams }));
@@ -86,27 +84,27 @@ export default function UserList() {
           ...currentSearchParams,
           ...params,
         };
-        
+
         console.log('发送用户分页请求参数:', requestParams);
         const response = await userAPI.getUserList(requestParams);
-        
+
         const { records, total, pageNum, pageSize } = response.data;
         console.log('用户分页响应数据:', response.data);
-        
+
         setUsers(records || []);
         setPagination({
           current: pageNum || 1,
           pageSize: pageSize || 10,
           total: total || 0,
         });
-        
+
         // 清除认证错误
         setAuthError(null);
-        
+
         return response.data;
       },
       {
-  errorMessage: t('userList.errors.dataFetchTitle', '获取用户列表失败，请检查网络连接'),
+        errorMessage: t('userList.errors.dataFetchTitle', '获取用户列表失败，请检查网络连接'),
         maxRetries: 0, // 不重试，避免反复请求
         retryDelay: 0,
         onError: (error) => {
@@ -182,7 +180,7 @@ export default function UserList() {
   const handleDeleteUser = (record) => {
     // 检查是否是删除自己
     const isDeletingSelf = record.id === user?.id;
-    
+
     // 二次确认逻辑
     const showSecondConfirm = () => {
       setDeleteTargetUser(record);
@@ -241,7 +239,7 @@ export default function UserList() {
           setConfirmationError(t('userList.secondConfirm.passwordRequired', '请输入密码'));
           return;
         }
-        
+
         // 调用危险操作验证API获取临时令牌
         const response = await dangerousOperationVerify(confirmationInput.trim(), 'DELETE_USER');
         if (response.data?.success && response.data?.verificationToken) {
@@ -256,7 +254,7 @@ export default function UserList() {
           setConfirmationError(t('userList.secondConfirm.usernameIncorrect', '用户名不正确'));
           return;
         }
-        
+
         // 用户名验证通过，现在需要弹出管理员密码输入框
         // 为了简化，这里我们提示用户在同一个输入框输入管理员密码
         const adminPassword = await new Promise((resolve, reject) => {
@@ -298,7 +296,7 @@ export default function UserList() {
             },
           });
         });
-        
+
         // 使用管理员密码进行验证
         const response = await dangerousOperationVerify(adminPassword, 'DELETE_USER');
         if (response.data?.success && response.data?.verificationToken) {
@@ -312,7 +310,7 @@ export default function UserList() {
       if (verificationToken) {
         await authDeleteUser(deleteTargetUser.id, verificationToken);
         messageApi.success(t('userList.messages.deleteSuccess', '用户删除成功'));
-        
+
         // 如果删除的是自己，自动退出登录
         if (isDeletingSelf) {
           messageApi.info(t('userList.messages.selfDeleteLogout', '您已删除自己的账户，即将退出登录'));
@@ -322,7 +320,7 @@ export default function UserList() {
         } else {
           fetchUsers(); // 刷新列表
         }
-        
+
         // 关闭弹窗
         setSecondConfirmVisible(false);
         setDeleteTargetUser(null);
@@ -378,7 +376,7 @@ export default function UserList() {
             <Input placeholder={t('userList.form.enterDepartment', '请输入部门')} />
           </Form.Item>
         );
-      
+
       case 'APPROVER':
         return (
           <Form.Item
@@ -393,7 +391,7 @@ export default function UserList() {
             </Select>
           </Form.Item>
         );
-      
+
       case 'SERVICE':
         return (
           <Form.Item
@@ -404,7 +402,7 @@ export default function UserList() {
             <Input placeholder={t('userList.form.enterServiceArea', '请输入负责区域')} />
           </Form.Item>
         );
-      
+
       case 'MAINTAINER':
         return (
           <Form.Item
@@ -415,7 +413,7 @@ export default function UserList() {
             <Input placeholder={t('userList.form.enterSkill', '请输入维修范围')} />
           </Form.Item>
         );
-      
+
       default:
         return null;
     }
@@ -425,7 +423,7 @@ export default function UserList() {
   const handleSubmit = async (values) => {
     try {
       if (drawerType === 'create') {
-    await executeUsers(
+        await executeUsers(
           async () => {
             // 使用auth的register接口创建用户，需要包含密码
             const userData = {
@@ -441,14 +439,14 @@ export default function UserList() {
               skill: values.skill,
             };
             const response = await register(userData);
-      messageApi.success(t('userList.messages.createSuccess', '用户创建成功'));
+            messageApi.success(t('userList.messages.createSuccess', '用户创建成功'));
             handleCloseDrawer();
             fetchUsers(); // 刷新列表
             return response;
           },
           {
-      errorMessage: t('userList.messages.createFail', '用户创建失败'),
-      successMessage: t('userList.messages.createSuccess', '用户创建成功')
+            errorMessage: t('userList.messages.createFail', '用户创建失败'),
+            successMessage: t('userList.messages.createSuccess', '用户创建成功')
           }
         );
       } else if (drawerType === 'edit') {
@@ -459,14 +457,14 @@ export default function UserList() {
               ...values
             };
             const response = await userAPI.updateUser(currentUser.id, userData);
-      messageApi.success(t('userList.messages.updateSuccess', '用户信息更新成功'));
+            messageApi.success(t('userList.messages.updateSuccess', '用户信息更新成功'));
             handleCloseDrawer();
             fetchUsers(); // 刷新列表
             return response;
           },
           {
-      errorMessage: t('userList.messages.updateFail', '用户信息更新失败'),
-      successMessage: t('userList.messages.updateSuccess', '用户信息更新成功')
+            errorMessage: t('userList.messages.updateFail', '用户信息更新失败'),
+            successMessage: t('userList.messages.updateSuccess', '用户信息更新成功')
           }
         );
       }
@@ -534,10 +532,10 @@ export default function UserList() {
       dataIndex: 'role',
       key: 'role',
       render: (role) => {
-        const color = role === 'ADMIN' ? 'red' : 
-                     role === 'APPROVER' ? 'blue' : 
-                     role === 'APPLIER' ? 'green' : 
-                     role === 'SERVICE' ? 'orange' : 'purple';
+        const color = role === 'ADMIN' ? 'red' :
+          role === 'APPROVER' ? 'blue' :
+            role === 'APPLIER' ? 'green' :
+              role === 'SERVICE' ? 'orange' : 'purple';
         return <Tag color={color}>{getRoleDisplayName(role)}</Tag>;
       },
     },
@@ -580,26 +578,26 @@ export default function UserList() {
         return (
           <Space size="middle">
             <Tooltip title={t('userList.tooltips.viewDetail', '查看详情')}>
-              <Button 
-                type="text" 
-                icon={<EyeOutlined />} 
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
                 size="small"
                 onClick={() => handleViewDetail(record)}
               />
             </Tooltip>
             <Tooltip title={t('userList.tooltips.editUser', '编辑用户')}>
-              <Button 
-                type="text" 
-                icon={<EditOutlined />} 
+              <Button
+                type="text"
+                icon={<EditOutlined />}
                 size="small"
                 onClick={() => handleEdit(record)}
               />
             </Tooltip>
             {canDeleteUser(user?.role) ? (
               <Tooltip title={t('userList.tooltips.deleteUser', '删除用户')}>
-                <Button 
-                  type="text" 
-                  icon={<DeleteOutlined />} 
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
                   size="small"
                   danger
                   onClick={() => handleDeleteUser(record)}
@@ -616,359 +614,167 @@ export default function UserList() {
     },
   ];
 
+  const filterControls = [
+    <div style={{ minWidth: '200px' }}>
+      <Input
+        placeholder={t('userList.filters.searchUsername', '搜索用户名')}
+        allowClear
+        style={{ width: '100%' }}
+        value={usernameSearch.searchValue}
+        onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
+        onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
+      />
+    </div>
+    ,
+    <div style={{ minWidth: '150px' }}>
+      <Input
+        placeholder={t('userList.filters.searchNickname', '搜索昵称')}
+        allowClear
+        style={{ width: '100%' }}
+        value={nicknameSearch.searchValue}
+        onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
+        onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+      />
+    </div>
+    ,
+    <div style={{ minWidth: '120px' }}>
+      <Select
+        ref={roleSelectRef}
+        placeholder={t('userList.allRoles', '全部角色')}
+        allowClear
+        style={{ width: '100%' }}
+        value={selectedRole}
+        onChange={(value) => {
+          setSelectedRole(value);
+          const newParams = { role: value || undefined, pageNum: 1 };
+          setSearchParams(prev => ({ ...prev, ...newParams }));
+          fetchUsers(newParams);
+        }}
+      >
+        <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+        <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+        <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+        <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+        <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
+      </Select>
+    </div >
+    ,
+    < div style={{ display: 'flex', gap: '8px' }}>
+      <Button
+        onClick={() => {
+          // 清空筛选控件内容
+          usernameSearch.updateSearchValue('');
+          nicknameSearch.updateSearchValue('');
+          // 清空角色选择器
+          setSelectedRole(undefined);
+        }}
+      >
+        {t('common.clearFilters', '清空筛选')}
+      </Button>
+    </div >,
+  ];
+
+  const actions = [
+    <ResponsiveButton
+      icon={<ReloadOutlined />}
+      onClick={() => {
+        // 清空筛选控件内容
+        usernameSearch.updateSearchValue('');
+        nicknameSearch.updateSearchValue('');
+        // 清空角色选择器
+        setSelectedRole(undefined);
+        // 清空搜索参数并刷新数据
+        const newParams = {
+          pageNum: 1,
+          username: undefined,
+          nickname: undefined,
+          role: undefined
+        };
+        setSearchParams(newParams);
+        fetchUsers(newParams);
+      }}
+      loading={usersLoading}
+    >
+      {t('common.refresh', '刷新')}
+    </ResponsiveButton>
+    ,
+    canCreateUser(user?.role) && (
+      <ResponsiveButton
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={handleCreateUser}
+      >
+        {t('userList.createUser', '创建用户')}
+      </ResponsiveButton>)
+    ,
+  ]
+
+  // 3. tableProps
+  const tableProps = {
+    columns,
+    dataSource: users,
+    rowKey: 'id',
+    loading: usersLoading,
+    onChange: handleTableChange,
+    sticky: { offsetHeader: 0 },
+  }
+
+
+  // 4. pageProps
+  const pageProps = {
+    ...pagination,
+    showSizeChanger: !isFilterCollapsed,
+    showQuickJumper: !isFilterCollapsed,
+    showTotal: (total, range) => {
+      return t('userList.paginationTotal', '第 {from}-{to} 条/共 {total} 条').replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)
+    },
+    pageSizeOptions: ['10', '20', '50', '100'],
+    size: 'default',
+    onChange: (page, pageSize) => {
+      const newParams = {
+        pageNum: page,
+        pageSize: pageSize,
+      };
+      setSearchParams(prev => ({ ...prev, ...newParams }));
+      fetchUsers(newParams);
+    },
+    onShowSizeChange: (current, size) => {
+      const newParams = {
+        pageNum: 1,
+        pageSize: size,
+      };
+      setSearchParams(prev => ({ ...prev, ...newParams }));
+      fetchUsers(newParams);
+    }
+  }
+
+  // 5. 错误提示
+  const error = usersError && {
+    title: t('userList.errors.dataFetchFail', '获取用户列表失败'),
+    description: String(usersError.message),
+  };
+
+
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
-      {contextHolderModal}
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Card 
-        title={t('userList.title', '用户管理')} 
-        extra={
-          <Space>
-            {isFilterCollapsed && (
-              <FilterDropdownButton>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                  {/* 用户名搜索 */}
-                  <div style={{ minWidth: '200px' }}>
-                    <Input
-                      placeholder={t('userList.filters.searchUsername', '搜索用户名')}
-                      allowClear
-                      style={{ width: '100%' }}
-                      value={usernameSearch.searchValue}
-                      onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
-                      onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
-                    />
-                  </div>
-                  
-                  {/* 昵称搜索 */}
-                  <div style={{ minWidth: '150px' }}>
-                    <Input
-                      placeholder={t('userList.filters.searchNickname', '搜索昵称')}
-                      allowClear
-                      style={{ width: '100%' }}
-                      value={nicknameSearch.searchValue}
-                      onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-                      onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
-                    />
-                  </div>
-                  
-                  {/* 角色筛选 */}
-                  <div style={{ minWidth: '120px' }}>
-                    <Select
-                      ref={roleSelectRef}
-                      placeholder={t('userList.allRoles', '全部角色')}
-                      allowClear
-                      style={{ width: '100%' }}
-                      value={selectedRole}
-                      onChange={(value) => {
-                        setSelectedRole(value);
-                        const newParams = { role: value || undefined, pageNum: 1 };
-                        setSearchParams(prev => ({ ...prev, ...newParams }));
-                        fetchUsers(newParams);
-                      }}
-                    >
-                      <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
-                      <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
-                      <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
-                      <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
-                      <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
-                    </Select>
-                  </div>
-                  
-                  {/* 操作按钮 */}
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button
-                      onClick={() => {
-                        // 清空筛选控件内容
-                        usernameSearch.updateSearchValue('');
-                        nicknameSearch.updateSearchValue('');
-                        // 清空角色选择器
-                        setSelectedRole(undefined);
-                      }}
-                    >
-                      {t('common.clearFilters', '清空筛选')}
-                    </Button>
-                  </div>
-                </div>
-              </FilterDropdownButton>
-            )}
-            <ResponsiveButton 
-              icon={<ReloadOutlined />} 
-              onClick={() => {
-                // 清空筛选控件内容
-                usernameSearch.updateSearchValue('');
-                nicknameSearch.updateSearchValue('');
-                // 清空角色选择器
-                setSelectedRole(undefined);
-                // 清空搜索参数并刷新数据
-                const newParams = {
-                  pageNum: 1,
-                  username: undefined,
-                  nickname: undefined,
-                  role: undefined
-                };
-                setSearchParams(newParams);
-                fetchUsers(newParams);
-              }}
-              loading={usersLoading}
-            >
-              {t('common.refresh', '刷新')}
-            </ResponsiveButton>
-            {canCreateUser(user?.role) && (
-              <ResponsiveButton 
-                type="primary" 
-                icon={<PlusOutlined />} 
-                onClick={handleCreateUser}
-              >
-                {t('userList.createUser', '创建用户')}
-              </ResponsiveButton>
-            )}
-          </Space>
-        }
-        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-        bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
-      >
-        {/* 错误提示 */}
-    {usersError && (
-          <Alert
-      message={t('userList.errors.dataFetchTitle', '数据获取失败')}
-            description={String(usersError)}
-            type="error"
-            showIcon
-            style={{ marginBottom: '16px' }}
-          />
-        )}
-        
-        {/* 筛选区域 */}
-        <div style={{
-          padding: isFilterCollapsed ? '4px' : '16px',
-          borderBottom: '1px solid var(--border-color)',
-          backgroundColor: 'var(--component-bg)',
-          transition: 'padding 0.3s ease'
-        }}>
-          <ResponsiveFilterContainer 
-            threshold={1000}
-            onCollapseStateChange={setIsFilterCollapsed}
-          >
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              {/* 用户名搜索 */}
-              <div style={{ minWidth: '200px' }}>
-                <Input
-                  placeholder={t('userList.filters.searchUsername', '搜索用户名')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={usernameSearch.searchValue}
-                  onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
-                  onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
-                />
-              </div>
-              
-              {/* 昵称搜索 */}
-              <div style={{ minWidth: '150px' }}>
-                <Input
-                  placeholder={t('userList.filters.searchNickname', '搜索昵称')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={nicknameSearch.searchValue}
-                  onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-                  onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
-                />
-              </div>
-              
-              {/* 角色筛选 */}
-              <div style={{ minWidth: '120px' }}>
-                <Select
-                  ref={roleSelectRef}
-                  placeholder={t('userList.allRoles', '全部角色')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={selectedRole}
-                  onChange={(value) => {
-                    setSelectedRole(value);
-                    const newParams = { role: value || undefined, pageNum: 1 };
-                    setSearchParams(prev => ({ ...prev, ...newParams }));
-                    fetchUsers(newParams);
-                  }}
-                >
-                  <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
-                  <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
-                  <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
-                  <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
-                  <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
-                </Select>
-              </div>
-              
-              {/* 操作按钮 */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button
-                  onClick={() => {
-                    // 清空筛选控件内容
-                    usernameSearch.updateSearchValue('');
-                    nicknameSearch.updateSearchValue('');
-                    // 清空角色选择器
-                    setSelectedRole(undefined);
-                  }}
-                >
-                  {t('common.clearFilters', '清空筛选')}
-                </Button>
-              </div>
-            </div>
-          </ResponsiveFilterContainer>
-        </div>
-        
-        <div style={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          border: '0px solid var(--border-color)',
-          borderRadius: '0px',
-          overflow: 'hidden',
-          height: '100%',
-          position: 'relative'
-        }}>
-
-          
-          {/* 表格内容区域 - 可滚动 */}
-          <div style={{ 
-            flex: 1,
-            overflow: 'hidden'
-          }}>
-            <FixedTop>
-              <div style={{
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                height: '100%'
-              }}>
-                <style>{`
-                  div::-webkit-scrollbar {
-                    height: 8px;
-                    background: transparent;
-                  }
-                  div::-webkit-scrollbar-track {
-                    background: transparent;
-                  }
-                  
-                  /* 浅色模式 - 默认样式 */
-                  div::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.15);
-                    border-radius: 4px;
-                    transition: background 0.2s ease;
-                  }
-                  div::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.25);
-                  }
-                  div {
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-                  }
-                  
-                  /* 深色模式适配 - 半透明白色 */
-                  [data-theme="dark"] div::-webkit-scrollbar-thumb,
-                  .dark div::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.2);
-                  }
-                  [data-theme="dark"] div::-webkit-scrollbar-thumb:hover,
-                  .dark div::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.35);
-                  }
-                  [data-theme="dark"] div,
-                  .dark div {
-                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-                  }
-                  
-                  /* 系统深色模式 */
-                  @media (prefers-color-scheme: dark) {
-                    div::-webkit-scrollbar-thumb {
-                      background: rgba(255, 255, 255, 0.2);
-                    }
-                    div::-webkit-scrollbar-thumb:hover {
-                      background: rgba(255, 255, 255, 0.35);
-                    }
-                    div {
-                      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-                    }
-                  }
-                  
-                  /* 明确的浅色模式覆盖（当明确指定浅色主题时） */
-                  [data-theme="light"] div::-webkit-scrollbar-thumb,
-                  .light div::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.15);
-                  }
-                  [data-theme="light"] div::-webkit-scrollbar-thumb:hover,
-                  .light div::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.25);
-                  }
-                  [data-theme="light"] div,
-                  .light div {
-                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-                  }
-                `}</style>
-                <Table
-                  columns={columns}
-                  dataSource={users}
-                  rowKey="id"
-                  loading={usersLoading}
-                  scroll={{ 
-                    x: 1200, 
-                    y: isFilterCollapsed ? 'calc(100vh - 219px)' : 'calc(100vh - 275px)',
-                    scrollToFirstRowOnChange: false
-                  }}
-                  pagination={false}
-                  onChange={handleTableChange}
-                  size="middle"
-                  style={{ height: '100%', minWidth: '1200px' }}
-                  overflowX='hidden'
-                  sticky={{ offsetHeader: 0 }}
-                />
-              </div>
-            </FixedTop>
-          </div>
-          
-          {/* 分页组件 - 放置在 Card 内部底部 */}
-          <div style={{
-            padding: '12px 16px',
-            borderTop: '1px solid var(--border-color)',
-            backgroundColor: 'var(--component-bg)',
-            display: 'flex',
-            justifyContent: 'center',
-            borderBottomLeftRadius: '6px',
-            borderBottomRightRadius: '6px',
-            fontFamily: 'var(--app-font-stack)'
-          }}>
-            <Pagination
-              {...pagination}
-              showSizeChanger={!isFilterCollapsed}
-              showQuickJumper={!isFilterCollapsed}
-              showTotal={(total, range) => t('userList.paginationTotal', '第 {from}-{to} 条/共 {total} 条').replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)}
-              pageSizeOptions={['10', '20', '50', '100']}
-              size="default"
-              onChange={(page, pageSize) => {
-                const newParams = {
-                  pageNum: page,
-                  pageSize: pageSize,
-                };
-                setSearchParams(prev => ({ ...prev, ...newParams }));
-                fetchUsers(newParams);
-              }}
-              onShowSizeChange={(current, size) => {
-                const newParams = {
-                  pageNum: 1,
-                  pageSize: size,
-                };
-                setSearchParams(prev => ({ ...prev, ...newParams }));
-                fetchUsers(newParams);
-              }}
-            />
-          </div>
-        </div>
-      </Card>
-
-      {/* 抽屉组件 */}
+      <ManagementPageContainer
+        title={t('userList.title')}
+        actions={actions}
+        filterControls={filterControls}
+        filterCollapsed={isFilterCollapsed}
+        filterCollapseThreshold= {940}
+        onFilterCollapseChange={setIsFilterCollapsed}
+        tableProps={tableProps}
+        pageProps={pageProps}
+        error={error}
+      />
+      {/* Drawer/Modal等业务弹窗保留 */}
       <Drawer
         title={
           drawerType === 'detail' ? t('userList.drawer.detail', '用户详情') :
-          drawerType === 'edit' ? t('userList.drawer.edit', '编辑用户') :
-          drawerType === 'create' ? t('userList.drawer.create', '创建用户') : ''
+            drawerType === 'edit' ? t('userList.drawer.edit', '编辑用户') :
+              drawerType === 'create' ? t('userList.drawer.create', '创建用户') : ''
         }
         width={600}
         open={drawerVisible}
@@ -988,12 +794,12 @@ export default function UserList() {
       >
         {drawerType === 'detail' && currentUser && (
           <div>
-            <div style={{ 
-              marginBottom: 16, 
-              padding: 16, 
-              backgroundColor: 'var(--component-bg)', 
+            <div style={{
+              marginBottom: 16,
+              padding: 16,
+              backgroundColor: 'var(--component-bg)',
               border: '1px solid var(--border-color)',
-              borderRadius: 6 
+              borderRadius: 6
             }}>
               <div style={{ color: 'var(--text-color)' }}>
                 <div style={{ marginBottom: 12 }}>
@@ -1011,10 +817,10 @@ export default function UserList() {
                 <div style={{ marginBottom: 12 }}>
                   <strong>{t('userList.labels.role', '角色')}：</strong>
                   <Tag color={
-                    currentUser.role === 'ADMIN' ? 'red' : 
-                    currentUser.role === 'APPROVER' ? 'blue' : 
-                    currentUser.role === 'APPLIER' ? 'green' : 
-                    currentUser.role === 'SERVICE' ? 'orange' : 'purple'
+                    currentUser.role === 'ADMIN' ? 'red' :
+                      currentUser.role === 'APPROVER' ? 'blue' :
+                        currentUser.role === 'APPLIER' ? 'green' :
+                          currentUser.role === 'SERVICE' ? 'orange' : 'purple'
                   }>
                     {getRoleDisplayName(currentUser.role)}
                   </Tag>
@@ -1100,7 +906,7 @@ export default function UserList() {
                 }
               ]}
             >
-              <Input.Password placeholder={t('userList.form.enterPassword', '请输入密码')} onChange={(e)=> setCreatePassword(e.target.value)} />
+              <Input.Password placeholder={t('userList.form.enterPassword', '请输入密码')} onChange={(e) => setCreatePassword(e.target.value)} />
             </Form.Item>
             <PasswordStrengthMeter password={createPassword} />
 
@@ -1109,7 +915,7 @@ export default function UserList() {
               label={t('userList.form.role', '角色')}
               rules={[{ required: true, message: t('userList.form.selectRole', '请选择角色') }]}
             >
-              <Select 
+              <Select
                 placeholder={t('userList.form.selectRole', '请选择角色')}
                 onChange={(value) => {
                   setCreateFormRole(value);
@@ -1162,27 +968,27 @@ export default function UserList() {
 
         {drawerType === 'edit' && currentUser && (
           <div>
-            <div style={{ 
-              marginBottom: 16, 
-              padding: 16, 
-              backgroundColor: 'var(--component-bg)', 
+            <div style={{
+              marginBottom: 16,
+              padding: 16,
+              backgroundColor: 'var(--component-bg)',
               border: '1px solid var(--border-color)',
-              borderRadius: 6 
+              borderRadius: 6
             }}>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.displayName', '显示名称')}：</strong>{getUserDisplayName(currentUser)}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.username', '用户名')}：</strong>{currentUser.username}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.role', '角色')}：</strong>
                 <Tag color={
-                  currentUser.role === 'ADMIN' ? 'red' : 
-                  currentUser.role === 'APPROVER' ? 'blue' : 
-                  currentUser.role === 'APPLIER' ? 'green' : 
-                  currentUser.role === 'SERVICE' ? 'orange' : 'purple'
+                  currentUser.role === 'ADMIN' ? 'red' :
+                    currentUser.role === 'APPROVER' ? 'blue' :
+                      currentUser.role === 'APPLIER' ? 'green' :
+                        currentUser.role === 'SERVICE' ? 'orange' : 'purple'
                 }>
                   {getRoleDisplayName(currentUser.role)}
                 </Tag>
               </p>
             </div>
-            
+
             <Form
               form={form}
               layout="vertical"
@@ -1261,8 +1067,8 @@ export default function UserList() {
 
       {/* 二次确认Modal */}
       <Modal
-        title={deleteTargetUser?.id === user?.id ? 
-          t('userList.secondConfirm.passwordTitle', '输入密码确认') : 
+        title={deleteTargetUser?.id === user?.id ?
+          t('userList.secondConfirm.passwordTitle', '输入密码确认') :
           t('userList.secondConfirm.usernameTitle', '输入用户名确认')
         }
         open={secondConfirmVisible}
@@ -1276,7 +1082,7 @@ export default function UserList() {
       >
         <div style={{ marginBottom: 16 }}>
           <p>
-            {deleteTargetUser?.id === user?.id ? 
+            {deleteTargetUser?.id === user?.id ?
               t('userList.secondConfirm.passwordPrompt', '为了确认删除自己的账户，请输入您的密码：') :
               t('userList.secondConfirm.usernamePrompt', '为了确认删除用户 "{username}"，请输入该用户的用户名：').replace('{username}', deleteTargetUser?.username || '')
             }
@@ -1319,8 +1125,16 @@ export default function UserList() {
           </div>
         )}
       </Modal>
-
-    </div>
     </PageErrorBoundary>
   );
-} 
+}
+
+
+export default function UserList() {
+  return (
+    <App>
+      <UserListContent />
+    </App>
+  );
+}
+
