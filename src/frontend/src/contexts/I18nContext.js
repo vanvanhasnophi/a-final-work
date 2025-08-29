@@ -19,6 +19,7 @@ const dictionaries = {
       save: '保存',
       submit: '提交',
       clearFilters: '清空筛选',
+      showFilters: '显示筛选',
       loading: '加载中…',
       empty: '暂无数据',
       reason: '原因'
@@ -49,6 +50,10 @@ const dictionaries = {
         title: '提示',
         okText: '确定'
       }
+    },
+    pagination: {
+      totalSimple: '{total} 条',
+      total: `第 {from}-{to} 条/共 {total} 条`
     },
     lazy: {
       timeoutTitle: '加载超时',
@@ -361,6 +366,7 @@ const dictionaries = {
       noDeletePermission: '无删除权限',
       allRoles: '全部角色',
       paginationTotal: '第 {from}-{to} 条/共 {total} 条',
+      paginationTotalSimple: '{total} 条',
       filters: {
         searchUsername: '搜索用户名',
         searchNickname: '搜索昵称'
@@ -979,6 +985,7 @@ const dictionaries = {
       save: 'Save',
       submit: 'Submit',
       clearFilters: 'Clear filters',
+      showFilters: 'Show filters',
       loading: 'Loading…',
       empty: 'No data',
       reason: 'Reason'
@@ -1009,6 +1016,10 @@ const dictionaries = {
         title: 'Information',
         okText: 'OK'
       }
+    },
+    pagination: {
+      totalSimple: '{total} items',
+      total: `{from}-{to} of {total} items`
     },
     lazy: {
       timeoutTitle: 'Load timed out',
@@ -1370,6 +1381,7 @@ const dictionaries = {
       noDeletePermission: 'No delete permission',
       allRoles: 'All roles',
       paginationTotal: '{from}-{to} of {total} items',
+      paginationTotalSimple: '{total} items',
       filters: {
         searchUsername: 'Search username',
         searchNickname: 'Search nickname'

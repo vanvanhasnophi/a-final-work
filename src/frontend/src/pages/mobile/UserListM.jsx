@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Table, Card, Button, Space, Drawer, Form, Input, Divider, Select, message, Alert, Tag, Pagination, Result, Modal, Tooltip } from 'antd';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { theme, Table, Card, Button, Space, Drawer, Form, Input, Divider, Select, message, Alert, Tag, Result, Modal, Tooltip } from 'antd';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
-import { PlusOutlined, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, FilterOutlined, FilterFilled, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../../api/user';
 import { register, deleteUser as authDeleteUser, verifyPassword, dangerousOperationVerify } from '../../api/auth';
 import { useApiWithRetry } from '../../hooks/useApiWithRetry';
@@ -19,12 +19,18 @@ import FilterDropdownButton from '../../components/FilterDropdownButton';
 import { getUserDisplayName } from '../../utils/userDisplay';
 import FixedTop from '../../components/FixedTop';
 import { useI18n } from '../../contexts/I18nContext';
+import ResponsivePagination from '../../components/ResponsivePagination';
+import { BlurContext } from '../../App';
+
 
 const { Option } = Select;
 
 export default function UserList(props) {
 
+  const [, setRerender] = useState(0);
+  const enableMoreBlur= useContext(BlurContext);
   const { t } = useI18n();
+  const { token } = theme.useToken();
   const { user, clearAuth, logout } = useAuth();
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
@@ -43,7 +49,8 @@ export default function UserList(props) {
   const [selectedRole, setSelectedRole] = useState(undefined);
   const [authError, setAuthError] = useState(null);
   const [createFormRole, setCreateFormRole] = useState(undefined);
-  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
 
   // 二次确认弹窗状态
   const [secondConfirmVisible, setSecondConfirmVisible] = useState(false);
@@ -77,8 +84,11 @@ export default function UserList(props) {
     fetchUsers(newParams);
   }, 500);
 
-
-
+  const [floatKey, setFloatKey] = useState(0);
+  const toggleFilter = () => {
+    setIsFilterCollapsed(v => !v);
+    setFloatKey(k => k + 1); // 每次切换都让悬浮卡片强制刷新
+  };
 
   // 获取用户列表
   const fetchUsers = useCallback(async (params = {}) => {
@@ -230,40 +240,41 @@ export default function UserList(props) {
     }
   };
 
-  // 高性能浮动卡片内容 useMemo
+  // 浮动卡片内容 useMemo
   const floatContent = React.useMemo(() => (
-    <div style={{
+    <div key={floatKey} style={{
       width: 'calc(100vw - 24px)',
       marginTop: 'calc(2vw + 68px)',
       marginLeft: '12px',
       marginRight: '12px',
-      background: 'var(--component-bg-allow-blur)',
-      backdropFilter: 'blur(32px)',
+      background: enableMoreBlur ? 'var(--component-bg-allow-blur)' : 'var(--component-bg)',
+      backdropFilter: enableMoreBlur ? 'blur(32px)' : 'none',
       border: '1px solid var(--border-color)',
       borderRadius: 12,
       boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-      padding: 16,
+      padding: 12,
       textAlign: 'center',
     }}>
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <div>
+        <div style={{ width: '100%' }}>
           <div style={{
-            padding: '12px 16px',
-            borderTop: '1px solid var(--border-color)',
-            backgroundColor: 'var(--component-bg)',
+            padding: '6px',
+            backgroundColor: 'transparent',
             display: 'flex',
-            justifyContent: 'center',
-            borderBottomLeftRadius: '6px',
-            borderBottomRightRadius: '6px',
+            verticalAlign: 'middle',
             fontFamily: 'var(--app-font-stack)'
           }}>
-            <Pagination
-              {...pagination}
-              showSizeChanger={!isFilterCollapsed}
-              showQuickJumper={!isFilterCollapsed}
-              showTotal={(total, range) => t('userList.paginationTotal', '第 {from}-{to} 条/共 {total} 条').replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)}
-              pageSizeOptions={['10', '20', '50', '100']}
-              size="default"
+
+            <ResponsivePagination
+              showTotalThreshold={370}
+              simpleThreshold={480}
+              totalCapThreshold={600}
+              lessThreshold={760}
+              pageSizeOptions={['50']}
+              size='default'
+              responsive
+              pageSize={1}
+              showSizeChanger={false}
               onChange={(page, pageSize) => {
                 const newParams = {
                   pageNum: page,
@@ -280,99 +291,147 @@ export default function UserList(props) {
                 setSearchParams(prev => ({ ...prev, ...newParams }));
                 fetchUsers(newParams);
               }}
+              {...pagination}
             />
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flex: '0 0 30vw' }}>
-            <ResponsiveButton
-              icon={<ReloadOutlined />}
-              onClick={() => {
-                usernameSearch.updateSearchValue('');
-                nicknameSearch.updateSearchValue('');
-                setSelectedRole(undefined);
-                const newParams = {
-                  pageNum: 1,
-                  username: undefined,
-                  nickname: undefined,
-                  role: undefined
-                };
-                setSearchParams(newParams);
-                fetchUsers(newParams);
-              }}
-              loading={usersLoading}
-            >
-              {t('common.refresh', '刷新')}
-            </ResponsiveButton>
-            {canCreateUser(user?.role) && (
-              <ResponsiveButton
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleCreateUser}
+            <div style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'nowrap' }}>
+              <div
+                onClick={toggleFilter}
+                style={{
+                  marginTop:'4px',
+                  marginBottom:'4px',
+                  height:'24px',
+                  width:'24px',
+                  fontSize: '16px',
+                  display: 'flex',
+                  borderRadius: '4px',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  marginLeft: 0,
+                  marginRight: 0,
+                  transform: 'translateZ(0)',
+                  backfaceVisibility: 'hidden',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = token.colorBgTextHover;
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'none';
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                }}
+                tabIndex={0}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') toggleFilter();
+                }}
+                aria-label={t('common.showFilters', '显示筛选')}
               >
-                {t('userList.createUser', '创建用户')}
+                {isFilterCollapsed ? <FilterOutlined style={{ fontSize: '16px', color: token.colorText, verticalAlign: 'middle' }} /> : <FilterFilled style={{ fontSize: '16px', color: token.colorText, verticalAlign: 'middle' }} />}
+              </div>
+              <ResponsiveButton
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  usernameSearch.updateSearchValue('');
+                  nicknameSearch.updateSearchValue('');
+                  setSelectedRole(undefined);
+                  const newParams = {
+                    pageNum: 1,
+                    username: undefined,
+                    nickname: undefined,
+                    role: undefined
+                  };
+                  setSearchParams(newParams);
+                  fetchUsers(newParams);
+                }}
+                loading={usersLoading}
+                style={{ marginLeft: '8px' }}
+              >
+                {t('common.refresh', '刷新')}
               </ResponsiveButton>
-            )}
+              {canCreateUser(user?.role) && (
+                <ResponsiveButton
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleCreateUser}
+                  style={{ marginLeft: '8px' }}
+                >
+                  {t('userList.createUser', '创建用户')}
+                </ResponsiveButton>
+              )}
+            </div>
           </div>
+
         </div>
-        <Divider />
-        {/* 用户名搜索 */}
-        <div style={{ minWidth: '200px' }}>
-          <Input
-            placeholder={t('userList.filters.searchUsername', '搜索用户名')}
-            allowClear
-            style={{ width: '100%' }}
-            value={usernameSearch.searchValue}
-            onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
-            onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
-          />
-        </div>
-        {/* 昵称搜索 */}
-        <div style={{ minWidth: '150px' }}>
-          <Input
-            placeholder={t('userList.filters.searchNickname', '搜索昵称')}
-            allowClear
-            style={{ width: '100%' }}
-            value={nicknameSearch.searchValue}
-            onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-            onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
-          />
-        </div>
-        {/* 角色筛选 */}
-        <div style={{ minWidth: '120px' }}>
-          <Select
-            ref={roleSelectRef}
-            placeholder={t('userList.allRoles', '全部角色')}
-            allowClear
-            style={{ width: '100%' }}
-            value={selectedRole}
-            onChange={(value) => {
-              setSelectedRole(value);
-              const newParams = { role: value || undefined, pageNum: 1 };
-              setSearchParams(prev => ({ ...prev, ...newParams }));
-              fetchUsers(newParams);
-            }}
-          >
-            <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
-            <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
-            <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
-            <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
-            <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
-          </Select>
-        </div>
-        {/* 操作按钮 */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button
-            onClick={() => {
-              usernameSearch.updateSearchValue('');
-              nicknameSearch.updateSearchValue('');
-              setSelectedRole(undefined);
-            }}
-          >
-            {t('common.clearFilters', '清空筛选')}
-          </Button>
-        </div>
+        {!isFilterCollapsed && (
+          <Divider style={{ margin: '0' }} />
+        )}
+        {!isFilterCollapsed && (
+          < div style={{display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end'}}>
+            {/* 用户名搜索 */}
+            <div style={{ minWidth: '200px' }}>
+              <Input
+                placeholder={t('userList.filters.searchUsername', '搜索用户名')}
+                allowClear
+                style={{ width: '100%' }}
+                value={usernameSearch.searchValue}
+                onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
+                onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
+              />
+            </div>
+            {/* 昵称搜索 */}
+            <div style={{ minWidth: '150px' }}>
+              <Input
+                placeholder={t('userList.filters.searchNickname', '搜索昵称')}
+                allowClear
+                style={{ width: '100%' }}
+                value={nicknameSearch.searchValue}
+                onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
+                onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+              />
+            </div>
+            {/* 角色筛选 */}
+            <div style={{ minWidth: '120px' }}>
+              <Select
+                ref={roleSelectRef}
+                placeholder={t('userList.allRoles', '全部角色')}
+                allowClear
+                style={{ width: '100%' }}
+                value={selectedRole}
+                onChange={(value) => {
+                  setSelectedRole(value);
+                  const newParams = { role: value || undefined, pageNum: 1 };
+                  setSearchParams(prev => ({ ...prev, ...newParams }));
+                  fetchUsers(newParams);
+                }}
+              >
+                <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+                <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
+              </Select>
+            </div>
+            {/* 操作按钮 */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                onClick={() => {
+                  usernameSearch.updateSearchValue('');
+                  nicknameSearch.updateSearchValue('');
+                  setSelectedRole(undefined);
+                }}
+              >
+                {t('common.clearFilters', '清空筛选')}
+              </Button>
+            </div>
+          </div>)}
       </div>
-    </div>
-  ), [pagination, isFilterCollapsed, t, usernameSearch.searchValue, nicknameSearch.searchValue, selectedRole, usersLoading, user?.role]);
+    </div >
+  ), [enableMoreBlur, floatKey, pagination, isNarrow, t, usernameSearch.searchValue, nicknameSearch.searchValue, selectedRole, usersLoading, user?.role]);
 
   // 用 useEffect 同步浮动内容
   useEffect(() => {
@@ -780,103 +839,7 @@ export default function UserList(props) {
       {contextHolderModal}
 
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Card
-          className="transparent-card"
-          variant="borderless"
-          marginTop={'32px'}
-          title={t('userList.title', '用户管理')}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-          bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
-        >
-          {/* 错误提示 */}
-          {usersError && (
-            <Alert
-              message={t('userList.errors.dataFetchTitle', '数据获取失败')}
-              description={String(usersError)}
-              type="error"
-              showIcon
-              style={{ marginBottom: '16px' }}
-            />
-          )}
-
-          {/* 筛选区域 */}
-          <div style={{
-            padding: isFilterCollapsed ? '4px' : '16px',
-            borderBottom: '1px solid var(--border-color)',
-            backgroundColor: 'var(--component-bg)',
-            transition: 'padding 0.3s ease'
-          }}>
-            <ResponsiveFilterContainer
-              threshold={1000}
-              onCollapseStateChange={setIsFilterCollapsed}
-            >
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                {/* 用户名搜索 */}
-                <div style={{ minWidth: '200px' }}>
-                  <Input
-                    placeholder={t('userList.filters.searchUsername', '搜索用户名')}
-                    allowClear
-                    style={{ width: '100%' }}
-                    value={usernameSearch.searchValue}
-                    onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
-                    onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
-                  />
-                </div>
-
-                {/* 昵称搜索 */}
-                <div style={{ minWidth: '150px' }}>
-                  <Input
-                    placeholder={t('userList.filters.searchNickname', '搜索昵称')}
-                    allowClear
-                    style={{ width: '100%' }}
-                    value={nicknameSearch.searchValue}
-                    onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-                    onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
-                  />
-                </div>
-
-                {/* 角色筛选 */}
-                <div style={{ minWidth: '120px' }}>
-                  <Select
-                    ref={roleSelectRef}
-                    placeholder={t('userList.allRoles', '全部角色')}
-                    allowClear
-                    style={{ width: '100%' }}
-                    value={selectedRole}
-                    onChange={(value) => {
-                      setSelectedRole(value);
-                      const newParams = { role: value || undefined, pageNum: 1 };
-                      setSearchParams(prev => ({ ...prev, ...newParams }));
-                      fetchUsers(newParams);
-                    }}
-                  >
-                    <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
-                    <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
-                    <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
-                    <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
-                    <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维修人员')}</Option>
-                  </Select>
-                </div>
-
-                {/* 操作按钮 */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button
-                    onClick={() => {
-                      // 清空筛选控件内容
-                      usernameSearch.updateSearchValue('');
-                      nicknameSearch.updateSearchValue('');
-                      // 清空角色选择器
-                      setSelectedRole(undefined);
-                    }}
-                  >
-                    {t('common.clearFilters', '清空筛选')}
-                  </Button>
-                </div>
-              </div>
-            </ResponsiveFilterContainer>
-          </div>
-
-          <div style={{
+        <div style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
@@ -893,7 +856,6 @@ export default function UserList(props) {
               flex: 1,
               overflow: 'hidden'
             }}>
-              <FixedTop>
                 <div style={{
                   overflowX: 'auto',
                   overflowY: 'hidden',
@@ -968,23 +930,16 @@ export default function UserList(props) {
                     dataSource={users}
                     rowKey="id"
                     loading={usersLoading}
-                    scroll={{
-                      x: 1200,
-                      y: isFilterCollapsed ? 'calc(100vh - 251px)' : 'calc(100vh - 307px)',
-                      scrollToFirstRowOnChange: false
-                    }}
                     pagination={false}
                     onChange={handleTableChange}
                     size="middle"
-                    style={{ height: '100%', minWidth: '1200px' }}
+                    style={{ height: '100%', minWidth: '1200px', marginTop: isFilterCollapsed ? '96px' : '300px' }}
                     overflowX='hidden'
                     sticky={{ offsetHeader: 0 }}
                   />
                 </div>
-              </FixedTop>
             </div>
           </div>
-        </Card>
 
         {/* 抽屉组件 */}
         <Drawer
@@ -1294,7 +1249,7 @@ export default function UserList(props) {
           okText={t('userList.secondConfirm.confirmDelete', '确认删除')}
           cancelText={t('common.cancel', '取消')}
           okType="danger"
-          destroyOnClose
+          destroyOnHidden
           confirmLoading={false}
         >
           <div style={{ marginBottom: 16 }}>
@@ -1341,9 +1296,9 @@ export default function UserList(props) {
               {confirmationError}
             </div>
           )}
+          
         </Modal>
-
       </div>
     </PageErrorBoundary>
   );
-} 
+}
