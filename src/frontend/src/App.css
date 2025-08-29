@@ -20,6 +20,7 @@
   --component-bg: #FFFFFF;
   --component-bg-elevated: #FFFFFF;
   --component-bg-allow-blur: #FFFFFF40;
+  --component-bg-allow-blur-alt: #FFFFFF23;
   --component-bg-blur-cover: #FFFFFF60;
   --component-bg-blur-cover-alt: #FFFFFF60;
   --table-header-bg: #F8F9FA;
@@ -54,6 +55,7 @@
   --component-bg: #2B2D31;
   --component-bg-elevated: #2B2D31;
   --component-bg-allow-blur: #15161820;
+  --component-bg-allow-blur-alt: #15161823;
   --component-bg-blur-cover: #2B2D3160;
   --component-bg-blur-cover-alt: #15161860;
   --table-header-bg: #1F2023;
@@ -808,6 +810,7 @@ code, pre, pre code {
 /* 分页样式 */
 .ant-pagination {
   color: var(--text-color) !important;
+  background-color: transparent;
 }
 
 .ant-pagination-item {
@@ -849,6 +852,7 @@ code, pre, pre code {
 /* 深色模式下的分页特殊样式 */
 [data-theme="dark"] .ant-pagination {
   color: #FFFFFF !important;
+  background-color: transparent;
 }
 
 [data-theme="dark"] .ant-pagination-item {
