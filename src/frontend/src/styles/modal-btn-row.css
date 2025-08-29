@@ -1,0 +1,8 @@
+.modal-btn-row .ant-modal-confirm-btns {
+  display: flex !important;
+  gap: 8px;
+}
+.modal-btn-row .ant-btn {
+  flex: 1 1 0;
+  min-width: 0;
+}

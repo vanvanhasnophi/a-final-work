@@ -1,10 +1,12 @@
+import '../../styles/modal-btn-row.css';
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
-import { theme, Table, Card, Button, Space, Drawer, Form, Input, Divider, Select, message, Alert, Tag, Result, Modal, Tooltip } from 'antd';
+import { theme, List, Card, Button, Space, Drawer, Form, Input, Divider, Select, message, Alert, Tag, Result, Modal, Tooltip, Skeleton } from 'antd';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { PlusOutlined, FilterOutlined, FilterFilled, EyeOutlined, EditOutlined, ReloadOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { userAPI } from '../../api/user';
 import { register, deleteUser as authDeleteUser, verifyPassword, dangerousOperationVerify } from '../../api/auth';
 import { useApiWithRetry } from '../../hooks/useApiWithRetry';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import { usePageRefresh } from '../../hooks/usePageRefresh';
 import PageErrorBoundary from '../../components/PageErrorBoundary';
 import { getRoleDisplayName } from '../../utils/roleMapping';
@@ -28,20 +30,16 @@ const { Option } = Select;
 export default function UserList(props) {
 
   const [, setRerender] = useState(0);
-  const enableMoreBlur= useContext(BlurContext);
+  const enableMoreBlur = useContext(BlurContext);
   const { t } = useI18n();
   const { token } = theme.useToken();
   const { user, clearAuth, logout } = useAuth();
   const [users, setUsers] = useState([]);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
   const [searchParams, setSearchParams] = useState({
     pageNum: 1,
-    pageSize: 10,
+    pageSize: 20,
   });
+  const [total, setTotal] = useState(0); // 总数
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [modal, contextHolderModal] = Modal.useModal();
@@ -91,32 +89,23 @@ export default function UserList(props) {
   };
 
   // 获取用户列表
-  const fetchUsers = useCallback(async (params = {}) => {
+  const fetchUsers = useCallback(async (params = {}, append = false) => {
     const result = await executeUsers(
       async () => {
-        // 获取当前的searchParams，避免闭包问题
         const currentSearchParams = searchParams;
         const requestParams = {
           ...currentSearchParams,
           ...params,
         };
-
-        console.log('发送用户分页请求参数:', requestParams);
         const response = await userAPI.getUserList(requestParams);
-
-        const { records, total, pageNum, pageSize } = response.data;
-        console.log('用户分页响应数据:', response.data);
-
-        setUsers(records || []);
-        setPagination({
-          current: pageNum || 1,
-          pageSize: pageSize || 10,
-          total: total || 0,
-        });
-
-        // 清除认证错误
+        const { records, total: totalCount } = response.data;
+        if (append) {
+          setUsers(prev => [...prev, ...(records || [])]);
+        } else {
+          setUsers(records || []);
+        }
+        setTotal(totalCount || 0);
         setAuthError(null);
-
         return response.data;
       },
       {
@@ -141,23 +130,14 @@ export default function UserList(props) {
       }
     );
     return result;
-  }, [executeUsers, searchParams, messageApi, clearAuth]); // 修复依赖
+  }, [executeUsers, searchParams, messageApi, clearAuth]);
 
   // 初始化加载
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]); // 修复依赖
+    fetchUsers({}, false);
+  }, [fetchUsers]);
 
-  // 处理表格分页变化
-  const handleTableChange = (pagination, filters, sorter) => {
-    console.log('用户表格分页变化:', pagination);
-    const newParams = {
-      pageNum: pagination.current,
-      pageSize: pagination.pageSize,
-    };
-    setSearchParams(prev => ({ ...prev, ...newParams }));
-    fetchUsers(newParams);
-  };
+  // 已废弃分页控件逻辑
 
   // 打开详情抽屉
   const handleViewDetail = (record) => {
@@ -214,7 +194,8 @@ export default function UserList(props) {
         okText: t('userList.confirmDelete.nextStep', '下一步'),
         cancelText: t('common.cancel', '取消'),
         okType: 'danger',
-        onOk: showSecondConfirm
+        onOk: showSecondConfirm,
+        className: 'modal-btn-row'
       });
     };
 
@@ -233,14 +214,15 @@ export default function UserList(props) {
         okText: t('userList.confirmDeleteSelf.continueText', '继续删除'),
         cancelText: t('common.cancel', '取消'),
         okType: 'danger',
-        onOk: showSecondConfirm  // 直接跳转到二次确认，跳过主确认
+        onOk: showSecondConfirm, // 直接跳转到二次确认，跳过主确认
+        className: 'modal-btn-row'
       });
     } else {
       showMainConfirm();
     }
   };
 
-  // 浮动卡片内容 useMemo
+  // 浮动卡片内容 useMemo（只显示总数，无分页控件）
   const floatContent = React.useMemo(() => (
     <div key={floatKey} style={{
       width: 'calc(100vw - 24px)',
@@ -261,46 +243,29 @@ export default function UserList(props) {
             padding: '6px',
             backgroundColor: 'transparent',
             display: 'flex',
-            verticalAlign: 'middle',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
             fontFamily: 'var(--app-font-stack)'
           }}>
-
-            <ResponsivePagination
-              showTotalThreshold={370}
-              simpleThreshold={480}
-              totalCapThreshold={600}
-              lessThreshold={760}
-              pageSizeOptions={['50']}
-              size='default'
-              responsive
-              pageSize={1}
-              showSizeChanger={false}
-              onChange={(page, pageSize) => {
-                const newParams = {
-                  pageNum: page,
-                  pageSize: pageSize,
-                };
-                setSearchParams(prev => ({ ...prev, ...newParams }));
-                fetchUsers(newParams);
-              }}
-              onShowSizeChange={(current, size) => {
-                const newParams = {
-                  pageNum: 1,
-                  pageSize: size,
-                };
-                setSearchParams(prev => ({ ...prev, ...newParams }));
-                fetchUsers(newParams);
-              }}
-              {...pagination}
-            />
+            <span style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 600,
+              fontSize: 16
+            }}>
+              {t('pagination.totalSimple', '{total} 条').replace('{total}', total)}
+            </span>
             <div style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'nowrap' }}>
               <div
                 onClick={toggleFilter}
                 style={{
-                  marginTop:'4px',
-                  marginBottom:'4px',
-                  height:'24px',
-                  width:'24px',
+                  marginTop: '4px',
+                  marginBottom: '4px',
+                  height: '24px',
+                  width: '24px',
                   fontSize: '16px',
                   display: 'flex',
                   borderRadius: '4px',
@@ -365,13 +330,12 @@ export default function UserList(props) {
               )}
             </div>
           </div>
-
         </div>
         {!isFilterCollapsed && (
-          <Divider style={{ margin: '0' }} />
+          <Divider style={{ margin: '0', borderColor: 'var(--divider-color)' }} />
         )}
         {!isFilterCollapsed && (
-          < div style={{display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end'}}>
+          < div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             {/* 用户名搜索 */}
             <div style={{ minWidth: '200px' }}>
               <Input
@@ -391,7 +355,7 @@ export default function UserList(props) {
                 style={{ width: '100%' }}
                 value={nicknameSearch.searchValue}
                 onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-                onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+                onPressEnter={() => usernameSearch.searchImmediately(nicknameSearch.searchValue)}
               />
             </div>
             {/* 角色筛选 */}
@@ -431,7 +395,7 @@ export default function UserList(props) {
           </div>)}
       </div>
     </div >
-  ), [enableMoreBlur, floatKey, pagination, isNarrow, t, usernameSearch.searchValue, nicknameSearch.searchValue, selectedRole, usersLoading, user?.role]);
+  ), [enableMoreBlur, floatKey, isNarrow, t, usernameSearch.searchValue, nicknameSearch.searchValue, selectedRole, usersLoading, user?.role, total]);
 
   // 用 useEffect 同步浮动内容
   useEffect(() => {
@@ -442,6 +406,62 @@ export default function UserList(props) {
       if (props.setFloatContent) props.setFloatContent(null);
     };
   }, [props.setFloatContent, floatContent]);
+
+
+  // 无限滚动相关
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [pageNum, setPageNum] = useState(1);
+  const listRef = useRef(null);
+
+  // 加载更多函数（追加数据）
+  const loadMoreUsers = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const pageSize = searchParams.pageSize || 20;
+    const result = await fetchUsers({ pageNum, pageSize }, true); // 追加
+    if (result && Array.isArray(result.records) && result.records.length > 0) {
+      setPageNum(prev => prev + 1);
+      setHasMore(users.length + result.records.length < (result.total || total));
+    } else {
+      setHasMore(false);
+    }
+    setLoadingMore(false);
+  }, [loadingMore, hasMore, pageNum, searchParams.pageSize, fetchUsers, users.length, total]);
+
+  // 初始化和筛选变化时重置
+  useEffect(() => {
+    setPageNum(2); // 首次加载后，下一页应为2
+    setHasMore(users.length < total);
+  }, [users, total, searchParams.username, searchParams.nickname, searchParams.role]);
+
+
+  useEffect(() => {
+    loadMoreUsers();
+  }, []);
+
+  // 渲染用户列表项（只显示重要内容，点击可查看详情）
+  const renderUserItem = (item) => (
+    <List.Item
+      key={item.id}
+      style={{ cursor: 'pointer', padding: '12px 16px', borderBottom: '1px solid var(--border-color)' }}
+      onClick={() => handleViewDetail(item)}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 600 }}>{item.username}</span>
+          <Tag color={item.role === 'ADMIN' ? 'red' : item.role === 'APPROVER' ? 'blue' : item.role === 'APPLIER' ? 'green' : item.role === 'SERVICE' ? 'orange' : 'purple'}>
+            {getRoleDisplayName(item.role)}
+          </Tag>
+          <span style={{ color: '#888', fontSize: 12 }}>{item.nickname}</span>
+        </div>
+        <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>
+          {item.email || '-'}
+        </div>
+      </div>
+    </List.Item>
+  );
+
 
   // 处理二次确认
   const handleSecondConfirm = async () => {
@@ -513,6 +533,7 @@ export default function UserList(props) {
             onCancel: () => {
               reject(new Error('用户取消'));
             },
+            className: 'modal-btn-row'
           });
         });
 
@@ -834,15 +855,18 @@ export default function UserList(props) {
   ];
   const filterOverflowThreshold = 940;
 
-  const filterHeight = isFilterCollapsed ? 0 : (12 + 42 * Math.ceil(filterOverflowThreshold / window.innerWidth)); // 粗略估算高度
+  const filterHeight = isFilterCollapsed ? 0 : (12 + 44 * Math.ceil(filterOverflowThreshold / window.innerWidth)); // 粗略估算高度
 
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
       {contextHolderModal}
 
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div style={{
+      <div
+        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div
+
+          style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
@@ -854,263 +878,302 @@ export default function UserList(props) {
           }}>
 
 
-            {/* 表格内容区域 - 可滚动 */}
+
+          <div
+            id="user-list-scrollable-div"
+            style={{
+              overflowX: 'auto',
+              overflowY: 'auto',
+              height: '100%'
+            }}
+          >
+            <InfiniteScroll
+              dataLength={users.length}
+              next={loadMoreUsers}
+              hasMore={hasMore}
+              loader={<Skeleton style={{ padding: '12px' }} paragraph={{ rows: 1 }} active />}
+              endMessage={<div style={{ textAlign: 'center', padding: 12, color: '#bbb' }}>{t('common.noMore', '没有了')}</div>}
+              style={{ overflow: 'visible' }}
+            >
+              <List
+                ref={listRef}
+                dataSource={users}
+                loading={usersLoading && users.length === 0}
+                renderItem={renderUserItem}
+                style={{ marginTop: isFilterCollapsed ? '96px' : `calc(104px + ${filterHeight}px )`, background: 'var(--component-bg)', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                locale={{ emptyText: t('userList.empty', '暂无用户') }}
+              />
+            </InfiniteScroll>
+          </div>
+        </div>
+      </div>
+
+      {/* 抽屉组件 */}
+      <Drawer
+        title={
+          drawerType === 'detail' ? t('userList.drawer.detail', '用户详情') :
+            drawerType === 'edit' ? t('userList.drawer.edit', '编辑用户') :
+              drawerType === 'create' ? t('userList.drawer.create', '创建用户') : ''
+        }
+        placement="bottom"
+        height="80vh"
+        open={drawerVisible}
+        onClose={handleCloseDrawer}
+        closable={false}
+        bodyStyle={{ padding: 16 }}
+        style={{ borderRadius: '16px 16px 0 0' }}
+        footer={
+          drawerType === 'detail' && currentUser ? (
+            <div style={{ margin: 8 }}>
+              <Button
+                type="primary"
+                style={{ width: '100%', marginBottom: 12 }}
+                onClick={() => handleEdit(currentUser)}
+              >
+                {t('common.edit', '编辑')}
+              </Button>
+              <Button
+                danger
+                style={{ width: '100%', marginBottom: 12 }}
+                onClick={() => handleDeleteUser(currentUser)}
+              >
+                {t('common.delete', '删除')}
+              </Button>
+              <Button
+                style={{ width: '100%' }}
+                onClick={handleCloseDrawer}
+              >
+                {t('common.cancel', '取消')}
+              </Button>
+            </div>
+          ) : (drawerType === 'edit' || drawerType === 'create') ? (
+            <div style={{ margin: 8 }}>
+              <Button
+                type="primary"
+                style={{ width: '100%', marginBottom: 12 }}
+                onClick={() => form.submit()}
+              >
+                {drawerType === 'create' ? t('common.create', '创建') : t('common.save', '保存')}
+              </Button>
+              <Button
+                style={{ width: '100%' }}
+                onClick={handleCloseDrawer}
+              >
+                {t('common.cancel', '取消')}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              style={{ width: '100%' }}
+              onClick={handleCloseDrawer}
+            >
+              {t('common.close', '关闭')}
+            </Button>
+          )
+        }
+      >
+        {drawerType === 'detail' && currentUser && (
+          <div>
             <div style={{
-              flex: 1,
-              overflow: 'hidden'
+              marginBottom: 16,
+              padding: 16,
+              backgroundColor: 'var(--component-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 6
             }}>
-                <div style={{
-                  overflowX: 'auto',
-                  overflowY: 'hidden',
-                  height: '100%'
-                }}>
-                  <style jsx>{`
-                  div::-webkit-scrollbar {
-                    height: 8px;
-                    background: transparent;
-                  }
-                  div::-webkit-scrollbar-track {
-                    background: transparent;
-                  }
-                  
-                  /* 浅色模式 - 默认样式 */
-                  div::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.15);
-                    border-radius: 4px;
-                    transition: background 0.2s ease;
-                  }
-                  div::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.25);
-                  }
-                  div {
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-                  }
-                  
-                  /* 深色模式适配 - 半透明白色 */
-                  [data-theme="dark"] div::-webkit-scrollbar-thumb,
-                  .dark div::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.2);
-                  }
-                  [data-theme="dark"] div::-webkit-scrollbar-thumb:hover,
-                  .dark div::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.35);
-                  }
-                  [data-theme="dark"] div,
-                  .dark div {
-                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-                  }
-                  
-                  /* 系统深色模式 */
-                  @media (prefers-color-scheme: dark) {
-                    div::-webkit-scrollbar-thumb {
-                      background: rgba(255, 255, 255, 0.2);
-                    }
-                    div::-webkit-scrollbar-thumb:hover {
-                      background: rgba(255, 255, 255, 0.35);
-                    }
-                    div {
-                      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-                    }
-                  }
-                  
-                  /* 明确的浅色模式覆盖（当明确指定浅色主题时） */
-                  [data-theme="light"] div::-webkit-scrollbar-thumb,
-                  .light div::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.15);
-                  }
-                  [data-theme="light"] div::-webkit-scrollbar-thumb:hover,
-                  .light div::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.25);
-                  }
-                  [data-theme="light"] div,
-                  .light div {
-                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-                  }
-                `}</style>
-                  <Table
-                    columns={columns}
-                    dataSource={users}
-                    rowKey="id"
-                    loading={usersLoading}
-                    pagination={false}
-                    onChange={handleTableChange}
-                    size="middle"
-                    style={{ height: '100%', minWidth: '1200px', marginTop: isFilterCollapsed ? '96px' : `calc(104px + ${filterHeight}px)` }}
-                    overflowX='hidden'
-                    sticky={{ offsetHeader: 0 }}
-                  />
+              <div style={{ color: 'var(--text-color)' }}>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.displayName', '显示名称')}：</strong>
+                  <span>{getUserDisplayName(currentUser)}</span>
                 </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.username', '用户名')}：</strong>
+                  <span>{currentUser.username}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.nickname', '昵称')}：</strong>
+                  <span>{currentUser.nickname || '-'}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.role', '角色')}：</strong>
+                  <Tag color={
+                    currentUser.role === 'ADMIN' ? 'red' :
+                      currentUser.role === 'APPROVER' ? 'blue' :
+                        currentUser.role === 'APPLIER' ? 'green' :
+                          currentUser.role === 'SERVICE' ? 'orange' : 'purple'
+                  }>
+                    {getRoleDisplayName(currentUser.role)}
+                  </Tag>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.email', '邮箱')}：</strong>
+                  <span>{currentUser.email || '-'}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.phone', '电话')}：</strong>
+                  <span className="num-mono" data-field="phone">{currentUser.phone || '-'}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.createTime', '注册时间')}：</strong>
+                  <span className="num-mono" data-field="createTime">{formatDateTime(currentUser.createTime)}</span>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{t('userList.labels.lastLoginTime', '最后登录')}：</strong>
+                  <span className="num-mono" data-field="lastLoginTime">{currentUser.lastLoginTime ? formatDateTime(currentUser.lastLoginTime) : '-'}</span>
+                </div>
+                {currentUser.department && (
+                  <div style={{ marginBottom: 12 }}>
+                    <strong>{t('userList.labels.department', '部门')}：</strong>
+                    <span>{currentUser.department}</span>
+                  </div>
+                )}
+                {currentUser.serviceArea && (
+                  <div style={{ marginBottom: 12 }}>
+                    <strong>{t('userList.labels.serviceArea', '负责区域')}：</strong>
+                    <span>{currentUser.serviceArea}</span>
+                  </div>
+                )}
+                {currentUser.permission && (
+                  <div style={{ marginBottom: 12 }}>
+                    <strong>{t('userList.labels.permission', '审批权限')}：</strong>
+                    <span>{getPermissionDisplayName(currentUser.permission)}</span>
+                  </div>
+                )}
+                {currentUser.skill && (
+                  <div style={{ marginBottom: 12 }}>
+                    <strong>{t('userList.labels.skill', '维修范围')}：</strong>
+                    <span>{currentUser.skill}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+        )}
 
-        {/* 抽屉组件 */}
-        <Drawer
-          title={
-            drawerType === 'detail' ? t('userList.drawer.detail', '用户详情') :
-              drawerType === 'edit' ? t('userList.drawer.edit', '编辑用户') :
-                drawerType === 'create' ? t('userList.drawer.create', '创建用户') : ''
-          }
-          width={600}
-          open={drawerVisible}
-          onClose={handleCloseDrawer}
-          footer={
-            drawerType === 'edit' || drawerType === 'create' ? (
-              <div style={{ textAlign: 'right' }}>
-                <Button onClick={handleCloseDrawer} style={{ marginRight: 8 }}>
-                  {t('common.cancel', '取消')}
-                </Button>
-                <Button type="primary" onClick={() => form.submit()}>
-                  {drawerType === 'create' ? t('common.create', '创建') : t('common.save', '保存')}
-                </Button>
-              </div>
-            ) : null
-          }
-        >
-          {drawerType === 'detail' && currentUser && (
-            <div>
-              <div style={{
-                marginBottom: 16,
-                padding: 16,
-                backgroundColor: 'var(--component-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 6
-              }}>
-                <div style={{ color: 'var(--text-color)' }}>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.displayName', '显示名称')}：</strong>
-                    <span>{getUserDisplayName(currentUser)}</span>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.username', '用户名')}：</strong>
-                    <span>{currentUser.username}</span>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.nickname', '昵称')}：</strong>
-                    <span>{currentUser.nickname || '-'}</span>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.role', '角色')}：</strong>
-                    <Tag color={
-                      currentUser.role === 'ADMIN' ? 'red' :
-                        currentUser.role === 'APPROVER' ? 'blue' :
-                          currentUser.role === 'APPLIER' ? 'green' :
-                            currentUser.role === 'SERVICE' ? 'orange' : 'purple'
-                    }>
-                      {getRoleDisplayName(currentUser.role)}
-                    </Tag>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.email', '邮箱')}：</strong>
-                    <span>{currentUser.email || '-'}</span>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.phone', '电话')}：</strong>
-                    <span className="num-mono" data-field="phone">{currentUser.phone || '-'}</span>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.createTime', '注册时间')}：</strong>
-                    <span className="num-mono" data-field="createTime">{formatDateTime(currentUser.createTime)}</span>
-                  </div>
-                  <div style={{ marginBottom: 12 }}>
-                    <strong>{t('userList.labels.lastLoginTime', '最后登录')}：</strong>
-                    <span className="num-mono" data-field="lastLoginTime">{currentUser.lastLoginTime ? formatDateTime(currentUser.lastLoginTime) : '-'}</span>
-                  </div>
-                  {currentUser.department && (
-                    <div style={{ marginBottom: 12 }}>
-                      <strong>{t('userList.labels.department', '部门')}：</strong>
-                      <span>{currentUser.department}</span>
-                    </div>
-                  )}
-                  {currentUser.serviceArea && (
-                    <div style={{ marginBottom: 12 }}>
-                      <strong>{t('userList.labels.serviceArea', '负责区域')}：</strong>
-                      <span>{currentUser.serviceArea}</span>
-                    </div>
-                  )}
-                  {currentUser.permission && (
-                    <div style={{ marginBottom: 12 }}>
-                      <strong>{t('userList.labels.permission', '审批权限')}：</strong>
-                      <span>{getPermissionDisplayName(currentUser.permission)}</span>
-                    </div>
-                  )}
-                  {currentUser.skill && (
-                    <div style={{ marginBottom: 12 }}>
-                      <strong>{t('userList.labels.skill', '维修范围')}：</strong>
-                      <span>{currentUser.skill}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+        {drawerType === 'create' && (
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+          >
+            <Form.Item
+              name="username"
+              label={t('userList.form.username', '用户名')}
+              rules={[{ required: true, message: t('userList.form.enterUsername', '请输入用户名') }]}
+            >
+              <Input placeholder={t('userList.form.enterUsername', '请输入用户名')} />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label={t('userList.form.password', '密码')}
+              rules={[
+                { required: true, message: t('userList.form.enterPassword', '请输入密码') },
+                { min: 8, message: t('user.common.passwordMin8', '至少 8 个字符') },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const parts = [
+                      value.length >= 8,
+                      /[A-Z]/.test(value),
+                      /[a-z]/.test(value),
+                      /[0-9]/.test(value),
+                      /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
+                    ].filter(Boolean).length;
+                    if (parts >= 3 && value.length >= 8) return Promise.resolve();
+                    return Promise.reject(new Error(t('user.common.passwordRule', '除长度外至少满足任意2类: 大写/小写/数字/特殊')));
+                  }
+                }
+              ]}
+            >
+              <Input.Password placeholder={t('userList.form.enterPassword', '请输入密码')} onChange={(e) => setCreatePassword(e.target.value)} />
+            </Form.Item>
+            <PasswordStrengthMeter password={createPassword} />
+
+            <Form.Item
+              name="role"
+              label={t('userList.form.role', '角色')}
+              rules={[{ required: true, message: t('userList.form.selectRole', '请选择角色') }]}
+            >
+              <Select
+                placeholder={t('userList.form.selectRole', '请选择角色')}
+                onChange={(value) => {
+                  setCreateFormRole(value);
+                  // 清空角色特有字段的值
+                  form.setFieldsValue({
+                    department: undefined,
+                    permission: undefined,
+                    serviceArea: undefined,
+                    skill: undefined
+                  });
+                }}
+              >
+                <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
+                <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
+                <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
+                <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维护人员')}</Option>
+                <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="nickname"
+              label={t('userList.form.nickname', '昵称')}
+              rules={[{ required: true, message: t('userList.form.enterNickname', '请输入昵称') }]}
+            >
+              <Input placeholder={t('userList.form.enterNickname', '请输入昵称')} />
+            </Form.Item>
+
+            <Form.Item
+              name="email"
+              label={t('userList.form.email', '邮箱')}
+              rules={[
+                { type: 'email', message: t('user.common.enterValidEmail', '请输入有效的邮箱地址') }
+              ]}
+            >
+              <Input placeholder={t('userList.form.enterEmail', '请输入邮箱')} />
+            </Form.Item>
+
+            <Form.Item
+              name="phone"
+              label={t('userList.form.phone', '电话')}
+            >
+              <Input placeholder={t('userList.form.enterPhone', '请输入电话')} />
+            </Form.Item>
+
+            {/* 根据选择的角色显示特有字段 */}
+            {getCreateFormRoleSpecificFields()}
+          </Form>
+        )}
+
+        {drawerType === 'edit' && currentUser && (
+          <div>
+            <div style={{
+              marginBottom: 16,
+              padding: 16,
+              backgroundColor: 'var(--component-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 6
+            }}>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.displayName', '显示名称')}：</strong>{getUserDisplayName(currentUser)}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.username', '用户名')}：</strong>{currentUser.username}</p>
+              <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.role', '角色')}：</strong>
+                <Tag color={
+                  currentUser.role === 'ADMIN' ? 'red' :
+                    currentUser.role === 'APPROVER' ? 'blue' :
+                      currentUser.role === 'APPLIER' ? 'green' :
+                        currentUser.role === 'SERVICE' ? 'orange' : 'purple'
+                }>
+                  {getRoleDisplayName(currentUser.role)}
+                </Tag>
+              </p>
             </div>
-          )}
 
-          {drawerType === 'create' && (
             <Form
               form={form}
               layout="vertical"
               onFinish={handleSubmit}
             >
-              <Form.Item
-                name="username"
-                label={t('userList.form.username', '用户名')}
-                rules={[{ required: true, message: t('userList.form.enterUsername', '请输入用户名') }]}
-              >
-                <Input placeholder={t('userList.form.enterUsername', '请输入用户名')} />
-              </Form.Item>
-
-              <Form.Item
-                name="password"
-                label={t('userList.form.password', '密码')}
-                rules={[
-                  { required: true, message: t('userList.form.enterPassword', '请输入密码') },
-                  { min: 8, message: t('user.common.passwordMin8', '至少 8 个字符') },
-                  {
-                    validator: (_, value) => {
-                      if (!value) return Promise.resolve();
-                      const parts = [
-                        value.length >= 8,
-                        /[A-Z]/.test(value),
-                        /[a-z]/.test(value),
-                        /[0-9]/.test(value),
-                        /[!@#$%^&*()_+\-={}[\]|:;"'<>.,?/]/.test(value)
-                      ].filter(Boolean).length;
-                      if (parts >= 3 && value.length >= 8) return Promise.resolve();
-                      return Promise.reject(new Error(t('user.common.passwordRule', '除长度外至少满足任意2类: 大写/小写/数字/特殊')));
-                    }
-                  }
-                ]}
-              >
-                <Input.Password placeholder={t('userList.form.enterPassword', '请输入密码')} onChange={(e) => setCreatePassword(e.target.value)} />
-              </Form.Item>
-              <PasswordStrengthMeter password={createPassword} />
-
-              <Form.Item
-                name="role"
-                label={t('userList.form.role', '角色')}
-                rules={[{ required: true, message: t('userList.form.selectRole', '请选择角色') }]}
-              >
-                <Select
-                  placeholder={t('userList.form.selectRole', '请选择角色')}
-                  onChange={(value) => {
-                    setCreateFormRole(value);
-                    // 清空角色特有字段的值
-                    form.setFieldsValue({
-                      department: undefined,
-                      permission: undefined,
-                      serviceArea: undefined,
-                      skill: undefined
-                    });
-                  }}
-                >
-                  <Option value="APPLIER">{t('user.role.APPLIER', '申请人')}</Option>
-                  <Option value="APPROVER">{t('user.role.APPROVER', '审批人')}</Option>
-                  <Option value="SERVICE">{t('user.role.SERVICE', '服务人员')}</Option>
-                  <Option value="MAINTAINER">{t('user.role.MAINTAINER', '维护人员')}</Option>
-                  <Option value="ADMIN">{t('user.role.ADMIN', '管理员')}</Option>
-                </Select>
-              </Form.Item>
-
               <Form.Item
                 name="nickname"
                 label={t('userList.form.nickname', '昵称')}
@@ -1136,172 +1199,134 @@ export default function UserList(props) {
                 <Input placeholder={t('userList.form.enterPhone', '请输入电话')} />
               </Form.Item>
 
-              {/* 根据选择的角色显示特有字段 */}
-              {getCreateFormRoleSpecificFields()}
+              {/* 根据用户角色显示特有字段 */}
+              {currentUser.role === 'APPLIER' && (
+                <Form.Item
+                  name="department"
+                  label={t('userList.form.department', '部门')}
+                >
+                  <Input placeholder={t('userList.form.enterDepartment', '请输入部门')} />
+                </Form.Item>
+              )}
+
+              {currentUser.role === 'APPROVER' && (
+                <Form.Item
+                  name="permission"
+                  label={t('userList.form.permission', '审批权限')}
+                >
+                  <Select placeholder={t('userList.form.selectPermission', '请选择审批权限')}>
+                    <Option value="READ_ONLY">{t('user.permission.READ_ONLY', '只读')}</Option>
+                    <Option value="RESTRICTED">{t('user.permission.RESTRICTED', '受限')}</Option>
+                    <Option value="NORMAL">{t('user.permission.NORMAL', '正常')}</Option>
+                    <Option value="EXTENDED">{t('user.permission.EXTENDED', '扩展')}</Option>
+                  </Select>
+                </Form.Item>
+              )}
+
+              {currentUser.role === 'SERVICE' && (
+                <Form.Item
+                  name="serviceArea"
+                  label={t('userList.form.serviceArea', '负责区域')}
+                >
+                  <Input placeholder={t('userList.form.enterServiceArea', '请输入负责区域')} />
+                </Form.Item>
+              )}
+
+              {currentUser.role === 'MAINTAINER' && (
+                <Form.Item
+                  name="skill"
+                  label={t('userList.form.skill', '维修范围')}
+                >
+                  <Input placeholder={t('userList.form.enterSkill', '请输入维修范围')} />
+                </Form.Item>
+              )}
             </Form>
-          )}
-
-          {drawerType === 'edit' && currentUser && (
-            <div>
-              <div style={{
-                marginBottom: 16,
-                padding: 16,
-                backgroundColor: 'var(--component-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 6
-              }}>
-                <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.displayName', '显示名称')}：</strong>{getUserDisplayName(currentUser)}</p>
-                <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.username', '用户名')}：</strong>{currentUser.username}</p>
-                <p style={{ color: 'var(--text-color)' }}><strong>{t('userList.labels.role', '角色')}：</strong>
-                  <Tag color={
-                    currentUser.role === 'ADMIN' ? 'red' :
-                      currentUser.role === 'APPROVER' ? 'blue' :
-                        currentUser.role === 'APPLIER' ? 'green' :
-                          currentUser.role === 'SERVICE' ? 'orange' : 'purple'
-                  }>
-                    {getRoleDisplayName(currentUser.role)}
-                  </Tag>
-                </p>
-              </div>
-
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-              >
-                <Form.Item
-                  name="nickname"
-                  label={t('userList.form.nickname', '昵称')}
-                  rules={[{ required: true, message: t('userList.form.enterNickname', '请输入昵称') }]}
-                >
-                  <Input placeholder={t('userList.form.enterNickname', '请输入昵称')} />
-                </Form.Item>
-
-                <Form.Item
-                  name="email"
-                  label={t('userList.form.email', '邮箱')}
-                  rules={[
-                    { type: 'email', message: t('user.common.enterValidEmail', '请输入有效的邮箱地址') }
-                  ]}
-                >
-                  <Input placeholder={t('userList.form.enterEmail', '请输入邮箱')} />
-                </Form.Item>
-
-                <Form.Item
-                  name="phone"
-                  label={t('userList.form.phone', '电话')}
-                >
-                  <Input placeholder={t('userList.form.enterPhone', '请输入电话')} />
-                </Form.Item>
-
-                {/* 根据用户角色显示特有字段 */}
-                {currentUser.role === 'APPLIER' && (
-                  <Form.Item
-                    name="department"
-                    label={t('userList.form.department', '部门')}
-                  >
-                    <Input placeholder={t('userList.form.enterDepartment', '请输入部门')} />
-                  </Form.Item>
-                )}
-
-                {currentUser.role === 'APPROVER' && (
-                  <Form.Item
-                    name="permission"
-                    label={t('userList.form.permission', '审批权限')}
-                  >
-                    <Select placeholder={t('userList.form.selectPermission', '请选择审批权限')}>
-                      <Option value="READ_ONLY">{t('user.permission.READ_ONLY', '只读')}</Option>
-                      <Option value="RESTRICTED">{t('user.permission.RESTRICTED', '受限')}</Option>
-                      <Option value="NORMAL">{t('user.permission.NORMAL', '正常')}</Option>
-                      <Option value="EXTENDED">{t('user.permission.EXTENDED', '扩展')}</Option>
-                    </Select>
-                  </Form.Item>
-                )}
-
-                {currentUser.role === 'SERVICE' && (
-                  <Form.Item
-                    name="serviceArea"
-                    label={t('userList.form.serviceArea', '负责区域')}
-                  >
-                    <Input placeholder={t('userList.form.enterServiceArea', '请输入负责区域')} />
-                  </Form.Item>
-                )}
-
-                {currentUser.role === 'MAINTAINER' && (
-                  <Form.Item
-                    name="skill"
-                    label={t('userList.form.skill', '维修范围')}
-                  >
-                    <Input placeholder={t('userList.form.enterSkill', '请输入维修范围')} />
-                  </Form.Item>
-                )}
-              </Form>
-            </div>
-          )}
-        </Drawer>
-
-        {/* 二次确认Modal */}
-        <Modal
-          title={deleteTargetUser?.id === user?.id ?
-            t('userList.secondConfirm.passwordTitle', '输入密码确认') :
-            t('userList.secondConfirm.usernameTitle', '输入用户名确认')
-          }
-          open={secondConfirmVisible}
-          onOk={handleSecondConfirm}
-          onCancel={handleSecondConfirmCancel}
-          okText={t('userList.secondConfirm.confirmDelete', '确认删除')}
-          cancelText={t('common.cancel', '取消')}
-          okType="danger"
-          destroyOnHidden
-          confirmLoading={false}
-        >
-          <div style={{ marginBottom: 16 }}>
-            <p>
-              {deleteTargetUser?.id === user?.id ?
-                t('userList.secondConfirm.passwordPrompt', '为了确认删除自己的账户，请输入您的密码：') :
-                t('userList.secondConfirm.usernamePrompt', '为了确认删除用户 "{username}"，请输入该用户的用户名：').replace('{username}', deleteTargetUser?.username || '')
-              }
-            </p>
           </div>
-          {deleteTargetUser?.id === user?.id ? (
-            <Input.Password
-              placeholder={t('userList.secondConfirm.enterPassword', '请输入密码')}
-              value={confirmationInput}
-              onChange={(e) => {
-                setConfirmationInput(e.target.value);
-                setConfirmationError('');
-              }}
-              status={confirmationError ? 'error' : ''}
-              onPressEnter={e => {
-                e.preventDefault();
-                handleSecondConfirm();
-              }}
-              autoFocus
-            />
-          ) : (
-            <Input
-              placeholder={t('userList.secondConfirm.enterUsername', '请输入用户名')}
-              value={confirmationInput}
-              onChange={(e) => {
-                setConfirmationInput(e.target.value);
-                setConfirmationError('');
-              }}
-              status={confirmationError ? 'error' : ''}
-              onPressEnter={e => {
-                e.preventDefault();
-                handleSecondConfirm();
-              }}
-              autoFocus
-            />
-          )}
-          {confirmationError && (
-            <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: '14px' }}>
-              {confirmationError}
-            </div>
-          )}
-          
-        </Modal>
-      </div>
+        )}
+      </Drawer>
+
+      {/* 二次确认Modal */}
+      <Modal
+        title={deleteTargetUser?.id === user?.id ?
+          t('userList.secondConfirm.passwordTitle', '输入密码确认') :
+          t('userList.secondConfirm.usernameTitle', '输入用户名确认')
+        }
+        open={secondConfirmVisible}
+        onOk={handleSecondConfirm}
+        onCancel={handleSecondConfirmCancel}
+        okText={t('userList.secondConfirm.confirmDelete', '确认删除')}
+        cancelText={t('common.cancel', '取消')}
+        okType="danger"
+        destroyOnHidden
+        confirmLoading={false}
+        footer={[
+          <div key="modal-btn-row" style={{ display: 'flex', gap: 8, margin: '16px 0 0 0' }}>
+            <Button
+              key="cancel"
+              style={{ flex: 1 }}
+              onClick={handleSecondConfirmCancel}
+            >
+              {t('common.cancel', '取消')}
+            </Button>
+            <Button
+              key="ok"
+              type="primary"
+              danger
+              style={{ flex: 1 }}
+              loading={false}
+              onClick={handleSecondConfirm}
+            >
+              {t('userList.secondConfirm.confirmDelete', '确认删除')}
+            </Button>
+          </div>
+        ]}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <p>
+            {deleteTargetUser?.id === user?.id ?
+              t('userList.secondConfirm.passwordPrompt', '为了确认删除自己的账户，请输入您的密码：') :
+              t('userList.secondConfirm.usernamePrompt', '为了确认删除用户 "{username}"，请输入该用户的用户名：').replace('{username}', deleteTargetUser?.username || '')
+            }
+          </p>
+        </div>
+        {deleteTargetUser?.id === user?.id ? (
+          <Input.Password
+            placeholder={t('userList.secondConfirm.enterPassword', '请输入密码')}
+            value={confirmationInput}
+            onChange={(e) => {
+              setConfirmationInput(e.target.value);
+              setConfirmationError('');
+            }}
+            status={confirmationError ? 'error' : ''}
+            onPressEnter={e => {
+              e.preventDefault();
+              handleSecondConfirm();
+            }}
+            autoFocus
+          />
+        ) : (
+          <Input
+            placeholder={t('userList.secondConfirm.enterUsername', '请输入用户名')}
+            value={confirmationInput}
+            onChange={(e) => {
+              setConfirmationInput(e.target.value);
+              setConfirmationError('');
+            }}
+            status={confirmationError ? 'error' : ''}
+            onPressEnter={e => {
+              e.preventDefault();
+              handleSecondConfirm();
+            }}
+            autoFocus
+          />
+        )}
+        {confirmationError && (
+          <div style={{ color: '#ff4d4f', marginTop: 8, fontSize: '14px' }}>
+            {confirmationError}
+          </div>
+        )}
+
+      </Modal>
     </PageErrorBoundary>
   );
 }

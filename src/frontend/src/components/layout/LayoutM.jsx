@@ -678,7 +678,9 @@ export default function AppLayoutMobile({ children }) {
         transform: 'translateZ(0)',            // 硬件加速
         willChange: 'margin-left'              // 优化margin变化
       }}>
-        <Content style={{
+        <Content 
+        overflow='scroll'
+        style={{
           marginTop: 'calc(2vw + 56px)',
           background: 'transparent',
         }}>

@@ -22,7 +22,10 @@ const dictionaries = {
       showFilters: '显示筛选',
       loading: '加载中…',
       empty: '暂无数据',
-      reason: '原因'
+      reason: '原因',
+      edit: '编辑',
+      delete: '删除',
+      noMore: '没有了'
     },
     modal: {
       confirm: {
@@ -383,8 +386,8 @@ const dictionaries = {
       },
       tooltips: {
         viewDetail: '查看详情',
-        editUser: '编辑用户',
-        deleteUser: '删除用户'
+        editUser: '编辑',
+        deleteUser: '删除'
       },
       drawer: {
         detail: '用户详情',
@@ -988,7 +991,10 @@ const dictionaries = {
       showFilters: 'Show filters',
       loading: 'Loading…',
       empty: 'No data',
-      reason: 'Reason'
+      reason: 'Reason',
+      edit: 'Edit',
+      delete: 'Delete',
+      noMore: 'No more data'
     },
     modal: {
       confirm: {
