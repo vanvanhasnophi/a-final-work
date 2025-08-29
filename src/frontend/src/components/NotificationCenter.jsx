@@ -125,16 +125,6 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
         console.warn('获取通知失败:', error);
       }
       
-      // 备用尝试：pageNum=0
-      if (remoteList.length === 0) {
-        try {
-          const altResp = await notificationAPI.getNotifications({ pageNum: 0, pageSize: 20 });
-          const alt = parseRecords(altResp);
-          if (alt.length > 0) {
-            remoteList = alt;
-          }
-        } catch(_) {}
-      }
       // 备用尝试：page 参数命名
       if (remoteList.length === 0) {
         try {

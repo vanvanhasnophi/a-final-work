@@ -832,6 +832,9 @@ export default function UserList(props) {
       },
     },
   ];
+  const filterOverflowThreshold = 940;
+
+  const filterHeight = isFilterCollapsed ? 0 : (12 + 42 * Math.ceil(filterOverflowThreshold / window.innerWidth)); // 粗略估算高度
 
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
@@ -933,7 +936,7 @@ export default function UserList(props) {
                     pagination={false}
                     onChange={handleTableChange}
                     size="middle"
-                    style={{ height: '100%', minWidth: '1200px', marginTop: isFilterCollapsed ? '96px' : '300px' }}
+                    style={{ height: '100%', minWidth: '1200px', marginTop: isFilterCollapsed ? '96px' : `calc(104px + ${filterHeight}px)` }}
                     overflowX='hidden'
                     sticky={{ offsetHeader: 0 }}
                   />

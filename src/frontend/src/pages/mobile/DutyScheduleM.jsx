@@ -1067,7 +1067,7 @@ export default function DutySchedule() {
             }}
           >
             <Calendar
-              dateCellRender={dateCellRender}
+              CellRender={dateCellRender}
               onSelect={onSelect}
               onPanelChange={onPanelChange}
               value={selectedDate}

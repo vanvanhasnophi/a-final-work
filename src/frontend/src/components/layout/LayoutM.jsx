@@ -337,7 +337,7 @@ export default function AppLayoutMobile({ children }) {
 
           // 获取最新通知列表来检查是否有新通知
           try {
-            const notificationsRes = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 5 });
+            const notificationsRes = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 20 });
             const notifications = notificationsRes?.data?.records || notificationsRes?.data?.list || notificationsRes?.data || [];
 
             if (notifications.length > 0) {
