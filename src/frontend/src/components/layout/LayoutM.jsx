@@ -441,7 +441,8 @@ export default function AppLayoutMobile({ children }) {
       )}
       <Layout style={{
         minHeight: 'calc(100vh - 100px)',
-        maxHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100%',
         background: 'var(--background-color)',
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
