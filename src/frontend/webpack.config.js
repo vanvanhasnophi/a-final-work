@@ -10,7 +10,7 @@ module.exports = {
 	devServer: {
 		static: path.join(__dirname, 'public'),
 		port: 3000,
-		allowedHosts: ['localhost', '127.0.0.1'], // 可加外网域名
+		allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0'], // 可加外网域名
 		hot: true,
 		historyApiFallback: true,
 		open: true,
