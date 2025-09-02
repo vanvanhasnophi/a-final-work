@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Tag, Space, Input, Select, message, Drawer, Form, InputNumber, DatePicker, Modal, Tooltip } from 'antd';
+import { Table, Card, Button, Tag, Space, Input, Select, message, Alert, Drawer, Form, InputNumber, DatePicker, Pagination, Modal, Tooltip } from 'antd';
 import { PlusOutlined, ReloadOutlined, EyeOutlined, DeleteOutlined, FileTextOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { roomAPI } from '../api/room';
@@ -16,9 +16,11 @@ import { useTimeConflictCheck } from '../hooks/useTimeConflictCheck';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { canCreateRoom, canDeleteRoom, canUpdateRoom, canCreateApplication } from '../utils/permissionUtils';
+import FixedTop from '../components/FixedTop';
 import ResponsiveButton from '../components/ResponsiveButton';
+import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
+import FilterDropdownButton from '../components/FilterDropdownButton';
 import dayjs from 'dayjs';
-import ManagementPageContainer from '../components/ManagementPageContainer';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -38,37 +40,37 @@ export default function RoomList() {
     pageSize: 10,
   });
   const [messageApi, contextHolder] = message.useMessage();
-
+  
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerType, setDrawerType] = useState(''); // 'add', 'detail', 'apply'
   const [currentRoom, setCurrentRoom] = useState(null);
   const [futureApplications, setFutureApplications] = useState([]);
   const [form] = Form.useForm();
-
+  
   // 确认弹窗状态
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [editFormValues, setEditFormValues] = useState({});
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteRoomRecord, setDeleteRoomRecord] = useState(null);
+  
 
-
-
+  
   // 筛选控件状态管理
   const [selectedType, setSelectedType] = useState(undefined);
   const [selectedStatus, setSelectedStatus] = useState(undefined);
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false); // 筛选器折叠状态
   const typeSelectRef = useRef(null);
   const statusSelectRef = useRef(null);
-
+  
   // 时间冲突检查Hook
   const { /*isChecking,*/ hasConflict, conflictMessage, checkTimeConflict, clearConflict } = useTimeConflictCheck(
     currentRoom?.id
   );
-
+  
   const { loading, error, executeWithRetry } = useApiWithRetry();
   const { debounce, clearDebounce } = useDebounce(500);
-
+  
   // 获取教室列表
   const fetchRooms = useCallback(async (params = {}) => {
     const result = await executeWithRetry(
@@ -79,20 +81,20 @@ export default function RoomList() {
           ...currentSearchParams,
           ...params,
         };
-
+        
         console.log('发送分页请求参数:', requestParams);
         const response = await roomAPI.getRoomList(requestParams);
-
+        
         const { records, total, pageNum, pageSize } = response.data;
         console.log('分页响应数据:', response.data);
-
+        
         setRooms(records || []);
         setPagination({
           current: pageNum || 1,
           pageSize: pageSize || 10,
           total: total || 0,
         });
-
+        
         return response.data;
       },
       {
@@ -101,7 +103,7 @@ export default function RoomList() {
         retryDelay: 0
       }
     );
-
+    
     return result;
   }, [executeWithRetry, searchParams, t]); // 移除searchParams依赖
 
@@ -111,13 +113,13 @@ export default function RoomList() {
   // 删除教室
   const handleDeleteRoom = (record) => {
     console.log('handleDeleteRoom called with record:', record);
-
+    
     // 检查教室状态
     if (record.status === 'USING' || record.status === 'RESERVED') {
-      messageApi.warning(t('roomList.deleteInUseWarning', '教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。'));
+  messageApi.warning(t('roomList.deleteInUseWarning', '教室正在使用中或已预约，无法删除。请等待教室空闲后再删除。'));
       return;
     }
-
+    
     // 设置删除记录并显示确认对话框
     setDeleteRoomRecord(record);
     setDeleteModalVisible(true);
@@ -177,10 +179,10 @@ export default function RoomList() {
       'maintenance': 'MAINTENANCE',
       'cleaning': 'CLEANING',
       'pending_cleaning': 'PENDING_CLEANING',
-      'pending_maintenance': 'PENDING_MAINTENANCE',
-      'unavailable': 'UNAVAILABLE'
+  'pending_maintenance': 'PENDING_MAINTENANCE',
+  'unavailable': 'UNAVAILABLE'
     };
-
+    
     const newParams = {
       ...searchParams,
       pageNum: 1,
@@ -203,7 +205,7 @@ export default function RoomList() {
     setDrawerType('detail');
     setCurrentRoom(record);
     setDrawerVisible(true);
-
+    
     // 获取教室未来的已批准预约
     try {
       const response = await applicationAPI.getFutureApprovedApplications(record.id);
@@ -227,7 +229,7 @@ export default function RoomList() {
       roomLocation: record.location
     });
     setDrawerVisible(true);
-
+    
     // 获取教室未来的已批准预约
     try {
       const response = await applicationAPI.getFutureApprovedApplications(record.id);
@@ -244,13 +246,13 @@ export default function RoomList() {
     setDrawerType('edit');
     setCurrentRoom(record);
     form.resetFields();
-
+    
     // 使用hook获取教室详细信息
     const fetchRoomDetails = async () => {
       try {
         const response = await roomAPI.getRoomById(record.id);
         const roomDetails = response.data;
-
+        
         // 预填充教室信息
         const formValues = {
           name: roomDetails.name,
@@ -260,16 +262,16 @@ export default function RoomList() {
           description: roomDetails.description,
           status: roomDetails.status
         };
-
+        
         form.setFieldsValue(formValues);
         setCurrentRoom(roomDetails);
         setDrawerVisible(true);
       } catch (error) {
-        console.error('获取教室详情失败:', error);
-        messageApi.error(t('roomList.errors.fetchRoomDetailFail', '获取教室详情失败'));
+  console.error('获取教室详情失败:', error);
+  messageApi.error(t('roomList.errors.fetchRoomDetailFail', '获取教室详情失败'));
       }
     };
-
+    
     fetchRoomDetails();
   };
 
@@ -277,38 +279,38 @@ export default function RoomList() {
   const handleFormChange = (changedFields, allFields) => {
     if (drawerType === 'edit' && currentRoom) {
       const changes = [];
-
+      
       // 比较各个字段的变化
       if (currentRoom.name !== allFields.name) {
         changes.push(`名称：${currentRoom.name} → ${allFields.name}`);
       } else {
         changes.push(`名称：${currentRoom.name}`);
       }
-
+      
       if (currentRoom.type !== getRoomTypeEnumValue(allFields.type)) {
         changes.push(`类型：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(allFields.type))}`);
       } else {
         changes.push(`类型：${getRoomTypeDisplayName(currentRoom.type)}`);
       }
-
+      
       if (currentRoom.capacity !== allFields.capacity) {
         changes.push(`容量：${currentRoom.capacity}人 → ${allFields.capacity}人`);
       } else {
         changes.push(`容量：${currentRoom.capacity}人`);
       }
-
+      
       if (currentRoom.location !== allFields.location) {
         changes.push(`位置：${currentRoom.location} → ${allFields.location}`);
       } else {
         changes.push(`位置：${currentRoom.location}`);
       }
-
+      
       if (currentRoom.status !== allFields.status) {
         changes.push(`状态：${getRoomStatusDisplayName(currentRoom.status)} → ${getRoomStatusDisplayName(allFields.status)}`);
       } else {
         changes.push(`状态：${getRoomStatusDisplayName(currentRoom.status)}`);
       }
-
+      
       if (currentRoom.description !== allFields.description) {
         const oldDesc = currentRoom.description || '无';
         const newDesc = allFields.description || '无';
@@ -316,7 +318,7 @@ export default function RoomList() {
       } else {
         changes.push(`描述：${currentRoom.description || '无'}`);
       }
-
+      
 
     }
   };
@@ -331,7 +333,7 @@ export default function RoomList() {
     setDeleteRoomRecord(null);
   };
 
-  // 提交表单
+    // 提交表单
   const handleSubmit = async (values) => {
     try {
       if (drawerType === 'edit') {
@@ -341,7 +343,7 @@ export default function RoomList() {
         setConfirmModalVisible(true);
         return false; // 阻止表单提交
       }
-
+      
       if (drawerType === 'add') {
         await executeWithRetry(
           async () => {
@@ -360,22 +362,22 @@ export default function RoomList() {
             successMessage: t('roomList.messages.addSuccess', '教室创建成功')
           }
         );
-      } else if (drawerType === 'apply') {
+       } else if (drawerType === 'apply') {
         // 验证时间范围
         const [startTime, endTime] = values.timeRange;
-
+        
         const validation = validateTimeRange(startTime, endTime);
         if (!validation.valid) {
           messageApi.error(validation.message);
           return;
         }
-
+        
         // 检查时间冲突
         if (hasConflict) {
-          messageApi.error(t('roomList.timeConflict', '所选时间段与已有预约冲突，请选择其他时间'));
+      messageApi.error(t('roomList.timeConflict', '所选时间段与已有预约冲突，请选择其他时间'));
           return;
         }
-
+        
         await executeWithRetry(
           async () => {
             const applicationData = {
@@ -387,10 +389,10 @@ export default function RoomList() {
               crowd: values.crowd,
               contact: values.contact,
             };
-
+            
             console.log('提交申请数据:', applicationData);
             const response = await applicationAPI.createApplication(applicationData);
-
+            
             messageApi.success(t('roomList.messages.applySuccess', '申请提交成功，正在跳转到申请列表...'), 0.5).then(() => {
               handleCloseDrawer();
               if (user?.role === 'APPLIER') {
@@ -411,7 +413,7 @@ export default function RoomList() {
       }
     } catch (error) {
       console.error('提交失败:', error);
-      messageApi.error(t('roomList.messages.operationFailed', '操作失败，请重试'));
+  messageApi.error(t('roomList.messages.operationFailed', '操作失败，请重试'));
     }
   };
 
@@ -457,18 +459,18 @@ export default function RoomList() {
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title={t('roomList.tooltips.viewDetail', '查看详情')}>
-            <Button
-              type="text"
-              size="small"
+            <Button 
+              type="text" 
+              size="small" 
               icon={<EyeOutlined />}
               onClick={() => handleViewDetail(record)}
             />
           </Tooltip>
           {canUpdateRoom(user?.role) && (
             <Tooltip title={t('roomList.tooltips.editRoom', '编辑教室')}>
-              <Button
-                type="text"
-                size="small"
+              <Button 
+                type="text" 
+                size="small" 
                 icon={<EditOutlined />}
                 onClick={() => handleEditRoom(record)}
               />
@@ -476,25 +478,25 @@ export default function RoomList() {
           )}
           {canCreateApplication(user?.role) && (
             <Tooltip title={t('roomList.tooltips.applyRoom', '申请教室')}>
-              <Button
-                type="text"
-                size="small"
+              <Button 
+                type="text" 
+                size="small" 
                 icon={<FileTextOutlined />}
                 onClick={() => handleApply(record)}
               />
             </Tooltip>
           )}
           {canDeleteRoom(user?.role) && (
-            <Tooltip
+            <Tooltip 
               title={
-                record.status === 'USING' || record.status === 'RESERVED'
-                  ? t('roomList.tooltips.deleteRoomDisabled', '教室正在使用中，无法删除')
+                record.status === 'USING' || record.status === 'RESERVED' 
+                  ? t('roomList.tooltips.deleteRoomDisabled', '教室正在使用中，无法删除') 
                   : t('roomList.tooltips.deleteRoom', '删除教室')
               }
             >
-              <Button
-                type="text"
-                size="small"
+              <Button 
+                type="text" 
+                size="small" 
                 danger
                 icon={<DeleteOutlined />}
                 onClick={(e) => {
@@ -514,169 +516,375 @@ export default function RoomList() {
     },
   ];
 
-  // 1. filterControls（主筛选区控件）
-  const filterControls = [
-    <div style={{ minWidth: '200px' }}>
-      <Input
-        placeholder={t('roomList.searchPlaceholder')}
-        allowClear
-        style={{ width: '100%' }}
-        onChange={(e) => handleSearch(e.target.value)}
-      />
-    </div>,
-    <div style={{ minWidth: '120px' }}>
-      <Select
-        ref={typeSelectRef}
-        placeholder={t('roomList.allTypes')}
-        allowClear
-        style={{ width: '100%' }}
-        value={selectedType}
-        onChange={(value) => {
-          setSelectedType(value);
-          handleTypeFilter(value);
-        }}
-      >
-        <Option value="all">{t('roomList.allTypes')}</Option>
-        <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
-        <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
-        <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
-        <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
-      </Select>
-    </div>,
-    <div style={{ minWidth: '120px' }}>
-      <Select
-        ref={statusSelectRef}
-        placeholder={t('roomList.allStatuses')}
-        allowClear
-        style={{ width: '100%' }}
-        value={selectedStatus}
-        onChange={(value) => {
-          setSelectedStatus(value);
-          handleStatusFilter(value);
-        }}
-      >
-        <Option value="all">{t('roomList.allStatuses')}</Option>
-        <Option value="available">{t('roomList.options.statuses.available', '空闲')}</Option>
-        <Option value="reserved">{t('roomList.options.statuses.reserved', '已预约')}</Option>
-        <Option value="using">{t('roomList.options.statuses.using', '使用中')}</Option>
-        <Option value="maintenance">{t('roomList.options.statuses.maintenance', '维修中')}</Option>
-        <Option value="cleaning">{t('roomList.options.statuses.cleaning', '清洁中')}</Option>
-        <Option value="pending_cleaning">{t('roomList.options.statuses.pending_cleaning', '待清洁')}</Option>
-        <Option value="pending_maintenance">{t('roomList.options.statuses.pending_maintenance', '待维修')}</Option>
-        <Option value="unavailable">{t('roomList.options.statuses.unavailable', '不可用')}</Option>
-      </Select>
-    </div>,
-    <div style={{ display: 'flex', gap: '8px' }}>
-      <Button
-        onClick={() => {
-          // 清空筛选控件内容
-          setSelectedType(undefined);
-          setSelectedStatus(undefined);
-          // 清空搜索参数并刷新数据
-          const newParams = {
-            pageNum: 1,
-            name: undefined,
-            type: undefined,
-            status: undefined
-          };
-          setSearchParams(newParams);
-          fetchRooms(newParams);
-        }}
-      >
-        {t('roomList.clearFilters')}
-      </Button>
-    </div>,
-
-  ];
-
-
-
-  // 2. actions（常规操作按钮）
-  const actions = [
-    // 刷新
-    <ResponsiveButton
-      icon={<ReloadOutlined />}
-      onClick={() => {
-        // 清空筛选控件内容
-        setSelectedType(undefined);
-        setSelectedStatus(undefined);
-        // 清空搜索参数并刷新数据
-        const newParams = {
-          pageNum: 1,
-          name: undefined,
-          type: undefined,
-          status: undefined
-        };
-        setSearchParams(newParams);
-        fetchRooms(newParams);
-      }}
-      loading={loading}
-    >
-      {t('common.refresh')}
-    </ResponsiveButton>,
-    // 新建教室
-    canCreateRoom(user?.role) && (
-      <ResponsiveButton type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
-        {t('roomList.addRoom')}
-      </ResponsiveButton>
-    )
-  ];
-
-  // 3. tableProps
-  const tableProps = {
-    columns,
-    dataSource: rooms,
-    rowKey: 'id',
-    loading: loading,
-    onChange: handleTableChange,
-    size: 'middle',
-    sticky: { offsetHeader: 0 },
-  };
-
-  // 4. pageProps
-  const pageProps = {
-    ...pagination,
-    showTotal: (total, range) => {
-      return t('roomList.paginationTotal', `第 ${range[0]}-${range[1]} 条/共 ${total} 条`).replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total);
-    },
-    onChange: (page, pageSize) => {
-      const newParams = {
-        pageNum: page,
-        pageSize: pageSize,
-      };
-      setSearchParams(prev => ({ ...prev, ...newParams }));
-      fetchRooms(newParams);
-    },
-
-    showSizeChanger: !isFilterCollapsed,
-    showQuickJumper: !isFilterCollapsed
-  };
-
-  // 5. 错误提示 已有
-
-
-
   return (
     <PageErrorBoundary onGoBack={handlePageRefresh}>
       {contextHolder}
-      <ManagementPageContainer
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Card 
         title={t('roomList.title')}
-        actions={actions}
-        filterControls={filterControls}
-        filterCollapsed={isFilterCollapsed}
-        filterCollapseThreshold= {860}
-        onFilterCollapseChange={setIsFilterCollapsed}
-        tableProps={tableProps}
-        pageProps={pageProps}
-        error={error}
-      />
-      {/* Drawer/Modal等业务弹窗 */}
+        extra={
+          <Space>
+            {/* 筛选器下拉按钮（仅在折叠时显示） */}
+            <FilterDropdownButton visible={isFilterCollapsed}>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                {/* 教室搜索 */}
+                <div style={{ minWidth: '200px' }}>
+                  <Input
+                    placeholder={t('roomList.searchPlaceholder')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
+                
+                {/* 教室类型筛选 */}
+                <div style={{ minWidth: '120px' }}>
+                  <Select
+                    placeholder={t('roomList.allTypes')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={selectedType}
+                    onChange={(value) => {
+                      setSelectedType(value);
+                      handleTypeFilter(value);
+                    }}
+                  >
+                    <Option value="all">{t('roomList.allTypes')}</Option>
+                    <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
+                    <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
+                    <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
+                    <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
+                  </Select>
+                </div>
+                
+                {/* 教室状态筛选 */}
+                <div style={{ minWidth: '120px' }}>
+                  <Select
+                    placeholder={t('roomList.allStatuses')}
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={selectedStatus}
+                    onChange={(value) => {
+                      setSelectedStatus(value);
+                      handleStatusFilter(value);
+                    }}
+                  >
+                    <Option value="AVAILABLE">{t('roomList.options.statuses.AVAILABLE', '可用')}</Option>
+                    <Option value="OCCUPIED">{t('roomList.options.statuses.OCCUPIED', '占用中')}</Option>
+                    <Option value="MAINTENANCE">{t('roomList.options.statuses.MAINTENANCE', '维护中')}</Option>
+                    <Option value="DISABLED">{t('roomList.options.statuses.DISABLED', '已禁用')}</Option>
+                  </Select>
+                </div>
+                
+                {/* 清空筛选按钮 */}
+                <Button
+                  onClick={() => {
+                    // 清空筛选控件内容
+                    setSelectedType(undefined);
+                    setSelectedStatus(undefined);
+                    // 清空搜索参数并刷新数据
+                    const newParams = {
+                      pageNum: 1,
+                      name: undefined,
+                      type: undefined,
+                      status: undefined
+                    };
+                    setSearchParams(newParams);
+                    fetchRooms(newParams);
+                  }}
+                >
+                  {t('common.clearFilters', '清空筛选')}
+                </Button>
+              </div>
+            </FilterDropdownButton>
+            
+            <ResponsiveButton 
+              icon={<ReloadOutlined />} 
+              onClick={() => {
+                // 清空筛选控件内容
+                setSelectedType(undefined);
+                setSelectedStatus(undefined);
+                // 清空搜索参数并刷新数据
+                const newParams = {
+                  pageNum: 1,
+                  name: undefined,
+                  type: undefined,
+                  status: undefined
+                };
+                setSearchParams(newParams);
+                fetchRooms(newParams);
+              }}
+              loading={loading}
+            >
+              {t('common.refresh')}
+            </ResponsiveButton>
+            {canCreateRoom(user?.role) && (
+              <ResponsiveButton type="primary" icon={<PlusOutlined />} onClick={handleAddRoom}>
+                {t('roomList.addRoom')}
+              </ResponsiveButton>
+            )}
+          </Space>
+        }
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+        bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0 }}
+      >
+        {/* 错误提示 */}
+    {error && (
+          <Alert
+      message={t('roomList.error.dataFetchTitle')}
+            description={error}
+            type="error"
+            showIcon
+            style={{ marginBottom: '16px' }}
+          />
+        )}
+        
+        {/* 筛选区域 */}
+        <div style={{
+          padding: isFilterCollapsed ? '4px' : '16px',
+          borderBottom: '1px solid var(--border-color)',
+          backgroundColor: 'var(--component-bg)',
+          transition: 'padding 0.3s ease'
+        }}>
+          <ResponsiveFilterContainer 
+            threshold={950}
+            heightThreshold={600}
+            onCollapseStateChange={setIsFilterCollapsed}
+          >
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              {/* 教室搜索 */}
+              <div style={{ minWidth: '200px' }}>
+                <Input
+                  placeholder={t('roomList.searchPlaceholder')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
+              
+              {/* 教室类型筛选 */}
+              <div style={{ minWidth: '120px' }}>
+                <Select
+                  ref={typeSelectRef}
+                  placeholder={t('roomList.allTypes')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={selectedType}
+                  onChange={(value) => {
+                    setSelectedType(value);
+                    handleTypeFilter(value);
+                  }}
+                >
+                  <Option value="all">{t('roomList.allTypes')}</Option>
+                  <Option value="caseroom">{t('roomList.options.types.caseroom', '案例教室')}</Option>
+                  <Option value="seminar">{t('roomList.options.types.seminar', '研讨间')}</Option>
+                  <Option value="lab">{t('roomList.options.types.lab', '实验室')}</Option>
+                  <Option value="lecture">{t('roomList.options.types.lecture', '平面教室')}</Option>
+                </Select>
+              </div>
+              
+              {/* 教室状态筛选 */}
+              <div style={{ minWidth: '120px' }}>
+                <Select
+                  ref={statusSelectRef}
+                  placeholder={t('roomList.allStatuses')}
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={selectedStatus}
+                  onChange={(value) => {
+                    setSelectedStatus(value);
+                    handleStatusFilter(value);
+                  }}
+                >
+                  <Option value="all">{t('roomList.allStatuses')}</Option>
+                  <Option value="available">{t('roomList.options.statuses.available', '空闲')}</Option>
+                  <Option value="reserved">{t('roomList.options.statuses.reserved', '已预约')}</Option>
+                  <Option value="using">{t('roomList.options.statuses.using', '使用中')}</Option>
+                  <Option value="maintenance">{t('roomList.options.statuses.maintenance', '维修中')}</Option>
+                  <Option value="cleaning">{t('roomList.options.statuses.cleaning', '清洁中')}</Option>
+                  <Option value="pending_cleaning">{t('roomList.options.statuses.pending_cleaning', '待清洁')}</Option>
+                  <Option value="pending_maintenance">{t('roomList.options.statuses.pending_maintenance', '待维修')}</Option>
+                  <Option value="unavailable">{t('roomList.options.statuses.unavailable', '不可用')}</Option>
+                </Select>
+              </div>
+              
+              {/* 操作按钮 */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button
+                  onClick={() => {
+                    // 清空筛选控件内容
+                    setSelectedType(undefined);
+                    setSelectedStatus(undefined);
+                    // 清空搜索参数并刷新数据
+                    const newParams = {
+                      pageNum: 1,
+                      name: undefined,
+                      type: undefined,
+                      status: undefined
+                    };
+                    setSearchParams(newParams);
+                    fetchRooms(newParams);
+                  }}
+                >
+                  {t('roomList.clearFilters')}
+                </Button>
+              </div>
+            </div>
+          </ResponsiveFilterContainer>
+        </div>
+        
+        <div style={{ 
+          flex: 1,
+          // minHeight: '280px',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '0px solid var(--border-color)',
+          borderRadius: '0px',
+          overflow: 'hidden',
+          height: '100%',
+          maxHeight: '100%',
+          position: 'relative'
+        }}>
+
+          
+          {/* 表格内容区域 - 可滚动 */}
+          <div style={{ 
+            flex: 1,
+            overflow: 'hidden'
+          }}>
+            <FixedTop>
+              <div style={{
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                height: '100%'
+              }}>
+                <style>{`
+                  div::-webkit-scrollbar {
+                    height: 8px;
+                    background: transparent;
+                  }
+                  div::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  
+                  /* 浅色模式 - 默认样式 */
+                  div::-webkit-scrollbar-thumb {
+                    background: rgba(0, 0, 0, 0.15);
+                    border-radius: 4px;
+                    transition: background 0.2s ease;
+                  }
+                  div::-webkit-scrollbar-thumb:hover {
+                    background: rgba(0, 0, 0, 0.25);
+                  }
+                  div {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+                  }
+                  
+                  /* 深色模式适配 - 半透明白色 */
+                  [data-theme="dark"] div::-webkit-scrollbar-thumb,
+                  .dark div::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                  }
+                  [data-theme="dark"] div::-webkit-scrollbar-thumb:hover,
+                  .dark div::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.35);
+                  }
+                  [data-theme="dark"] div,
+                  .dark div {
+                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                  }
+                  
+                  /* 系统深色模式 */
+                  @media (prefers-color-scheme: dark) {
+                    div::-webkit-scrollbar-thumb {
+                      background: rgba(255, 255, 255, 0.2);
+                    }
+                    div::-webkit-scrollbar-thumb:hover {
+                      background: rgba(255, 255, 255, 0.35);
+                    }
+                    div {
+                      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                    }
+                  }
+                  
+                  /* 明确的浅色模式覆盖（当明确指定浅色主题时） */
+                  [data-theme="light"] div::-webkit-scrollbar-thumb,
+                  .light div::-webkit-scrollbar-thumb {
+                    background: rgba(0, 0, 0, 0.15);
+                  }
+                  [data-theme="light"] div::-webkit-scrollbar-thumb:hover,
+                  .light div::-webkit-scrollbar-thumb:hover {
+                    background: rgba(0, 0, 0, 0.25);
+                  }
+                  [data-theme="light"] div,
+                  .light div {
+                    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+                  }
+                `}</style>
+                <Table
+                  columns={columns}
+                  dataSource={rooms}
+                  rowKey="id"
+                  loading={loading}
+                  scroll={{ 
+                    x: 1200, 
+                    y: isFilterCollapsed ? 'calc(100vh - 219px)' : 'calc(100vh - 275px)',
+                    scrollToFirstRowOnChange: false
+                  }}
+                  pagination={false}
+                  onChange={handleTableChange}
+                  size="middle"
+                  style={{ 
+                    height: '100%',
+                    minWidth: '1200px', // 确保表格有最小宽度以触发水平滚动
+                    // minHeight: '400px'  // 为表格体添加最小高度
+                  }}
+                  overflowX='hidden'
+                  sticky={{ offsetHeader: 0 }}
+                />
+              </div>
+            </FixedTop>
+          </div>
+          
+          {/* 分页组件 - 常驻 */}
+          <div style={{
+            padding: '12px 16px',
+            borderTop: '1px solid var(--border-color)',
+            backgroundColor: 'var(--component-bg)',
+            display: 'flex',
+            justifyContent: 'center',
+            borderBottomLeftRadius: '6px',
+            borderBottomRightRadius: '6px',
+            fontFamily: 'var(--app-font-stack)'
+          }}>
+            <Pagination
+              {...pagination}
+              showSizeChanger={!isFilterCollapsed}
+              showQuickJumper={!isFilterCollapsed}
+              showTotal={(total, range) => t('roomList.paginationTotal', `第 ${range[0]}-${range[1]} 条/共 ${total} 条`).replace('{from}', range[0]).replace('{to}', range[1]).replace('{total}', total)}
+              pageSizeOptions={['10', '20', '50', '100']}
+              size="default"
+              onChange={(page, pageSize) => {
+                const newParams = {
+                  pageNum: page,
+                  pageSize: pageSize,
+                };
+                setSearchParams(prev => ({ ...prev, ...newParams }));
+                fetchRooms(newParams);
+              }}
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* 抽屉组件 */}
       <Drawer
         title={
           drawerType === 'add' ? t('roomList.drawer.add') :
-            drawerType === 'edit' ? t('roomList.drawer.edit') :
-              drawerType === 'detail' ? t('roomList.drawer.detail') :
-                drawerType === 'apply' ? t('roomList.drawer.apply') : ''
+          drawerType === 'edit' ? t('roomList.drawer.edit') :
+          drawerType === 'detail' ? t('roomList.drawer.detail') :
+          drawerType === 'apply' ? t('roomList.drawer.apply') : ''
         }
         width={600}
         open={drawerVisible}
@@ -713,7 +921,7 @@ export default function RoomList() {
             >
               <Input placeholder={t('roomList.form.enterName', '请输入教室名称')} />
             </Form.Item>
-
+            
             <Form.Item
               name="type"
               label={t('roomList.form.type', '教室类型')}
@@ -727,7 +935,7 @@ export default function RoomList() {
                 ))}
               </Select>
             </Form.Item>
-
+            
             <Form.Item
               name="capacity"
               label={t('roomList.form.capacity', '容量')}
@@ -740,7 +948,7 @@ export default function RoomList() {
                 style={{ width: '100%' }}
               />
             </Form.Item>
-
+            
             <Form.Item
               name="location"
               label={t('roomList.form.location', '位置')}
@@ -748,7 +956,7 @@ export default function RoomList() {
             >
               <Input placeholder={t('roomList.form.enterLocation', '请输入位置')} />
             </Form.Item>
-
+            
             <Form.Item
               name="description"
               label={t('roomList.form.description', '描述')}
@@ -772,7 +980,7 @@ export default function RoomList() {
             >
               <Input placeholder={t('roomList.form.enterName', '请输入教室名称')} />
             </Form.Item>
-
+            
             <Form.Item
               name="type"
               label={t('roomList.form.type', '教室类型')}
@@ -786,7 +994,7 @@ export default function RoomList() {
                 ))}
               </Select>
             </Form.Item>
-
+            
             <Form.Item
               name="capacity"
               label={t('roomList.form.capacity', '容量')}
@@ -799,7 +1007,7 @@ export default function RoomList() {
                 style={{ width: '100%' }}
               />
             </Form.Item>
-
+            
             <Form.Item
               name="location"
               label={t('roomList.form.location', '位置')}
@@ -807,7 +1015,7 @@ export default function RoomList() {
             >
               <Input placeholder={t('roomList.form.enterLocation', '请输入位置')} />
             </Form.Item>
-
+            
             <Form.Item
               name="status"
               label={t('roomList.form.status', '教室状态')}
@@ -821,7 +1029,7 @@ export default function RoomList() {
                 ))}
               </Select>
             </Form.Item>
-
+            
             <Form.Item
               name="description"
               label={t('roomList.form.description', '描述')}
@@ -833,12 +1041,12 @@ export default function RoomList() {
 
         {drawerType === 'detail' && currentRoom && (
           <div>
-            <div style={{
-              marginBottom: 16,
-              padding: 16,
-              backgroundColor: 'var(--component-bg)',
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
               border: '1px solid var(--border-color)',
-              borderRadius: 6
+              borderRadius: 6 
             }}>
               <div style={{ color: 'var(--text-color)' }}>
                 <div style={{ marginBottom: 12 }}>
@@ -851,7 +1059,7 @@ export default function RoomList() {
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>{t('roomList.form.capacity', '容量')}：</strong>
-                  <span className="num-mono" data-field="capacity">{currentRoom.capacity}</span>{t('roomList.labels.people', '人')}
+                    <span className="num-mono" data-field="capacity">{currentRoom.capacity}</span>{t('roomList.labels.people', '人')}
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <strong>{t('roomList.columns.status', '状态')}：</strong>
@@ -871,14 +1079,14 @@ export default function RoomList() {
                 )}
               </div>
             </div>
-
+            
             {/* 未来预约信息 */}
-            <div style={{
-              marginBottom: 16,
-              padding: 16,
-              backgroundColor: 'var(--component-bg)',
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
               border: '1px solid var(--border-color)',
-              borderRadius: 6
+              borderRadius: 6 
             }}>
               <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
                 {t('roomList.detail.futureApprovedTitle', '未来已批准预约')} ({futureApplications.length})
@@ -897,9 +1105,9 @@ export default function RoomList() {
                   ))}
                 </div>
               ) : (
-                <div style={{
-                  color: 'var(--text-color-secondary)',
-                  textAlign: 'center',
+                <div style={{ 
+                  color: 'var(--text-color-secondary)', 
+                  textAlign: 'center', 
                   padding: '20px',
                   fontSize: '14px'
                 }}>
@@ -912,26 +1120,26 @@ export default function RoomList() {
 
         {drawerType === 'apply' && currentRoom && (
           <div>
-            <div style={{
-              marginBottom: 16,
-              padding: 16,
-              backgroundColor: 'var(--component-bg)',
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
               border: '1px solid var(--border-color)',
-              borderRadius: 6
+              borderRadius: 6 
             }}>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.name', '教室名称')}：</strong>{currentRoom.name}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.type', '教室类型')}：</strong>{getRoomTypeDisplayName(currentRoom.type)}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.capacity', '容量')}：</strong>{currentRoom.capacity}{t('roomList.labels.people', '人')}</p>
               <p style={{ color: 'var(--text-color)' }}><strong>{t('roomList.form.location', '位置')}：</strong>{currentRoom.location}</p>
             </div>
-
+            
             {/* 未来预约信息 */}
-            <div style={{
-              marginBottom: 16,
-              padding: 16,
-              backgroundColor: 'var(--component-bg)',
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 16, 
+              backgroundColor: 'var(--component-bg)', 
               border: '1px solid var(--border-color)',
-              borderRadius: 6
+              borderRadius: 6 
             }}>
               <h4 style={{ color: 'var(--text-color)', marginBottom: 12 }}>
                 {t('roomList.detail.futureApprovedTitle', '未来已批准预约')} ({futureApplications.length})
@@ -950,9 +1158,9 @@ export default function RoomList() {
                   ))}
                 </div>
               ) : (
-                <div style={{
-                  color: 'var(--text-color-secondary)',
-                  textAlign: 'center',
+                <div style={{ 
+                  color: 'var(--text-color-secondary)', 
+                  textAlign: 'center', 
                   padding: '20px',
                   fontSize: '14px'
                 }}>
@@ -960,7 +1168,7 @@ export default function RoomList() {
                 </div>
               )}
             </div>
-
+            
             <Form
               form={form}
               layout="vertical"
@@ -1034,7 +1242,7 @@ export default function RoomList() {
           </div>
         )}
       </Drawer>
-
+      
       {/* 确认弹窗 */}
       <Modal
         title={t('roomList.modals.confirmUpdateTitle', '确认更新教室信息')}
@@ -1043,36 +1251,36 @@ export default function RoomList() {
           try {
             // 重新计算变更对比
             const changes = [];
-
+            
             // 比较各个字段的变化
             if (currentRoom.name !== editFormValues.name) {
-              changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name} → ${editFormValues.name}`);
+        changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name} → ${editFormValues.name}`);
             } else {
-              changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name}`);
+        changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name}`);
             }
-
+            
             if (currentRoom.type !== getRoomTypeEnumValue(editFormValues.type)) {
-              changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
+        changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
             } else {
-              changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)}`);
+        changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)}`);
             }
-
+            
             if (currentRoom.capacity !== editFormValues.capacity) {
-              changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')} → ${editFormValues.capacity}${t('roomList.labels.people', '人')}`);
+        changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')} → ${editFormValues.capacity}${t('roomList.labels.people', '人')}`);
             } else {
-              changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')}`);
+        changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')}`);
             }
-
+            
             if (currentRoom.location !== editFormValues.location) {
-              changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location} → ${editFormValues.location}`);
+        changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location} → ${editFormValues.location}`);
             } else {
-              changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location}`);
+        changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location}`);
             }
-
+            
             if (currentRoom.status !== editFormValues.status) {
               changes.push(
                 <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
-                  {t('roomList.labels.status', '状态')}：
+          {t('roomList.labels.status', '状态')}：
                   <Tag color={getRoomStatusColor(currentRoom.status)} style={{ margin: '0 4px' }}>
                     {getRoomStatusDisplayName(currentRoom.status)}
                   </Tag>
@@ -1085,22 +1293,22 @@ export default function RoomList() {
             } else {
               changes.push(
                 <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
-                  {t('roomList.labels.status', '状态')}：
+          {t('roomList.labels.status', '状态')}：
                   <Tag color={getRoomStatusColor(currentRoom.status)} style={{ margin: '0 4px' }}>
                     {getRoomStatusDisplayName(currentRoom.status)}
                   </Tag>
                 </div>
               );
             }
-
+            
             if (currentRoom.description !== editFormValues.description) {
-              const oldDesc = currentRoom.description || t('roomList.labels.none', '无');
-              const newDesc = editFormValues.description || t('roomList.labels.none', '无');
-              changes.push(`${t('roomList.labels.description', '描述')}：${oldDesc} → ${newDesc}`);
+        const oldDesc = currentRoom.description || t('roomList.labels.none', '无');
+        const newDesc = editFormValues.description || t('roomList.labels.none', '无');
+        changes.push(`${t('roomList.labels.description', '描述')}：${oldDesc} → ${newDesc}`);
             } else {
-              changes.push(`${t('roomList.labels.description', '描述')}：${currentRoom.description || t('roomList.labels.none', '无')}`);
+        changes.push(`${t('roomList.labels.description', '描述')}：${currentRoom.description || t('roomList.labels.none', '无')}`);
             }
-
+            
             // 执行更新操作
             await executeWithRetry(
               async () => {
@@ -1154,32 +1362,32 @@ export default function RoomList() {
                 <div style={{ marginTop: 8 }}>
                   {(() => {
                     const changes = [];
-
+                    
                     // 比较各个字段的变化
                     if (currentRoom.name !== editFormValues.name) {
                       changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name} → ${editFormValues.name}`);
                     } else {
                       changes.push(`${t('roomList.labels.name', '名称')}：${currentRoom.name}`);
                     }
-
+                    
                     if (currentRoom.type !== getRoomTypeEnumValue(editFormValues.type)) {
                       changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)} → ${getRoomTypeDisplayName(getRoomTypeEnumValue(editFormValues.type))}`);
                     } else {
                       changes.push(`${t('roomList.labels.type', '类型')}：${getRoomTypeDisplayName(currentRoom.type)}`);
                     }
-
+                    
                     if (currentRoom.capacity !== editFormValues.capacity) {
                       changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')} → ${editFormValues.capacity}${t('roomList.labels.people', '人')}`);
                     } else {
                       changes.push(`${t('roomList.labels.capacity', '容量')}：${currentRoom.capacity}${t('roomList.labels.people', '人')}`);
                     }
-
+                    
                     if (currentRoom.location !== editFormValues.location) {
                       changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location} → ${editFormValues.location}`);
                     } else {
                       changes.push(`${t('roomList.labels.location', '位置')}：${currentRoom.location}`);
                     }
-
+                    
                     if (currentRoom.status !== editFormValues.status) {
                       changes.push(
                         <div key="status" style={{ marginBottom: 4, fontSize: '14px' }}>
@@ -1203,7 +1411,7 @@ export default function RoomList() {
                         </div>
                       );
                     }
-
+                    
                     if (currentRoom.description !== editFormValues.description) {
                       const oldDesc = currentRoom.description || t('roomList.labels.none', '无');
                       const newDesc = editFormValues.description || t('roomList.labels.none', '无');
@@ -1211,7 +1419,7 @@ export default function RoomList() {
                     } else {
                       changes.push(`${t('roomList.labels.description', '描述')}：${currentRoom.description || t('roomList.labels.none', '无')}`);
                     }
-
+                    
                     return changes.map((change, index) => (
                       <div key={index} style={{ marginBottom: 4, fontSize: '14px' }}>
                         {change}
@@ -1224,7 +1432,7 @@ export default function RoomList() {
           </div>
         </div>
       </Modal>
-
+      
       {/* 删除确认弹窗 */}
       <Modal
         title={t('roomList.modals.confirmDeleteTitle', '确认删除教室')}
@@ -1247,7 +1455,7 @@ export default function RoomList() {
           } catch (error) {
             console.error('删除教室失败:', error);
             const errorMessage = error.response?.data?.message || error.message || '未知错误';
-
+            
             // 根据错误类型显示不同的提示
             if (errorMessage.includes('相关申请记录')) {
               messageApi.error(t('roomList.errors.delete.relatedApplications', '删除失败：该教室存在相关申请记录，请先处理相关申请后再删除。'));
@@ -1282,9 +1490,9 @@ export default function RoomList() {
               <p style={{ fontSize: '14px', marginBottom: '8px' }}>
                 {t('roomList.modals.confirmDeleteQuestion', '确定删除以下教室？')}
               </p>
-              <div style={{
-                background: 'var(--component-bg, #f5f5f5)',
-                padding: '12px',
+              <div style={{ 
+                background: 'var(--component-bg, #f5f5f5)', 
+                padding: '12px', 
                 borderRadius: '6px',
                 border: '1px solid var(--border-color, #d9d9d9)'
               }}>
@@ -1308,9 +1516,9 @@ export default function RoomList() {
                 </p>
               </div>
             </div>
-            <div style={{
-              background: 'var(--warning-bg, #fff2e8)',
-              padding: '12px',
+            <div style={{ 
+              background: 'var(--warning-bg, #fff2e8)', 
+              padding: '12px', 
               borderRadius: '6px',
               border: '1px solid var(--warning-border, #ffd591)'
             }}>
@@ -1321,6 +1529,7 @@ export default function RoomList() {
           </div>
         )}
       </Modal>
+    </div>
     </PageErrorBoundary>
   );
 } 

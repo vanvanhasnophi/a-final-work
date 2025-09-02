@@ -169,7 +169,7 @@ export default function Dashboard() {
       <h1>{t('dashboard.overviewTitle')}</h1>
           
           {/* 第一行：数据展示 - 统计卡片 */}
-          <Row gutter={16} style={{ marginBottom: '24px' }}>
+          <Row gutter={16} style={{ marginBottom: '24px', gap: windowWidth < 600 ? '12px' : '0px' }}>
             {/* 通用统计卡片 */}
             <Col span={windowWidth < 600 ? 24 : 6}>
               <Card>

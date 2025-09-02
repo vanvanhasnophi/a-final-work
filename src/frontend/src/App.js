@@ -58,6 +58,11 @@ function AppContent() {
     window.removeEventListener('storage', storageHandler);
   };
 }, []);
+
+  // 同步设置到body元素的data属性
+  useEffect(() => {
+    document.body.setAttribute('data-blur-enabled', enableMoreBlur.toString());
+  }, [enableMoreBlur]);
   
   const themeConfig = {
     token: {
@@ -86,7 +91,7 @@ function AppContent() {
       <BlurContext.Provider value={enableMoreBlur}>
         <MessageContext.Provider value={messageApi}>
           {contextHolder}
-          <div className="App">
+          <div className="App" data-blur-enabled={enableMoreBlur.toString()}>
             <AppRouter />
           </div>
         </MessageContext.Provider>

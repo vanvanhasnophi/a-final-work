@@ -370,11 +370,13 @@ export default function UserList(props) {
         icon={<SearchOutlined />}
         onClick={handleSearch}
         loading={usersLoading}
+        className="drawer-row-btn-mobile"
       >
         {t('common.search', '搜索')}
       </Button>
       <Button
         onClick={handleClearFilters}
+        className="drawer-row-btn-mobile"
       >
         {t('common.clearFilters', '清空筛选')}
       </Button>
@@ -817,12 +819,11 @@ export default function UserList(props) {
               drawerType === 'create' ? t('userList.drawer.create', '创建用户') : ''
         }
         placement="bottom"
-        height="80vh"
         open={drawerVisible}
         onClose={handleCloseDrawer}
         closable={false}
         bodyStyle={{ padding: 16 }}
-        style={{ borderRadius: '16px 16px 0 0' }}
+        className="drawer-mobile"
         footer={
           drawerType === 'detail' && currentUser ? (
             <div style={{ margin: 8 }}>

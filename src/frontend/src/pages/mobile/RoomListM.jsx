@@ -303,6 +303,7 @@ function RoomListContent({ setFloatContent }) {
   const listItemBody = useCallback((item) => {
     return (
       <div style={{
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px'
@@ -711,19 +712,19 @@ function RoomListContent({ setFloatContent }) {
                 drawerType === 'apply' ? t('roomList.drawer.apply') : ''
         }
         placement="bottom"
-        height="80vh"
         open={drawerVisible}
         onClose={handleCloseDrawer}
         closable={false}
         bodyStyle={{ padding: 16 }}
-        style={{ borderRadius: '16px 16px 0 0' }}
+        className="drawer-mobile"
         footer={
           drawerType === 'detail' && currentRoom ? (
             <div style={{ margin: 8 }}>
               {canCreateApplication(user?.role) && (
                 <Button
                   type="primary"
-                  style={{ width: '100%', marginBottom: 12 }}
+                  className="drawer-row-btn-mobile"
+                  style={{ marginBottom: 12 }}
                   onClick={() => {
                     handleApply(currentRoom);
                   }}
@@ -733,7 +734,8 @@ function RoomListContent({ setFloatContent }) {
               )}
               {canUpdateRoom(user?.role) && (
                 <Button
-                  style={{ width: '100%', marginBottom: 12 }}
+                  className="drawer-row-btn-mobile"
+                  style={{ marginBottom: 12 }}
                   onClick={() => handleEditRoom(currentRoom)}
                 >
                   {t('common.edit', '编辑')}
@@ -742,7 +744,8 @@ function RoomListContent({ setFloatContent }) {
               {canDeleteRoom(user?.role) && (
                 <Button
                   danger
-                  style={{ width: '100%', marginBottom: 12 }}
+                  className="drawer-row-btn-mobile"
+                  style={{ marginBottom: 12 }}
                   onClick={() => {
                     handleDeleteRoom(currentRoom);
                     handleCloseDrawer();
@@ -752,7 +755,7 @@ function RoomListContent({ setFloatContent }) {
                 </Button>
               )}
               <Button
-                style={{ width: '100%' }}
+                className="drawer-row-btn-mobile"
                 onClick={handleCloseDrawer}
               >
                 {t('common.close', '关闭')}

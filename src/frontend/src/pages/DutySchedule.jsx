@@ -28,7 +28,6 @@ import { dutyAPI } from '../api/duty';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { canManageUsers } from '../utils/permissionUtils';
-import ResponsiveFilterContainer from '../components/ResponsiveFilterContainer';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import dayjs from 'dayjs';
 
@@ -133,7 +132,7 @@ export default function DutySchedule() {
             // 添加今日标记
             const mark = document.createElement('div');
             mark.className = 'custom-today-mark';
-            mark.textContent = t('common.today', 'Today');
+            mark.textContent = t('common.today.short', '今');
             mark.style.cssText = `
               position: absolute;
               top: 2px;

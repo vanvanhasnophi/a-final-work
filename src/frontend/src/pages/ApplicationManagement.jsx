@@ -447,6 +447,7 @@ function ApplicationManagementContent() {
             <Tooltip title={t('applicationManagement.tooltips.cancel')}>
               <Button
                 type="text"
+                danger
                 icon={<DeleteOutlined />}
                 size="small"
                 onClick={() => handleCancel(record)}

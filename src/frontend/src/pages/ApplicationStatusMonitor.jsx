@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Button, Space, Table, Tag, message, Alert, Tooltip } from 'antd';
 import { ReloadOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/statusMapping';
-import { formatDateTime } from '../utils/dateFormat';
+import { getApplicationStatusDisplayName, getApplicationStatusColor } from '../utils/mappingUtils';
+import { formatDateTime } from '../utils/dateTimeHelper';
 import { useApiWithRetry } from '../hooks/useApiWithRetry';
 import FixedTop from '../components/FixedTop';
 import ResponsiveButton from '../components/ResponsiveButton';

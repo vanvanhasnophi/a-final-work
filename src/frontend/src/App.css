@@ -1,12 +1,70 @@
+/* 移动端抽屉统一样式 */
+.drawer-mobile {
+  height: 70vh !important;
+  min-height: 550px !important;
+  max-width: 800px !important;
+  border-radius: 16px 16px 0 0 !important;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08) !important;
+  bottom: 0 !important;
+  margin: 0 auto !important;
+}
+
+[data-theme="dark"] .drawer-mobile {
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* 抽屉内容区域高度优化 */
+.ant-drawer-content-wrapper {
+  height: auto !important;
+  min-height: 550px !important;
+  box-shadow: none !important;
+}
+
+/* 当启用模糊效果时，设置drawer mask模糊 */
+[data-blur-enabled="true"] .ant-drawer-mask {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* 默认状态下不模糊 */
+[data-blur-enabled="false"] .ant-drawer-mask {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 默认drawer mask样式（后备方案） */
+.ant-drawer-mask {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 当启用模糊效果时，设置modal mask模糊 */
+[data-blur-enabled="true"] .ant-modal-mask {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* 默认状态下不模糊 */
+[data-blur-enabled="false"] .ant-modal-mask {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 默认modal mask样式（后备方案） */
+.ant-modal-mask {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 /* 保证所有模糊弹层和内容区圆角与overflow一致，防止模糊超出 */
 .blur-dropdown-menu.ant-dropdown,
-.blur-dropdown-menu.ant-dropdown > .ant-dropdown-content,
+.blur-dropdown-menu.ant-dropdown>.ant-dropdown-content,
 .blur-dropdown-menu.ant-dropdown .ant-dropdown-menu,
 .blur-dropdown-menu.ant-dropdown .ant-dropdown-menu-root,
 .blur-dropdown-menu.ant-dropdown .ant-slide-up-appear,
 .blur-dropdown-menu.ant-dropdown .ant-slide-up-enter,
 .blur-dropdown-menu.ant-dropdown .ant-slide-up-leave,
-.ant-modal-content{
+.ant-modal-content {
   border-radius: var(--border-radius-lg, 12px) !important;
   overflow: hidden !important;
 }
@@ -16,6 +74,8 @@
   --primary-color: #660874;
   --primary-hover: #7A0A8A;
   --primary-active: #5A0668;
+  --primary-dangerous: #FF4D4F;
+  --primary-dangerous-active: #FF6E6E;
   --background-color: #F2F2F2;
   --component-bg: #FFFFFF;
   --component-bg-elevated: #FFFFFF;
@@ -52,6 +112,8 @@
   --primary-color: #990CAE;
   --primary-hover: #B30FCC;
   --primary-active: #7A0A8A;
+  --primary-dangerous: #FF4D4F;
+  --primary-dangerous-active: #ff6e6e;
   --background-color: #161618;
   --component-bg: #2B2D31;
   --component-bg-elevated: #2B2D31;
@@ -99,39 +161,40 @@ body {
 }
 
 /* 确保除代码块外的普通文本与所有主要组件在字体偏好切换时同步使用 var(--app-font-stack) */
-html, body, 
+html,
+body,
 .ant-alert,
-.ant-typography, 
-.ant-btn, 
-.ant-table, 
-.ant-table-cell, 
-.ant-form, 
-.ant-input, 
-.ant-select, 
-.ant-select-item, 
-.ant-modal, 
-.ant-drawer, 
-.ant-message, 
-.ant-notification, 
-.ant-dropdown, 
-.ant-dropdown-menu, 
-.ant-tooltip, 
-.ant-pagination, 
-.ant-tag, 
-.ant-badge, 
-.ant-descriptions, 
-.ant-descriptions-item, 
-.ant-card, 
+.ant-typography,
+.ant-btn,
+.ant-table,
+.ant-table-cell,
+.ant-form,
+.ant-input,
+.ant-select,
+.ant-select-item,
+.ant-modal,
+.ant-drawer,
+.ant-message,
+.ant-notification,
+.ant-dropdown,
+.ant-dropdown-menu,
+.ant-tooltip,
+.ant-pagination,
+.ant-tag,
+.ant-badge,
+.ant-descriptions,
+.ant-descriptions-item,
+.ant-card,
 .ant-statistic,
 .ant-statistic-title,
 .ant-statistic-content,
-.ant-list, 
-.ant-list-item, 
-.ant-breadcrumb, 
-.ant-menu, 
-.ant-segmented, 
-.ant-segmented-item, 
-.ant-radio-wrapper, 
+.ant-list,
+.ant-list-item,
+.ant-breadcrumb,
+.ant-menu,
+.ant-segmented,
+.ant-segmented-item,
+.ant-radio-wrapper,
 .ant-checkbox-wrapper,
 .ant-calendar,
 .ant-calendar-cell,
@@ -143,7 +206,9 @@ html, body,
 }
 
 /* 避免影响代码/等宽内容 */
-code, pre, pre code {
+code,
+pre,
+pre code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace !important;
 }
 
@@ -249,18 +314,20 @@ code, pre, pre code {
 }
 
 .ant-checkbox {
-  margin-right: 6px !important; /* 降低与文字的距离 */
+  margin-right: 6px !important;
+  /* 降低与文字的距离 */
   margin-top: 0 !important;
   display: flex !important;
   align-items: center !important;
 }
 
 .ant-checkbox .ant-checkbox-inner {
-  border-radius: 3px !important; /* 降低圆角 */
+  border-radius: 3px !important;
+  /* 降低圆角 */
   margin-top: 0 !important;
 }
 
-.ant-checkbox-wrapper .ant-checkbox + span {
+.ant-checkbox-wrapper .ant-checkbox+span {
   line-height: 1.4 !important;
   padding-left: 0 !important;
   display: flex !important;
@@ -269,13 +336,14 @@ code, pre, pre code {
 
 /* 筛选区域中的复选框特殊优化 */
 .filter-checkbox .ant-checkbox-wrapper {
-  height: 32px !important; /* 与其他筛选控件高度一致 */
+  height: 32px !important;
+  /* 与其他筛选控件高度一致 */
   display: flex !important;
   align-items: center !important;
 }
 
 /* 按钮样式 */
-.ant-btn {
+.ant-btn:not(.ant-btn-dangerous) {
   color: var(--text-color) !important;
   border-color: var(--border-color) !important;
   background-color: var(--component-bg) !important;
@@ -284,7 +352,7 @@ code, pre, pre code {
 }
 
 
-.ant-btn-primary {
+.ant-btn-primary:not(.ant-btn-dangerous) {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
   color: #ffffff !important;
@@ -303,15 +371,116 @@ code, pre, pre code {
 }
 
 /* 其他按钮类型的悬停效果 */
-.ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):hover {
+.ant-btn:not(.ant-btn-primary, .ant-btn-dangerous):hover {
   border-color: var(--primary-hover) !important;
   color: var(--primary-hover) !important;
 }
 
-.ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):active {
+.ant-btn:not(.ant-btn-primary, .ant-btn-dangerous):active {
   border-color: var(--primary-active) !important;
   color: var(--primary-active) !important;
 }
+
+/* Primary危险按钮样式 */
+.ant-btn-dangerous.ant-btn-primary {
+  background-color: var(--primary-dangerous) !important;
+  border-color: var(--primary-dangerous) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-dangerous.ant-btn-primary:hover {
+  background-color: var(--primary-dangerous-active) !important;
+  border-color: var(--primary-dangerous-active) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-dangerous.ant-btn-primary:active {
+  background-color: var(--primary-dangerous-active) !important;
+  border-color: var(--primary-dangerous-active) !important;
+  color: #ffffff !important;
+}
+
+/* 普通危险按钮样式（排除text和primary类型） */
+.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text) {
+  background-color: var(--component-bg) !important;
+  border-color: var(--primary-dangerous) !important;
+  color: var(--primary-dangerous) !important;
+  transition: all 0.15s ease !important;
+}
+
+.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):hover,
+.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):focus {
+  background-color: var(--primary-dangerous) !important;
+  border-color: var(--primary-dangerous) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):active {
+  background-color: var(--primary-dangerous-active) !important;
+  border-color: var(--primary-dangerous-active) !important;
+  color: #ffffff !important;
+}
+
+/* 危险text按钮样式 */
+.ant-btn-dangerous.ant-btn-text {
+  border-color: var(--border-color) !important;
+  color: var(--primary-dangerous) !important;
+  background-color: transparent !important;
+}
+
+/* 危险按钮禁用状态 */
+.ant-btn-dangerous:disabled,
+.ant-btn-dangerous.ant-btn-disabled {
+  background-color: var(--fill-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color-quaternary) !important;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+/* 危险按钮最高优先级样式 - 确保在所有上下文中都能覆盖 */
+button.ant-btn.ant-btn-dangerous:not(.ant-btn-text):not(.ant-btn-primary),
+.ant-btn.ant-btn-dangerous:not(.ant-btn-text):not(.ant-btn-primary),
+button[class*="ant-btn-dangerous"]:not(.ant-btn-text):not(.ant-btn-primary),
+[class*="ant-btn-dangerous"]:not(.ant-btn-text):not(.ant-btn-primary) {
+  border-color: var(--primary-dangerous) !important;
+  color: var(--primary-dangerous) !important;
+  background-color: var(--component-bg) !important;
+}
+
+button.ant-btn.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):hover,
+.ant-btn.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):hover,
+button.ant-btn.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):focus,
+.ant-btn.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):focus {
+  background-color: var(--primary-dangerous) !important;
+  border-color: var(--primary-dangerous) !important;
+  color: #ffffff !important;
+}
+
+button.ant-btn.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):active,
+.ant-btn.ant-btn-dangerous:not(.ant-btn-primary):not(.ant-btn-text):active {
+  background-color: var(--primary-dangerous-active) !important;
+  border-color: var(--primary-dangerous-active) !important;
+  color: #ffffff !important;
+}
+
+/* Primary dangerous按钮最高优先级 */
+button.ant-btn.ant-btn-primary.ant-btn-dangerous,
+.ant-btn.ant-btn-primary.ant-btn-dangerous {
+  background-color: var(--primary-dangerous) !important;
+  border-color: var(--primary-dangerous) !important;
+  color: #ffffff !important;
+}
+
+button.ant-btn.ant-btn-primary.ant-btn-dangerous:hover,
+.ant-btn.ant-btn-primary.ant-btn-dangerous:hover,
+button.ant-btn.ant-btn-primary.ant-btn-dangerous:focus,
+.ant-btn.ant-btn-primary.ant-btn-dangerous:focus {
+  background-color: var(--primary-dangerous-active) !important;
+  border-color: var(--primary-dangerous-active) !important;
+  color: #ffffff !important;
+}
+
 
 /* 卡片样式 */
 .transparent-card .ant-card,
@@ -368,7 +537,7 @@ code, pre, pre code {
 
 
 
-.ant-table-tbody > tr > td {
+.ant-table-tbody>tr>td {
   background-color: var(--component-bg) !important;
   color: var(--text-color) !important;
   border-bottom: 1px solid var(--border-color) !important;
@@ -445,13 +614,13 @@ code, pre, pre code {
   background-color: var(--table-header-bg) !important;
 }
 
-.ant-table-thead > tr {
+.ant-table-thead>tr {
   position: sticky !important;
   top: 0 !important;
   z-index: 10 !important;
 }
 
-.ant-table-thead > tr > th {
+.ant-table-thead>tr>th {
   background-color: var(--table-header-bg) !important;
   color: var(--text-color) !important;
   border-bottom: 1px solid var(--border-color) !important;
@@ -473,7 +642,7 @@ code, pre, pre code {
 .ant-table td:has(> .num-mono),
 .ant-table-cell:has(.num-mono) {
   font-variant-numeric: lining-nums tabular-nums;
-  font-feature-settings: 'ss01','cv02','cv03','cv04','lnum','tnum';
+  font-feature-settings: 'ss01', 'cv02', 'cv03', 'cv04', 'lnum', 'tnum';
   /* 不改变 font-family，保持 Inter / system 当前选择 */
 }
 
@@ -489,11 +658,11 @@ code, pre, pre code {
 [data-field="createTime"],
 [data-field="capacity"] {
   font-variant-numeric: lining-nums tabular-nums;
-  font-feature-settings: 'ss01','cv02','cv03','cv04','lnum','tnum';
+  font-feature-settings: 'ss01', 'cv02', 'cv03', 'cv04', 'lnum', 'tnum';
   /* 保持当前字体，不强制切换 */
 }
 
-.ant-table-thead > tr > th:last-child {
+.ant-table-thead>tr>th:last-child {
   border-right: none !important;
 }
 
@@ -510,7 +679,7 @@ code, pre, pre code {
   background-color: var(--table-header-bg) !important;
 }
 
-[data-theme="dark"] .ant-table-thead > tr > th {
+[data-theme="dark"] .ant-table-thead>tr>th {
   background-color: var(--table-header-bg) !important;
   color: #FFFFFF !important;
   border-bottom: 1px solid var(--border-color) !important;
@@ -522,7 +691,7 @@ code, pre, pre code {
   border-right: 1px solid var(--border-color) !important;
 }
 
-[data-theme="dark"] .ant-table-thead > tr > th:last-child {
+[data-theme="dark"] .ant-table-thead>tr>th:last-child {
   border-right: none !important;
 }
 
@@ -607,7 +776,7 @@ code, pre, pre code {
 
 
 
-[data-theme="dark"] .ant-table-tbody > tr > td {
+[data-theme="dark"] .ant-table-tbody>tr>td {
   background-color: #232428 !important;
   color: #FFFFFF !important;
   border-bottom: 1px solid #2F3136 !important;
@@ -993,9 +1162,9 @@ code, pre, pre code {
   .App {
     padding: 0;
   }
-  
- 
-  
+
+
+
   /* 移动端 Message 样式 */
   .ant-message {
     max-width: none !important;
@@ -1003,7 +1172,7 @@ code, pre, pre code {
     transform: translateX(-50%) !important;
     top: 50px !important;
   }
-  
+
   .ant-message-notice {
     max-width: none !important;
     width: auto !important;
@@ -1014,7 +1183,7 @@ code, pre, pre code {
     align-items: center !important;
     justify-content: center !important;
   }
-  
+
   /* 移动端移除嵌套样式 */
   .ant-message-notice-content {
     background: transparent !important;
@@ -1036,6 +1205,7 @@ code, pre, pre code {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1052,6 +1222,7 @@ code, pre, pre code {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1083,7 +1254,17 @@ code, pre, pre code {
 }
 
 /* 确保所有文本元素都使用正确的颜色 */
-div, span, p, h1, h2, h3, h4, h5, h6, label, a {
+div,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+label,
+a {
   color: inherit !important;
 }
 
@@ -1116,7 +1297,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   align-items: center !important;
   justify-content: center !important;
   padding: 12px 16px !important;
-  font-size: 14px !important; 
+  font-size: 14px !important;
   line-height: 1.5 !important;
   color: var(--text-color) !important;
   white-space: normal !important;
@@ -1302,12 +1483,12 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 }
 
 /* 深色模式下的其他按钮悬停效果 */
-[data-theme="dark"] .ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):hover {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary, .ant-btn-dangerous):hover {
   border-color: var(--primary-hover) !important;
   color: var(--primary-hover) !important;
 }
 
-[data-theme="dark"] .ant-btn:not(.ant-btn-primary,.ant-btn-dangerous):active {
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary, .ant-btn-dangerous):active {
   border-color: #8A0B9E !important;
   color: #8A0B9E !important;
 }
@@ -1428,11 +1609,22 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   font-size: 16px !important;
   padding: 4px 28px;
 }
+
 .m-blur-dropdown-menu .ant-dropdown-menu-item-icon {
   font-size: 18px !important;
 }
 
-/* 移动端无模糊样式 */
+
+
+
+.drawer-row-btn-mobile {
+  width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  font-size: 15px !important;
+}
+
+
 
 .m-dropdown-menu .ant-dropdown-menu {
   min-width: 180px;
@@ -1442,7 +1634,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   background: var(--component-bg) !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   transition: background 0.15s, backdrop-filter 0.15s;
 }
 
@@ -1452,6 +1644,7 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   font-size: 16px !important;
   padding: 4px 28px;
 }
+
 .m-dropdown-menu .ant-dropdown-menu-item-icon {
   font-size: 18px !important;
 }
@@ -1460,14 +1653,14 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
 
 /* 保证所有带.blur-dropdown-menu的Dropdown及其动画层始终模糊 */
 .blur-dropdown-menu.ant-dropdown,
-.blur-dropdown-menu.ant-dropdown > .ant-dropdown-content,
+.blur-dropdown-menu.ant-dropdown>.ant-dropdown-content,
 .blur-dropdown-menu.ant-dropdown .ant-dropdown-menu,
 .blur-dropdown-menu.ant-dropdown .ant-dropdown-menu-root,
 .blur-dropdown-menu.ant-dropdown .ant-slide-up-appear,
 .blur-dropdown-menu.ant-dropdown .ant-slide-up-enter,
 .blur-dropdown-menu.ant-dropdown .ant-slide-up-leave,
 .blur-dropdown-menu.ant-select-dropdown,
-.blur-dropdown-menu.ant-select-dropdown > .ant-dropdown-content,
+.blur-dropdown-menu.ant-select-dropdown>.ant-dropdown-content,
 .blur-dropdown-menu.ant-select-dropdown .ant-dropdown-menu,
 .blur-dropdown-menu.ant-select-dropdown .ant-dropdown-menu-root,
 .blur-dropdown-menu.ant-select-dropdown .ant-slide-up-appear,
@@ -1476,14 +1669,14 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   background: var(--component-bg-allow-blur) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12)!important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
   transition: background 0.15s, backdrop-filter 0.15s !important;
 }
 
 
 /* 保证所有带.blur-dropdown-menu的Dropdown及其动画层始终模糊 */
 .m-blur-dropdown-menu.ant-dropdown,
-.m-blur-dropdown-menu.ant-dropdown > .ant-dropdown-content,
+.m-blur-dropdown-menu.ant-dropdown>.ant-dropdown-content,
 .m-blur-dropdown-menu.ant-dropdown .ant-dropdown-menu,
 .m-blur-dropdown-menu.ant-dropdown .ant-dropdown-menu-root,
 .m-blur-dropdown-menu.ant-dropdown .ant-slide-up-appear,
@@ -1492,12 +1685,9 @@ div, span, p, h1, h2, h3, h4, h5, h6, label, a {
   min-width: 180px;
   font-size: 16px !important;
   border-radius: 12px;
-  backdrop-filter: blur(16px)!important;
-  -webkit-backdrop-filter: blur(16px)!important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   background: var(--component-bg-allow-blur) !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12)!important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
   transition: background 0.15s, backdrop-filter 0.15s !important;
 }
-
-
-

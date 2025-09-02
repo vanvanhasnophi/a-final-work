@@ -28,7 +28,11 @@ const dictionaries = {
       noMore: '没有了',
       filterResultTip: '筛选结果：',
       search: '搜索',
-      close: '关闭'
+      close: '关闭',
+      today: {
+        short: '今',
+        long: '今日'
+      }
     },
     modal: {
       confirm: {
@@ -1044,7 +1048,11 @@ const dictionaries = {
       noMore: 'No more data',
       filterResultTip: 'Filtered:',
       search: 'Search',
-      close: 'Close'
+      close: 'Close',
+      today: {
+        short: 'T',
+        long: 'Today'
+      }
     },
     modal: {
       confirm: {

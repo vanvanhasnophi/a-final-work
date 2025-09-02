@@ -238,6 +238,7 @@ function ApplicationManagementContent({ setFloatContent }) {
 
     return (
       <div style={{
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
@@ -402,6 +403,7 @@ function ApplicationManagementContent({ setFloatContent }) {
         type="primary"
         icon={<SearchOutlined />}
         onClick={handleSearch}
+        className="drawer-row-btn-mobile"
       >
         {t('common.search', '搜索')}
       </Button>
@@ -432,6 +434,7 @@ function ApplicationManagementContent({ setFloatContent }) {
           setIsFiltering(false);
           setFloatKey(k => k + 1);
         }}
+        className="drawer-row-btn-mobile"
       >
         {t('applicationManagement.filters.clearFilters')}
       </Button>
@@ -575,19 +578,19 @@ function ApplicationManagementContent({ setFloatContent }) {
               drawerType === 'cancel' ? t('applicationManagement.drawer.cancel') : ''
         }
         placement="bottom"
-        height="80vh"
         open={drawerVisible}
         onClose={handleCloseDrawer}
         closable={false}
         bodyStyle={{ padding: 16 }}
-        style={{ borderRadius: '16px 16px 0 0' }}
+        className="drawer-mobile"
         footer={
           drawerType === 'detail' && currentApplication ? (
             <div style={{ margin: 8 }}>
               {canApprove && currentApplication.status === 'PENDING' && (
                 <Button
                   type="primary"
-                  style={{ width: '100%', marginBottom: 12 }}
+                  style={{ marginBottom: 12 }}
+                  className='drawer-row-btn-mobile'
                   onClick={() => handleApprove(currentApplication)}
                 >
                   {t('applicationManagement.drawer.approve', '审批')}
@@ -596,14 +599,15 @@ function ApplicationManagementContent({ setFloatContent }) {
               {canCancel && (currentApplication.status === 'PENDING' || currentApplication.status === 'APPROVED' || currentApplication.status === 'PENDING_CHECKIN' || currentApplication.status === 'IN_USE') && (
                 <Button
                   danger
-                  style={{ width: '100%', marginBottom: 12 }}
+                  style={{ marginBottom: 12 }}
+                  className='drawer-row-btn-mobile'
                   onClick={() => handleCancel(currentApplication)}
                 >
                   {t('applicationManagement.drawer.cancel', '取消申请')}
                 </Button>
               )}
               <Button
-                style={{ width: '100%' }}
+                className='drawer-row-btn-mobile'
                 onClick={handleCloseDrawer}
               >
                 {t('common.close', '关闭')}
@@ -614,13 +618,14 @@ function ApplicationManagementContent({ setFloatContent }) {
               <Button
                 type="primary"
                 danger={drawerType === 'cancel'}
-                style={{ width: '100%', marginBottom: 12 }}
+                style={{  marginBottom: 12 }}
+                className='drawer-row-btn-mobile'
                 onClick={() => form.submit()}
               >
-                {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmOk', '确认取消') : t('common.confirm', '确认')}
+                {drawerType === 'cancel' ? t('applicationManagement.messages.cancelConfirmOk', '确认撤消') : t('common.confirm', '确认')}
               </Button>
               <Button
-                style={{ width: '100%' }}
+                className='drawer-row-btn-mobile'
                 onClick={handleCloseDrawer}
               >
                 {t('common.cancel', '取消')}
@@ -628,7 +633,7 @@ function ApplicationManagementContent({ setFloatContent }) {
             </div>
           ) : (
             <Button
-              style={{ width: '100%' }}
+              className='drawer-row-btn-mobile'
               onClick={handleCloseDrawer}
             >
               {t('common.close', '关闭')}

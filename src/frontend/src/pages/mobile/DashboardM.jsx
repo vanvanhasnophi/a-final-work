@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Button, Tag, Space } from 'antd';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card, Row, Col, Statistic, Button, Tag, Space, List } from 'antd';
 import { UserOutlined, HomeOutlined, CalendarOutlined, SettingOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { roomAPI } from '../../api/room';
 import { applicationAPI } from '../../api/application';
@@ -137,6 +137,131 @@ export default function Dashboard() {
   const isService = user?.role === 'SERVICE';
   const canViewAllPending = isAdmin || isApprover;
 
+  // 图标常量，避免重复创建
+  const ICONS = useMemo(() => ({
+    home: <HomeOutlined />,
+    calendar: <CalendarOutlined />,
+    clock: <ClockCircleOutlined />,
+    setting: <SettingOutlined />,
+    user: <UserOutlined />
+  }), []);
+
+  // 样式常量，避免重复创建
+  const STYLES = useMemo(() => ({
+    listItem: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '6px 0'
+    },
+    leftContent: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    title: { fontSize: '16px' },
+    value: { fontSize: '24px', fontWeight: 'bold' }
+  }), []);
+
+  // 准备统计数据列表
+  const getStatsList = useCallback(() => {
+    const statsList = [];
+
+    // 通用统计 - 总教室数
+    statsList.push({
+      title: t('dashboard.stats.totalRooms'),
+      value: stats.totalRooms,
+      icon: ICONS.home,
+      color: '#1890ff'
+    });
+
+    if (!isMaintainer && !isService) {
+      // 普通用户和管理员的统计
+      statsList.push({
+        title: t('dashboard.stats.availableRooms'),
+        value: stats.availableRooms,
+        icon: ICONS.home,
+        color: '#3f8600'
+      });
+
+      statsList.push({
+        title: t('dashboard.stats.myPending'),
+        value: stats.myPendingApplications,
+        icon: ICONS.calendar,
+        color: '#cf1322'
+      });
+
+      if (canViewAllPending) {
+        statsList.push({
+          title: t('dashboard.stats.allPending'),
+          value: stats.allPendingApplications,
+          icon: ICONS.clock,
+          color: '#fa8c16'
+        });
+      } else {
+        statsList.push({
+          title: t('dashboard.stats.onlineUsers'),
+          value: stats.onlineUsers,
+          icon: ICONS.user,
+          color: '#1890ff'
+        });
+      }
+    }
+
+    if (isMaintainer) {
+      // Maintainer专用统计
+      statsList.push({
+        title: t('dashboard.stats.pendingMaintenanceRooms'),
+        value: stats.pendingMaintenanceRooms,
+        icon: ICONS.setting,
+        color: '#fa8c16'
+      });
+
+      statsList.push({
+        title: t('dashboard.stats.maintenanceRooms'),
+        value: stats.maintenanceRooms,
+        icon: ICONS.setting,
+        color: '#cf1322'
+      });
+
+      statsList.push({
+        title: t('dashboard.stats.todayMaintenanceReports'),
+        value: stats.todayMaintenanceReports,
+        icon: ICONS.clock,
+        color: '#1890ff'
+      });
+    }
+
+    if (isService) {
+      // Service专用统计
+      statsList.push({
+        title: t('dashboard.stats.pendingCleaningRooms'),
+        value: stats.pendingCleaningRooms,
+        icon: ICONS.home,
+        color: '#fa8c16'
+      });
+
+      statsList.push({
+        title: t('dashboard.stats.cleaningRooms'),
+        value: stats.cleaningRooms,
+        icon: ICONS.home,
+        color: '#cf1322'
+      });
+
+      statsList.push({
+        title: t('dashboard.stats.todayCleaningReports'),
+        value: stats.todayCleaningReports,
+        icon: ICONS.clock,
+        color: '#1890ff'
+      });
+    }
+
+    return statsList;
+  }, [stats, isMaintainer, isService, canViewAllPending, t, ICONS]);
+
+  // 判断是否使用窄屏布局
+  const isNarrow = windowWidth < 600;
+
   // 快速操作处理函数
   const handleQuickAction = (action) => {
     switch (action) {
@@ -168,140 +293,52 @@ export default function Dashboard() {
         <div style={{ padding: '24px' }}>
       <h1>{t('dashboard.overviewTitle')}</h1>
           
-          {/* 第一行：数据展示 - 统计卡片 */}
-          <Row gutter={16} style={{ marginBottom: '24px' }}>
-            {/* 通用统计卡片 */}
-            <Col span={windowWidth < 600 ? 24 : 6}>
-              <Card>
-                <Statistic
-                  title={t('dashboard.stats.totalRooms')}
-                  value={stats.totalRooms}
-                  prefix={<HomeOutlined />}
-                />
-              </Card>
-            </Col>
-            
-            {/* 根据角色显示不同的统计卡片 */}
-            {!isMaintainer && !isService && (
-              <>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.availableRooms')}
-                      value={stats.availableRooms}
-                      prefix={<HomeOutlined />}
-                      valueStyle={{ color: '#3f8600' }}
-                    />
-                  </Card>
-                </Col>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.myPending')}
-                      value={stats.myPendingApplications}
-                      prefix={<CalendarOutlined />}
-                      valueStyle={{ color: '#cf1322' }}
-                    />
-                  </Card>
-                </Col>
-                {canViewAllPending && (
-                  <Col span={windowWidth < 600 ? 24 : 6}>
-                    <Card>
-                      <Statistic
-                        title={t('dashboard.stats.allPending')}
-                        value={stats.allPendingApplications}
-                        prefix={<ClockCircleOutlined />}
-                        valueStyle={{ color: '#fa8c16' }}
-                      />
-                    </Card>
-                  </Col>
+          {/* 数据展示 - 根据屏幕宽度选择展示方式 */}
+          {isNarrow ? (
+            // 窄屏时使用List展示
+            <Card 
+              style={{ marginBottom: '24px' , padding: '0px'}}
+              styles={{ body: { paddingTop: '4px',paddingBottom:'4px' } }}
+            >
+              <List
+                dataSource={getStatsList()}
+                renderItem={(item) => (
+                  <List.Item style={STYLES.listItem}>
+                    <div style={STYLES.leftContent}>
+                      <span style={{ color: item.color, fontSize: '18px' }}>
+                        {item.icon}
+                      </span>
+                      <span style={STYLES.title}>
+                        {item.title}
+                      </span>
+                    </div>
+                    <span style={{ 
+                      ...STYLES.value,
+                      color: item.color 
+                    }}>
+                      {item.value}
+                    </span>
+                  </List.Item>
                 )}
-                {!canViewAllPending && (
-                  <Col span={windowWidth < 600 ? 24 : 6}>
-                    <Card>
-                      <Statistic
-                        title={t('dashboard.stats.onlineUsers')}
-                        value={stats.onlineUsers}
-                        prefix={<UserOutlined />}
-                      />
-                    </Card>
-                  </Col>
-                )}
-              </>
-            )}
-            
-            {/* Maintainer专用统计卡片 */}
-            {isMaintainer && (
-              <>
-                <Col span={windowWidth < 600 ? 24 : 6}>
+              />
+            </Card>
+          ) : (
+            // 宽屏时使用卡片网格展示
+            <Row gutter={16} style={{ marginBottom: '24px' }}>
+              {getStatsList().map((item, index) => (
+                <Col key={index} span={6}>
                   <Card>
                     <Statistic
-                      title={t('dashboard.stats.pendingMaintenanceRooms')}
-                      value={stats.pendingMaintenanceRooms}
-                      prefix={<SettingOutlined />}
-                      valueStyle={{ color: '#fa8c16' }}
+                      title={item.title}
+                      value={item.value}
+                      prefix={item.icon}
+                      valueStyle={{ color: item.color }}
                     />
                   </Card>
                 </Col>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.maintenanceRooms')}
-                      value={stats.maintenanceRooms}
-                      prefix={<SettingOutlined />}
-                      valueStyle={{ color: '#cf1322' }}
-                    />
-                  </Card>
-                </Col>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.todayMaintenanceReports')}
-                      value={stats.todayMaintenanceReports}
-                      prefix={<ClockCircleOutlined />}
-                      valueStyle={{ color: '#1890ff' }}
-                    />
-                  </Card>
-                </Col>
-              </>
-            )}
-            
-            {/* Service专用统计卡片 */}
-            {isService && (
-              <>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.pendingCleaningRooms')}
-                      value={stats.pendingCleaningRooms}
-                      prefix={<HomeOutlined />}
-                      valueStyle={{ color: '#fa8c16' }}
-                    />
-                  </Card>
-                </Col>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.cleaningRooms')}
-                      value={stats.cleaningRooms}
-                      prefix={<HomeOutlined />}
-                      valueStyle={{ color: '#cf1322' }}
-                    />
-                  </Card>
-                </Col>
-                <Col span={windowWidth < 600 ? 24 : 6}>
-                  <Card>
-                    <Statistic
-                      title={t('dashboard.stats.todayCleaningReports')}
-                      value={stats.todayCleaningReports}
-                      prefix={<ClockCircleOutlined />}
-                      valueStyle={{ color: '#1890ff' }}
-                    />
-                  </Card>
-                </Col>
-              </>
-            )}
-          </Row>
+              ))}
+            </Row>
+          )}
 
           {/* 第二行：快速操作单独一行 */}
           <Row gutter={16} style={{ marginBottom: '24px' }}>

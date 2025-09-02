@@ -1,3 +1,4 @@
+import '../../styles/modal-btn-row.css';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   List, Button, Input, DatePicker, Select,
@@ -256,6 +257,7 @@ function MyApplicationsContent({ setFloatContent }) {
 
     return (
       <div style={{
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
@@ -493,46 +495,6 @@ function MyApplicationsContent({ setFloatContent }) {
     renderItem: (item) => (
       <List.Item
         key={item.id}
-        actions={[
-          <Button
-            key="view"
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(item)}
-            style={{
-              padding: '4px 8px',
-              height: 'auto',
-              fontSize: '14px'
-            }}
-          >
-            {t('common.view')}
-          </Button>,
-          ...(item.status === 'PENDING' || item.status === 'APPROVED' ? [
-            <Button
-              key="cancel"
-              type="link"
-              danger
-              icon={<DeleteOutlined />}
-              style={{
-                padding: '4px 8px',
-                height: 'auto',
-                fontSize: '14px'
-              }}
-              onClick={() => {
-                modal.confirm({
-                  title: t('myApplications.confirmCancel.title'),
-                  content: t('myApplications.confirmCancel.content'),
-                  okText: t('common.confirm'),
-                  okType: 'danger',
-                  cancelText: t('common.cancel'),
-                  onOk: () => handleCancelApplication(item.id),
-                });
-              }}
-            >
-              {t('myApplications.actions.cancel')}
-            </Button>
-          ] : [])
-        ]}
       >
         {listItemBody(item)}
       </List.Item>
@@ -582,12 +544,11 @@ function MyApplicationsContent({ setFloatContent }) {
           drawerType === 'detail' ? t('myApplications.drawer.detail') : ''
         }
         placement="bottom"
-        height="80vh"
         open={drawerVisible}
         onClose={handleCloseDrawer}
         closable={false}
         bodyStyle={{ padding: 16 }}
-        style={{ borderRadius: '16px 16px 0 0' }}
+        className="drawer-mobile"
         footer={
           <div style={{ margin: 8 }}>
             {drawerType === 'detail' && currentApplication && (
@@ -595,7 +556,8 @@ function MyApplicationsContent({ setFloatContent }) {
                 {(currentApplication.status === 'PENDING' || currentApplication.status === 'APPROVED') && (
                   <Button
                     danger
-                    style={{ width: '100%', marginBottom: 12 }}
+                    className="drawer-row-btn-mobile"
+                    style={{ marginBottom: 12 }}
                     onClick={() => {
                       modal.confirm({
                         title: t('myApplications.confirmCancel.title'),
@@ -604,6 +566,7 @@ function MyApplicationsContent({ setFloatContent }) {
                         okType: 'danger',
                         cancelText: t('common.cancel'),
                         onOk: () => handleCancelApplication(currentApplication.id),
+                        className: 'modal-btn-row'
                       });
                     }}
                   >
@@ -613,8 +576,8 @@ function MyApplicationsContent({ setFloatContent }) {
               </>
             )}
             <Button
-              style={{ width: '100%' }}
               onClick={handleCloseDrawer}
+              className='drawer-row-btn-mobile'
             >
               {t('common.close','关闭')}
             </Button>

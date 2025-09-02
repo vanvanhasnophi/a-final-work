@@ -4,14 +4,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 import { UserOutlined, CloseOutlined, MailOutlined, PhoneOutlined, EditOutlined, SaveOutlined, BankOutlined, ToolOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 import { userAPI } from '../api/user';
-import { getRoleDisplayName } from '../utils/roleMapping';
-import { getPermissionDisplayName } from '../utils/permissionMapping';
+import { getRoleDisplayName, getPermissionDisplayName } from '../utils/mappingUtils';
 import { useAuth } from '../contexts/AuthContext';
 import RecentActivities from '../components/RecentActivities';
 import { useActivities } from '../hooks/useActivities';
 import ActivityGenerator from '../utils/activityGenerator';
 import { useI18n } from '../contexts/I18nContext';
-import ResponsiveButton  from '../components/ResponsiveButton';
+import ResponsiveButton from '../components/ResponsiveButton';
 
 const { Option } = Select;
 
@@ -37,12 +36,12 @@ export default function UserProfile() {
 
   // 检查是否是密码修改子路由
   const isPasswordChangeRoute = location.pathname.includes('/change-password');
-  
+
   // 使用活动Hook
-  const { 
-    activities: userActivities, 
-    loading: activitiesLoading, 
-    refreshActivities: fetchUserActivities 
+  const {
+    activities: userActivities,
+    loading: activitiesLoading,
+    refreshActivities: fetchUserActivities
   } = useActivities({
     type: 'all',
     userId: userInfo?.id,
@@ -99,19 +98,19 @@ export default function UserProfile() {
         id: userInfo.id,
         role: userInfo.role // 保持原有角色不变
       };
-      
+
       await userAPI.updateUser(userInfo.id, updateData);
-      
+
       // 更新AuthContext中的用户信息
       const updatedUserData = {
         ...userInfo,
         ...values
       };
       updateUserInfo(updatedUserData);
-      
+
       // 生成用户更新活动
       ActivityGenerator.userUpdated(updatedUserData);
-      
+
       messageApi.open({
         type: 'success',
         content: t('userProfile.messages.updateSuccess', '用户信息更新成功'),
@@ -136,7 +135,7 @@ export default function UserProfile() {
 
   // 修改密码相关函数
   const handleChangePassword = () => {
-  setPasswordModalVisible(true);
+    setPasswordModalVisible(true);
     passwordForm.resetFields();
   };
 
@@ -146,13 +145,13 @@ export default function UserProfile() {
         oldPassword: values.oldPassword,
         newPassword: values.newPassword
       });
-      
+
       messageApi.open({
         type: 'success',
         content: t('userProfile.messages.passwordChangeSuccess', '密码修改成功'),
         duration: 2,
       });
-      
+
       setPasswordModalVisible(false);
       passwordForm.resetFields();
     } catch (error) {
@@ -204,7 +203,7 @@ export default function UserProfile() {
             </Col>
           </Row>
         );
-      
+
       case 'APPROVER':
         return (
           <Row gutter={16}>
@@ -223,7 +222,7 @@ export default function UserProfile() {
             </Col>
           </Row>
         );
-      
+
       case 'SERVICE':
         return (
           <Row gutter={16}>
@@ -238,7 +237,7 @@ export default function UserProfile() {
             </Col>
           </Row>
         );
-      
+
       case 'MAINTAINER':
         return (
           <Row gutter={16}>
@@ -253,7 +252,7 @@ export default function UserProfile() {
             </Col>
           </Row>
         );
-      
+
       default:
         return null;
     }
@@ -270,28 +269,28 @@ export default function UserProfile() {
             <strong>{t('userProfile.roleInfo.department', '部门')}:</strong> {userInfo.department || t('user.common.notSet', '未设置')}
           </div>
         );
-      
+
       case 'APPROVER':
         return (
           <div style={{ marginBottom: '12px' }}>
             <strong>{t('userProfile.roleInfo.permission', '审批权限')}:</strong> {getPermissionDisplayName(userInfo.permission)}
           </div>
         );
-      
+
       case 'SERVICE':
         return (
           <div style={{ marginBottom: '12px' }}>
             <strong>{t('userProfile.roleInfo.serviceArea', '负责区域')}:</strong> {userInfo.serviceArea || t('user.common.notSet', '未设置')}
           </div>
         );
-      
+
       case 'MAINTAINER':
         return (
           <div style={{ marginBottom: '12px' }}>
             <strong>{t('userProfile.roleInfo.skill', '维修范围')}:</strong> {userInfo.skill || t('user.common.notSet', '未设置')}
           </div>
         );
-      
+
       default:
         return null;
     }
@@ -321,7 +320,7 @@ export default function UserProfile() {
     <>
       {contextHolder}
       <div style={{ padding: '24px' }}>
-  <Row gutter={24}>
+        <Row gutter={24} style={{gap: windowWidth<600?'12px':0}}>
           <Col span={windowWidth < 600 ? 24 : 8}>
             <Card>
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -352,8 +351,8 @@ export default function UserProfile() {
           </Col>
 
           <Col span={windowWidth < 600 ? 24 : 16}>
-            <Card 
-              title={t('userProfile.cards.profile.title', '个人信息')} 
+            <Card
+              title={t('userProfile.cards.profile.title', '个人信息')}
               extra={
                 isEditing ? (
                   <Space>
@@ -441,9 +440,9 @@ export default function UserProfile() {
             <Divider />
 
             <Card title={t('userProfile.cards.activities.title', '最近活动')} extra={
-              <Button 
-                type="link" 
-                size="small" 
+              <Button
+                type="link"
+                size="small"
                 onClick={fetchUserActivities}
                 loading={activitiesLoading}
               >
@@ -491,8 +490,8 @@ export default function UserProfile() {
               { required: true, message: t('userProfile.passwordModal.fields.enterOldPassword', '请输入当前密码') }
             ]}
           >
-            <Input.Password 
-              prefix={<LockOutlined />} 
+            <Input.Password
+              prefix={<LockOutlined />}
               placeholder={t('userProfile.passwordModal.fields.enterOldPassword', '请输入当前密码')}
               size="large"
             />
@@ -504,7 +503,8 @@ export default function UserProfile() {
             rules={[
               { required: true, message: t('userProfile.passwordModal.fields.enterNewPassword', '请输入新密码') },
               { min: 8, message: t('user.common.passwordMin8', '密码长度至少8位') },
-              { validator: (_, value) => {
+              {
+                validator: (_, value) => {
                   if (!value) return Promise.resolve();
                   const parts = [
                     value.length >= 8,
@@ -519,11 +519,11 @@ export default function UserProfile() {
               }
             ]}
           >
-            <Input.Password 
-              prefix={<LockOutlined />} 
+            <Input.Password
+              prefix={<LockOutlined />}
               placeholder={t('userProfile.passwordModal.fields.enterNewPassword', '请输入新密码')}
               size="large"
-              onChange={(e)=> setNewPwd(e.target.value)}
+              onChange={(e) => setNewPwd(e.target.value)}
             />
           </Form.Item>
           <PasswordStrengthMeter password={newPwd} compact />
@@ -544,8 +544,8 @@ export default function UserProfile() {
               }),
             ]}
           >
-            <Input.Password 
-              prefix={<LockOutlined />} 
+            <Input.Password
+              prefix={<LockOutlined />}
               placeholder={t('userProfile.passwordModal.fields.enterConfirmPassword', '请确认新密码')}
               size="large"
             />
