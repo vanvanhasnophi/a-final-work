@@ -71,7 +71,7 @@ function ApplicationManagementContent() {
   }, 500);
 
   const applicantSearch = useDebounceSearchV2((value) => {
-    const newParams = { username: value || undefined, pageNum: 1 };
+    const newParams = { user: value || undefined, pageNum: 1 };
     setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchApplications(newParams);
   }, 500);
@@ -551,10 +551,10 @@ function ApplicationManagementContent() {
           const newParams = {
             pageNum: 1,
             roomName: undefined,
-            username: undefined,
+            user: undefined,
             status: undefined,
             queryDate: undefined,
-            showExpired: undefined
+            showExpired: false
           };
           setSearchParams(newParams);
           fetchApplications(newParams);

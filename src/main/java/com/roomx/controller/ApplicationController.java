@@ -55,8 +55,9 @@ public class ApplicationController {
     @GetMapping("/page") // 分页查询预约列表
     @RequireAuth(roles = {UserRole.ADMIN, UserRole.APPLIER, UserRole.APPROVER})
     public ResponseEntity<PageResult<ApplicationDTO>> page(@RequestParam(required = false) Long userId,
-                                                          @RequestParam(required = false) String username,
-                                                          @RequestParam(required = false) String nickname,
+                                                          @RequestParam(required = false) String user, // 统一搜索参数，同时搜索用户名和昵称
+                                                          @RequestParam(required = false) String username, // 保留兼容性
+                                                          @RequestParam(required = false) String nickname, // 保留兼容性
                                                           @RequestParam(required = false) Long roomId,
                                                           @RequestParam(required = false) String roomName,
                                                           @RequestParam(required = false) String roomLocation,
@@ -75,8 +76,16 @@ public class ApplicationController {
         // 构建查询对象
         ApplicationQuery query = new ApplicationQuery();
         query.setUserId(userId);
-        query.setUsername(username);
-        query.setNickname(nickname);
+        
+        // 优先使用新的统一搜索参数
+        if (user != null && !user.trim().isEmpty()) {
+            query.setUser(user.trim());
+        } else {
+            // 兼容旧的分离参数
+            query.setUsername(username);
+            query.setNickname(nickname);
+        }
+        
         query.setRoomId(roomId);
         query.setRoomName(roomName);
         query.setRoomLocation(roomLocation);

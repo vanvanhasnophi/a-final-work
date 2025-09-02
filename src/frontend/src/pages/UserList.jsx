@@ -61,15 +61,9 @@ function UserListContent() {
     fetchUsers();
   });
 
-  // 防抖搜索Hook
-  const usernameSearch = useDebounceSearchV2((value) => {
-    const newParams = { username: value || undefined, pageNum: 1 };
-    setSearchParams(prev => ({ ...prev, ...newParams }));
-    fetchUsers(newParams);
-  }, 500);
-
-  const nicknameSearch = useDebounceSearchV2((value) => {
-    const newParams = { nickname: value || undefined, pageNum: 1 };
+  // 防抖搜索Hook - 合并用户名和昵称搜索为一个user字段
+  const userSearch = useDebounceSearchV2((value) => {
+    const newParams = { user: value || undefined, pageNum: 1 };
     setSearchParams(prev => ({ ...prev, ...newParams }));
     fetchUsers(newParams);
   }, 500);
@@ -617,23 +611,12 @@ function UserListContent() {
   const filterControls = [
     <div style={{ minWidth: '200px' }}>
       <Input
-        placeholder={t('userList.filters.searchUsername', '搜索用户名')}
+        placeholder={t('userList.filters.searchUser', '搜索用户名或昵称')}
         allowClear
         style={{ width: '100%' }}
-        value={usernameSearch.searchValue}
-        onChange={(e) => usernameSearch.updateSearchValue(e.target.value)}
-        onPressEnter={() => usernameSearch.searchImmediately(usernameSearch.searchValue)}
-      />
-    </div>
-    ,
-    <div style={{ minWidth: '150px' }}>
-      <Input
-        placeholder={t('userList.filters.searchNickname', '搜索昵称')}
-        allowClear
-        style={{ width: '100%' }}
-        value={nicknameSearch.searchValue}
-        onChange={(e) => nicknameSearch.updateSearchValue(e.target.value)}
-        onPressEnter={() => nicknameSearch.searchImmediately(nicknameSearch.searchValue)}
+        value={userSearch.searchValue}
+        onChange={(e) => userSearch.updateSearchValue(e.target.value)}
+        onPressEnter={() => userSearch.searchImmediately(userSearch.searchValue)}
       />
     </div>
     ,
@@ -663,8 +646,7 @@ function UserListContent() {
       <Button
         onClick={() => {
           // 清空筛选控件内容
-          usernameSearch.updateSearchValue('');
-          nicknameSearch.updateSearchValue('');
+          userSearch.updateSearchValue('');
           // 清空角色选择器
           setSelectedRole(undefined);
         }}
@@ -679,15 +661,13 @@ function UserListContent() {
       icon={<ReloadOutlined />}
       onClick={() => {
         // 清空筛选控件内容
-        usernameSearch.updateSearchValue('');
-        nicknameSearch.updateSearchValue('');
+        userSearch.updateSearchValue('');
         // 清空角色选择器
         setSelectedRole(undefined);
         // 清空搜索参数并刷新数据
         const newParams = {
           pageNum: 1,
-          username: undefined,
-          nickname: undefined,
+          user: undefined,
           role: undefined
         };
         setSearchParams(newParams);
@@ -717,7 +697,7 @@ function UserListContent() {
     loading: usersLoading,
     onChange: handleTableChange,
     sticky: { offsetHeader: 0 },
-  }
+  };
 
 
   // 4. pageProps

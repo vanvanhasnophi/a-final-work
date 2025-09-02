@@ -9,6 +9,7 @@ import lombok.Data;
 
 @Data
 public class UserQuery {
+    private String user; // 统一搜索字段，同时搜索用户名和昵称
     private String username;
     private String nickname;
     private String email;

@@ -30,8 +30,7 @@ export default function ManagementPageContainer({
   tableContent,
   showTableScrollbar = true,
   badge, 
-  onClearFilters, // 可选：清空筛选回调
-}) {
+  }) {
     const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
       
   // 折叠时的筛选按钮（漏斗），弹出全部筛选控件和清空按钮
@@ -39,11 +38,6 @@ export default function ManagementPageContainer({
     <FilterDropdownButton>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         {filterControls}
-        {onClearFilters && (
-          <button type="button" onClick={onClearFilters} style={{ marginLeft: 8 }}>
-            清空筛选
-          </button>
-        )}
       </div>
     </FilterDropdownButton>
   ) : null;

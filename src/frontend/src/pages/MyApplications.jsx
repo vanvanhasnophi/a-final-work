@@ -45,6 +45,7 @@ function MyApplicationsContent() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(undefined);
   const [selectedRoom, setSelectedRoom] = useState(undefined);
+  const [roomSearchText, setRoomSearchText] = useState('');
   const [showExpired, setShowExpired] = useState(false);
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -359,24 +360,25 @@ function MyApplicationsContent() {
   // 1. filterControls（主筛选区控件）
   const filterControls = [
                   <div style={{ minWidth: '200px' }} key="room">
-                    <Select
-                      placeholder={t('myApplications.filters.allRooms', '全部教室')}
+                    <Input
+                      placeholder={t('myApplications.filters.roomSearchPlaceholder', '搜索教室名称')}
                       allowClear
                       style={{ width: '100%' }}
-                      value={selectedRoom}
-                      onChange={(value) => {
-                        setSelectedRoom(value);
-                        const newParams = { roomId: value || undefined, pageNum: 1 };
+                      value={roomSearchText}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setRoomSearchText(value);
+                        const newParams = { roomName: value || undefined, pageNum: 1 };
                         setSearchParams(prev => ({ ...prev, ...newParams }));
                         fetchApplications(newParams);
                       }}
-                    >
-                      {rooms.map(room => (
-                        <Option key={room.id} value={room.id}>
-                          {room.name} ({room.location})
-                        </Option>
-                      ))}
-                    </Select>
+                      onPressEnter={(e) => {
+                        const value = e.target.value;
+                        const newParams = { roomName: value || undefined, pageNum: 1 };
+                        setSearchParams(prev => ({ ...prev, ...newParams }));
+                        fetchApplications(newParams);
+                      }}
+                    />
                   </div>,
 
                   <div style={{ minWidth: '120px' }} key="status">
@@ -449,6 +451,7 @@ function MyApplicationsContent() {
                             onClick={() => {
                             // 清空筛选控件内容
                             setSelectedRoom(undefined);
+                            setRoomSearchText('');
                             setSelectedDate(null);
                             setSelectedStatus(undefined);
                             setShowExpired(false);
@@ -456,6 +459,7 @@ function MyApplicationsContent() {
                            const newParams = {
                              pageNum: 1,
                              roomId: undefined,
+                             roomName: undefined,
                              status: undefined,
                              queryDate: undefined,
                              showExpired: undefined
@@ -478,12 +482,14 @@ function MyApplicationsContent() {
               onClick={() => {
                 // 清空筛选控件内容
                 setSelectedRoom(undefined);
+                setRoomSearchText('');
                 setSelectedDate(null);
                 setSelectedStatus(undefined);
                 // 清空搜索参数并刷新数据
                 const newParams = {
                   pageNum: 1,
                   roomId: undefined,
+                  roomName: undefined,
                   status: undefined,
                   queryDate: undefined
                 };

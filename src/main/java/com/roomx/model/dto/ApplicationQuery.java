@@ -10,8 +10,9 @@ import lombok.Data;
 @Data
 public class ApplicationQuery {
     private Long userId;
-    private String username;
-    private String nickname;
+    private String user; // 统一搜索字段，同时搜索用户名和昵称
+    private String username; // 保留严格搜索功能
+    private String nickname; // 保留严格搜索功能
 
     private Long roomId;
     private String roomName;

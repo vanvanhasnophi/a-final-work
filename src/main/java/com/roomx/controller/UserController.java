@@ -58,15 +58,24 @@ public class UserController {
     public ResponseEntity<PageResult<UserInfoDTO>> getUserList(
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String user, // 统一搜索参数，同时搜索用户名和昵称
+            @RequestParam(required = false) String username, // 保留兼容性
+            @RequestParam(required = false) String nickname, // 保留兼容性
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) UserRole role) {
         
         UserQuery query = new UserQuery();
-        query.setUsername(username);
-        query.setNickname(nickname);
+        
+        // 优先使用新的统一搜索参数
+        if (user != null && !user.trim().isEmpty()) {
+            query.setUser(user.trim());
+        } else {
+            // 兼容旧的分离参数
+            query.setUsername(username);
+            query.setNickname(nickname);
+        }
+        
         query.setEmail(email);
         query.setPhone(phone);
         query.setRole(role);

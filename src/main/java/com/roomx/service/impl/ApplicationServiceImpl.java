@@ -225,11 +225,19 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
             
             // 用户相关字段 - 使用冗余字段
-            if (query.getUsername() != null && !query.getUsername().isEmpty()) {
-                predicates.add(cb.like(root.get("username"), "%" + query.getUsername() + "%"));
-            }
-            if (query.getNickname() != null && !query.getNickname().isEmpty()) {
-                predicates.add(cb.like(root.get("userNickname"), "%" + query.getNickname() + "%"));
+            // 优先使用统一搜索字段，同时搜索用户名和昵称
+            if (query.getUser() != null && !query.getUser().isEmpty()) {
+                Predicate usernamePredicate = cb.like(root.get("username"), "%" + query.getUser() + "%");
+                Predicate nicknamePredicate = cb.like(root.get("userNickname"), "%" + query.getUser() + "%");
+                predicates.add(cb.or(usernamePredicate, nicknamePredicate));
+            } else {
+                // 兼容旧的分离搜索字段，提供严格搜索功能
+                if (query.getUsername() != null && !query.getUsername().isEmpty()) {
+                    predicates.add(cb.like(root.get("username"), "%" + query.getUsername() + "%"));
+                }
+                if (query.getNickname() != null && !query.getNickname().isEmpty()) {
+                    predicates.add(cb.like(root.get("userNickname"), "%" + query.getNickname() + "%"));
+                }
             }
             if (query.getContact() != null && !query.getContact().isEmpty()) {
                 predicates.add(cb.like(root.get("contact"), "%" + query.getContact() + "%"));

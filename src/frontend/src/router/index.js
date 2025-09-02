@@ -91,9 +91,9 @@ function AppRoutes() {
         </RoleBasedRoute>
       } />
       <Route path="/my-applications" element={
-        <ProtectedRoute>
+        <RoleBasedRoute pageName="my-applications">
           <AppLayoutMobile><LazyMyApplicationsMobile /></AppLayoutMobile>
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/profile/*" element={
         <ProtectedRoute>
@@ -171,9 +171,9 @@ function AppRoutes() {
         </RoleBasedRoute>
       } />
       <Route path="/my-applications" element={
-        <ProtectedRoute>
+        <RoleBasedRoute pageName="my-applications">
           <AppLayout><LazyMyApplications /></AppLayout>
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/profile/*" element={
         <ProtectedRoute>

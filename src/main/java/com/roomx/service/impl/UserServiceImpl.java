@@ -68,12 +68,22 @@ public class UserServiceImpl implements UserService {
     public PageResult<UserInfoDTO> page(UserQuery query, int pageNum, int pageSize) {
         Specification<User> spec = (root, cq, cb) -> {
             ArrayList<Predicate> predicates = new ArrayList<>();
-            if (query.getUsername() != null && !query.getUsername().isEmpty()) {
-                predicates.add(cb.like(root.get("username"), "%" + query.getUsername() + "%"));
+            
+            // 优先使用统一搜索字段，同时搜索用户名和昵称
+            if (query.getUser() != null && !query.getUser().isEmpty()) {
+                Predicate usernamePredicate = cb.like(root.get("username"), "%" + query.getUser() + "%");
+                Predicate nicknamePredicate = cb.like(root.get("nickname"), "%" + query.getUser() + "%");
+                predicates.add(cb.or(usernamePredicate, nicknamePredicate));
+            } else {
+                // 兼容旧的分离搜索字段
+                if (query.getUsername() != null && !query.getUsername().isEmpty()) {
+                    predicates.add(cb.like(root.get("username"), "%" + query.getUsername() + "%"));
+                }
+                if (query.getNickname() != null && !query.getNickname().isEmpty()) {
+                    predicates.add(cb.like(root.get("nickname"), "%" + query.getNickname() + "%"));
+                }
             }
-            if (query.getNickname() != null && !query.getNickname().isEmpty()) {
-                predicates.add(cb.like(root.get("nickname"), "%" + query.getNickname() + "%"));
-    }
+            
             if (query.getEmail() != null && !query.getEmail().isEmpty()) {
                 predicates.add(cb.like(root.get("email"), "%" + query.getEmail() + "%"));
             }

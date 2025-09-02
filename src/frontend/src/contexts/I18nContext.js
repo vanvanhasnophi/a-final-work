@@ -25,7 +25,10 @@ const dictionaries = {
       reason: '原因',
       edit: '编辑',
       delete: '删除',
-      noMore: '没有了'
+      noMore: '没有了',
+      filterResultTip: '筛选结果：',
+      search: '搜索',
+      close: '关闭'
     },
     modal: {
       confirm: {
@@ -372,7 +375,8 @@ const dictionaries = {
       paginationTotalSimple: '{total} 条',
       filters: {
         searchUsername: '搜索用户名',
-        searchNickname: '搜索昵称'
+        searchNickname: '搜索昵称',
+        searchUser: '搜索用户名或昵称'
       },
       columns: {
         username: '用户名',
@@ -560,13 +564,21 @@ const dictionaries = {
         pending: '待审批',
         approved: '已通过',
         rejected: '已拒绝',
-        cancelled: '已取消'
+        cancelled: '已取消',
+        roomSearchPlaceholder: '搜索教室名称',
+        roomSelectPlaceholder: '选择教室',
+        statusPlaceholder: '全部状态',
+        datePlaceholder: '选择日期',
+        showExpired: '显示过期申请',
+        clearFilters: '清空筛选',
+        expiredCount: '，过期 {count} 条'
       },
       actions: {
         cancel: '取消申请',
         checkin: '签到',
         details: '查看详情',
         edit: '编辑',
+        newApplication: '新建申请',
         checkinConfirmTitle: '确认签到',
         checkinConfirmContent: '确认对该申请进行签到吗？签到后将无法撤销。',
         checkinConfirmOk: '确认签到',
@@ -595,6 +607,40 @@ const dictionaries = {
         rejected: '已拒绝',
         cancelled: '已取消',
         checkedIn: '已签到'
+      },
+      statusOptions: {
+        PENDING: '待审批',
+        PENDING_CHECKIN: '待签到',
+        IN_USE: '使用中',
+        APPROVED: '已批准',
+        REJECTED: '已驳回',
+        CANCELLED: '已取消',
+        COMPLETED: '已完成',
+        EXPIRED: '已过期'
+      },
+      error: {
+        fetchListFail: '获取申请列表失败，请检查网络连接',
+        dataFetchTitle: '数据获取失败',
+        tokenExpired: '登录已过期，请重新登录',
+        forbidden: '权限不足，无法访问该资源'
+      },
+      drawer: {
+        detail: '申请详情'
+      },
+      descriptions: {
+        roomName: '教室名称',
+        time: '使用时间',
+        status: '状态',
+        reason: '申请原因',
+        createTime: '创建时间'
+      },
+      messages: {
+        cancelSuccess: '申请已取消',
+        cancelFail: '取消申请失败'
+      },
+      confirmCancel: {
+        title: '确认取消申请',
+        content: '确认要取消该申请吗？取消后将无法恢复。'
       }
     },
     applicationManagement: {
@@ -602,11 +648,12 @@ const dictionaries = {
       badgeRetention: '申请记录过期后最多保留60天',
       filters: {
         roomSearchPlaceholder: '搜索教室名称',
-        applicantSearchPlaceholder: '搜索申请人',
+        applicantSearchPlaceholder: '搜索申请人（用户名或昵称）',
         statusPlaceholder: '全部状态',
         datePlaceholder: '选择日期',
         showExpired: '显示过期申请',
-        clearFilters: '清空筛选'
+        clearFilters: '清空筛选',
+        expiredCount: '，过期 {count} 条'
       },
       statusOptions: {
         PENDING: '待审批',
@@ -994,7 +1041,10 @@ const dictionaries = {
       reason: 'Reason',
       edit: 'Edit',
       delete: 'Delete',
-      noMore: 'No more data'
+      noMore: 'No more data',
+      filterResultTip: 'Filtered:',
+      search: 'Search',
+      close: 'Close'
     },
     modal: {
       confirm: {
@@ -1389,8 +1439,9 @@ const dictionaries = {
       paginationTotal: '{from}-{to} of {total} items',
       paginationTotalSimple: '{total} items',
       filters: {
-        searchUsername: 'Search username',
-        searchNickname: 'Search nickname'
+        searchUsername: 'Search by username',
+        searchNickname: 'Search by nickname',
+        searchUser: 'Search by name'
       },
       columns: {
         username: 'Username',
@@ -1571,13 +1622,21 @@ const dictionaries = {
         pending: 'Pending',
         approved: 'Approved',
         rejected: 'Rejected',
-        cancelled: 'Cancelled'
+        cancelled: 'Cancelled',
+        roomSearchPlaceholder: 'Search room name',
+        roomSelectPlaceholder: 'Select room',
+        statusPlaceholder: 'All statuses',
+        datePlaceholder: 'Select date',
+        showExpired: 'Show expired applications',
+        clearFilters: 'Clear filters',
+        expiredCount: ', {count} expired'
       },
       actions: {
         cancel: 'Cancel Application',
         checkin: 'Check In',
         details: 'View Details',
         edit: 'Edit',
+        newApplication: 'New Application',
         checkinConfirmTitle: 'Confirm Check In',
         checkinConfirmContent: 'Confirm check in for this application? This action cannot be undone.',
         checkinConfirmOk: 'Confirm Check In',
@@ -1606,6 +1665,40 @@ const dictionaries = {
         rejected: 'Rejected',
         cancelled: 'Cancelled',
         checkedIn: 'Checked In'
+      },
+      statusOptions: {
+        PENDING: 'Pending',
+        PENDING_CHECKIN: 'Pending Check-in',
+        IN_USE: 'In Use',
+        APPROVED: 'Approved',
+        REJECTED: 'Rejected',
+        CANCELLED: 'Cancelled',
+        COMPLETED: 'Completed',
+        EXPIRED: 'Expired'
+      },
+      error: {
+        fetchListFail: 'Failed to load applications. Please check your connection.',
+        dataFetchTitle: 'Failed to load data',
+        tokenExpired: 'Session expired, please sign in again',
+        forbidden: 'Insufficient permission to access this resource'
+      },
+      drawer: {
+        detail: 'Application Details'
+      },
+      descriptions: {
+        roomName: 'Room Name',
+        time: 'Usage Time',
+        status: 'Status',
+        reason: 'Reason',
+        createTime: 'Created At'
+      },
+      messages: {
+        cancelSuccess: 'Application cancelled',
+        cancelFail: 'Failed to cancel application'
+      },
+      confirmCancel: {
+        title: 'Confirm Cancel Application',
+        content: 'Are you sure you want to cancel this application? This action cannot be undone.'
       }
     },
     applicationManagement: {
@@ -1613,11 +1706,12 @@ const dictionaries = {
       badgeRetention: 'Records kept up to 60 days after expiry',
       filters: {
         roomSearchPlaceholder: 'Search room name',
-        applicantSearchPlaceholder: 'Search applicant',
+        applicantSearchPlaceholder: 'Search applicant (both names)',
         statusPlaceholder: 'All statuses',
         datePlaceholder: 'Select date',
         showExpired: 'Show expired applications',
-        clearFilters: 'Clear filters'
+        clearFilters: 'Clear filters',
+        expiredCount: ', {count} expired'
       },
       statusOptions: {
         PENDING: 'Pending',
