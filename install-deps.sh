@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo rm -rf ./target
+
 set -e
 
 echo "开始安装依赖..."
