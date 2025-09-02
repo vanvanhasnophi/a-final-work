@@ -450,8 +450,11 @@ main() {
     
     log_success "RoomX Development Environment started successfully!"
     log_info "Application Information:"
+    EXTERNAL_IP=$(hostname -I | awk '{print $1}')
     echo "  Frontend: http://localhost:3000"
+    echo "  Frontend (external): http://$EXTERNAL_IP:3000"
     echo "  Backend API: http://localhost:8080"
+    echo "  Backend API (external): http://$EXTERNAL_IP:8080"
     echo "  Health Check: http://localhost:8080/api/health"
     echo "  Database: localhost:3306/roomx"
     echo "  Profile: dev"

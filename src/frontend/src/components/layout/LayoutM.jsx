@@ -18,7 +18,6 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRoleColor } from '../../utils/permissionUtils';
-import { getRoleDisplayName } from '../../utils/roleMapping';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useI18n } from '../../contexts/I18nContext';
@@ -429,373 +428,375 @@ export default function AppLayoutMobile({ children }) {
     <div>
 
       {floatContent && (
-          <div style={{ 
-            position: 'fixed', 
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 997, 
-            pointerEvents: 'auto'
-          }}>
-            {floatContent}
-          </div>
-      )}
-    <Layout style={{
-      minHeight: '100vh-100px',
-      background: 'var(--background-color)',
-      paddingTop: 'env(safe-area-inset-top)',
-      paddingBottom: 'env(safe-area-inset-bottom)',
-      paddingLeft: 'env(safe-area-inset-left)',
-      paddingRight: 'env(safe-area-inset-right)',
-      boxSizing: 'border-box',
-      overflowX: 'hidden',
-    }}>
-      <Header style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        left: 0,
-        zIndex: 999,
-        background: 'var(--component-bg-allow-blur)',
-        padding: 'calc(1vw + 8px)',
-        height: 'calc(2vw + 56px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: 'var(--shadow)',
-        borderBottom: '1px solid var(--border-color)',
-        transition: 'left 0.2s',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-      }}>
         <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 997,
+          pointerEvents: 'auto'
+        }}>
+          {floatContent}
+        </div>
+      )}
+      <Layout style={{
+        minHeight: 'calc(100vh - 100px)',
+        maxHeight: '100vh',
+        background: 'var(--background-color)',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
+        overflowY: 'visible'
+      }}>
+        <Header style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          left: 0,
+          zIndex: 999,
+          background: 'var(--component-bg-allow-blur)',
+          padding: 'calc(1vw + 8px)',
+          height: 'calc(2vw + 56px)',
           display: 'flex',
           alignItems: 'center',
-          width: '100%',
-          paddingTop: 'env(safe-area-inset-top)', // 只内容加
-          boxSizing: 'border-box'
+          justifyContent: 'space-between',
+          boxShadow: 'var(--shadow)',
+          borderBottom: '1px solid var(--border-color)',
+          transition: 'left 0.2s',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
         }}>
-          <div style={{ flex: '0 0 30vw' }} >
-            <Dropdown
-              menu={{
-                items: menuItems.map(item => ({
-                  key: item.key,
-                  icon: getMenuIcon(item.icon),
-                  label: item.label,
-                  onClick: () => handleMenuClick({ key: item.key })
-                })),
-                selectedKeys: getSelectedKeys(),
-                className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'
-              }}
-              overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
-              trigger={['hover']}
-              placement="bottomRight"
-            >
-              <div style={{
-                height: 'calc(2vw + 32px)',
-                width: 'calc(2vw + 48px)',
-                lineHeight: 'calc(1vw + 36px)',
-                padding: 'calc(0.5vw + 18px)',
-                textAlign: 'center',
-                margin: '0 0 0 0',
-                cursor: 'pointer',
-                borderRadius: 'calc(0.5vw + 2.5px)',
-                transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
-                display: 'flex',
-                alignItems: 'center',
-                position: 'relative',
-                color: token.colorText,
-                fontSize: 'calc(1vw + 10px)'
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = token.colorBgTextHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                theme={isDarkMode ? 'dark' : 'light'}
-              >
-                <MenuOutlined
-                  style={{
-                    fontSize: 'calc(1vw + 12px)',
-                    color: token.colorText,
-                    marginRight: 0,
-                    marginLeft: 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  theme={isDarkMode ? 'dark' : 'light'}
-                />
-              </div>
-            </Dropdown>
-          </div>
-          <Text strong
-            style={{
-              flex: '1 1 0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              fontSize: 'calc(0.75vw + 16px)',
-              fontWeight: 600,
-              fontVariationSettings: "'wght' 600"
-            }}
-          >
-            {getPageTitle()}
-          </Text>
-          <div style={{ flex: '0 0 30vw' }} >
-            <Space style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              {/* 通知中心 */}
-              <div
-                className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
-                onClick={() => setNotificationVisible(true)}
-                style={{
-                  height: 'calc(1vw + 32px)',
-                  minWidth: 'calc(1vw + 20px)',
-                  fontSize: 'calc(0.5vw + 12px)',
-                  padding: '0 1vw',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'none',
-                  border: 'none',
-                  boxShadow: 'none',
-                  borderRadius: 'calc(0.5vw + 2.5px)',
-                  marginLeft: 0,
-                  marginRight: 0,
-                  transform: 'translateZ(0)',
-                  backfaceVisibility: 'hidden',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
-                }}
-                onMouseEnter={e => {
-                  if (unreadCount === 0) {
-                    e.currentTarget.style.background = token.colorBgTextHover;
-                    e.currentTarget.style.transform = 'translateZ(0)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (unreadCount === 0) {
-                    e.currentTarget.style.background = 'none';
-                    e.currentTarget.style.transform = 'translateZ(0)';
-                  }
-                }}
-                tabIndex={0}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') setNotificationVisible(true);
-                }}
-                aria-label={t('notification.openNotificationCenter', '打开通知中心')}
-              >
-                <BellOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
-                {unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6, fontWeight: 600, fontVariationSettings: "'wght' 600" }}>{unreadCount}</span> : null}
-              </div>
-              {/* 主题切换 */}
-              <div
-                onClick={toggleTheme}
-                style={{
-                  height: 'calc(1vw + 32px)',
-                  minWidth: 'calc(1vw + 20px)',
-                  fontSize: 'calc(0.5vw + 12px)',
-                  padding: '1vw',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'none',
-                  border: 'none',
-                  borderRadius: 'calc(0.5vw + 2.5px)',
-                  boxShadow: 'none',
-                  marginLeft: 0,
-                  marginRight: 0,
-                  transform: 'translateZ(0)',
-                  backfaceVisibility: 'hidden',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = token.colorBgTextHover;
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }}
-                tabIndex={0}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') toggleTheme();
-                }}
-                aria-label={t('layout.themeSwitch', '切换主题')}
-              >
-                <BulbOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
-              </div>
-              {/* 用户信息 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            width: '100%',
+            paddingTop: 'env(safe-area-inset-top)', // 只内容加
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ flex: '0 0 30vw' }} >
               <Dropdown
-                menu={{ items: userMenuItems, className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu' }}
+                menu={{
+                  items: menuItems.map(item => ({
+                    key: item.key,
+                    icon: getMenuIcon(item.icon),
+                    label: item.label,
+                    onClick: () => handleMenuClick({ key: item.key })
+                  })),
+                  selectedKeys: getSelectedKeys(),
+                  className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'
+                }}
                 overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
-                placement="bottomLeft"
+                trigger={['hover']}
+                placement="bottomRight"
               >
                 <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0,
-                  padding: '1vw',
+                  height: 'calc(2vw + 32px)',
+                  width: 'calc(2vw + 48px)',
+                  lineHeight: 'calc(1vw + 36px)',
+                  padding: 'calc(0.5vw + 18px)',
+                  textAlign: 'center',
+                  margin: '0 0 0 0',
                   cursor: 'pointer',
                   borderRadius: 'calc(0.5vw + 2.5px)',
-                  background: 'transparent',
-                  transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
-                  width: 'auto',
-                  marginLeft: 0,
-                  marginRight: 0,
-                  transform: 'translateZ(0)', // 硬件加速
-                  backfaceVisibility: 'hidden' // 减少重绘
+                  transition: 'all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  position: 'relative',
+                  color: token.colorText,
+                  fontSize: 'calc(1vw + 10px)'
                 }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = token.colorBgTextHover;
-                    e.currentTarget.style.transform = 'translateZ(0)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.transform = 'translateZ(0)';
                   }}
+                  theme={isDarkMode ? 'dark' : 'light'}
                 >
-                  <Avatar
-                    size={`calc(2vw + 24px)`}
+                  <MenuOutlined
                     style={{
-                      backgroundColor: getRoleColor(user.role),
-                      flexShrink: 0,
-                      color: '#ffffff'
+                      fontSize: 'calc(1vw + 12px)',
+                      color: token.colorText,
+                      marginRight: 0,
+                      marginLeft: 0, // 折叠时稍微向右移动居中，展开时对齐其他图标
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
-                  >
-                    {getUserAvatarChar(user)}
-                  </Avatar>
+                    theme={isDarkMode ? 'dark' : 'light'}
+                  />
                 </div>
               </Dropdown>
-            </Space >
+            </div>
+            <Text strong
+              style={{
+                flex: '1 1 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                fontSize: 'calc(0.75vw + 16px)',
+                fontWeight: 600,
+                fontVariationSettings: "'wght' 600"
+              }}
+            >
+              {getPageTitle()}
+            </Text>
+            <div style={{ flex: '0 0 30vw' }} >
+              <Space style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                {/* 通知中心 */}
+                <div
+                  className={`notification-trigger ${unreadCount > 0 ? 'unread' : ''}`}
+                  onClick={() => setNotificationVisible(true)}
+                  style={{
+                    height: 'calc(1vw + 32px)',
+                    minWidth: 'calc(1vw + 20px)',
+                    fontSize: 'calc(0.5vw + 12px)',
+                    padding: '0 1vw',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'none',
+                    border: 'none',
+                    boxShadow: 'none',
+                    borderRadius: 'calc(0.5vw + 2.5px)',
+                    marginLeft: 0,
+                    marginRight: 0,
+                    transform: 'translateZ(0)',
+                    backfaceVisibility: 'hidden',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
+                  }}
+                  onMouseEnter={e => {
+                    if (unreadCount === 0) {
+                      e.currentTarget.style.background = token.colorBgTextHover;
+                      e.currentTarget.style.transform = 'translateZ(0)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (unreadCount === 0) {
+                      e.currentTarget.style.background = 'none';
+                      e.currentTarget.style.transform = 'translateZ(0)';
+                    }
+                  }}
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') setNotificationVisible(true);
+                  }}
+                  aria-label={t('notification.openNotificationCenter', '打开通知中心')}
+                >
+                  <BellOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
+                  {unreadCount > 0 ? <span className="num-mono" style={{ marginLeft: 6, fontWeight: 600, fontVariationSettings: "'wght' 600" }}>{unreadCount}</span> : null}
+                </div>
+                {/* 主题切换 */}
+                <div
+                  onClick={toggleTheme}
+                  style={{
+                    height: 'calc(1vw + 32px)',
+                    minWidth: 'calc(1vw + 20px)',
+                    fontSize: 'calc(0.5vw + 12px)',
+                    padding: '1vw',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'none',
+                    border: 'none',
+                    borderRadius: 'calc(0.5vw + 2.5px)',
+                    boxShadow: 'none',
+                    marginLeft: 0,
+                    marginRight: 0,
+                    transform: 'translateZ(0)',
+                    backfaceVisibility: 'hidden',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s ease, width 0.15s ease, transform 0.15s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = token.colorBgTextHover;
+                    e.currentTarget.style.transform = 'translateZ(0)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.transform = 'translateZ(0)';
+                  }}
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') toggleTheme();
+                  }}
+                  aria-label={t('layout.themeSwitch', '切换主题')}
+                >
+                  <BulbOutlined style={{ fontSize: 'calc(0.5vw + 12px)', color: token.colorText, verticalAlign: 'middle' }} />
+                </div>
+                {/* 用户信息 */}
+                <Dropdown
+                  menu={{ items: userMenuItems, className: enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu' }}
+                  overlayClassName={enableMoreBlur ? 'm-blur-dropdown-menu' : 'm-dropdown-menu'}
+                  placement="bottomLeft"
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0,
+                    padding: '1vw',
+                    cursor: 'pointer',
+                    borderRadius: 'calc(0.5vw + 2.5px)',
+                    background: 'transparent',
+                    transition: 'background-color 0.15s ease, width 0.15s ease, transform 0.15s ease', // 更快的过渡
+                    width: 'auto',
+                    marginLeft: 0,
+                    marginRight: 0,
+                    transform: 'translateZ(0)', // 硬件加速
+                    backfaceVisibility: 'hidden' // 减少重绘
+                  }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                      e.currentTarget.style.transform = 'translateZ(0)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.transform = 'translateZ(0)';
+                    }}
+                  >
+                    <Avatar
+                      size={`calc(2vw + 24px)`}
+                      style={{
+                        backgroundColor: getRoleColor(user.role),
+                        flexShrink: 0,
+                        color: '#ffffff'
+                      }}
+                    >
+                      {getUserAvatarChar(user)}
+                    </Avatar>
+                  </div>
+                </Dropdown>
+              </Space >
+            </div>
           </div>
-        </div>
-      </Header>
+        </Header>
 
 
 
-      <Layout style={{
-        background: 'var(--background-color)',
-        transition: 'margin-left 0.15s ease', // 更快的过渡
-        transform: 'translateZ(0)',            // 硬件加速
-        willChange: 'margin-left'              // 优化margin变化
-      }}>
-        <Content 
-        overflow='scroll'
-        style={{
-          marginTop: 'calc(2vw + 56px)',
-          background: 'transparent',
+        <Layout style={{
+          background: 'var(--background-color)',
+          transition: 'margin-left 0.15s ease', // 更快的过渡
+          transform: 'translateZ(0)',            // 硬件加速
+          willChange: 'margin-left'              // 优化margin变化
         }}>
-          {/* 让子组件可以通过 props 传递 setFloatContent 回调 */}
-          {React.isValidElement(children)
-            ? React.cloneElement(children, { setFloatContent })
-            : children}
-        </Content>
-        {/* 全局悬浮内容，fixed 定位 */}
-        
-      </Layout>
-      
+          <Content
+            overflow='scroll'
+            style={{
+              marginTop: 'calc(2vw + 56px)',
+              background: 'transparent',
+            }}>
+            {/* 让子组件可以通过 props 传递 setFloatContent 回调 */}
+            {React.isValidElement(children)
+              ? React.cloneElement(children, { setFloatContent })
+              : children}
+          </Content>
+          {/* 全局悬浮内容，fixed 定位 */}
 
-      {/* 通知中心 */}
-      <NotificationCenter
-        visible={notificationVisible}
-        onClose={() => setNotificationVisible(false)}
-        onUnreadChange={(n) => setUnreadCount(n)}
-      />
+        </Layout>
 
-      {/* 温柔的通知横幅 */}
-      <NotificationBanner
-        notification={bannerNotification}
-        onClose={() => setBannerNotification(null)}
-        onViewNotifications={() => {
-          setNotificationVisible(true);
-          setBannerNotification(null);
-        }}
-        onMarkAsRead={async (notificationId) => {
-          // 实际标记已读逻辑
-          try {
-            console.log(`标记通知 ${notificationId} 为已读`);
 
-            // 获取当前通知信息
-            const notification = bannerNotification;
-            const wasUnread = notification && !notification.isRead;
+        {/* 通知中心 */}
+        <NotificationCenter
+          visible={notificationVisible}
+          onClose={() => setNotificationVisible(false)}
+          onUnreadChange={(n) => setUnreadCount(n)}
+        />
 
-            console.log(`通知 ${notificationId} 当前未读状态: ${wasUnread}`);
+        {/* 温柔的通知横幅 */}
+        <NotificationBanner
+          notification={bannerNotification}
+          onClose={() => setBannerNotification(null)}
+          onViewNotifications={() => {
+            setNotificationVisible(true);
+            setBannerNotification(null);
+          }}
+          onMarkAsRead={async (notificationId) => {
+            // 实际标记已读逻辑
+            try {
+              console.log(`标记通知 ${notificationId} 为已读`);
 
-            // 更新本地存储的通知状态（如果存在）
-            const localRaw = localStorage.getItem('localNotifications');
-            if (localRaw) {
-              try {
-                const localList = JSON.parse(localRaw);
-                const targetIndex = localList.findIndex(n => n.id === notificationId);
-                if (targetIndex !== -1) {
-                  localList[targetIndex] = { ...localList[targetIndex], isRead: true };
-                  localStorage.setItem('localNotifications', JSON.stringify(localList));
-                  console.log(`本地通知 ${notificationId} 已更新为已读`);
+              // 获取当前通知信息
+              const notification = bannerNotification;
+              const wasUnread = notification && !notification.isRead;
+
+              console.log(`通知 ${notificationId} 当前未读状态: ${wasUnread}`);
+
+              // 更新本地存储的通知状态（如果存在）
+              const localRaw = localStorage.getItem('localNotifications');
+              if (localRaw) {
+                try {
+                  const localList = JSON.parse(localRaw);
+                  const targetIndex = localList.findIndex(n => n.id === notificationId);
+                  if (targetIndex !== -1) {
+                    localList[targetIndex] = { ...localList[targetIndex], isRead: true };
+                    localStorage.setItem('localNotifications', JSON.stringify(localList));
+                    console.log(`本地通知 ${notificationId} 已更新为已读`);
+                  }
+                } catch (e) {
+                  console.warn('更新本地通知失败:', e);
                 }
-              } catch (e) {
-                console.warn('更新本地通知失败:', e);
               }
-            }
 
-            // 调用API标记为已读（如果不是纯本地通知）
-            if (notification && !notification.local) {
-              try {
-                await notificationAPI.markAsRead(notificationId);
-                console.log(`服务器通知 ${notificationId} 已通过API标记为已读`);
-              } catch (apiError) {
-                console.error('API标记已读失败:', apiError);
-                // API失败时不影响本地计数更新
+              // 调用API标记为已读（如果不是纯本地通知）
+              if (notification && !notification.local) {
+                try {
+                  await notificationAPI.markAsRead(notificationId);
+                  console.log(`服务器通知 ${notificationId} 已通过API标记为已读`);
+                } catch (apiError) {
+                  console.error('API标记已读失败:', apiError);
+                  // API失败时不影响本地计数更新
+                }
               }
-            }
 
-            // 只有当通知确实从未读变为已读时才减少计数
-            if (wasUnread) {
-              setUnreadCount(prevCount => {
-                const newCount = Math.max(0, prevCount - 1);
-                console.log(`未读计数更新: ${prevCount} -> ${newCount} (通知${notificationId}已读)`);
+              // 只有当通知确实从未读变为已读时才减少计数
+              if (wasUnread) {
+                setUnreadCount(prevCount => {
+                  const newCount = Math.max(0, prevCount - 1);
+                  console.log(`未读计数更新: ${prevCount} -> ${newCount} (通知${notificationId}已读)`);
 
-                // 触发未读数量变化事件（使用最新的计数值）
+                  // 触发未读数量变化事件（使用最新的计数值）
+                  setTimeout(() => {
+                    notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newCount);
+                  }, 0);
+
+                  return newCount;
+                });
+
+                // 触发通知已读事件，通知其他组件（如NotificationCenter）
                 setTimeout(() => {
-                  notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newCount);
+                  notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, {
+                    id: notificationId,
+                    notification
+                  });
                 }, 0);
 
-                return newCount;
-              });
+              } else {
+                console.log(`通知 ${notificationId} 已经是已读状态，无需更新计数`);
+              }
 
-              // 触发通知已读事件，通知其他组件（如NotificationCenter）
-              setTimeout(() => {
-                notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, {
-                  id: notificationId,
-                  notification
-                });
-              }, 0);
-
-            } else {
-              console.log(`通知 ${notificationId} 已经是已读状态，无需更新计数`);
+              console.log('通知标记已读操作完成:', notificationId);
+            } catch (error) {
+              console.error('标记通知已读失败:', error);
             }
-
-            console.log('通知标记已读操作完成:', notificationId);
-          } catch (error) {
-            console.error('标记通知已读失败:', error);
-          }
-        }}
-        onCollapseNotificationCenter={() => {
-          setNotificationVisible(false);
-          setBannerNotification(null);
-        }}
-      />
+          }}
+          onCollapseNotificationCenter={() => {
+            setNotificationVisible(false);
+            setBannerNotification(null);
+          }}
+        />
 
 
 
-      {/* 悬浮反馈按钮 */}
-      <FeedbackButton />
-    </Layout>
+        {/* 悬浮反馈按钮 */}
+        <FeedbackButton />
+      </Layout>
     </div>
   );
 }
