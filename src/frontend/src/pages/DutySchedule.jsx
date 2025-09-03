@@ -76,14 +76,28 @@ export default function DutySchedule() {
 
   // 手动清理和重新应用今日标记的函数
   const refreshTodayMarks = useCallback(() => {
-    // 只在切换月份和页面刷新时调用
+    console.log('refreshTodayMarks 被调用');
+    
+    // 检查DOM是否准备好
+    const checkAndApply = () => {
+      const cells = document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date');
+      console.log('找到日历单元格数量:', cells.length);
+      
+      if (cells.length === 0) {
+        console.log('DOM尚未准备好，延迟重试...');
+        setTimeout(checkAndApply, 100);
+        return;
+      }
+
       const today = dayjs();
+      
       // 清理之前的标记
       document.querySelectorAll('.custom-today-mark').forEach(el => {
         el.remove();
       });
+      
       // 清理之前应用的今日样式
-      document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date').forEach(cell => {
+      cells.forEach(cell => {
         const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
         if (dateValue) {
           cell.style.background = '';
@@ -93,62 +107,72 @@ export default function DutySchedule() {
           dateValue.style.fontWeight = '';
         }
       });
-        // 以外层td.title为准，title为YYYY-MM-DD
-        const cells = document.querySelectorAll('.ant-picker-calendar .ant-picker-calendar-date');
-        cells.forEach(cell => {
-          const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
-          if (!dateValue) return;
-          // 找到外层td
-          let td = cell.closest('td[title]');
-          if (!td) return;
-          const dateStr = td.getAttribute('title');
-          if (!dateStr) return;
-          const cellDate = dayjs(dateStr);
-          if (
-            cellDate.year() === today.year() &&
-            cellDate.month() === today.month() &&
-            cellDate.date() === today.date()
-          ) {
-            console.log('match!');
-            // 检测主题模式
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
-              document.documentElement.classList.contains('dark') ||
-              document.body.classList.contains('dark') ||
-              window.matchMedia('(prefers-color-scheme: dark)').matches;
-            // 应用今日样式
-            cell.style.position = 'relative';
-            if (isDark) {
-              cell.style.background = 'linear-gradient(135deg, rgba(179, 15, 204, 0.15), rgba(179, 15, 204, 0.08))';
-              cell.style.border = '1px solid rgba(179, 15, 204, 0.4)';
-              cell.style.boxShadow = '0 2px 4px rgba(179, 15, 204, 0.2)';
-              dateValue.style.color = '#B30FCC';
-            } else {
-              cell.style.background = 'linear-gradient(135deg, rgba(102, 8, 116, 0.08), rgba(102, 8, 116, 0.04))';
-              cell.style.border = '1px solid rgba(102, 8, 116, 0.3)';
-              cell.style.boxShadow = '0 2px 4px rgba(102, 8, 116, 0.1)';
-              dateValue.style.color = '#660874';
-            }
-            dateValue.style.fontWeight = 'bold';
-            // 添加今日标记
-            const mark = document.createElement('div');
-            mark.className = 'custom-today-mark';
-            mark.textContent = t('common.today.short', '今');
-            mark.style.cssText = `
-              position: absolute;
-              top: 2px;
-              right: 2px;
-              background: ${isDark ? '#B30FCC' : '#660874'};
-              color: white;
-              font-size: ${lang === 'en-US' ? '9px' : '10px'};
-              padding: 1px ${lang === 'en-US' ? '3px' : '4px'};
-              border-radius: 8px;
-              line-height: 1;
-              font-weight: bold;
-              z-index: 10;
-            `;
-            cell.appendChild(mark);
+
+      // 以外层td.title为准，title为YYYY-MM-DD
+      cells.forEach(cell => {
+        const dateValue = cell.querySelector('.ant-picker-calendar-date-value');
+        if (!dateValue) return;
+        
+        // 找到外层td
+        let td = cell.closest('td[title]');
+        if (!td) return;
+        
+        const dateStr = td.getAttribute('title');
+        if (!dateStr) return;
+        
+        const cellDate = dayjs(dateStr);
+        if (
+          cellDate.year() === today.year() &&
+          cellDate.month() === today.month() &&
+          cellDate.date() === today.date()
+        ) {
+          console.log('找到今日格子，应用样式...', dateStr);
+          
+          // 检测主题模式
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+            document.documentElement.classList.contains('dark') ||
+            document.body.classList.contains('dark') ||
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+          // 应用今日样式
+          cell.style.position = 'relative';
+          if (isDark) {
+            cell.style.background = 'linear-gradient(135deg, rgba(179, 15, 204, 0.15), rgba(179, 15, 204, 0.08))';
+            cell.style.border = '1px solid rgba(179, 15, 204, 0.4)';
+            cell.style.boxShadow = '0 2px 4px rgba(179, 15, 204, 0.2)';
+            dateValue.style.color = '#B30FCC';
+          } else {
+            cell.style.background = 'linear-gradient(135deg, rgba(102, 8, 116, 0.08), rgba(102, 8, 116, 0.04))';
+            cell.style.border = '1px solid rgba(102, 8, 116, 0.3)';
+            cell.style.boxShadow = '0 2px 4px rgba(102, 8, 116, 0.1)';
+            dateValue.style.color = '#660874';
           }
-        });
+          dateValue.style.fontWeight = 'bold';
+          
+          // 添加今日标记
+          const mark = document.createElement('div');
+          mark.className = 'custom-today-mark';
+          mark.textContent = t('common.today.short', '今');
+          mark.style.cssText = `
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: ${isDark ? '#B30FCC' : '#660874'};
+            color: white;
+            font-size: ${lang === 'en-US' ? '9px' : '10px'};
+            padding: 1px ${lang === 'en-US' ? '3px' : '4px'};
+            border-radius: 8px;
+            line-height: 1;
+            font-weight: bold;
+            z-index: 10;
+          `;
+          cell.appendChild(mark);
+          console.log('今日标记已添加');
+        }
+      });
+    };
+
+    checkAndApply();
   }, [selectedDate, lang]);
 
 
@@ -297,28 +321,71 @@ export default function DutySchedule() {
         height: 100% !important;
         table-layout: fixed !important;
       }
-      .ant-picker-calendar .ant-picker-cell {
-        height: auto !important;
-        min-height: 70px !important;
-        padding: 2px !important;
-        transition: all 0.3s ease !important;
-        vertical-align: top !important;
+      /* 桌面端基础格子样式 */
+      @media (min-width: 769px) {
+        .ant-picker-calendar .ant-picker-cell {
+          height: 10vh !important;
+          min-height: 85px !important;
+          padding: 2px !important;
+          transition: all 0.3s ease !important;
+          vertical-align: top !important;
+        }
+      }
+      
+      /* 窄屏模式下缩减格子高度 - 增强优先级 */
+      @media (max-width: 768px) {
+        .ant-picker-calendar .ant-picker-cell,
+        .ant-picker-calendar tbody .ant-picker-cell,
+        .ant-picker-calendar tbody td.ant-picker-cell {
+          max-height: 60px !important;
+          min-height: 0px !important;
+          padding: 1px !important;
+          height: auto !important;
+        }
+        .ant-picker-calendar .ant-picker-calendar-date,
+        .ant-picker-calendar .ant-picker-cell .ant-picker-calendar-date,
+        .ant-picker-calendar tbody td .ant-picker-calendar-date {
+          padding: 2px !important;
+          max-height: 55px !important;
+          min-height: 0px !important;
+          height: auto !important;
+        }
       }
       .ant-picker-calendar tbody td {
-        border-top: none !important; /* 去掉上部阴影/边框 */
+        border: none !important; /* 去掉上部阴影/边框 */
         padding: 0 !important;
         transition: all 0.3s ease !important;
       }
-      .ant-picker-calendar .ant-picker-calendar-date {
-        height: 100% !important;
-        margin: 0 !important;
-        padding: 4px !important;
-        border-radius: 4px !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: flex-start !important;
-        align-items: flex-start !important;
+      /* 桌面端日历格子基础样式 */
+      @media (min-width: 769px) {
+        .ant-picker-calendar .ant-picker-calendar-date {
+          height: 10vh !important;
+          min-height: 85px !important;
+          margin: 0 !important;
+          padding: 4px !important;
+          border-radius: 4px !important;
+          transition: all 0.3s ease !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: flex-start !important;
+          align-items: flex-start !important;
+        }
+      }
+      /* 窄屏模式下的日历格子样式 */
+      @media (max-width: 768px) {
+        .ant-picker-calendar .ant-picker-calendar-date {
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: 60px !important;
+          margin: 0 !important;
+          padding: 2px !important;
+          border-radius: 4px !important;
+          transition: all 0.3s ease !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: flex-start !important;
+          align-items: flex-start !important;
+        }
       }
       
       /* 今日特殊标注样式 - 使用项目紫色主题 - 多种选择器兼容 */
@@ -333,7 +400,6 @@ export default function DutySchedule() {
       .ant-picker-calendar .ant-picker-cell-today .ant-picker-calendar-date::before,
       .ant-picker-calendar .ant-picker-cell.ant-picker-cell-today .ant-picker-calendar-date::before,
       .ant-picker-calendar td.ant-picker-cell-today .ant-picker-calendar-date::before {
-        content: '今日' !important;
         position: absolute !important;
         top: 2px !important;
         right: 2px !important;
@@ -402,7 +468,6 @@ export default function DutySchedule() {
       [data-lang="en-US"] .ant-picker-calendar .ant-picker-cell.ant-picker-cell-today .ant-picker-calendar-date::before,
       [lang="en-US"] .ant-picker-calendar td.ant-picker-cell-today .ant-picker-calendar-date::before,
       [data-lang="en-US"] .ant-picker-calendar td.ant-picker-cell-today .ant-picker-calendar-date::before {
-        content: 'Today' !important;
         font-size: 9px !important;
         padding: 1px 3px !important;
       }
@@ -446,7 +511,9 @@ export default function DutySchedule() {
       const startDate = date.startOf('month').format('YYYY-MM-DD');
       const endDate = date.endOf('month').format('YYYY-MM-DD');
       
+      console.log('获取值班数据范围:', startDate, '到', endDate);
       const response = await dutyAPI.getDutySchedulesByDateRange(startDate, endDate);
+      console.log('获取到的值班数据:', response.data);
       setSchedules(response.data || []);
     } catch (error) {
       console.error('获取值班安排失败:', error);
@@ -480,10 +547,33 @@ export default function DutySchedule() {
     fetchTodayDuty();
   }, [fetchSchedules, fetchAvailableUsers, fetchTodayDuty, selectedDate]);
 
+  // 初次加载和数据变化后刷新今日标记
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      refreshTodayMarks();
+    }, 100); // 延迟确保DOM已渲染
+
+    return () => clearTimeout(timer);
+  }, [refreshTodayMarks, schedules]); // 当schedules数据变化时也刷新今日标记
+
+  // 确保页面完全加载后应用今日标记
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      refreshTodayMarks();
+    }, 300); // 更长延迟确保Calendar组件完全渲染
+
+    return () => clearTimeout(timer);
+  }, []); // 只在组件挂载时执行一次
+
   // 根据日期获取值班安排
   const getScheduleByDate = (date) => {
     const dateStr = date.format('YYYY-MM-DD');
-    return schedules.find(schedule => schedule.dutyDate === dateStr);
+    const schedule = schedules.find(schedule => schedule.dutyDate === dateStr);
+    // 调试日志
+    if (schedule) {
+      console.log(`找到值班数据 ${dateStr}:`, schedule);
+    }
+    return schedule;
   };
 
   // 日历单元格内容渲染
@@ -491,62 +581,94 @@ export default function DutySchedule() {
     const schedule = getScheduleByDate(value);
     if (!schedule) return null;
 
-    const displayName = schedule.dutyUserNickname || schedule.dutyUserName;
-    const isCompactMode = windowWidth < 1000;
+    const displayName = schedule.dutyUserNickname || schedule.dutyUserName || 'Unknown';
+    const isCompactMode = windowWidth < 768; // 调整断点为768px
     
     // 工具提示内容
     const tooltipContent = (
       <div style={{ lineHeight: '1.5', fontFamily: 'var(--app-font-stack)' }}>
-        <div style={{ fontWeight: '600' }}><strong style={{ fontWeight: '700' }}>{displayName}</strong> ({schedule.dutyUserName})</div>
-        {schedule.dutyUserPhone && <div style={{ fontWeight: '500' }}>电话: <span style={{ fontWeight: '600' }}>{schedule.dutyUserPhone}</span></div>}
-        {schedule.dutyUserEmail && <div style={{ fontWeight: '500' }}>邮箱: <span style={{ fontWeight: '600' }}>{schedule.dutyUserEmail}</span></div>}
-        {schedule.remark && <div style={{ marginTop: '4px', color: '#999', fontWeight: '400' }}>备注: {schedule.remark}</div>}
+        <div style={{ fontWeight: '600' }}>
+          <strong style={{ fontWeight: '700' }}>{displayName}</strong> 
+          {schedule.dutyUserName && schedule.dutyUserName !== displayName && ` (${schedule.dutyUserName})`}
+        </div>
+        {schedule.dutyUserPhone && (
+          <div style={{ fontWeight: '500' }}>
+            电话: <span style={{ fontWeight: '600' }}>{schedule.dutyUserPhone}</span>
+          </div>
+        )}
+        {schedule.dutyUserEmail && (
+          <div style={{ fontWeight: '500' }}>
+            邮箱: <span style={{ fontWeight: '600' }}>{schedule.dutyUserEmail}</span>
+          </div>
+        )}
+        {schedule.remark && (
+          <div style={{ marginTop: '4px', color: '#999', fontWeight: '400' }}>
+            备注: {schedule.remark}
+          </div>
+        )}
       </div>
     );
 
     if (isCompactMode) {
-      // 紧凑模式：显示圆形头像，整个方格为hover区域
+      // 窄屏模式：显示窄小颜色条，过窄时只显示首字（英文字母大写）
+      const isVeryNarrow = windowWidth < 400; // 过窄模式断点
+      const displayText = isVeryNarrow 
+        ? displayName.charAt(0).toUpperCase() 
+        : displayName;
+      
       return (
         <div style={{ 
           height: '100%', 
-          width: '100%'
+          width: '100%',
+          padding: '1px',
+          maxHeight: '58px',
+          overflow: 'hidden'
         }}>
-          <Tooltip title={tooltipContent} placement="top">
+          <Tooltip 
+            title={tooltipContent} 
+            placement="top" 
+            trigger="hover"
+            mouseEnterDelay={0.1}
+            mouseLeaveDelay={0.1}
+          >
             <div style={{ 
-              height: '100%',
+              height: '18px',
               width: '100%',
-              display: 'flex', 
+              background: 'linear-gradient(90deg, rgba(24, 144, 255, 0.8), rgba(24, 144, 255, 0.6))',
+              borderRadius: isVeryNarrow ? '18px' : '9px',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              alignItems: 'flex-start',
-              paddingTop: '6px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: '10px',
+              fontWeight: '600',
+              color: 'white',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+              padding: isVeryNarrow ? '0 2px' : '0 6px',
+              fontFamily: 'var(--app-font-stack)'
             }}>
-              <Avatar
-                size={28}
-                style={{
-                  backgroundColor: 'var(--avatar-bg-color)',
-                  color: 'var(--avatar-text-color)',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  fontFamily: 'var(--app-font-stack)',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  border: '2px solid var(--avatar-border-color)'
-                }}
-              >
-                {displayName ? displayName.charAt(0).toUpperCase() : '?'}
-              </Avatar>
+              {displayText}
             </div>
           </Tooltip>
         </div>
       );
     } else {
-      // 完整模式：显示详细信息
+      // 桌面端完整模式：显示详细信息
       return (
         <div style={{ 
           height: '100%', 
           width: '100%'
         }}>
-          <Tooltip title={tooltipContent} placement="top">
+          <Tooltip 
+            title={tooltipContent} 
+            placement="top" 
+            trigger="hover"
+            mouseEnterDelay={0.1}
+            mouseLeaveDelay={0.1}
+          >
             <div style={{ 
               padding: '3px', 
               height: '100%',
@@ -559,58 +681,58 @@ export default function DutySchedule() {
               fontFamily: 'var(--app-font-stack)',
               cursor: 'pointer'
             }}>
-            <div style={{
-              background: 'rgba(24, 144, 255, 0.1)',
-              borderRadius: '4px',
-              padding: '4px 6px',
-              marginTop: '2px',
-              width: '100%',
-              minHeight: '45px',
-              overflow: 'hidden',
-              border: '1px solid rgba(24, 144, 255, 0.2)'
-            }}>
-              {/* 值班人员名称 */}
-              <div style={{ 
-                fontWeight: '700', 
-                color: '#1890ff',
-                fontSize: '13px',
-                whiteSpace: 'nowrap',
+              <div style={{
+                background: 'rgba(24, 144, 255, 0.1)',
+                borderRadius: '4px',
+                padding: '4px 6px',
+                marginTop: '2px',
+                width: '100%',
+                minHeight: '45px',
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                marginBottom: '2px'
+                border: '1px solid rgba(24, 144, 255, 0.2)'
               }}>
-                {displayName}
-              </div>
-              
-              {/* 联系方式 - 优先显示电话，如果没有则显示邮箱 */}
-              {(schedule.dutyUserPhone || schedule.dutyUserEmail) && (
+                {/* 值班人员名称 */}
                 <div style={{ 
-                  color: '#666', 
-                  fontSize: '10px',
+                  fontWeight: '700', 
+                  color: '#1890ff',
+                  fontSize: '13px',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  marginBottom: '1px'
+                  marginBottom: '2px'
                 }}>
-                  {schedule.dutyUserPhone || schedule.dutyUserEmail}
+                  {displayName}
                 </div>
-              )}
-              
-              {/* 备注信息 */}
-              {schedule.remark && (
-                <div style={{ 
-                  color: '#999', 
-                  fontSize: '9px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {schedule.remark}
-                </div>
-              )}
+                
+                {/* 联系方式 - 优先显示电话，如果没有则显示邮箱 */}
+                {(schedule.dutyUserPhone || schedule.dutyUserEmail) && (
+                  <div style={{ 
+                    color: '#666', 
+                    fontSize: '10px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    marginBottom: '1px'
+                  }}>
+                    {schedule.dutyUserPhone || schedule.dutyUserEmail}
+                  </div>
+                )}
+                
+                {/* 备注信息 */}
+                {schedule.remark && (
+                  <div style={{ 
+                    color: '#999', 
+                    fontSize: '9px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {schedule.remark}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </Tooltip>
+          </Tooltip>
         </div>
       );
     }
@@ -891,7 +1013,7 @@ export default function DutySchedule() {
               onClick={handlePrevMonth}
               size="large"
               disabled={isTransitioning}
-              className="month-nav-btn"
+              className="month-nav-btn btn-mobile"
               style={{ 
                 opacity: isTransitioning ? 0.5 : 1,
                 transition: 'all 0.3s ease'
@@ -924,7 +1046,7 @@ export default function DutySchedule() {
               onClick={handleNextMonth}
               size="large"
               disabled={isTransitioning}
-              className="month-nav-btn"
+              className="month-nav-btn btn-mobile"
               style={{ 
                 opacity: isTransitioning ? 0.5 : 1,
                 transition: 'all 0.3s ease'
@@ -943,7 +1065,7 @@ export default function DutySchedule() {
             }}
           >
             <Calendar
-              CellRender={dateCellRender}
+              cellRender={dateCellRender}
               onSelect={onSelect}
               onPanelChange={onPanelChange}
               value={selectedDate}
@@ -974,7 +1096,6 @@ export default function DutySchedule() {
             }
           </div>
         </Card>
-
         {/* 抽屉组件 */}
         <Drawer
           title={
@@ -1037,6 +1158,9 @@ export default function DutySchedule() {
                 placeholder={t('dutySchedule.form.selectUser', '请选择值班人员')}
                 showSearch
                 optionFilterProp="children"
+                onChange={(value) => {
+                  console.log('桌面端选择的用户ID:', value, typeof value); // 调试日志
+                }}
               >
                 {availableUsers.map(user => (
                   <Option key={user.dutyUserId} value={user.dutyUserId}>
