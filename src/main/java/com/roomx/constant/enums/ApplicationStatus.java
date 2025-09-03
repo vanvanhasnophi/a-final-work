@@ -16,4 +16,21 @@ public enum ApplicationStatus {
     ApplicationStatus(int code) {
         this.code = code;
     }
+
+    public boolean isFinished() {
+        return this == REJECTED || this == COMPLETED || this == CANCELLED;
+    }
+
+    public static boolean isFinished(ApplicationStatus status) {
+        return status == REJECTED || status == COMPLETED || status == CANCELLED;
+    }
+
+    public boolean isPending() {
+        return this == PENDING || this == PENDING_CHECKIN;
+    }
+
+    public static boolean isPending(ApplicationStatus status) {
+        return status == PENDING || status == PENDING_CHECKIN;
+    }
+
 }

@@ -17,4 +17,37 @@ public enum RoomStatus {
     RoomStatus(int code) {
         this.code = code;
     }
+
+    public boolean onCleaning() {
+        return this == CLEANING|| this == PENDING_CLEANING;
+    }
+
+    public static boolean onCleaning(RoomStatus status) {
+        return status == CLEANING|| status == PENDING_CLEANING;
+    }
+
+    public boolean onMaintenance() {
+        return this == MAINTENANCE || this == PENDING_MAINTENANCE;
+    }
+
+    public static boolean onMaintenance(RoomStatus status) {
+        return status == MAINTENANCE || status == PENDING_MAINTENANCE;
+    }
+
+    public boolean isOccupied() {
+        return this == RESERVED || this == USING;
+    }
+
+    public static boolean isOccupied(RoomStatus status) {
+        return status == RESERVED || status == USING;
+    }
+
+    public boolean canApply() {
+        return this != UNAVAILABLE && this != PENDING_CLEANING && this != PENDING_MAINTENANCE;
+    }
+
+    public static boolean canApply(RoomStatus status) {
+        return status != UNAVAILABLE && status != PENDING_CLEANING && status != PENDING_MAINTENANCE;
+    }
+
 }

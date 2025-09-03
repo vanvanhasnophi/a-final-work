@@ -14,9 +14,11 @@ import org.springframework.stereotype.Service;
 import com.roomx.constant.enums.ApplicationStatus;
 import com.roomx.constant.enums.RoomStatus;
 import com.roomx.model.entity.Application;
+import com.roomx.model.entity.FootPrint;
 import com.roomx.model.entity.Room;
 import com.roomx.model.entity.User;
 import com.roomx.repository.ApplicationRepository;
+import com.roomx.repository.FootPrintRepository;
 import com.roomx.repository.RoomRepository;
 import com.roomx.repository.UserRepository;
 import com.roomx.service.DataRefreshService;
@@ -34,6 +36,9 @@ public class DataRefreshServiceImpl implements DataRefreshService {
     
     @Autowired
     private ApplicationRepository applicationRepository;
+    
+    @Autowired
+    private FootPrintRepository footPrintRepository;
     
     // 缓存存储
     private final ConcurrentHashMap<String, Object> cache = new ConcurrentHashMap<>();
@@ -124,12 +129,24 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             List<Application> oldApplications = applicationRepository.findAll().stream()
                 .filter(app -> app.getCreateTime() != null && app.getCreateTime().before(sixtyDaysAgo))
                 .toList();
-            
+
             int deletedOldCount = 0;
             if (!oldApplications.isEmpty()) {
                 applicationRepository.deleteAll(oldApplications);
                 deletedOldCount = oldApplications.size();
                 logger.info("清理了 {} 条60天前的申请记录", deletedOldCount);
+            }
+            
+            // 清理60天前的足迹记录
+            List<FootPrint> oldFootPrints = footPrintRepository.findAll().stream()
+                .filter(fp -> fp.getTimestamp() != null && fp.getTimestamp().before(sixtyDaysAgo))
+                .toList();
+                
+            int deletedFootPrintCount = 0;
+            if (!oldFootPrints.isEmpty()) {
+                footPrintRepository.deleteAll(oldFootPrints);
+                deletedFootPrintCount = oldFootPrints.size();
+                logger.info("清理了 {} 条60天前的足迹记录", deletedFootPrintCount);
             }
             
             // 清理已过期的申请（结束时间已过且状态为已完成或已取消，并且marked为过期）
@@ -151,8 +168,8 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             updateRoomStatus();
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("过期数据清理完成，删除旧记录{}条，删除过期记录{}条，耗时 {}ms", 
-                       deletedOldCount, deletedExpiredCount, duration);
+            logger.info("过期数据清理完成，删除旧申请记录{}条，删除足迹记录{}条，删除过期记录{}条，耗时 {}ms", 
+                       deletedOldCount, deletedFootPrintCount, deletedExpiredCount, duration);
             
         } catch (Exception e) {
             logger.error("清理过期数据失败", e);

@@ -1,0 +1,21 @@
+category, action, operatorvisibility(operator始终可见故不显示), userid, roomid, applicationid, tempinfo, attach, note, tip
+user, create, , 1, , , name, , 创建用户,
+user, delete, , 1, , , name, , 删除用户,
+user, update, , 1, , , name, , 更新用户信息,
+user, password, , 1, , , , , 用户修改密码,
+app, create, admin&approver, 2, 3, 1, , reason, 创建申请, 会在申请过期时被清理
+app, update, admin&approver, 2, 3, 1, , , 更新申请信息, 会在申请过期时被清理
+app, approve, admin&approver, 2, 3, 1, , comment, 批准申请, 会在申请过期时被清理
+app, reject, admin&approver, 2, 3, 1, , comment, 驳回申请, 会在申请过期时被清理
+app, cancel, admin&approver, 2, 3, 1, , reason, 取消申请, 会在申请过期时被清理
+app, checkin, , 2, 3, 1, , , 签到, 仅签到者自己可见/会在申请过期时被清理
+room, create, admin, , 1, , name, , 创建教室,
+room, statusupdate, admin, , 1, , name, , 更新教室状态,
+room, infoupdate, admin, , 1, , name, , 更新教室信息, 只对操作人显示
+room, delete, admin, , 1, , name, , 删除教室,
+duty, create, admin, 1, , , , dutydate, 创建值班安排,
+duty, update, admin, 1, , , , dutydate, 更新值班安排,
+duty, delete, admin, 1, , , , dutydate, 删除值班安排,
+system, upgrade, none, , , , , version&changelog, 系统更新, operator始终不显示
+system, , none, , , , , content, 全域广播, operator始终不显示
+

@@ -27,4 +27,12 @@ public class Room {
     private Date updateTime;
     private Date lastMaintenanceTime;
 
+
+    public void setStatus(RoomStatus status) {
+        if((this.status.onMaintenance())
+        && (!status.onMaintenance())) {// 如果状态从维修中或待维修切换到其他，记录最后维修时间
+            this.lastMaintenanceTime = new Date();
+        }
+        this.status = status;
+    }
 }

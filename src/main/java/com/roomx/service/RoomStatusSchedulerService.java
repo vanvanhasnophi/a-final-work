@@ -438,10 +438,10 @@ public class RoomStatusSchedulerService {
         if (room.getLastMaintenanceTime() == null) {
             return false; // 新教室不需要维修
         }
-        
-        // 如果超过30天没有维修，可能需要维修
-        Date thirtyDaysAgo = new Date(System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000);
-        return room.getLastMaintenanceTime().before(thirtyDaysAgo);
+
+        // 如果超过60天没有维修，可能需要维修
+        Date sixtyDaysAgo = new Date(System.currentTimeMillis() - 60L * 24 * 60 * 60 * 1000);
+        return room.getLastMaintenanceTime().before(sixtyDaysAgo);
     }
     
     /**

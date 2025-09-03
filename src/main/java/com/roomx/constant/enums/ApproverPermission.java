@@ -13,4 +13,12 @@ public enum ApproverPermission {
     ApproverPermission(int code) {
         this.code = code;
     }
+
+    public boolean canApprove() {
+        return this == NORMAL || this == EXTENDED;
+    }
+
+    public static boolean canApprove(ApproverPermission permission) {
+        return permission == NORMAL || permission == EXTENDED;
+    }
 }
