@@ -3,12 +3,12 @@ import  api  from './index';
 export const dutyAPI = {
   // 创建值班安排
   createDutySchedule: (data) => {
-    return api.post('/duty', { data });
+    return api.post('/duty', data);
   },
 
   // 更新值班安排
   updateDutySchedule: (id, data) => {
-    return api.put(`/duty/${id}`, { data });
+    return api.put(`/duty/${id}`, data);
   },
 
   // 删除值班安排
