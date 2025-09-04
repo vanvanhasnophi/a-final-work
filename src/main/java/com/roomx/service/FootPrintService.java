@@ -13,17 +13,17 @@ import com.roomx.model.entity.FootPrint;
 public interface FootPrintService {
     
     /**
-     * 创建足迹记录
+     * 创建动态记录
      */
     FootPrintDTO createFootPrint(FootPrintCreateDTO createDTO, Long operatorId);
     
     /**
-     * 根据ID获取足迹记录
+     * 根据ID获取动态记录
      */
     FootPrintDTO getFootPrintById(Long id);
     
     /**
-     * 分页查询足迹记录
+     * 分页查询动态记录
      */
     Page<FootPrintDTO> getFootPrints(FootPrintQueryDTO queryDTO);
     
@@ -78,7 +78,7 @@ public interface FootPrintService {
     long countByTimeRange(Date startTime, Date endTime);
     
     /**
-     * 删除足迹记录
+     * 删除动态记录
      */
     void deleteFootPrint(Long id);
     
@@ -88,7 +88,7 @@ public interface FootPrintService {
     void cleanupHistoryData(Date cutoffDate);
     
     /**
-     * 批量创建足迹记录
+     * 批量创建动态记录
      */
     List<FootPrintDTO> createFootPrintsBatch(List<FootPrintCreateDTO> createDTOs, Long operatorId);
     

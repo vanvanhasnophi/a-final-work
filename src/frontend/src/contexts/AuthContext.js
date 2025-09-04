@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import authAPI from '../api/auth';
-import activityService from '../services/activityService';
+import footprintService from '../services/footprintService';
 
 const AuthContext = createContext();
 
@@ -175,9 +175,8 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setSessionId(newSessionId);
 
-      // 登录后刷新活动数据
-      activityService.setCurrentUser(userData.id, userData.role);
-      activityService.refreshMockActivities(userData.id, userData.nickname || userData.username, userData.role);
+      // 登录后设置footprint服务用户信息
+      footprintService.setCurrentUser(userData.id, userData.role);
 
       console.debug('AuthContext: 登录完成，token和sessionId已设置');
       console.debug('AuthContext: localStorage检查:', {

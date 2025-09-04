@@ -7,9 +7,8 @@ import { userAPI } from '../../api/user';
 import { getRoleDisplayName } from '../../utils/roleMapping';
 import { getPermissionDisplayName } from '../../utils/permissionMapping';
 import { useAuth } from '../../contexts/AuthContext';
-import RecentActivities from '../../components/RecentActivities';
-import { useActivities } from '../../hooks/useActivities';
-import ActivityGenerator from '../../utils/activityGenerator';
+import RecentFootprints from '../../components/RecentFootprints';
+import { useFootprints } from '../../hooks/useFootprints';
 import { useI18n } from '../../contexts/I18nContext';
 import ResponsiveButton  from '../../components/ResponsiveButton';
 
@@ -38,13 +37,13 @@ export default function UserProfile() {
   // 检查是否是密码修改子路由
   const isPasswordChangeRoute = location.pathname.includes('/change-password');
   
-  // 使用活动Hook
+  // 使用footprints Hook
   const { 
-    activities: userActivities, 
-    loading: activitiesLoading, 
-    refreshActivities: fetchUserActivities 
-  } = useActivities({
-    type: 'all',
+    footprints: userFootprints, 
+    loading: footprintsLoading, 
+    refresh: fetchUserFootprints 
+  } = useFootprints({
+    type: 'user',
     userId: userInfo?.id,
     userRole: userInfo?.role,
     limit: 8,
@@ -109,8 +108,6 @@ export default function UserProfile() {
       };
       updateUserInfo(updatedUserData);
       
-      // 生成用户更新活动
-      ActivityGenerator.userUpdated(updatedUserData);
       
       messageApi.open({
         type: 'success',
@@ -183,7 +180,6 @@ export default function UserProfile() {
     passwordForm.resetFields();
   };
 
-  // 移除模拟活动数据，使用真实的活动服务
 
   // 根据角色获取特有字段的显示组件
   const getRoleSpecificFields = () => {
@@ -440,25 +436,25 @@ export default function UserProfile() {
 
             <Divider />
 
-            <Card title={t('userProfile.cards.activities.title', '最近活动')} extra={
+            <Card title={t('userProfile.cards.footprints.title', '最近动态')} extra={
               <Button 
                 type="link" 
                 size="small" 
-                onClick={fetchUserActivities}
-                loading={activitiesLoading}
+                onClick={fetchUserFootprints}
+                loading={footprintsLoading}
               >
-                {t('userProfile.cards.activities.refresh', '刷新')}
+                {t('userProfile.cards.footprints.refresh', '刷新')}
               </Button>
             }>
-              <RecentActivities
-                activities={userActivities}
-                loading={activitiesLoading}
+              <RecentFootprints
+                footprints={userFootprints}
+                loading={footprintsLoading}
                 maxItems={8}
                 showAvatar={false}
                 showTime={true}
                 showType={true}
                 compact={false}
-                emptyText={t('userProfile.cards.activities.empty', '暂无最近活动')}
+                emptyText={t('userProfile.cards.footprints.empty', '暂无最近动态')}
                 height="calc(100vh - 450px)"
                 minHeight="200px"
               />

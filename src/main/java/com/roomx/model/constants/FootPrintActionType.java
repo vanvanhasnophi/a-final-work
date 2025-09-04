@@ -1,7 +1,7 @@
 package com.roomx.model.constants;
 
 /**
- * 足迹操作类型工具类
+ * 动态操作类型工具类
  * 提供操作类型解析的静态方法
  */
 public class FootPrintActionType {

@@ -19,9 +19,15 @@ public interface NotificationService {
     // 删除通知
     void deleteNotification(Long notificationId, Long userId);
     
+    // 删除指定用户所有通知
+    void deleteAllByUserId(Long userId);
+    
     // 创建通知
     void createNotification(NotificationDTO notificationDTO);
     
     // 批量创建通知
     void createNotifications(Iterable<NotificationDTO> notificationDTOs);
-} 
+    
+    // Admin发送测试通知给自己
+    void sendTestNotificationToAdmin(Long adminUserId);
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Space, Typography, Tag, Popconfirm, Drawer, Card } from 'antd';
-import { CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import { CheckOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../api/notification';
 import { formatRelativeTime } from '../utils/dateFormat';
@@ -10,13 +10,17 @@ import isMobileFn from '../utils/isMobile';
 
 const { Text } = Typography;
 
-export default function NotificationCenter({ visible, onClose, onUnreadChange }) {
+export default function NotificationCenter({ userId, visible, onClose, onUnreadChange }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const loadingRef = useRef(false);
+  // ...existing code...
+  const [deletingIds, setDeletingIds] = useState(new Set()); // 跟踪正在删除的通知ID
+  const [deletingAll, setDeletingAll] = useState(false); // 跟踪全部删除状态
+  const scrollContainerRef = useRef(null);
   const isMobile = isMobileFn();
 
   // 获取通知标题（支持国际化键）
@@ -94,146 +98,140 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
     return notification.content;
   }, [t, replaceTemplate]);
 
-  // 获取通知列表
+  // 获取全部通知（一次性，无分页）
   const fetchNotifications = useCallback(async () => {
-    if (loadingRef.current) return; // 防止重复调用
-    
-    loadingRef.current = true;
     setLoading(true);
-    const parseRecords = (resp) => {
-      if (!resp) return [];
+    try {
+      const resp = await notificationAPI.getNotificationsByUser(userId,{
+        pageNum: 1,
+        pageSize: 999999
+      });
       const d = resp.data ?? resp;
-      if (!d) return [];
-      if (Array.isArray(d)) return d;
-      if (Array.isArray(d.records)) return d.records;
-      if (Array.isArray(d.list)) return d.list;
-      if (Array.isArray(d.rows)) return d.rows;
-      // 常见分页结构 { data: { records: [...], total: X } } 已在上方覆盖
-      // 若返回对象自身就是单条通知，包装成数组
-      if (typeof d === 'object' && (d.title || d.content)) return [d];
-      return [];
-    };
-    let remoteList = [];
-
-    try {
-      // 主要尝试：pageNum 参数命名
+      let list = [];
+      if (Array.isArray(d)) list = d;
+      else if (Array.isArray(d.records)) list = d.records;
+      else if (Array.isArray(d.list)) list = d.list;
+      else if (Array.isArray(d.rows)) list = d.rows;
+      else if (typeof d === 'object' && (d.title || d.content)) list = [d];
+      // 合并本地通知
       try {
-        const primaryResp = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 20 });
-        remoteList = parseRecords(primaryResp);
-        console.debug('[NotificationCenter] 主要通知数量:', remoteList.length);
-      } catch(error) {
-        console.warn('获取通知失败:', error);
-      }
-      
-      // 备用尝试：page 参数命名
-      if (remoteList.length === 0) {
-        try {
-          const pageResp = await notificationAPI.getNotifications({ page: 1, size: 20 });
-          const pageList = parseRecords(pageResp);
-            if (pageList.length > 0) {
-              remoteList = pageList;
+        const localRaw = localStorage.getItem('localNotifications');
+        if (localRaw) {
+          const localList = JSON.parse(localRaw).map(item => ({ ...item, local: true }));
+          const mergedMap = new Map();
+          [...list, ...localList].forEach(n => { 
+            if (n && n.id) {
+              if (!mergedMap.has(n.id)) {
+                mergedMap.set(n.id, n);
+              }
             }
-        } catch(_) {}
-      }
-      // 备用尝试：无分页参数
-      if (remoteList.length === 0) {
-        try {
-          const noParamResp = await notificationAPI.getNotifications();
-          const noParamList = parseRecords(noParamResp);
-          if (noParamList.length > 0) {
-            remoteList = noParamList;
-          }
-        } catch(_) {}
-      }
-    } catch (error) {
-  console.warn('远程通知获取失败，使用本地缓存: ', error);
-    }
-
-    // 合并本地缓冲（弱密码或其它本地注入）
-    try {
-      const localRaw = localStorage.getItem('localNotifications');
-      if (localRaw) {
-        const localList = JSON.parse(localRaw).map(item => ({ ...item, local: true }));
-        const mergedMap = new Map();
-        // 先放远程再放本地，使本地覆盖、保留本地 isRead 状态
-        [...remoteList, ...localList].forEach(n => { 
-          if (n && n.id) {
-            if (!mergedMap.has(n.id)) {
-              mergedMap.set(n.id, n);
-            }
-          }
-        });
-        remoteList = Array.from(mergedMap.values());
-        console.debug('[NotificationCenter] 合并本地临时通知数量:', localList.length);
-        console.debug('[NotificationCenter] 合并后总通知数量:', remoteList.length);
-      }
-    } catch(e) { console.warn('本地通知解析失败', e); }
-
-    setNotifications(remoteList);
-    
-    // 计算未读数量 - 分别计算服务器和本地的未读数量，避免重复计算
-    let serverUnreadCount = 0;
-    let localUnreadCount = 0;
-    
-    remoteList.forEach(n => {
-      if (!n.isRead) {
-        if (n.local) {
-          localUnreadCount++;
-        } else {
-          serverUnreadCount++;
+          });
+          list = Array.from(mergedMap.values());
+        }
+      } catch(e) { console.warn('本地通知解析失败', e); }
+      setNotifications(list);
+      // 横幅逻辑（只在首次加载时）
+      if (list.length > 0) {
+        const unreadNotifications = list.filter(n => !n.isRead)
+          .sort((a, b) => new Date(b.createTime || b.createdAt || 0) - new Date(a.createTime || a.createdAt || 0));
+        if (unreadNotifications.length > 0) {
+          const latestNotification = unreadNotifications[0];
+          notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, latestNotification);
         }
       }
-    });
-    
-    const totalUnread = serverUnreadCount + localUnreadCount;
-    console.log(`[NotificationCenter] 未读计数 - 服务器: ${serverUnreadCount}, 本地: ${localUnreadCount}, 总计: ${totalUnread}`);
-    
-    setUnreadCount(totalUnread);
-    
-    // 检查是否有新的未读通知需要显示横幅
-    if (remoteList.length > 0) {
-      // 获取所有未读通知，按创建时间降序排列
-      const unreadNotifications = remoteList
-        .filter(n => !n.isRead)
-        .sort((a, b) => new Date(b.createTime || b.createdAt || 0) - new Date(a.createTime || a.createdAt || 0));
-      
-      console.log(`[NotificationCenter] 找到 ${unreadNotifications.length} 个未读通知`);
-      
-      // 触发最新的未读通知事件（用于横幅显示）
-      if (unreadNotifications.length > 0) {
-        const latestNotification = unreadNotifications[0];
-        console.log(`[NotificationCenter] 触发最新通知事件: ${latestNotification.id}`);
-        
-        // 延迟触发，避免与状态更新冲突
-        setTimeout(() => {
-          notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, latestNotification);
-        }, 100);
-      }
+    } catch (error) {
+      setNotifications([]);
+      console.warn('获取通知失败:', error);
     }
-    
-    // 触发未读数量变化事件
-    notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
-    
-    loadingRef.current = false;
     setLoading(false);
-  }, []); // 移除loading依赖防止无限循环
+  }, []);
 
-  // 获取服务器未读数量（仅用于同步，不直接设置状态）
+  // 获取未读数量（直接从API，不依赖分页数据）
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const response = await notificationAPI.getUnreadCount();
-      
-      if (response?.data) {
-        const serverUnread = response.data.unreadCount || 0;
+      // 获取服务器未读数量
+      let serverUnread = 0;
+      try {
+        const response = await notificationAPI.getUnreadCountByUser(userId);
+        serverUnread = response?.data?.unreadCount || 0;
         console.debug('[NotificationCenter] 服务器未读数量:', serverUnread);
-        return serverUnread;
+      } catch (error) {
+        console.warn('获取服务器未读数量失败:', error);
       }
-      return 0;
+
+      // 获取本地通知中的未读数量
+      let localUnread = 0;
+      try {
+        const localRaw = localStorage.getItem('localNotifications');
+        if (localRaw) {
+          const localList = JSON.parse(localRaw);
+          localUnread = localList.filter(n => !n.isRead).length;
+        }
+        console.debug('[NotificationCenter] 本地未读数量:', localUnread);
+      } catch (e) {
+        console.warn('获取本地未读数量失败:', e);
+      }
+
+      const totalUnread = serverUnread + localUnread;
+      console.log(`[NotificationCenter] 总未读数量: ${totalUnread} (服务器: ${serverUnread} + 本地: ${localUnread})`);
+      
+      setUnreadCount(totalUnread);
+      return totalUnread;
     } catch (error) {
-      console.warn('获取服务器未读数量失败:', error);
+      console.warn('获取未读数量失败:', error);
       return 0;
     }
-  }, []); // 移除executeWithRetry依赖
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await notificationAPI.getStatsByUser(userId);
+      const total = response?.data?.total || 0;
+      const unread = response?.data?.unread || 0;
+      setTotal(total);
+      setUnreadCount(unread);
+      return { total, unread };
+    } catch (error) {
+      console.warn('获取通知总数和未读数量失败:', error);
+      return { total: 0, unread: 0 };
+    }
+  }, [userId]);
+
+
+  // 删除所有通知
+  const handleDeleteAllNotifications = useCallback(async () => {
+    if (deletingAll) return; // 防止重复点击
+    
+    try {
+      setDeletingAll(true);
+      console.log('[NotificationCenter] 开始删除所有通知');
+      
+      // 调用删除所有通知API
+      await notificationAPI.deleteAllByUser(userId);
+      
+      // 清空本地通知
+      localStorage.removeItem('localNotifications');
+      
+      // 清空通知列表和状态
+      setNotifications([]);
+      setUnreadCount(0);
+      
+      // 触发相关事件
+      notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, 0);
+      
+      console.log('[NotificationCenter] 所有通知已删除');
+      
+      // 通知Layout重新获取未读计数
+      if (onUnreadChange) {
+        onUnreadChange();
+      }
+      
+    } catch (error) {
+      console.error('删除所有通知失败:', error);
+    } finally {
+      setDeletingAll(false);
+    }
+  }, [deletingAll, onUnreadChange]);
 
   // 标记通知为已读
   const handleMarkAsRead = useCallback(async (notificationId) => {
@@ -241,17 +239,41 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
       const target = prev.find(n => n.id === notificationId);
       const isLocal = target?.local;
       const alreadyRead = target?.isRead;
+      
       // 先本地快速更新，提升响应速度
       const next = prev.map(item => item.id === notificationId ? { ...item, isRead: true } : item);
+      
       if (!alreadyRead) {
-        setUnreadCount(prevUnreadCount => {
-          const newUnreadCount = Math.max(0, prevUnreadCount - 1);
-          // 温柔地通知其他组件未读数量变化
-          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newUnreadCount);
-          return newUnreadCount;
-        });
         // 触发通知已读事件
         notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_READ, { id: notificationId, notification: target });
+        
+        // 重新从API获取未读计数，而不是手动-1
+        setTimeout(async () => {
+          try {
+            // 获取服务器未读数量
+            const res = await notificationAPI.getUnreadCountByUser(userId);
+            const serverUnread = res?.data?.unreadCount || 0;
+            
+            // 获取本地通知中的未读数量
+            let localUnread = 0;
+            try {
+              const localRaw = localStorage.getItem('localNotifications');
+              if (localRaw) {
+                const localList = JSON.parse(localRaw);
+                localUnread = localList.filter(n => !n.isRead).length;
+              }
+            } catch (e) {}
+            
+            const totalUnread = serverUnread + localUnread;
+            setUnreadCount(totalUnread);
+            
+            // 通知其他组件未读数量变化
+            notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+            console.debug(`[NotificationCenter] 标记已读后重新获取未读计数: ${totalUnread}`);
+          } catch (e) {
+            console.warn('重新获取未读计数失败:', e);
+          }
+        }, 100);
       }
       
       // 同步 localStorage
@@ -279,10 +301,34 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
     setNotifications(prev => {
       const anyServerUnread = prev.some(n => !n.local && !n.isRead);
       const next = prev.map(item => ({ ...item, isRead: true }));
-      setUnreadCount(0);
       
-      // 温柔地通知其他组件未读数量变化
-      notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, 0);
+      // 重新从API获取未读计数，而不是直接设置为0
+      setTimeout(async () => {
+        try {
+          // 获取服务器未读数量
+          const res = await notificationAPI.getUnreadCountByUser(userId);
+          const serverUnread = res?.data?.unreadCount || 0;
+          
+          // 获取本地通知中的未读数量
+          let localUnread = 0;
+          try {
+            const localRaw = localStorage.getItem('localNotifications');
+            if (localRaw) {
+              const localList = JSON.parse(localRaw);
+              localUnread = localList.filter(n => !n.isRead).length;
+            }
+          } catch (e) {}
+          
+          const totalUnread = serverUnread + localUnread;
+          setUnreadCount(totalUnread);
+          
+          // 通知其他组件未读数量变化
+          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+          console.debug(`[NotificationCenter] 标记全部已读后重新获取未读计数: ${totalUnread}`);
+        } catch (e) {
+          console.warn('重新获取未读计数失败:', e);
+        }
+      }, 100);
       
       try {
         const raw = localStorage.getItem('localNotifications');
@@ -292,7 +338,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
         }
       } catch(_) {}
       if (anyServerUnread) {
-        notificationAPI.markAllAsRead()
+        notificationAPI.markAllAsReadByUser(userId)
           .then(() => console.debug('标记全部已读成功'))
           .catch(err => console.error('标记全部已读失败:', err));
       }
@@ -302,38 +348,106 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
 
   // 删除通知
   const handleDeleteNotification = async (notificationId) => {
-    setNotifications(prev => {
-      const target = prev.find(n => n.id === notificationId);
-      const isLocal = target?.local;
-      const wasUnread = target && !target.isRead;
-      const next = prev.filter(item => item.id !== notificationId);
-      
-      if (wasUnread) {
-        setUnreadCount(prevUnreadCount => {
-          const newUnreadCount = Math.max(0, prevUnreadCount - 1);
-          // 温柔地通知其他组件未读数量变化
-          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, newUnreadCount);
-          return newUnreadCount;
-        });
-      }
-      
-      // 触发通知删除事件
-      notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_DELETED, { id: notificationId, notification: target });
-      
-      try {
-        const raw = localStorage.getItem('localNotifications');
-        if (raw) {
-          const arr = JSON.parse(raw).filter(n => n.id !== notificationId);
-          localStorage.setItem('localNotifications', JSON.stringify(arr));
+    // 防重复点击：检查是否正在删除
+    if (deletingIds.has(notificationId)) {
+      console.debug('通知正在删除中，忽略重复操作:', notificationId);
+      return;
+    }
+
+    // 标记为正在删除
+    setDeletingIds(prev => new Set(prev).add(notificationId));
+    
+    try {
+      setNotifications(prev => {
+        const target = prev.find(n => n.id === notificationId);
+        
+        // 如果通知已经被删除了，直接返回
+        if (!target) {
+          console.debug('通知已不存在，跳过删除:', notificationId);
+          return prev;
         }
-      } catch(_) {}
-      if (!isLocal) {
-        notificationAPI.deleteNotification(notificationId)
-          .then(() => console.debug('删除通知成功'))
-          .catch(err => console.error('删除通知失败:', err));
-      }
-      return next;
-    });
+        
+        const isLocal = target.local;
+        const wasUnread = target && !target.isRead;
+        const next = prev.filter(item => item.id !== notificationId);
+        
+        if (wasUnread) {
+          // 重新从API获取未读计数，而不是手动-1
+          setTimeout(async () => {
+            try {
+              // 获取服务器未读数量
+              const res = await notificationAPI.getUnreadCountByUser(userId);
+              const serverUnread = res?.data?.unreadCount || 0;
+              
+              // 获取本地通知中的未读数量
+              let localUnread = 0;
+              try {
+                const localRaw = localStorage.getItem('localNotifications');
+                if (localRaw) {
+                  const localList = JSON.parse(localRaw);
+                  localUnread = localList.filter(n => !n.isRead).length;
+                }
+              } catch (e) {}
+              
+              const totalUnread = serverUnread + localUnread;
+              setUnreadCount(totalUnread);
+              
+              // 通知其他组件未读数量变化
+              notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+              console.debug(`[NotificationCenter] 删除通知后重新获取未读计数: ${totalUnread}`);
+            } catch (e) {
+              console.warn('重新获取未读计数失败:', e);
+            }
+          }, 100);
+        }
+        
+        // 触发通知删除事件
+        notificationEvents.emit(NOTIFICATION_EVENTS.NOTIFICATION_DELETED, { id: notificationId, notification: target });
+        
+        try {
+          const raw = localStorage.getItem('localNotifications');
+          if (raw) {
+            const arr = JSON.parse(raw).filter(n => n.id !== notificationId);
+            localStorage.setItem('localNotifications', JSON.stringify(arr));
+          }
+        } catch(_) {}
+        
+        // 后台删除服务器端通知（如果不是本地通知）
+        if (!isLocal) {
+          notificationAPI.deleteNotification(notificationId)
+            .then(() => console.debug('删除通知成功:', notificationId))
+            .catch(err => {
+              console.error('删除通知失败:', err);
+              // 删除失败时可能需要回滚界面状态，但这里先保持简单处理
+            })
+            .finally(() => {
+              // 无论成功失败，都要移除删除标记
+              setDeletingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(notificationId);
+                return newSet;
+              });
+            });
+        } else {
+          // 本地通知直接移除删除标记
+          setDeletingIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(notificationId);
+            return newSet;
+          });
+        }
+        
+        return next;
+      });
+    } catch (error) {
+      console.error('删除通知时发生错误:', error);
+      // 出错时移除删除标记
+      setDeletingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationId);
+        return newSet;
+      });
+    }
   };
 
   // 智能路由导航函数
@@ -416,10 +530,20 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
     const initializeData = async () => {
       console.log('[NotificationCenter] 初始化数据加载');
       await fetchNotifications();
+      await fetchStats();
     };
     initializeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 只在组件挂载时执行一次
+
+  // 组件显示时刷新数据
+  useEffect(() => {
+    if (visible) {
+      console.log('[NotificationCenter] 组件显示，刷新数据');
+      fetchNotifications(); // 重新获取通知列表
+      fetchStats(); // 重新获取未读计数
+    }
+  }, [visible, fetchNotifications, fetchStats]);
 
   // 监听外部通知已读事件（如横幅通知被标记为已读）
   useEffect(() => {
@@ -535,17 +659,26 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
             )}
             <Popconfirm
               title={t('notification.confirmDelete.title')}
-              onConfirm={(e) => { e?.stopPropagation?.(); handleDeleteNotification(item.id); }}
+              onConfirm={(e) => { 
+                e?.stopPropagation?.(); 
+                // 再次检查是否正在删除，防止重复操作
+                if (!deletingIds.has(item.id)) {
+                  handleDeleteNotification(item.id); 
+                }
+              }}
               okText={t('notification.confirmDelete.ok')}
               cancelText={t('notification.confirmDelete.cancel')}
               onPopupClick={e => e.stopPropagation()}
+              disabled={deletingIds.has(item.id)}
             >
               <Button
                 type="text"
                 size="small"
                 icon={<DeleteOutlined />}
                 danger
-                title={t('notification.actions.delete')}
+                loading={deletingIds.has(item.id)}
+                disabled={deletingIds.has(item.id)}
+                title={deletingIds.has(item.id) ? t('notification.actions.deleting') : t('notification.actions.delete')}
                 onClick={e => e.stopPropagation()}
                 style={{ border: 'none', boxShadow: 'none', background: 'transparent' }}
               />
@@ -585,7 +718,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
         <Button
           type="text"
           size="small"
-          onClick={() => { fetchNotifications(); fetchUnreadCount(); }}
+          onClick={() => { fetchNotifications(); fetchStats(); }}
           loading={loading}
         >{t('notification.refresh')}</Button>
         {unreadCount > 0 && (
@@ -598,24 +731,49 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
             {t('notification.markAllRead')}
           </Button>
         )}
+        {notifications.length > 0 && (
+          <Popconfirm
+            title={t('notification.deleteAll.confirm', '确定要删除所有通知吗？')}
+            description={t('notification.deleteAll.description', '此操作无法撤销')}
+            onConfirm={handleDeleteAllNotifications}
+            okText={t('common.confirm', '确定')}
+            cancelText={t('common.cancel', '取消')}
+            disabled={deletingAll}
+          >
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<ClearOutlined />}
+              loading={deletingAll}
+              disabled={deletingAll}
+            >
+              {t('notification.deleteAll.button', '全部删除')}
+            </Button>
+          </Popconfirm>
+        )}
       </Space>
     }
   >
-              <div style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }} className="custom-scrollbar">
-        {notifications.length > 0 ? (
-          <Space direction="vertical" style={{ width: '100%' }} size={12}>
-            {notifications.map(renderNotificationCard)}
-          </Space>
-        ) : (
-          <div style={{ 
-            padding: '40px 20px', 
-            textAlign: 'center',
-            color: 'var(--text-color-secondary)'
-          }}>
-            {loading ? t('notification.loading') : t('notification.empty')}
-          </div>
-        )}
-      </div>
+    <div 
+      ref={scrollContainerRef}
+      style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }} 
+      className="custom-scrollbar"
+    >
+      {notifications.length > 0 ? (
+        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          {notifications.map(renderNotificationCard)}
+        </Space>
+      ) : (
+        <div style={{ 
+          padding: '40px 20px', 
+          textAlign: 'center',
+          color: 'var(--text-color-secondary)'
+        }}>
+          {loading ? t('notification.loading') : t('notification.empty')}
+        </div>
+      )}
+    </div>
       
       {notifications.length > 0 && (
         <div style={{
@@ -625,7 +783,7 @@ export default function NotificationCenter({ visible, onClose, onUnreadChange })
           marginTop: '16px'
         }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            {t('notification.footer.totalPrefix','共')} {notifications.length} {t('notification.footer.totalSuffix','条通知')}
+            {t('notification.footer.totalPrefix','共')} {total} {t('notification.footer.totalSuffix','条通知')}
             {unreadCount > 0 && `，${unreadCount} ${t('notification.footer.unreadSuffix','条未读')}`}
           </Text>
         </div>

@@ -193,7 +193,7 @@ public class ApplicationController {
                 applicationService.reject(approvalDTO.getApplicationId(), approvalDTO.getReason());
                 // 立即触发状态更新
                 roomStatusSchedulerService.updateApplicationStatuses();
-                return ResponseEntity.ok("申请已拒绝");
+                return ResponseEntity.ok("申请已驳回");
             }
         } catch (Exception e) {
             System.err.println("审批操作失败: " + e.getMessage());

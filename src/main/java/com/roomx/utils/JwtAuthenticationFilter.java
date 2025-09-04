@@ -39,20 +39,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         TokenValidationLogger.logValidationStart(requestURI, clientIP, userAgent);
         
         // 跳过无需认证的端点
-    if (requestURI.equals("/api/login") || requestURI.equals("/api/register") || requestURI.equals("/api/csrf")) {
+        if (requestURI.equals("/api/login") || requestURI.equals("/api/register") || requestURI.equals("/api/csrf")) {
             TokenValidationLogger.logValidationSkipped(requestURI, "Public auth endpoint");
             chain.doFilter(request, response);
             return;
         }
+        
+        // 注意：WebSocket连接需要认证，不应该跳过！
+        // WebSocket握手会通过查询参数或header传递token进行认证
         
         // 跳过静态资源和健康检查
         if (requestURI.startsWith("/static/") || requestURI.equals("/health") || requestURI.equals("/api/health")) {
             TokenValidationLogger.logValidationSkipped(requestURI, "Static resource or health check");
             chain.doFilter(request, response);
             return;
-        }
-        
-        try {
+        }        try {
             // 从请求头获取token
             String token = extractTokenFromRequest(request);
             
@@ -120,10 +121,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractTokenFromRequest(HttpServletRequest request) {
+        // 首先尝试从Authorization头获取token（用于普通API请求）
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+        
+        // 对于WebSocket连接，尝试从查询参数获取token
+        String queryToken = request.getParameter("token");
+        if (queryToken != null && !queryToken.trim().isEmpty()) {
+            return queryToken.trim();
+        }
+        
         return null;
     }
     

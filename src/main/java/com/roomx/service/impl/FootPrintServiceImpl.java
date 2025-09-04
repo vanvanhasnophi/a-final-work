@@ -86,7 +86,7 @@ public class FootPrintServiceImpl implements FootPrintService {
             return convertToDTO(saved);
         } catch (Exception e) {
             log.error("Failed to create footprint: {}", e.getMessage(), e);
-            throw new RuntimeException("创建足迹记录失败", e);
+            throw new RuntimeException("创建动态记录失败", e);
         }
     }
     
@@ -97,7 +97,7 @@ public class FootPrintServiceImpl implements FootPrintService {
         if (footPrint.isPresent()) {
             return convertToDTO(footPrint.get());
         }
-        throw new RuntimeException("足迹记录不存在");
+        throw new RuntimeException("动态记录不存在");
     }
     
     @Override
@@ -137,7 +137,7 @@ public class FootPrintServiceImpl implements FootPrintService {
             throw new RuntimeException("日期格式错误", e);
         } catch (Exception e) {
             log.error("Query footprints failed: {}", e.getMessage(), e);
-            throw new RuntimeException("查询足迹记录失败", e);
+            throw new RuntimeException("查询动态记录失败", e);
         }
     }
     
@@ -254,11 +254,11 @@ public class FootPrintServiceImpl implements FootPrintService {
                 footPrintRepository.deleteById(id);
                 log.info("Deleted footprint with id: {}", id);
             } else {
-                throw new RuntimeException("足迹记录不存在");
+                throw new RuntimeException("动态记录不存在");
             }
         } catch (Exception e) {
             log.error("Failed to delete footprint: {}", e.getMessage(), e);
-            throw new RuntimeException("删除足迹记录失败", e);
+            throw new RuntimeException("删除动态记录失败", e);
         }
     }
     
@@ -293,7 +293,7 @@ public class FootPrintServiceImpl implements FootPrintService {
                        .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Failed to batch create footprints: {}", e.getMessage(), e);
-            throw new RuntimeException("批量创建足迹记录失败", e);
+            throw new RuntimeException("批量创建动态记录失败", e);
         }
     }
     

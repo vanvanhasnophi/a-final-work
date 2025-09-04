@@ -122,7 +122,7 @@ public class AuthController {
     @PostMapping("/updatePassword")
     public ResponseEntity<?> updatePassword(@RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
         try {
-            // 始终使用当前认证用户，忽略传入的 username，避免前端误传造成拒绝
+            // 始终使用当前认证用户，忽略传入的 username，避免前端误传造成驳回
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null || authentication.getName() == null) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

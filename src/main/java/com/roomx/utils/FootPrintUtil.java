@@ -7,7 +7,7 @@ import com.roomx.model.dto.FootPrintCreateDTO;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 足迹记录工具类
+ * 动态记录工具类
  */
 @Slf4j
 @Component
@@ -72,10 +72,10 @@ public class FootPrintUtil {
         return parts.length <= 2;
     }
     
-    // ========== 统一的足迹记录创建方法 ==========
+    // ========== 统一的动态记录创建方法 ==========
     
     /**
-     * 统一的足迹记录创建方法
+     * 统一的动态记录创建方法
      * @param action 操作类型，格式为 "category operation" 或 "category"
      * @param description 操作描述
      * @param operatorId 操作人ID（可选）

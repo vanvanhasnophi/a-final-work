@@ -333,7 +333,7 @@ start_application() {
     else
         export REDIS_ENABLED=false
         log_info "Backend will start WITHOUT Redis (REDIS_ENABLED=false)."
-        # 禁用 Redis 自动配置与健康检查，避免连接被拒绝异常
+        # 禁用 Redis 自动配置与健康检查，避免连接被驳回异常
         JVM_REDIS_ARGS="-Dmanagement.health.redis.enabled=false -Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration"
     fi
     

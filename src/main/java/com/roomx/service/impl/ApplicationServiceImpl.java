@@ -369,7 +369,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setStatus(ApplicationStatus.REJECTED);
         applicationRepository.save(application);
         
-        // 发送审批拒绝通知
+        // 发送审批驳回通知
         User applicant = userRepository.findById(application.getUserId()).orElse(null);
         Room room = roomRepository.findById(application.getRoomId()).orElse(null);
         if (applicant != null && room != null) {

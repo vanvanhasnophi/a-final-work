@@ -512,10 +512,10 @@ const dictionaries = {
             phone: '电话'
           }
         },
-        activities: {
-          title: '最近活动',
+        footprints: {
+          title: '最近动态',
           refresh: '刷新',
-          empty: '暂无最近活动'
+          empty: '暂无最近动态'
         }
       },
       form: {
@@ -567,7 +567,7 @@ const dictionaries = {
         all: '全部',
         pending: '待审批',
         approved: '已通过',
-        rejected: '已拒绝',
+        rejected: '已驳回',
         cancelled: '已取消',
         roomSearchPlaceholder: '搜索教室名称',
         roomSelectPlaceholder: '选择教室',
@@ -608,7 +608,7 @@ const dictionaries = {
       status: {
         pending: '待审批',
         approved: '已通过',
-        rejected: '已拒绝',
+        rejected: '已驳回',
         cancelled: '已取消',
         checkedIn: '已签到'
       },
@@ -740,7 +740,7 @@ const dictionaries = {
         approveResult: '审批结果',
         pleaseSelectApproveResult: '请选择审批结果',
         approveOptionApprove: '批准',
-        approveOptionReject: '拒绝',
+        approveOptionReject: '驳回',
         approveOpinion: '审批意见',
         cancelReason: '撤销原因',
         enterApproveOpinion: '请输入审批意见',
@@ -855,8 +855,8 @@ const dictionaries = {
           message: '您的申请「{{title}}」已获得批准。{{reason}}'
         },
         rejected: {
-          title: '申请已拒绝',
-          message: '您的申请「{{title}}」被拒绝。{{reason}}'
+          title: '申请已驳回',
+          message: '您的申请「{{title}}」被驳回。{{reason}}'
         }
       },
       room: {
@@ -1574,10 +1574,10 @@ const dictionaries = {
             phone: 'Phone'
           }
         },
-        activities: {
-          title: 'Recent Activities',
+        footprints: {
+          title: 'Recent Footprints',
           refresh: 'Refresh',
-          empty: 'No recent activity'
+          empty: 'No recent footprints'
         }
       },
       form: {

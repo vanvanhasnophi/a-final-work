@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,4 +26,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     
     // 根据用户ID和类型查找通知
     List<Notification> findByUserIdAndTypeOrderByCreateTimeDesc(Long userId, String type);
+    
+    // 根据ID和用户ID删除通知（原子操作）
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.id = :id AND n.userId = :userId")
+    int deleteByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 } 

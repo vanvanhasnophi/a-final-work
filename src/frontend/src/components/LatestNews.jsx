@@ -1,12 +1,12 @@
 import React from 'react';
 import { List, Tag, Typography, Space, Empty } from 'antd';
-import { getActivityTypeDisplayName, getActivityTypeColor } from '../utils/activityTypes';
+import { getActionDisplayName, getActionColor } from '../utils/footprintTypes';
 import { formatTime } from '../utils/dateFormat';
 
 const { Text } = Typography;
 
 export default function LatestNews({ 
-  activities = [], 
+  footprints = [], 
   loading = false, 
   maxItems = 6,
   emptyText = "暂无最新动态",
@@ -21,7 +21,7 @@ export default function LatestNews({
     );
   }
 
-  if (!activities || activities.length === 0) {
+  if (!footprints || footprints.length === 0) {
     return (
       <Empty 
         description={emptyText}
@@ -31,7 +31,7 @@ export default function LatestNews({
     );
   }
 
-  const displayActivities = activities.slice(0, maxItems);
+  const displayFootprints = footprints.slice(0, maxItems);
 
   return (
     <div style={{ 
@@ -45,8 +45,8 @@ export default function LatestNews({
     className="custom-scrollbar"
     >
       <List
-        dataSource={displayActivities}
-        renderItem={(activity) => (
+        dataSource={displayFootprints}
+        renderItem={(footprint) => (
         <List.Item
           style={{
             padding: '12px 0',
@@ -60,25 +60,25 @@ export default function LatestNews({
             <Space direction="vertical" size={2} style={{ width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Tag 
-                  color={getActivityTypeColor(activity.type)}
+                  color={getActionColor(footprint.action)}
                   style={{ margin: 0, fontSize: '12px' }}
                 >
-                  {getActivityTypeDisplayName(activity.type)}
+                  {getActionDisplayName(footprint.action)}
                 </Tag>
                 <Text strong style={{ fontSize: '14px' }}>
-                  {activity.description || '系统活动'}
+                  {footprint.attach || '系统动态'}
                 </Text>
               </div>
-              {activity.user && (
+              {footprint.tempInfo && (
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {activity.user}
+                  {footprint.tempInfo}
                 </Text>
               )}
             </Space>
           </div>
           <div style={{ marginLeft: '12px', textAlign: 'right' }}>
             <Text type="secondary" style={{ fontSize: '12px' }}>
-              {formatTime(activity.timestamp)}
+              {formatTime(footprint.timestamp)}
             </Text>
           </div>
         </List.Item>

@@ -2,17 +2,17 @@ import React from 'react';
 import { List, Tag, Space, Typography, Empty } from 'antd';
 import { formatRelativeTime } from '../utils/dateFormat';
 import { 
-  getActivityTypeDisplayName, 
-  getActivityTypeColor, 
-  generateActivityDescription 
-} from '../utils/activityTypes';
+  getActionDisplayName, 
+  getActionColor, 
+  formatFootprintDescription 
+} from '../utils/footprintTypes';
 
 const { Text } = Typography;
 
-export default function RecentActivities({ 
-  activities = [], 
+export default function RecentFootprints({ 
+  footprints = [], 
   loading = false, 
-  emptyText = "暂无最近活动",
+  emptyText = "暂无最近动态",
   maxItems = 10,
   showAvatar = true,
   showTime = true,
@@ -21,8 +21,8 @@ export default function RecentActivities({
   height = "400px",
   minHeight = "200px"
 }) {
-  // 限制显示的活动数量
-  const displayActivities = activities.slice(0, maxItems);
+  // 限制显示的动态数量
+  const displayFootprints = footprints.slice(0, maxItems);
 
   if (loading) {
     return (
@@ -34,7 +34,7 @@ export default function RecentActivities({
     );
   }
 
-  if (!displayActivities || displayActivities.length === 0) {
+  if (!displayFootprints || displayFootprints.length === 0) {
     return (
       <Empty 
         description={emptyText}
@@ -55,8 +55,8 @@ export default function RecentActivities({
     className="custom-scrollbar"
     >
       <List
-        dataSource={displayActivities}
-        renderItem={(activity) => (
+        dataSource={displayFootprints}
+        renderItem={(footprint) => (
         <List.Item
           style={{
             padding: compact ? '8px 0' : '12px 0',
@@ -70,28 +70,28 @@ export default function RecentActivities({
             <Space direction="vertical" size={2} style={{ width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Text strong style={{ fontSize: compact ? '13px' : '14px' }}>
-                  {generateActivityDescription(activity)}
+                  {formatFootprintDescription(footprint)}
                 </Text>
                 {showType && (
                   <Tag 
-                    color={getActivityTypeColor(activity.type)}
+                    color={getActionColor(footprint.action)}
                     size={compact ? 'small' : 'default'}
                   >
-                    {getActivityTypeDisplayName(activity.type)}
+                    {getActionDisplayName(footprint.action)}
                   </Tag>
                 )}
               </div>
-              {activity.description && (
+              {footprint.attach && (
                 <Text type="secondary" style={{ fontSize: compact ? '11px' : '12px' }}>
-                  {activity.description}
+                  {footprint.attach}
                 </Text>
               )}
             </Space>
           </div>
-          {showTime && activity.timestamp && (
+          {showTime && footprint.timestamp && (
             <div style={{ marginLeft: '12px', textAlign: 'right' }}>
               <Text type="secondary" style={{ fontSize: compact ? '10px' : '12px' }}>
-                {formatRelativeTime(activity.timestamp)}
+                {formatRelativeTime(footprint.timestamp)}
               </Text>
             </div>
           )}

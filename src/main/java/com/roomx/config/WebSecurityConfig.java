@@ -44,6 +44,8 @@ public class WebSecurityConfig {
                     .csrfTokenRequestHandler(requestHandler)
                     // 对所有 /api/** 走 JWT，统一跳过 CSRF，避免前端 403
                     .ignoringRequestMatchers("/api/**")
+                    // WebSocket连接跳过CSRF
+                    .ignoringRequestMatchers("/ws/**")
                     // 以及静态与预检
                     .ignoringRequestMatchers("/static/**", "/", "/index.html")
                     .ignoringRequestMatchers(request -> HttpMethod.OPTIONS.matches(request.getMethod()));
@@ -57,7 +59,8 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers(
                     "/api/login", "/api/register",
-                    "/api/test", "/api/health", "/api/health/**", "/api/csrf"
+                    "/api/test", "/api/health", "/api/health/**", "/api/csrf",
+                    "/ws/**"  // 允许WebSocket连接
                 ).permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()

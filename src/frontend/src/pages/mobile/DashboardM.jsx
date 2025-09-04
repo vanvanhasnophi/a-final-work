@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, Row, Col, Statistic, Button, Tag, Space, List } from 'antd';
-import { UserOutlined, HomeOutlined, CalendarOutlined, SettingOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Statistic, Button, Tag, Space, List, message } from 'antd';
+import { UserOutlined, HomeOutlined, CalendarOutlined, SettingOutlined, ClockCircleOutlined, BellOutlined } from '@ant-design/icons';
 import { roomAPI } from '../../api/room';
 import { applicationAPI } from '../../api/application';
 import { dutyAPI } from '../../api/duty';
@@ -11,7 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { canViewOwnApplications } from '../../utils/permissionUtils';
 import LatestNews from '../../components/LatestNews';
 import { useI18n } from '../../contexts/I18nContext';
-import { useActivities } from '../../hooks/useActivities';
+import { useFootprints } from '../../hooks/useFootprints';
+import { notificationAPI } from '../../api/notification';
 import dayjs from 'dayjs';
 
 export default function Dashboard() {
@@ -41,12 +42,12 @@ export default function Dashboard() {
   const [todayDuty, setTodayDuty] = useState(null);
   const { loading, executeWithRetry } = useApiWithRetry();
   
-  // 使用活动Hook
+  // 使用动态Hook
   const { 
-    activities: recentActivities, 
-    refreshActivities: refreshRecentActivities 
-  } = useActivities({
-    type: 'all',
+    footprints: recentFootprints, 
+    refresh: refreshRecentFootprints 
+  } = useFootprints({
+    type: 'visible',
     userId: user?.id,
     userRole: user?.role,
     limit: 6,
@@ -263,7 +264,7 @@ export default function Dashboard() {
   const isNarrow = windowWidth < 600;
 
   // 快速操作处理函数
-  const handleQuickAction = (action) => {
+  const handleQuickAction = async (action) => {
     switch (action) {
       case 'apply':
         navigate('/rooms');
@@ -282,6 +283,28 @@ export default function Dashboard() {
         break;
       case 'settings':
         navigate('/settings');
+        break;
+      case 'sendTestNotification':
+        try {
+          message.loading({ content: '正在发送测试通知...', key: 'sendTest' });
+          console.log('发送测试通知请求...');
+          
+          const response = await notificationAPI.sendTestNotification();
+          console.log('测试通知发送响应:', response);
+          
+          message.success({ 
+            content: '测试通知发送成功！请查看通知中心', 
+            key: 'sendTest',
+            duration: 3
+          });
+        } catch (error) {
+          console.error('发送测试通知失败:', error);
+          message.error({ 
+            content: `发送测试通知失败: ${error?.response?.data?.message || error.message}`, 
+            key: 'sendTest',
+            duration: 5
+          });
+        }
         break;
       default:
         break;
@@ -391,20 +414,28 @@ export default function Dashboard() {
                   </Button>
                 )}
                 {isAdmin && (
-                  <Button 
-                    style={{ marginRight: '8px', marginBottom: '8px' }}
-                    onClick={() => handleQuickAction('userManagement')}
-                  >
-                    {t('dashboard.buttons.userManagement')}
-                  </Button>
-                )}
-                {isAdmin && (
-                  <Button 
-                    style={{ marginRight: '8px', marginBottom: '8px' }}
-                    onClick={() => handleQuickAction('roomManagement')}
-                  >
-                    {t('dashboard.buttons.roomManagement')}
-                  </Button>
+                  <>
+                    <Button 
+                      style={{ marginRight: '8px', marginBottom: '8px' }}
+                      onClick={() => handleQuickAction('userManagement')}
+                    >
+                      {t('dashboard.buttons.userManagement')}
+                    </Button>
+                    <Button 
+                      style={{ marginRight: '8px', marginBottom: '8px' }}
+                      onClick={() => handleQuickAction('roomManagement')}
+                    >
+                      {t('dashboard.buttons.roomManagement')}
+                    </Button>
+                    <Button 
+                      icon={<BellOutlined />}
+                      style={{ marginRight: '8px', marginBottom: '8px' }}
+                      onClick={() => handleQuickAction('sendTestNotification')}
+                      title="发送测试通知给自己"
+                    >
+                      测试通知
+                    </Button>
+                  </>
                 )}
                 {isMaintainer && (
                   <Button 
@@ -482,13 +513,13 @@ export default function Dashboard() {
                   <Button 
                     type="link" 
                     size="small" 
-                    onClick={refreshRecentActivities}
+                    onClick={refreshRecentFootprints}
                   >
                     {t('common.refresh')}
                   </Button>
                 }>
                   <LatestNews
-                    activities={recentActivities}
+                    footprints={recentFootprints}
                     loading={false}
                     maxItems={6}
                     emptyText={t('dashboard.latestNewsEmpty')}

@@ -27,6 +27,7 @@ import FeedbackButton from '../FeedbackButton';
 import { notificationEvents, NOTIFICATION_EVENTS } from '../../utils/notificationEvents';
 import { notificationAPI } from '../../api/notification';
 import { getUserDisplayName, getUserAvatarChar } from '../../utils/userDisplay';
+import webSocketService from '../../services/websocketService';
 // import { getCsrfStatus, probeCsrf } from '../../security/csrf';
 
 const { Header, Content } = Layout;
@@ -257,7 +258,8 @@ export default function AppLayoutMobile({ children }) {
         setBannerNotification(notification);
         setLastBannerNotificationId(notification.id);
         setLastBannerTime(now);
-        console.log(`设置横幅通知: ${notification.id}`);
+        
+        console.log(`设置横幅通知: ${notification.id}, 当前显示次数: ${currentCount}`);
       }
     );
 
@@ -278,7 +280,7 @@ export default function AppLayoutMobile({ children }) {
         // 先获取服务器未读数量
         let serverUnread = 0;
         try {
-          const res = await notificationAPI.getUnreadCount();
+          const res = await notificationAPI.getUnreadCountByUser(user.id);
           serverUnread = res?.data?.unreadCount || 0;
           console.log(`服务器未读数量: ${serverUnread}`);
         } catch (e) {
@@ -311,13 +313,13 @@ export default function AppLayoutMobile({ children }) {
 
     initializeUnreadCount();
 
-    // 设置定期检查（5分钟一次，既检查未读数量，也检查新通知）
+    // 设置定期检查（仅检查未读数量，减少API调用）
     const gentleTimer = setInterval(async () => {
       try {
-        console.log('定期检查未读数量和新通知...');
+        console.log('定期检查未读数量...');
 
-        // 1. 检查未读数量
-        const res = await notificationAPI.getUnreadCount();
+        // 只检查未读数量，不获取完整通知列表
+        const res = await notificationAPI.getUnreadCountByUser(user.id);
         const serverUnread = res?.data?.unreadCount || 0;
 
         const localRaw = localStorage.getItem('localNotifications');
@@ -330,40 +332,26 @@ export default function AppLayoutMobile({ children }) {
         const totalUnread = serverUnread + localUnread;
         console.log(`定期检查 - 服务器: ${serverUnread}, 本地: ${localUnread}, 总计: ${totalUnread}`);
 
-        // 2. 如果未读数量增加，可能有新通知，触发通知检查
-        if (totalUnread > unreadCount) {
-          console.log(`检测到未读数量增加 (${unreadCount} -> ${totalUnread})，检查新通知`);
-
-          // 获取最新通知列表来检查是否有新通知
-          try {
-            const notificationsRes = await notificationAPI.getNotifications({ pageNum: 1, pageSize: 20 });
-            const notifications = notificationsRes?.data?.records || notificationsRes?.data?.list || notificationsRes?.data || [];
-
-            if (notifications.length > 0) {
-              // 查找最新的未读通知
-              const latestUnread = notifications.find(n => !n.isRead);
-              if (latestUnread) {
-                console.log(`发现新通知: ${latestUnread.id}`);
-
-                // 触发新通知事件
-                setTimeout(() => {
-                  notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, latestUnread);
-                }, 200);
-              }
-            }
-          } catch (notificationError) {
-            console.warn('获取通知列表失败:', notificationError);
+        // 只有在未读数量变化时才触发事件
+        if (totalUnread !== unreadCount) {
+          console.log(`未读数量变化: ${unreadCount} -> ${totalUnread}`);
+          setUnreadCount(totalUnread);
+          
+          // 触发未读数量变化事件
+          notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
+          
+          // 如果未读数量增加且增加幅度不大（防止初始化时触发），可能有新通知
+          // 但不在此处获取完整通知列表，让通知中心组件自行处理
+          if (totalUnread > unreadCount && (totalUnread - unreadCount) <= 3) {
+            console.log('检测到可能的新通知，通知相关组件刷新');
+            // 触发一个新通知可能存在的事件，但不传递具体通知内容
+            notificationEvents.emit('POSSIBLE_NEW_NOTIFICATIONS', { count: totalUnread });
           }
         }
-
-        setUnreadCount(totalUnread);
-
-        // 触发未读数量变化事件
-        notificationEvents.emit(NOTIFICATION_EVENTS.UNREAD_COUNT_CHANGED, totalUnread);
       } catch (e) {
         console.debug('定期检查失败:', e);
       }
-    }, 300000); // 5分钟
+    }, 20000); // 20秒
 
     return () => {
       unsubscribeNewNotification();
@@ -371,6 +359,66 @@ export default function AppLayoutMobile({ children }) {
       clearInterval(gentleTimer);
     };
   }, [bannerNotification, lastBannerNotificationId, lastBannerTime, unreadCount]);
+
+  // 初始化WebSocket连接，实现实时通知（移动端）
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    console.log('正在初始化WebSocket连接（移动端）...');
+    
+    // 连接WebSocket - 传递JWT token用于认证
+    const token = localStorage.getItem('token');
+    if (token) {
+      webSocketService.connect(user.id, token);
+    } else {
+      console.warn('WebSocket连接失败：未找到JWT token');
+      return;
+    }
+
+    // 监听新通知
+    const handleNewNotification = (notification) => {
+      console.log('收到实时通知（移动端）:', notification);
+      
+      // 直接触发新通知事件，让现有的事件处理器处理横幅显示
+      notificationEvents.emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION, notification);
+      
+      // 触发通知列表刷新（不依赖未读计数变化）
+      notificationEvents.emit('NOTIFICATIONS_UPDATED');
+      
+      // 重新获取未读计数以保持同步（使用现有的初始化逻辑）
+      // 简单递增计数，避免额外API调用
+      setUnreadCount(prev => prev + 1);
+    };
+
+    const handleWebSocketConnected = () => {
+      console.log('WebSocket连接已建立，实时通知功能已启用（移动端）');
+    };
+
+    const handleWebSocketDisconnected = () => {
+      console.log('WebSocket连接已断开，将回退到轮询模式（移动端）');
+    };
+
+    const handleWebSocketError = (error) => {
+      console.warn('WebSocket连接错误（移动端）:', error);
+    };
+
+    // 注册WebSocket事件监听器
+    webSocketService.on('newNotification', handleNewNotification);
+    webSocketService.on('connected', handleWebSocketConnected);
+    webSocketService.on('disconnected', handleWebSocketDisconnected);
+    webSocketService.on('error', handleWebSocketError);
+
+    return () => {
+      // 清理WebSocket连接和监听器
+      webSocketService.off('newNotification', handleNewNotification);
+      webSocketService.off('connected', handleWebSocketConnected);
+      webSocketService.off('disconnected', handleWebSocketDisconnected);
+      webSocketService.off('error', handleWebSocketError);
+      webSocketService.disconnect();
+    };
+  }, [user?.id]); // 移除unreadCount依赖，WebSocket连接不应该依赖于未读计数变化
 
   // 登录跳转后若存在自动打开通知中心标记，则打开后清除
   useEffect(() => {
@@ -703,6 +751,7 @@ export default function AppLayoutMobile({ children }) {
 
         {/* 通知中心 */}
         <NotificationCenter
+        userId={user.id}
           visible={notificationVisible}
           onClose={() => setNotificationVisible(false)}
           onUnreadChange={(n) => setUnreadCount(n)}

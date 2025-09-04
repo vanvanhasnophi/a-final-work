@@ -137,7 +137,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
                 logger.info("清理了 {} 条60天前的申请记录", deletedOldCount);
             }
             
-            // 清理60天前的足迹记录
+            // 清理60天前的动态记录
             List<FootPrint> oldFootPrints = footPrintRepository.findAll().stream()
                 .filter(fp -> fp.getTimestamp() != null && fp.getTimestamp().before(sixtyDaysAgo))
                 .toList();
@@ -146,7 +146,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             if (!oldFootPrints.isEmpty()) {
                 footPrintRepository.deleteAll(oldFootPrints);
                 deletedFootPrintCount = oldFootPrints.size();
-                logger.info("清理了 {} 条60天前的足迹记录", deletedFootPrintCount);
+                logger.info("清理了 {} 条60天前的动态记录", deletedFootPrintCount);
             }
             
             // 清理已过期的申请（结束时间已过且状态为已完成或已取消，并且marked为过期）
@@ -168,7 +168,7 @@ public class DataRefreshServiceImpl implements DataRefreshService {
             updateRoomStatus();
             
             long duration = System.currentTimeMillis() - startTime;
-            logger.info("过期数据清理完成，删除旧申请记录{}条，删除足迹记录{}条，删除过期记录{}条，耗时 {}ms", 
+            logger.info("过期数据清理完成，删除旧申请记录{}条，删除动态记录{}条，删除过期记录{}条，耗时 {}ms", 
                        deletedOldCount, deletedFootPrintCount, deletedExpiredCount, duration);
             
         } catch (Exception e) {
